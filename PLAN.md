@@ -588,3 +588,28 @@ build/check/test, a real browser walkthrough against `byo site`, delivery report
 Agent rules: work only inside your own directory; never edit the root `PLAN.md`; never run
 `git`; never write runtime/server/linker implementation code for the learner; leave the repo
 buildable at every step.
+
+### 5.9 Delivered (2026-09-19)
+
+| Track | Stages / tests | `--validate` against | Wall clock |
+|---|---|---|---|
+| `wasm` | 45 / 347 | wasmtime 48.0.2 | 16 s |
+| `tls` | 45 / 321 | `openssl s_server` 3.6.4 | 73 s (1 documented skip) |
+| `link` | 42 / 341 | GNU ld 2.47 | 4 s |
+| `dist` A | 20 / 183 | `examples/reference_primitives` | 5 s |
+| `dist` B | 15 / 128 | etcd 3.7.1 | 108 s |
+| `dist` C | 20 / 164 | etcd 3.7.1 | 859 s |
+
+With shell (57/428) and kafka (45/296) that is **2 208 tests over six tracks**, every one of
+them green against the real implementation. `byo` carries a six-entry registry (97 tests), the
+site renders six trails from those catalogs (270 tests, 289 stage pages prerendered), and
+`install.sh` builds and installs all of it.
+
+Verified after the build, in a sandbox `BYO_HOME`: `install.sh --skip-site` → `byo tracks`
+(six installed) → `byo init wasm --runtime wasmtime` → `byo test --until 3` (24/24, recorded as
+run #1) → `byo status` (owner read from `.env`) → `byo site` + `/api/tracks` and `/api/runs`.
+
+Two process-hygiene notes for whoever runs these next: the cluster ladder leaks etcd children
+if its harness is killed mid-test rather than left to finish, so kill the tester and then sweep
+`pgrep -f cache/disttest/etcd` and `/tmp/disttest-*`; and a cluster `--validate` takes ~15
+minutes, which is long enough to look stalled when it is not.
