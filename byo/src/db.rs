@@ -5,8 +5,8 @@
 //! transaction. `migrations` records what has been applied so future schema versions can
 //! be added without guessing.
 
-use crate::paths::Track;
 use crate::report::Report;
+use crate::track::Track;
 use anyhow::{Context, Result};
 use rusqlite::{params, Connection, OptionalExtension};
 use serde::Serialize;
@@ -577,10 +577,10 @@ pub struct Score {
     pub streak: i64,
 }
 
-/// Compute XP, level and the completion streak across both tracks.
+/// Compute XP, level and the completion streak across every registered track.
 pub fn score(conn: &Connection) -> Result<Score> {
     let mut xp = 0i64;
-    for t in Track::ALL {
+    for t in Track::all() {
         for s in stages(conn, t)? {
             xp += match s.state.as_str() {
                 "done" => 100,
@@ -662,7 +662,7 @@ pub fn dump(conn: &Connection) -> Result<serde_json::Value> {
         projects.push(row?);
     }
     let mut progress = serde_json::Map::new();
-    for t in Track::ALL {
+    for t in Track::all() {
         progress.insert(t.as_str().into(), serde_json::to_value(stages(conn, t)?)?);
     }
     let runs = runs(conn, None, 10_000)?;
@@ -759,7 +759,7 @@ mod tests {
         let mut conn = open_memory().unwrap();
         let pid = upsert_project(
             &conn,
-            Track::Shell,
+            Track::SHELL,
             Path::new("/proj"),
             "bash",
             "registered",
@@ -776,7 +776,7 @@ mod tests {
         );
         let id = ingest(
             &mut conn,
-            Track::Shell,
+            Track::SHELL,
             Some(pid),
             &rep,
             "--until 4",
@@ -792,7 +792,7 @@ mod tests {
             )
             .unwrap();
         assert_eq!(n, 6);
-        let rows = stages(&conn, Track::Shell).unwrap();
+        let rows = stages(&conn, Track::SHELL).unwrap();
         let state = |s: u32| rows.iter().find(|r| r.stage == s).map(|r| r.state.clone());
         assert_eq!(state(1).as_deref(), Some("done"));
         assert_eq!(state(2).as_deref(), Some("in_progress"));
@@ -812,7 +812,7 @@ mod tests {
         let green = sample("bash", vec![st(1, &[("a", "pass")])]);
         ingest(
             &mut conn,
-            Track::Shell,
+            Track::SHELL,
             None,
             &green,
             "",
@@ -823,7 +823,7 @@ mod tests {
         let red = sample("bash", vec![st(1, &[("a", "fail")])]);
         ingest(
             &mut conn,
-            Track::Shell,
+            Track::SHELL,
             None,
             &red,
             "",
@@ -831,7 +831,7 @@ mod tests {
             "2026-09-13T10:00:00Z",
         )
         .unwrap();
-        let row = stage(&conn, Track::Shell, 1).unwrap().unwrap();
+        let row = stage(&conn, Track::SHELL, 1).unwrap().unwrap();
         assert_eq!(row.state, "failed");
         assert!(row.done_at.is_none());
     }
@@ -839,11 +839,11 @@ mod tests {
     #[test]
     fn notes_survive_runs_and_state_changes() {
         let mut conn = open_memory().unwrap();
-        set_note(&conn, Track::Kafka, 5, Some("watch the CRC")).unwrap();
+        set_note(&conn, Track::KAFKA, 5, Some("watch the CRC")).unwrap();
         let rep = sample("broken", vec![st(5, &[("a", "pass")])]);
         ingest(
             &mut conn,
-            Track::Kafka,
+            Track::KAFKA,
             None,
             &rep,
             "",
@@ -851,10 +851,10 @@ mod tests {
             "2026-09-13T10:00:00Z",
         )
         .unwrap();
-        let row = stage(&conn, Track::Kafka, 5).unwrap().unwrap();
+        let row = stage(&conn, Track::KAFKA, 5).unwrap().unwrap();
         assert_eq!(row.note.as_deref(), Some("watch the CRC"));
         assert_eq!(row.state, "done");
-        let row = set_state(&conn, Track::Kafka, 5, false).unwrap();
+        let row = set_state(&conn, Track::KAFKA, 5, false).unwrap();
         assert_eq!(row.state, "todo");
         assert_eq!(row.note.as_deref(), Some("watch the CRC"));
     }
@@ -871,7 +871,7 @@ mod tests {
         );
         let id = ingest(
             &mut conn,
-            Track::Shell,
+            Track::SHELL,
             None,
             &rep,
             "--all",
@@ -895,7 +895,7 @@ mod tests {
         let mut conn = open_memory().unwrap();
         ingest(
             &mut conn,
-            Track::Shell,
+            Track::SHELL,
             None,
             &sample("bash", vec![]),
             "a",
@@ -905,7 +905,7 @@ mod tests {
         .unwrap();
         ingest(
             &mut conn,
-            Track::Kafka,
+            Track::KAFKA,
             None,
             &sample("broken", vec![]),
             "b",
@@ -916,8 +916,8 @@ mod tests {
         let all = runs(&conn, None, 10).unwrap();
         assert_eq!(all.len(), 2);
         assert_eq!(all[0].track, "kafka");
-        assert_eq!(runs(&conn, Some(Track::Shell), 10).unwrap().len(), 1);
-        assert_eq!(latest_run_id(&conn, Track::Kafka).unwrap(), Some(all[0].id));
+        assert_eq!(runs(&conn, Some(Track::SHELL), 10).unwrap().len(), 1);
+        assert_eq!(latest_run_id(&conn, Track::KAFKA).unwrap(), Some(all[0].id));
     }
 
     #[test]
@@ -943,7 +943,7 @@ mod tests {
             "bash",
             vec![st(1, &[("a", "pass")]), st(2, &[("b", "fail")])],
         );
-        ingest(&mut conn, Track::Shell, None, &rep, "", None, &now()).unwrap();
+        ingest(&mut conn, Track::SHELL, None, &rep, "", None, &now()).unwrap();
         let s = score(&conn).unwrap();
         assert_eq!(s.xp, 120);
         assert_eq!(s.level, 1);
@@ -953,10 +953,10 @@ mod tests {
     #[test]
     fn reset_empties_everything() {
         let mut conn = open_memory().unwrap();
-        upsert_project(&conn, Track::Shell, Path::new("/p"), "bash", "registered").unwrap();
+        upsert_project(&conn, Track::SHELL, Path::new("/p"), "bash", "registered").unwrap();
         ingest(
             &mut conn,
-            Track::Shell,
+            Track::SHELL,
             None,
             &sample("bash", vec![st(1, &[("a", "pass")])]),
             "",
@@ -966,8 +966,8 @@ mod tests {
         .unwrap();
         reset(&mut conn).unwrap();
         assert!(runs(&conn, None, 10).unwrap().is_empty());
-        assert!(stages(&conn, Track::Shell).unwrap().is_empty());
-        assert!(latest_project(&conn, Track::Shell).unwrap().is_none());
+        assert!(stages(&conn, Track::SHELL).unwrap().is_empty());
+        assert!(latest_project(&conn, Track::SHELL).unwrap().is_none());
         assert_eq!(schema_version(&conn).unwrap(), SCHEMA_VERSION);
     }
 

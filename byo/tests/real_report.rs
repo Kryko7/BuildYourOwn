@@ -30,10 +30,10 @@ fn harness() -> Harness {
     assert_eq!(report.passed, 20);
     assert_eq!(report.failed, 0);
     let project_id =
-        db::upsert_project(&conn, Track::Shell, dir.path(), "bash", "registered").expect("project");
+        db::upsert_project(&conn, Track::SHELL, dir.path(), "bash", "registered").expect("project");
     let run_id = db::ingest(
         &mut conn,
-        Track::Shell,
+        Track::SHELL,
         Some(project_id),
         &report,
         "--until 3",
@@ -98,14 +98,14 @@ fn a_real_report_becomes_rows() {
 #[test]
 fn progress_is_derived_from_the_report() {
     let h = harness();
-    let rows = db::stages(&h.conn, Track::Shell).unwrap();
+    let rows = db::stages(&h.conn, Track::SHELL).unwrap();
     assert_eq!(rows.len(), 3);
     for r in &rows {
         assert_eq!(r.state, "done", "stage {} should be green", r.stage);
         assert_eq!(r.done_at.as_deref(), Some("2026-09-13T02:34:00Z"));
         assert_eq!(r.last_run_id, Some(h.run_id));
     }
-    assert!(db::stages(&h.conn, Track::Kafka).unwrap().is_empty());
+    assert!(db::stages(&h.conn, Track::KAFKA).unwrap().is_empty());
     assert_eq!(db::score(&h.conn).unwrap().xp, 300);
 }
 

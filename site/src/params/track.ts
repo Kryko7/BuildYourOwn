@@ -1,3 +1,5 @@
+import { isTrack } from '$lib/tracks';
 import type { ParamMatcher } from '@sveltejs/kit';
 
-export const match: ParamMatcher = (param) => param === 'shell' || param === 'kafka';
+/** `/[track]` matches any id in the registry (`src/lib/tracks.ts`). */
+export const match: ParamMatcher = (param) => isTrack(param);

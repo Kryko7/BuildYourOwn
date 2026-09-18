@@ -6,6 +6,7 @@
  * `/api/runs/latest` is "no runs yet", not an error.
  */
 import type { Report, TrackId } from '../types';
+import { byTrack, isTrack, trackIds } from '../tracks';
 import { parseReport } from '../report';
 
 export interface ApiProject {
@@ -26,6 +27,20 @@ export interface ApiHealth {
 	tracks: Record<TrackId, { project: ApiProject | null }>;
 }
 
+/**
+ * `GET /api/tracks` — what the installed `byo` knows about (PLAN.md §5.6). It is not in
+ * `byo/API.md` yet, so the site treats it as optional everywhere: with it, a track can say
+ * "tester installed, v0.2.0"; without it, the built-in registry is the whole truth.
+ */
+export interface ApiTrack {
+	id: TrackId;
+	title: string;
+	blurb: string;
+	accent: string;
+	installed: boolean;
+	testerVersion: string | null;
+}
+
 export type ApiStageState = 'todo' | 'in_progress' | 'failed' | 'done';
 
 export interface ApiStageRow {
@@ -41,13 +56,11 @@ export interface ApiTrackProgress {
 	stages: Record<string, ApiStageRow>;
 }
 
-export interface ApiProgress {
-	shell: ApiTrackProgress;
-	kafka: ApiTrackProgress;
+export type ApiProgress = Record<TrackId, ApiTrackProgress> & {
 	streak: number;
 	xp: number;
 	level: number;
-}
+};
 
 export interface ApiRunSummary {
 	id: number;
@@ -76,7 +89,7 @@ export class ApiError extends Error {
 const STATES: ApiStageState[] = ['todo', 'in_progress', 'failed', 'done'];
 
 function isTrackId(v: unknown): v is TrackId {
-	return v === 'shell' || v === 'kafka';
+	return typeof v === 'string' && isTrack(v);
 }
 
 function num(v: unknown, fallback = 0): number {
@@ -118,14 +131,30 @@ function normalizeTrackProgress(raw: unknown): ApiTrackProgress {
 	};
 }
 
+/**
+ * A track the running `byo` has never heard of (an older binary, a tester not installed)
+ * simply comes back empty rather than missing, so every caller can index the record.
+ */
 export function normalizeProgress(raw: unknown): ApiProgress {
 	const o = (raw ?? {}) as Record<string, unknown>;
 	return {
-		shell: normalizeTrackProgress(o.shell),
-		kafka: normalizeTrackProgress(o.kafka),
+		...byTrack((track) => normalizeTrackProgress(o[track])),
 		streak: num(o.streak),
 		xp: num(o.xp),
 		level: Math.max(1, num(o.level, 1))
+	};
+}
+
+function normalizeApiTrack(raw: unknown): ApiTrack | null {
+	const o = (raw ?? {}) as Record<string, unknown>;
+	if (!isTrackId(o.id)) return null;
+	return {
+		id: o.id,
+		title: str(o.title),
+		blurb: str(o.blurb),
+		accent: str(o.accent),
+		installed: o.installed !== false,
+		testerVersion: typeof o.testerVersion === 'string' ? o.testerVersion : null
 	};
 }
 
@@ -236,6 +265,22 @@ export class ByoApi {
 			body: JSON.stringify(body)
 		})) as Record<string, unknown>;
 		return { ...normalizeStageRow(raw), track, stage };
+	}
+
+	/**
+	 * The tracks the running `byo` knows about, or `null` when it does not serve
+	 * `/api/tracks` (every byo before the registry landed, and any static host). Callers
+	 * fall back to the built-in registry, which is why nothing here throws.
+	 */
+	async tracks(): Promise<ApiTrack[] | null> {
+		try {
+			const raw = await this.json('/api/tracks');
+			const list = Array.isArray(raw) ? raw : Array.isArray((raw as { tracks?: unknown })?.tracks) ? (raw as { tracks: unknown[] }).tracks : null;
+			if (!list) return null;
+			return list.map(normalizeApiTrack).filter((t): t is ApiTrack => t !== null);
+		} catch {
+			return null;
+		}
 	}
 
 	/** The catalog the installed testers know about; `null` when the data dir has none. */

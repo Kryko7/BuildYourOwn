@@ -1,0 +1,45 @@
+[package]
+name = "tlstest"
+version = "0.1.0"
+edition = "2021"
+description = "stage-by-stage black-box conformance tester for TLS 1.3 servers"
+license = "MIT"
+
+[dependencies]
+aes-gcm = "0.10"
+anyhow = "1"
+chacha20poly1305 = "0.10"
+clap = { version = "4.5", features = ["derive"] }
+ed25519-dalek = "2"
+hmac = "0.12"
+libc = "0.2"
+owo-colors = "4"
+p256 = { version = "0.13", features = ["ecdh", "ecdsa"] }
+rand = "0.9"
+rcgen = { version = "0.13", features = ["pem", "x509-parser"] }
+regex = "1"
+rsa = { version = "0.9", features = ["sha2"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_yaml = "0.9"
+sha2 = "0.10"
+similar = "2"
+tempfile = "3"
+tokio = { version = "1", features = [
+    "rt-multi-thread",
+    "macros",
+    "net",
+    "io-util",
+    "time",
+    "process",
+    "sync",
+    "fs",
+] }
+x25519-dalek = { version = "2", features = ["static_secrets"] }
+x509-parser = "0.16"
+
+[dev-dependencies]
+tokio = { version = "1", features = ["full"] }
+
+[profile.release]
+strip = true

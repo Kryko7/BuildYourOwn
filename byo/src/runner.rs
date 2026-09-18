@@ -2,8 +2,9 @@
 
 use crate::config::Project;
 use crate::db;
-use crate::paths::{find_tester, Paths, Track};
+use crate::paths::{find_tester, Paths};
 use crate::report;
+use crate::track::Track;
 use anyhow::{Context, Result};
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -40,45 +41,28 @@ fn value_of(args: &[String], flag: &str) -> Option<String> {
 }
 
 /// Build the tester command line: the user's flags verbatim, plus whatever `byo` knows.
+///
+/// Everything `byo` adds comes from the [track registry][crate::track]: the target flag,
+/// the `$BYO_HOME` data files that exist, and the track's extra keys. There is no
+/// per-track branch here, so a new tester works as soon as it is registered.
 pub fn plan(paths: &Paths, project: &Project, user: &[String], temp_json: PathBuf) -> Invocation {
     let mut args: Vec<String> = Vec::new();
-    let track = project.track;
+    let def = project.track.def();
 
-    if !has(user, track.target_flag()) {
-        args.push(track.target_flag().to_string());
+    if !has(user, def.target_flag) {
+        args.push(def.target_flag.to_string());
         args.push(project.target.clone());
     }
-    match track {
-        Track::Shell => {
-            let tests = paths.tests_dir();
-            if !has(user, "--tests-dir") && tests.is_dir() {
-                args.push("--tests-dir".into());
-                args.push(tests.to_string_lossy().into_owned());
-            }
-            let shells = paths.shells_file();
-            if !has(user, "--shells-file") && shells.is_file() {
-                args.push("--shells-file".into());
-                args.push(shells.to_string_lossy().into_owned());
-            }
+    for file in def.data_files {
+        if !has(user, file.flag) && paths.has_data_file(file) {
+            args.push(file.flag.to_string());
+            args.push(paths.data_file(file).to_string_lossy().into_owned());
         }
-        Track::Kafka => {
-            let brokers = paths.brokers_file();
-            if !has(user, "--brokers-file") && brokers.is_file() {
-                args.push("--brokers-file".into());
-                args.push(brokers.to_string_lossy().into_owned());
-            }
-            if let Some(p) = project.port {
-                if !has(user, "--port") {
-                    args.push("--port".into());
-                    args.push(p.to_string());
-                }
-            }
-            if let Some(d) = &project.log_dir {
-                if !has(user, "--log-dir") {
-                    args.push("--log-dir".into());
-                    args.push(d.clone());
-                }
-            }
+    }
+    for key in def.extra_keys {
+        if let (Some(value), false) = (project.extra(key.name), has(user, key.flag)) {
+            args.push(key.flag.to_string());
+            args.push(value.to_string());
         }
     }
 
@@ -235,11 +219,7 @@ mod tests {
         for f in files {
             let p = d.path().join(f);
             std::fs::create_dir_all(p.parent().unwrap()).unwrap();
-            if f.ends_with('/') {
-                std::fs::create_dir_all(&p).unwrap();
-            } else {
-                std::fs::write(&p, "x").unwrap();
-            }
+            std::fs::write(&p, "x").unwrap();
         }
         let paths = Paths {
             home: d.path().to_path_buf(),
@@ -268,12 +248,47 @@ mod tests {
         assert_eq!(inv.args[1], "bash");
         assert!(inv
             .args
-            .contains(&paths.tests_dir().to_string_lossy().into_owned()));
+            .contains(&paths.data("tests/stages").to_string_lossy().into_owned()));
         assert!(inv
             .args
-            .contains(&paths.shells_file().to_string_lossy().into_owned()));
+            .contains(&paths.data("shells.yaml").to_string_lossy().into_owned()));
         assert!(inv.args.contains(&"--all".to_string()), "{:?}", inv.args);
         assert_eq!(inv.json, PathBuf::from("/tmp/r.json"));
+    }
+
+    #[test]
+    fn every_track_gets_its_flag_and_its_data_files() {
+        for track in Track::all() {
+            let def = track.def();
+            let files: Vec<String> = def
+                .data_files
+                .iter()
+                .map(|f| {
+                    if f.dir {
+                        format!("{}/placeholder.yaml", f.rel)
+                    } else {
+                        f.rel.to_string()
+                    }
+                })
+                .collect();
+            let (_d, paths) = paths_with(&files.iter().map(String::as_str).collect::<Vec<_>>());
+            let text = format!("track = {:?}\ncommand = \"./your_program.sh\"\n", def.id);
+            let inv = plan(&paths, &project(&text), &[], PathBuf::from("/tmp/r.json"));
+            assert_eq!(inv.args[0], def.target_flag, "{} target flag", def.id);
+            assert_eq!(inv.args[1], "./your_program.sh");
+            for f in def.data_files {
+                assert!(
+                    inv.args.contains(&f.flag.to_string()),
+                    "{} should pass {}: {:?}",
+                    def.id,
+                    f.flag,
+                    inv.args
+                );
+                assert!(inv
+                    .args
+                    .contains(&paths.data(f.rel).to_string_lossy().into_owned()));
+            }
+        }
     }
 
     #[test]
@@ -334,7 +349,7 @@ mod tests {
     }
 
     #[test]
-    fn kafka_invocation_carries_port_and_log_dir() {
+    fn kafka_invocation_carries_its_extra_keys() {
         let (_d, paths) = paths_with(&["brokers.yaml"]);
         let p =
             project("track = \"kafka\"\ncommand = \"./b\"\nport = 9099\nlog_dir = \"/tmp/kl\"\n");
@@ -358,16 +373,29 @@ mod tests {
     }
 
     #[test]
-    fn missing_data_files_are_simply_not_passed() {
-        let (_d, paths) = paths_with(&[]);
+    fn a_user_supplied_extra_flag_wins() {
+        let (_d, paths) = paths_with(&["brokers.yaml"]);
+        let p = project("track = \"kafka\"\ncommand = \"./b\"\nport = 9099\n");
         let inv = plan(
             &paths,
-            &project("track = \"shell\"\nshell = \"bash\"\n"),
-            &[],
+            &p,
+            &s(&["--port", "19092", "--all"]),
             PathBuf::from("/tmp/r.json"),
         );
-        assert!(!inv.args.contains(&"--tests-dir".to_string()));
-        assert!(!inv.args.contains(&"--shells-file".to_string()));
+        assert_eq!(inv.args.iter().filter(|a| *a == "--port").count(), 1);
+        assert!(inv.args.contains(&"19092".to_string()));
+    }
+
+    #[test]
+    fn missing_data_files_are_simply_not_passed() {
+        let (_d, paths) = paths_with(&[]);
+        for track in Track::all() {
+            let text = format!("track = {:?}\ncommand = \"./x\"\n", track.as_str());
+            let inv = plan(&paths, &project(&text), &[], PathBuf::from("/tmp/r.json"));
+            for f in track.def().data_files {
+                assert!(!inv.args.contains(&f.flag.to_string()), "{}", f.flag);
+            }
+        }
     }
 
     #[test]

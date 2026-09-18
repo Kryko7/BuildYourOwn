@@ -1,0 +1,153 @@
+{
+	"track": "link",
+	"generatedAt": "2026-09-18T15:22:19.879Z",
+	"sections": [
+		{
+			"id": "A",
+			"title": "Reading relocatable objects",
+			"stages": [
+				1
+			]
+		},
+		{
+			"id": "B",
+			"title": "Emitting a runnable executable",
+			"stages": [
+				2
+			]
+		},
+		{
+			"id": "C",
+			"title": "Symbol resolution",
+			"stages": [
+				3
+			]
+		},
+		{
+			"id": "D",
+			"title": "Relocations",
+			"stages": [
+				4
+			]
+		},
+		{
+			"id": "E",
+			"title": "Archives and link order",
+			"stages": [
+				5
+			]
+		},
+		{
+			"id": "F",
+			"title": "Real programs, robustness, scale",
+			"stages": [
+				6
+			]
+		}
+	],
+	"stages": [
+		{
+			"number": 1,
+			"slug": "reading-relocatable-objects",
+			"name": "Reading relocatable objects",
+			"ext": false,
+			"section": "A",
+			"file": "",
+			"planDone": false,
+			"planned": true,
+			"hints": [
+				"Parse ELF64: the header, the section headers, and the string tables behind them",
+				"`.symtab` and `.strtab`: name, value, size, binding, type, section index",
+				"Relocation sections: `.rela.text` and friends, with their addends"
+			],
+			"tests": []
+		},
+		{
+			"number": 2,
+			"slug": "emitting-a-runnable-executable",
+			"name": "Emitting a runnable executable",
+			"ext": false,
+			"section": "B",
+			"file": "",
+			"planDone": false,
+			"planned": true,
+			"hints": [
+				"Lay out sections into segments and write program headers the kernel accepts",
+				"Entry point, `_start`, and the load addresses your layout picks",
+				"The output has to actually run and exit with the status the test expects"
+			],
+			"tests": []
+		},
+		{
+			"number": 3,
+			"slug": "symbol-resolution",
+			"name": "Symbol resolution",
+			"ext": false,
+			"section": "C",
+			"file": "",
+			"planDone": false,
+			"planned": true,
+			"hints": [
+				"Global, local and weak symbols, and which definition wins",
+				"Common symbols, COMDAT groups and duplicate definitions",
+				"Undefined symbols are an error with a message that names them"
+			],
+			"tests": []
+		},
+		{
+			"number": 4,
+			"slug": "relocations",
+			"name": "Relocations",
+			"ext": false,
+			"section": "D",
+			"file": "",
+			"planDone": false,
+			"planned": true,
+			"hints": [
+				"R_X86_64_64, PC32, PLT32, 32S and the rest of the static set",
+				"Compute S + A − P correctly, and detect overflow instead of truncating",
+				"Section-relative symbols and addends that point into the middle of a section"
+			],
+			"tests": []
+		},
+		{
+			"number": 5,
+			"slug": "archives-and-link-order",
+			"name": "Archives and link order",
+			"ext": false,
+			"section": "E",
+			"file": "",
+			"planDone": false,
+			"planned": true,
+			"hints": [
+				"`.a` files: the archive format, the symbol index, and lazy member extraction",
+				"Link order matters — a member is pulled in only to satisfy a pending undefined",
+				"`-L` and `-l` search paths"
+			],
+			"tests": []
+		},
+		{
+			"number": 6,
+			"slug": "real-programs-robustness-scale",
+			"name": "Real programs, robustness, scale",
+			"ext": false,
+			"section": "F",
+			"file": "",
+			"planDone": false,
+			"planned": true,
+			"hints": [
+				"Multi-object programs that compute something and print it",
+				"Fuzzed and truncated objects: reject them cleanly",
+				"Many objects, many symbols, and a link that finishes fast"
+			],
+			"tests": []
+		}
+	],
+	"totals": {
+		"stages": 6,
+		"tests": 0,
+		"ext": 0
+	},
+	"pending": true,
+	"source": "placeholder — linktest has not published a catalog or a plan yet"
+}

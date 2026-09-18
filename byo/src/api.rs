@@ -5,11 +5,13 @@
 //! `server.rs` only has to translate types.
 
 use crate::db;
-use crate::paths::{Paths, Track};
+use crate::paths::{self, Paths};
+use crate::track::{Track, TRACKS};
 use anyhow::Result;
 use rusqlite::Connection;
 use serde_json::{json, Value};
 use std::collections::HashMap;
+use std::sync::Mutex;
 
 /// Everything a handler needs besides the database.
 pub struct Ctx {
@@ -121,16 +123,19 @@ fn dispatch(conn: &Connection, ctx: &Ctx, req: &Request, seg: &[&str]) -> Result
     let post = req.method == "POST";
     match seg {
         ["health"] if get => health(conn, ctx),
+        ["tracks"] if get => Ok(tracks(ctx)),
         ["progress"] if get => progress(conn),
         ["runs"] if get => list_runs(conn, req),
         ["runs", "latest"] if get => latest_run(conn, req),
         ["runs", id] if get => one_run(conn, id),
         ["stages", track, n] if post => post_stage(conn, req, track, n),
         ["catalog", track] if get => catalog(ctx, track),
-        ["health" | "progress" | "runs" | "stages" | "catalog", ..] => Ok(Response::error(
-            405,
-            format!("{} is not allowed on {}", req.method, req.path),
-        )),
+        ["health" | "tracks" | "progress" | "runs" | "stages" | "catalog", ..] => {
+            Ok(Response::error(
+                405,
+                format!("{} is not allowed on {}", req.method, req.path),
+            ))
+        }
         _ => Ok(Response::error(
             404,
             format!("no such endpoint: {}", req.path),
@@ -140,9 +145,16 @@ fn dispatch(conn: &Connection, ctx: &Ctx, req: &Request, seg: &[&str]) -> Result
 
 fn health(conn: &Connection, ctx: &Ctx) -> Result<Response> {
     let mut tracks = serde_json::Map::new();
-    for t in Track::ALL {
+    for t in Track::all() {
         let project = db::latest_project(conn, t)?;
-        tracks.insert(t.as_str().into(), json!({ "project": project }));
+        tracks.insert(
+            t.as_str().into(),
+            json!({
+                "project": project,
+                "installed": paths::tester_installed(t),
+                "catalog": ctx.paths.catalog(t).is_file(),
+            }),
+        );
     }
     Ok(Response::json(json!({
         "ok": true,
@@ -154,9 +166,63 @@ fn health(conn: &Connection, ctx: &Ctx) -> Result<Response> {
     })))
 }
 
+/// `GET /api/tracks` — the registry, so the site does not hard-code the track list.
+///
+/// Deliberately flat and stable: `id`, `title`, `blurb`, `accent` are registry data;
+/// `installed` and `testerVersion` describe this machine (a track whose tester has not been
+/// built yet is `installed: false, testerVersion: null`, never missing from the list).
+fn tracks(ctx: &Ctx) -> Response {
+    let list: Vec<Value> = TRACKS
+        .iter()
+        .zip(Track::all())
+        .map(|(def, t)| {
+            let version = tester_version(def.tester);
+            json!({
+                "id": def.id,
+                "title": def.title,
+                "blurb": def.blurb,
+                "accent": def.accent,
+                "tester": def.tester,
+                "targetFlag": def.target_flag,
+                "targetKey": def.target_key,
+                "installed": version.is_some(),
+                "testerVersion": version,
+                "catalog": ctx.paths.catalog(t).is_file(),
+            })
+        })
+        .collect();
+    Response::json(Value::Array(list))
+}
+
+/// `<tester> --version`, or `None` when the tester is not installed.
+///
+/// Presence is re-checked every call (a cheap stat, so installing a tester while `byo site`
+/// runs is picked up), while the version string itself is cached per binary path.
+fn tester_version(tester: &str) -> Option<String> {
+    static CACHE: Mutex<Option<HashMap<String, String>>> = Mutex::new(None);
+    let path = paths::locate_tester(tester)?;
+    let key = path.to_string_lossy().into_owned();
+    if let Ok(guard) = CACHE.lock() {
+        if let Some(hit) = guard.as_ref().and_then(|m| m.get(&key)) {
+            return Some(hit.clone());
+        }
+    }
+    let out = std::process::Command::new(&path).arg("--version").output();
+    let version = match out {
+        Ok(o) if o.status.success() => String::from_utf8_lossy(&o.stdout).trim().to_string(),
+        _ => format!("{tester} (version unknown)"),
+    };
+    if let Ok(mut guard) = CACHE.lock() {
+        guard
+            .get_or_insert_with(HashMap::new)
+            .insert(key, version.clone());
+    }
+    Some(version)
+}
+
 fn progress(conn: &Connection) -> Result<Response> {
     let mut out = serde_json::Map::new();
-    for t in Track::ALL {
+    for t in Track::all() {
         let mut stages = serde_json::Map::new();
         for s in db::stages(conn, t)? {
             stages.insert(
@@ -356,7 +422,7 @@ mod tests {
     fn seed(conn: &mut Connection) -> i64 {
         db::upsert_project(
             conn,
-            Track::Shell,
+            Track::SHELL,
             std::path::Path::new("/proj"),
             "bash",
             "registered",
@@ -390,7 +456,7 @@ mod tests {
         };
         db::ingest(
             conn,
-            Track::Shell,
+            Track::SHELL,
             None,
             &rep,
             "--stage 1",
@@ -430,13 +496,42 @@ mod tests {
         assert_eq!(v["schemaVersion"], db::SCHEMA_VERSION);
         assert_eq!(v["tracks"]["shell"]["project"]["command"], "bash");
         assert!(v["tracks"]["kafka"]["project"].is_null());
+        // Every registered track is reported, installed or not.
+        for t in Track::all() {
+            let row = &v["tracks"][t.as_str()];
+            assert!(row["installed"].is_boolean(), "{t}: {row}");
+            assert_eq!(row["catalog"], false, "{t} has no catalog in /data");
+        }
+    }
+
+    #[test]
+    fn tracks_lists_the_whole_registry() {
+        let conn = db::open_memory().unwrap();
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::write(dir.path().join("catalog.tls.json"), r#"{"track":"tls"}"#).unwrap();
+        let c = ctx(dir.path().to_path_buf());
+        let v = body(&get(&conn, &c, "/api/tracks"));
+        let rows = v.as_array().expect("an array");
+        assert_eq!(rows.len(), TRACKS.len());
+        for (row, def) in rows.iter().zip(TRACKS) {
+            assert_eq!(row["id"], def.id);
+            assert_eq!(row["title"], def.title);
+            assert_eq!(row["blurb"], def.blurb);
+            assert_eq!(row["accent"], def.accent);
+            assert_eq!(row["tester"], def.tester);
+            assert!(row["installed"].is_boolean());
+            let version = &row["testerVersion"];
+            assert!(version.is_string() || version.is_null());
+            assert_eq!(version.is_string(), row["installed"], "{row}");
+            assert_eq!(row["catalog"], def.id == "tls");
+        }
     }
 
     #[test]
     fn progress_is_keyed_by_stage_number() {
         let mut conn = db::open_memory().unwrap();
         let run = seed(&mut conn);
-        db::set_note(&conn, Track::Shell, 1, Some("hi")).unwrap();
+        db::set_note(&conn, Track::SHELL, 1, Some("hi")).unwrap();
         let v = body(&get(&conn, &ctx(PathBuf::from("/d")), "/api/progress"));
         assert_eq!(v["shell"]["stages"]["1"]["state"], "done");
         assert_eq!(v["shell"]["stages"]["1"]["note"], "hi");
@@ -601,6 +696,38 @@ mod tests {
         assert_eq!(body(&r)["track"], "shell");
         assert_eq!(get(&conn, &c, "/api/catalog/kafka").status, 404);
         assert_eq!(get(&conn, &c, "/api/catalog/redis").status, 404);
+    }
+
+    #[test]
+    fn every_registered_track_is_addressable() {
+        let dir = tempfile::tempdir().unwrap();
+        let conn = db::open_memory().unwrap();
+        let c = ctx(dir.path().to_path_buf());
+        for t in Track::all() {
+            std::fs::write(
+                dir.path().join(format!("catalog.{t}.json")),
+                format!(r#"{{"track":"{t}","stages":[{{"number":1,"name":"One"}}]}}"#),
+            )
+            .unwrap();
+            let r = get(&conn, &c, &format!("/api/catalog/{t}"));
+            assert_eq!(r.status, 200, "{t}");
+            assert_eq!(body(&r)["track"], t.as_str());
+
+            let r = handle(
+                &conn,
+                &c,
+                &Request::new("POST", &format!("/api/stages/{t}/3"), r#"{"state":"done"}"#),
+            )
+            .unwrap();
+            assert_eq!(r.status, 200, "{t}");
+            assert_eq!(body(&r)["track"], t.as_str());
+            assert_eq!(body(&r)["state"], "done");
+        }
+        let v = body(&get(&conn, &c, "/api/progress"));
+        for t in Track::all() {
+            assert_eq!(v[t.as_str()]["stages"]["3"]["state"], "done", "{t}");
+        }
+        assert_eq!(v["xp"], 100 * Track::all().len() as i64);
     }
 
     #[test]

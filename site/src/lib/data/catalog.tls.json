@@ -1,0 +1,176 @@
+{
+	"track": "tls",
+	"generatedAt": "2026-09-18T15:22:19.879Z",
+	"sections": [
+		{
+			"id": "A",
+			"title": "TCP & the record layer",
+			"stages": [
+				1
+			]
+		},
+		{
+			"id": "B",
+			"title": "ClientHello, extensions, negotiation",
+			"stages": [
+				2
+			]
+		},
+		{
+			"id": "C",
+			"title": "Key schedule & handshake encryption",
+			"stages": [
+				3
+			]
+		},
+		{
+			"id": "D",
+			"title": "Authentication",
+			"stages": [
+				4
+			]
+		},
+		{
+			"id": "E",
+			"title": "Application data & AEAD",
+			"stages": [
+				5
+			]
+		},
+		{
+			"id": "F",
+			"title": "Alerts, errors, robustness",
+			"stages": [
+				6
+			]
+		},
+		{
+			"id": "G",
+			"title": "Advanced",
+			"stages": [
+				7
+			]
+		}
+	],
+	"stages": [
+		{
+			"number": 1,
+			"slug": "tcp-the-record-layer",
+			"name": "TCP & the record layer",
+			"ext": false,
+			"section": "A",
+			"file": "",
+			"planDone": false,
+			"planned": true,
+			"hints": [
+				"Accept a connection and speak TLSPlaintext: type, legacy version, length",
+				"Record size limits, coalescing and fragmentation across records",
+				"Nothing is sent before the client speaks"
+			],
+			"tests": []
+		},
+		{
+			"number": 2,
+			"slug": "clienthello-extensions-negotiation",
+			"name": "ClientHello, extensions, negotiation",
+			"ext": false,
+			"section": "B",
+			"file": "",
+			"planDone": false,
+			"planned": true,
+			"hints": [
+				"Parse ClientHello and answer with a ServerHello that echoes the legacy session id",
+				"supported_versions, key_share, signature_algorithms, server_name, ALPN",
+				"Pick a cipher suite from the client’s list, or alert if there is nothing in common"
+			],
+			"tests": []
+		},
+		{
+			"number": 3,
+			"slug": "key-schedule-handshake-encryption",
+			"name": "Key schedule & handshake encryption",
+			"ext": false,
+			"section": "C",
+			"file": "",
+			"planDone": false,
+			"planned": true,
+			"hints": [
+				"X25519 (or P-256) shared secret, HKDF-Extract and HKDF-Expand-Label",
+				"The RFC 8446 §7.1 ladder: early → handshake → master, with the derived secrets",
+				"EncryptedExtensions onwards is protected with the handshake traffic keys"
+			],
+			"tests": []
+		},
+		{
+			"number": 4,
+			"slug": "authentication",
+			"name": "Authentication",
+			"ext": false,
+			"section": "D",
+			"file": "",
+			"planDone": false,
+			"planned": true,
+			"hints": [
+				"Certificate, CertificateVerify and Finished, in that order",
+				"The signature covers the transcript hash under a context string",
+				"Finished is HMAC over the transcript with the finished key"
+			],
+			"tests": []
+		},
+		{
+			"number": 5,
+			"slug": "application-data-aead",
+			"name": "Application data & AEAD",
+			"ext": false,
+			"section": "E",
+			"file": "",
+			"planDone": false,
+			"planned": true,
+			"hints": [
+				"AEAD records: the nonce is the write IV xor the sequence number",
+				"The additional data is the record header; the content type is inside the ciphertext",
+				"The `-rev` echo layer: every line received comes back reversed"
+			],
+			"tests": []
+		},
+		{
+			"number": 6,
+			"slug": "alerts-errors-robustness",
+			"name": "Alerts, errors, robustness",
+			"ext": false,
+			"section": "F",
+			"file": "",
+			"planDone": false,
+			"planned": true,
+			"hints": [
+				"close_notify, and the fatal alerts a malformed handshake must produce",
+				"Truncated records, bad MACs, replayed sequence numbers",
+				"A misbehaving client must not take the server down"
+			],
+			"tests": []
+		},
+		{
+			"number": 7,
+			"slug": "advanced",
+			"name": "Advanced",
+			"ext": false,
+			"section": "G",
+			"file": "",
+			"planDone": false,
+			"planned": true,
+			"hints": [
+				"HelloRetryRequest when the client’s key share is not one you support",
+				"KeyUpdate in both directions",
+				"Session tickets, resumption, early-data rejection, and real-client interop"
+			],
+			"tests": []
+		}
+	],
+	"totals": {
+		"stages": 7,
+		"tests": 0,
+		"ext": 0
+	},
+	"pending": true,
+	"source": "placeholder — tlstest has not published a catalog or a plan yet"
+}

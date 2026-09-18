@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Build and install the BuildYourOwn toolchain: the two testers, the `byo` command and the
-# journey site. Idempotent — re-run it after pulling changes.
+# Build and install the BuildYourOwn toolchain: every tester that is present, the `byo`
+# command and the journey site. Idempotent — re-run it after pulling changes.
 #
 #   ./install.sh                 build everything and install
 #   ./install.sh --skip-site     skip the (slow) npm build; keep whatever site is installed
@@ -21,6 +21,24 @@ for arg in "$@"; do
   esac
 done
 
+# ---------------------------------------------------------------------------------------
+# The track registry. Keep this table in step with `byo/src/track.rs`: adding a sixth track
+# is one row here and one TrackDef there.
+#
+#   id | repo dir | tester binary | cargo build flags | data files (src:dest,…) | catalogs
+#
+# `src` is relative to the repo root, `dest` to $BYO_HOME. Catalog candidates are tried in
+# order; if none exists the tester is asked for one with `--list --json`.
+# ---------------------------------------------------------------------------------------
+TRACKS=(
+  "shell|shelltest|shelltest|--bins|shelltest/tests:tests,shelltest/shells.yaml:shells.yaml|shelltest/catalog.json,site/src/lib/data/catalog.shell.json"
+  "kafka|kafkatest|kafkatest|--bins --examples|kafkatest/brokers.yaml:brokers.yaml|kafkatest/catalog.json,site/src/lib/data/catalog.kafka.json"
+  "wasm|wasmtest|wasmtest|--bins|wasmtest/runtimes.yaml:runtimes.yaml|wasmtest/catalog.json,site/src/lib/data/catalog.wasm.json"
+  "tls|tlstest|tlstest|--bins|tlstest/servers.yaml:servers.yaml|tlstest/catalog.json,site/src/lib/data/catalog.tls.json"
+  "link|linktest|linktest|--bins|linktest/linkers.yaml:linkers.yaml|linktest/catalog.json,site/src/lib/data/catalog.link.json"
+)
+field() { printf '%s' "$1" | cut -d'|' -f"$2"; }
+
 if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
   BOLD=$'\033[1m'; GREEN=$'\033[32m'; YELLOW=$'\033[33m'; RED=$'\033[31m'; DIM=$'\033[2m'; OFF=$'\033[0m'
 else
@@ -35,31 +53,48 @@ WARNINGS=()
 
 command -v cargo >/dev/null 2>&1 || die "cargo is not on PATH — install Rust from https://rustup.rs"
 
+# The journey owner's name lives in the git-ignored .env. The site build bakes
+# PUBLIC_JOURNEY_OWNER in, and `byo` reads it at runtime — so export it here, and never copy
+# the file itself into $BYO_HOME (it is personal configuration, not installable data).
+step "Configuration"
+if [ -f "$REPO/.env" ]; then
+  set -a
+  # shellcheck disable=SC1091
+  . "$REPO/.env"
+  set +a
+  note ".env sourced — PUBLIC_JOURNEY_OWNER=${PUBLIC_JOURNEY_OWNER:-(unset)}"
+else
+  note "no $REPO/.env — everything will read \"The Journey\" (copy .env.example to .env)"
+fi
+
 step "Building the testers and byo (release)"
-for crate in shelltest kafkatest byo; do
-  [ -d "$REPO/$crate" ] || die "$REPO/$crate is missing"
-  printf '  %s… ' "$crate"
-  if [ "$crate" = kafkatest ]; then
-    # kafkatest also ships an intentionally broken example broker used by the docs.
-    if (cd "$REPO/$crate" && cargo build --release --bins --examples >/tmp/byo-build-$crate.log 2>&1); then
-      printf '%sok%s\n' "$GREEN" "$OFF"
-    else
-      printf '%sfailed%s\n' "$YELLOW" "$OFF"
-      tail -20 "/tmp/byo-build-$crate.log" >&2 || true
-      warn "kafkatest did not build; the kafka track will not work until it does"
-      WARNINGS+=("kafkatest failed to build (see /tmp/byo-build-kafkatest.log)")
-      continue
-    fi
+for row in "${TRACKS[@]}"; do
+  id="$(field "$row" 1)"; dir="$(field "$row" 2)"; tester="$(field "$row" 3)"
+  read -r -a build_flags <<< "$(field "$row" 4)"
+  if [ ! -d "$REPO/$dir" ]; then
+    note "$id: $dir/ (not present, skipped)"
+    continue
+  fi
+  printf '  %s… ' "$tester"
+  if (cd "$REPO/$dir" && cargo build --release "${build_flags[@]}" >"/tmp/byo-build-$tester.log" 2>&1); then
+    printf '%sok%s\n' "$GREEN" "$OFF"
   else
-    if (cd "$REPO/$crate" && cargo build --release >/tmp/byo-build-$crate.log 2>&1); then
-      printf '%sok%s\n' "$GREEN" "$OFF"
-    else
-      printf '%sfailed%s\n' "$RED" "$OFF"
-      tail -30 "/tmp/byo-build-$crate.log" >&2 || true
-      die "$crate failed to build"
-    fi
+    printf '%sfailed%s\n' "$YELLOW" "$OFF"
+    tail -20 "/tmp/byo-build-$tester.log" >&2 || true
+    warn "$tester did not build; the $id track will not work until it does"
+    WARNINGS+=("$tester failed to build (see /tmp/byo-build-$tester.log)")
   fi
 done
+
+printf '  %s… ' byo
+[ -d "$REPO/byo" ] || die "$REPO/byo is missing"
+if (cd "$REPO/byo" && cargo build --release >/tmp/byo-build-byo.log 2>&1); then
+  printf '%sok%s\n' "$GREEN" "$OFF"
+else
+  printf '%sfailed%s\n' "$RED" "$OFF"
+  tail -30 /tmp/byo-build-byo.log >&2 || true
+  die "byo failed to build"
+fi
 
 step "Building the site"
 if [ "$SKIP_SITE" = 1 ]; then
@@ -83,48 +118,92 @@ fi
 
 step "Installing binaries into $BYO_BIN_DIR"
 mkdir -p "$BYO_BIN_DIR"
-for crate in shelltest kafkatest byo; do
-  src="$REPO/$crate/target/release/$crate"
+install_bin() { # install_bin <crate dir> <binary name> <required: yes|no>
+  local src="$REPO/$1/target/release/$2"
   if [ -x "$src" ]; then
-    install -m 0755 "$src" "$BYO_BIN_DIR/$crate"
-    note "$BYO_BIN_DIR/$crate"
+    install -m 0755 "$src" "$BYO_BIN_DIR/$2"
+    note "$BYO_BIN_DIR/$2"
+  elif [ "$3" = yes ]; then
+    die "$src does not exist; byo was not installed"
   else
-    warn "$src does not exist; $crate was not installed"
-    WARNINGS+=("$crate binary missing")
+    warn "$src does not exist; $2 was not installed"
+    WARNINGS+=("$2 binary missing")
   fi
+}
+install_bin byo byo yes
+for row in "${TRACKS[@]}"; do
+  dir="$(field "$row" 2)"; tester="$(field "$row" 3)"
+  [ -d "$REPO/$dir" ] || continue
+  install_bin "$dir" "$tester" no
 done
 
 step "Installing data into $BYO_HOME"
 mkdir -p "$BYO_HOME"
+# An early version of this script had no such rule; make sure no personal .env lingers.
+if [ -f "$BYO_HOME/.env" ]; then
+  rm -f "$BYO_HOME/.env"
+  note "removed a stale $BYO_HOME/.env (personal config never belongs here)"
+fi
 
 copy_tree() { # copy_tree <src dir> <dest dir>
-  if [ -d "$1" ]; then
-    rm -rf "$2"
-    mkdir -p "$(dirname "$2")"
-    cp -R "$1" "$2"
-    note "$2"
-  else
-    warn "$1 is missing"
-    WARNINGS+=("missing $1")
-  fi
+  rm -rf "$2"
+  mkdir -p "$(dirname "$2")"
+  cp -R "$1" "$2"
+  note "$2"
 }
-copy_file() { # copy_file <src> <dest> [optional]
-  if [ -f "$1" ]; then
-    install -m 0644 "$1" "$2"
-    note "$2"
-  elif [ "${3:-}" = optional ]; then
-    note "(no $1 — skipped)"
-  else
-    warn "$1 is missing"
-    WARNINGS+=("missing $1")
-  fi
+copy_file() { # copy_file <src> <dest>
+  install -m 0644 "$1" "$2"
+  note "$2"
 }
 
-copy_tree "$REPO/shelltest/tests" "$BYO_HOME/tests"
-copy_file "$REPO/shelltest/shells.yaml" "$BYO_HOME/shells.yaml"
-copy_file "$REPO/kafkatest/brokers.yaml" "$BYO_HOME/brokers.yaml"
-copy_file "$REPO/kafkatest/catalog.json" "$BYO_HOME/catalog.kafka.json"
-copy_file "$REPO/site/src/lib/data/catalog.shell.json" "$BYO_HOME/catalog.shell.json" optional
+for row in "${TRACKS[@]}"; do
+  id="$(field "$row" 1)"; dir="$(field "$row" 2)"; tester="$(field "$row" 3)"
+  if [ ! -d "$REPO/$dir" ]; then
+    note "$id: no data (not present, skipped)"
+    continue
+  fi
+
+  IFS=',' read -r -a pairs <<< "$(field "$row" 5)"
+  for pair in "${pairs[@]}"; do
+    [ -n "$pair" ] || continue
+    src="$REPO/${pair%%:*}"
+    dest="$BYO_HOME/${pair##*:}"
+    if [ -d "$src" ]; then
+      copy_tree "$src" "$dest"
+    elif [ -f "$src" ]; then
+      copy_file "$src" "$dest"
+    else
+      warn "$src is missing; the $id track will run without it"
+      WARNINGS+=("missing ${pair%%:*}")
+    fi
+  done
+
+  # The stage catalog the site and `byo status` read: a committed one if there is one,
+  # otherwise whatever the freshly built tester says.
+  catalog_dest="$BYO_HOME/catalog.$id.json"
+  IFS=',' read -r -a candidates <<< "$(field "$row" 6)"
+  copied=0
+  for cand in "${candidates[@]}"; do
+    if [ -f "$REPO/$cand" ]; then
+      copy_file "$REPO/$cand" "$catalog_dest"
+      copied=1
+      break
+    fi
+  done
+  if [ "$copied" = 0 ]; then
+    tmp="$(mktemp)"
+    if [ -x "$REPO/$dir/target/release/$tester" ] \
+       && "$REPO/$dir/target/release/$tester" --list --json >"$tmp" 2>/dev/null \
+       && head -c1 "$tmp" | grep -q '{'; then
+      install -m 0644 "$tmp" "$catalog_dest"
+      note "$catalog_dest (generated by \`$tester --list --json\`)"
+    else
+      warn "no catalog for the $id track; /api/catalog/$id will 404"
+      WARNINGS+=("no catalog.$id.json — commit $dir/catalog.json or teach $tester --list --json")
+    fi
+    rm -f "$tmp"
+  fi
+done
 
 if [ -d "$REPO/site/build" ]; then
   copy_tree "$REPO/site/build" "$BYO_HOME/site"
@@ -161,6 +240,7 @@ fi
 cat <<EOF
 
 ${BOLD}Next steps${OFF}
+  byo tracks                                      what you can build
   cd ~/code/my-shell && byo init shell --command ./your_program.sh
   byo test --stage 1
   byo status

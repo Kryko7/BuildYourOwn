@@ -2,7 +2,8 @@
 
 use crate::catalog;
 use crate::db;
-use crate::paths::{Paths, Track};
+use crate::paths::{self, Paths};
+use crate::track::Track;
 use anyhow::Result;
 use rusqlite::Connection;
 use std::collections::BTreeMap;
@@ -45,7 +46,7 @@ pub fn print(paths: &Paths) -> Result<()> {
             n => format!("{n}-day streak 🌸"),
         }
     );
-    for track in Track::ALL {
+    for track in Track::all() {
         println!();
         print_track(&conn, paths, track)?;
     }
@@ -54,8 +55,9 @@ pub fn print(paths: &Paths) -> Result<()> {
 }
 
 fn print_track(conn: &Connection, paths: &Paths, track: Track) -> Result<()> {
+    let def = track.def();
     let cat = catalog::load(&paths.catalog(track)).filter(|c| {
-        let matches = c.track.is_empty() || c.track == track.as_str();
+        let matches = c.track.is_empty() || c.track == def.id;
         if !matches {
             eprintln!(
                 "byo: {} is a '{}' catalog, not '{track}' — ignoring it",
@@ -68,6 +70,29 @@ fn print_track(conn: &Connection, paths: &Paths, track: Track) -> Result<()> {
     let rows = db::stages(conn, track)?;
     let states: BTreeMap<u32, &db::StageRow> = rows.iter().map(|r| (r.stage, r)).collect();
     let project = db::latest_project(conn, track)?;
+    let installed = paths::tester_installed(track);
+
+    // A track with no catalog has nothing to draw bars from. Say which kind of nothing it
+    // is — "not installed" is `./install.sh`'s problem, "not started" is the learner's.
+    if cat.is_none() && states.is_empty() && project.is_none() {
+        let head = paint(&format!("{:<6}", def.id), def.ansi);
+        let tail = if installed {
+            paint(
+                &format!(
+                    "not started — `byo init {track} --command {}`",
+                    def.default_command
+                ),
+                "2",
+            )
+        } else {
+            paint(
+                &format!("not installed — {}/ has not been built yet", def.dir),
+                "2",
+            )
+        };
+        println!("{head}  {}  ·  {tail}", paint(def.blurb, "2"));
+        return Ok(());
+    }
 
     let known: Vec<u32> = match &cat {
         Some(c) if !c.stages.is_empty() => c.numbers(),
@@ -84,7 +109,7 @@ fn print_track(conn: &Connection, paths: &Paths, track: Track) -> Result<()> {
     };
     println!(
         "{}  {head}  ·  {}",
-        paint(&format!("{:<6}", track.as_str()), "1;36"),
+        paint(&format!("{:<6}", def.id), def.ansi),
         paint(
             &format!("{done}/{} stages done", known.len()),
             if done == known.len() && done > 0 {
@@ -100,8 +125,20 @@ fn print_track(conn: &Connection, paths: &Paths, track: Track) -> Result<()> {
         println!(
             "        {}",
             paint(
-                &format!("run `byo init {track} --command ./your_program.sh` in your project"),
+                &format!(
+                    "run `byo init {track} --command {}` in your project",
+                    def.default_command
+                ),
                 "2"
+            )
+        );
+    }
+    if !installed {
+        println!(
+            "        {}",
+            paint(
+                &format!("{} is not installed — run ./install.sh", def.tester),
+                "33"
             )
         );
     }
@@ -157,7 +194,7 @@ fn print_track(conn: &Connection, paths: &Paths, track: Track) -> Result<()> {
             println!(
                 "  {}",
                 paint(
-                    &format!("{d}/{} stages beyond the classic track", ext.len()),
+                    &format!("{d}/{} stages beyond the core track", ext.len()),
                     "2"
                 )
             );
@@ -255,5 +292,26 @@ mod tests {
             home: d.path().to_path_buf(),
         };
         print(&paths).unwrap();
+    }
+
+    #[test]
+    fn a_track_with_a_catalog_is_drawn_and_the_others_are_not() {
+        let d = tempfile::tempdir().unwrap();
+        std::fs::write(
+            d.path().join("catalog.link.json"),
+            r#"{"track":"link","sections":[{"id":"A","title":"Objects","stages":[1,2]}],
+                "stages":[{"number":1,"name":"Read an object","ext":false},
+                          {"number":2,"name":"Emit a header","ext":true}]}"#,
+        )
+        .unwrap();
+        let paths = Paths {
+            home: d.path().to_path_buf(),
+        };
+        let conn = db::open(&paths.db()).unwrap();
+        db::set_state(&conn, Track::LINK, 1, true).unwrap();
+        // Every track is visited, the catalogued one in full; nothing panics on the rest.
+        print(&paths).unwrap();
+        print_track(&conn, &paths, Track::LINK).unwrap();
+        print_track(&conn, &paths, Track::WASM).unwrap();
     }
 }

@@ -1,10 +1,11 @@
 /**
- * Parse `../kafkatest/PLAN.md` into the stage list the site needs.
+ * Parse a tester's `PLAN.md` (`../kafkatest/PLAN.md`, `../wasmtest/PLAN.md`, …) into the
+ * stage list the site needs.
  *
- * kafkatest is written by several agents at once, so `catalog.json` legitimately has
- * gaps while stages are being merged. PLAN.md always lists all 45, with the ones that
- * have no tests yet marked `(planned)`. The sync script merges those in so the site
- * never links to a stage it cannot prerender.
+ * Every tester is written by several agents at once, so `catalog.json` legitimately has
+ * gaps while stages are being merged — and early on there is no catalog at all. PLAN.md
+ * always lists every stage, with the ones that have no tests yet marked `(planned)`. The
+ * sync script merges those in so the site never links to a stage it cannot prerender.
  *
  * Stage lines look like one of:
  *   - [ ] **Stage 01** — Bind to the broker port (`src/stages/s01_bind.rs`, 6 tests)
@@ -36,7 +37,7 @@ export function slugifyName(name, number) {
 	return s || `stage-${number}`;
 }
 
-export function parseKafkaPlan(markdown) {
+export function parseTesterPlan(markdown) {
 	const sections = [];
 	const stages = [];
 	let section = null;
@@ -111,3 +112,6 @@ export function parseKafkaPlan(markdown) {
 	for (const s of sections) s.stages.sort((a, b) => a - b);
 	return { sections, stages };
 }
+
+/** The name this parser had while kafkatest was the only tester using it. */
+export const parseKafkaPlan = parseTesterPlan;

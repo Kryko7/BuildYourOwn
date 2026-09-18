@@ -5,8 +5,8 @@ import { join, resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parse as parseYaml } from 'yaml';
 import { parsePlan, buildCatalog, testsFromYaml, slugFromFile, auditCounts } from './parse-catalog.mjs';
-import { normalizeKafkaCatalog, mergePlannedStages } from './normalize-kafka.mjs';
-import { parseKafkaPlan } from './parse-kafka-plan.mjs';
+import { normalizeKafkaCatalog, mergePlannedStages } from './normalize-catalog.mjs';
+import { parseTesterPlan as parseKafkaPlan } from './parse-tester-plan.mjs';
 import { kafkaPlaceholderPlan } from './kafka-placeholder.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));

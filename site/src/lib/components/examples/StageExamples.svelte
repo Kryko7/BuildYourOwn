@@ -1,19 +1,19 @@
 <script lang="ts">
 	/**
 	 * "What to expect" for one stage (PLAN.md §4.2) — a terminal transcript on the shell
-	 * track, an annotated request/response pair on the Kafka track. Renders nothing at all
-	 * when the catalog has nothing truthful to show, so a stage never gets a heading over
-	 * an empty box.
+	 * track, annotated bytes on every other. Which of the two a track uses is one field in
+	 * the registry (`tracks[track].examples`), so a new track needs no change here.
 	 *
-	 * Kafka examples are a lazy chunk (one file per stage), so they arrive a moment after
-	 * the rest of the page — except on `/kafka/<n>`, where the route's `load` has already
-	 * fetched them and passes them in as `preloaded`, and they are server-rendered.
+	 * Byte examples are a lazy chunk (one file per stage per track), so they arrive a moment
+	 * after the rest of the page — except on `/<track>/<n>`, where the route's `load` has
+	 * already fetched them and passes them in as `preloaded`, and they are server-rendered.
 	 */
 	import ShellTranscript from './ShellTranscript.svelte';
-	import WireExample from './WireExample.svelte';
+	import ByteExampleView from './ByteExample.svelte';
 	import { shellExamples } from '$lib/examples/shell';
-	import { kafkaExamples, loadKafkaExamples, normalizeKafkaExamples } from '$lib/examples/kafka';
-	import type { KafkaExample, StageSpec, TrackId } from '$lib/types';
+	import { inlineExamples, loadExamples, normalizeByteExamples } from '$lib/examples/bytes';
+	import { tracks } from '$lib/tracks';
+	import type { ByteExample, StageSpec, TrackId } from '$lib/types';
 
 	let {
 		track,
@@ -28,30 +28,25 @@
 		preloaded?: unknown[] | null;
 	} = $props();
 
-	const shell = $derived(track === 'shell' ? shellExamples(stage, limit) : []);
+	const kind = $derived(tracks[track].examples);
+	const shell = $derived(kind === 'transcript' ? shellExamples(stage, limit) : []);
 
-	let fetched = $state<KafkaExample[]>([]);
+	let fetched = $state<ByteExample[]>([]);
 	let loading = $state(false);
 
 	/** Anything already in hand — the route's preload, or examples carried on the stage. */
 	const immediate = $derived(
-		track !== 'kafka'
-			? []
-			: preloaded
-				? normalizeKafkaExamples(preloaded)
-				: kafkaExamples(stage)
+		kind !== 'bytes' ? [] : preloaded ? normalizeByteExamples(preloaded) : inlineExamples(stage)
 	);
 
-	const kafka = $derived(
-		(immediate.length ? immediate : fetched).slice(0, limit)
-	);
+	const byteExamples = $derived((immediate.length ? immediate : fetched).slice(0, limit));
 
 	$effect(() => {
-		if (track !== 'kafka' || immediate.length) return;
+		if (kind !== 'bytes' || immediate.length) return;
 		const n = stage.number;
 		let cancelled = false;
 		loading = true;
-		void loadKafkaExamples(stage).then((list) => {
+		void loadExamples(track, stage).then((list) => {
 			if (cancelled || n !== stage.number) return;
 			fetched = list;
 			loading = false;
@@ -72,17 +67,17 @@
 			<ShellTranscript example={ex} />
 		{/each}
 	</div>
-{:else if kafka.length}
+{:else if byteExamples.length}
 	<div class="examples">
 		<p class="tiny muted lead">
-			Real frames, byte for byte. Hover a field to find its bytes, or a byte to find its field.
+			Real bytes, byte for byte. Hover a field to find its bytes, or a byte to find its field.
 		</p>
-		{#each kafka as ex, i (i)}
-			<WireExample example={ex} />
+		{#each byteExamples as ex, i (i)}
+			<ByteExampleView example={ex} />
 		{/each}
 	</div>
-{:else if track === 'kafka' && loading}
-	<p class="tiny muted lead">Fetching this stage’s frames…</p>
+{:else if kind === 'bytes' && loading}
+	<p class="tiny muted lead">Fetching this stage’s bytes…</p>
 {/if}
 
 <style>

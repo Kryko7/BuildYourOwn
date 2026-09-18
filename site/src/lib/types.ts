@@ -1,6 +1,8 @@
 /** Shared shapes for the catalogs, the testers' JSON reports and the resource library. */
 
-export type TrackId = 'shell' | 'kafka';
+// The set of tracks is the registry's business, not this file's.
+export type { TrackId } from './tracks';
+import type { TrackId } from './tracks';
 
 export type ExpectKind =
 	| 'exact'
@@ -198,7 +200,16 @@ export interface ShellExample {
 	exact: boolean;
 }
 
-export interface KafkaExampleField {
+/* ---------- worked examples that are bytes (PLAN.md §5.2) ----------
+
+   Every tester past the shell emits the same shape: a title, a note, one or more named
+   blocks of bytes with per-field annotations, and optionally a transcript of what running
+   the thing prints. A Kafka exchange is `request` + `response`; a wasm example is a module
+   plus the stdout of an invocation; a TLS example is one or more handshake messages; a link
+   example is the ELF structures plus the linked program's output. They all render with the
+   same component — a new track needs no new one. */
+
+export interface ExampleField {
 	offset: number;
 	length: number;
 	name: string;
@@ -208,37 +219,46 @@ export interface KafkaExampleField {
 }
 
 /**
- * What kafkatest had set up when it captured the exchange: the topics the frames refer to
- * and the consumer group, so a reader can tell a fixture name from a protocol constant.
+ * What the tester had set up when it captured the example: the topics an exchange refers
+ * to and the consumer group, so a reader can tell a fixture name from a protocol constant.
  */
-export interface KafkaExampleTopic {
+export interface ExampleFixture {
 	key: string;
 	name: string;
 	id: string | null;
 	partitions: number | null;
 }
 
-export interface KafkaExampleEnv {
-	topics: KafkaExampleTopic[];
+export interface ExampleEnv {
+	topics: ExampleFixture[];
 	group: string | null;
 }
 
 /** `wire` has bytes; `text`, `closed` and `silence` describe what does *not* go on the wire. */
-export type KafkaExampleKind = 'wire' | 'text' | 'closed' | 'silence' | 'other';
+export type ExampleKindTag = 'wire' | 'text' | 'closed' | 'silence' | 'other';
 
-export interface KafkaExampleSide {
+/** One named run of bytes: a request, a response, a module, a handshake message, a header. */
+export interface ExampleBlock {
+	/** Stable key from the generator (`request`, `module`, `client_hello`, `rela_text`). */
+	key: string;
+	/** What to print above it (`request →`, `module bytes`). */
+	label: string;
 	/** A one-line human summary ("ApiVersions v4 request, client_id kafka-cli"). */
 	summary: string;
-	/** Decoded wire bytes, or null for a stage with no frame to show. */
+	/** Decoded bytes, or null when the block is prose rather than a frame. */
 	bytes: Uint8Array | null;
-	fields: KafkaExampleField[];
+	fields: ExampleField[];
 }
 
-export interface KafkaExample {
+/** A line of "and this is what it prints" — reuses the shell transcript's line kinds. */
+export type TranscriptLine = ShellExampleLine;
+
+export interface ByteExample {
 	title: string;
-	kind: KafkaExampleKind;
+	kind: ExampleKindTag;
 	note: string | null;
-	env: KafkaExampleEnv | null;
-	request: KafkaExampleSide;
-	response: KafkaExampleSide;
+	env: ExampleEnv | null;
+	blocks: ExampleBlock[];
+	/** What running it produced: stdout, stderr, the exit status. Often empty. */
+	transcript: TranscriptLine[];
 }

@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Remove the binaries installed by ./install.sh. With --purge, also delete the data
-# directory (stage progress, run history, the installed site).
+# Remove everything ./install.sh installed: the `byo` command and every tester binary.
+# With --purge, also delete the data directory (stage progress, run history, the installed
+# site, the copied catalogs and data files).
 #
 #   ./uninstall.sh
 #   ./uninstall.sh --purge
@@ -11,16 +12,19 @@ BYO_HOME="${BYO_HOME:-${XDG_DATA_HOME:-$HOME/.local/share}/byo}"
 PURGE=0
 YES=0
 
+# Keep in step with install.sh's TRACKS table and byo/src/track.rs.
+BINARIES=(byo shelltest kafkatest wasmtest tlstest linktest)
+
 for arg in "$@"; do
   case "$arg" in
     --purge) PURGE=1 ;;
     --yes|-y) YES=1 ;;
-    -h|--help) sed -n '2,7p' "$0"; exit 0 ;;
+    -h|--help) sed -n '2,8p' "$0"; exit 0 ;;
     *) echo "uninstall.sh: unknown option '$arg'" >&2; exit 2 ;;
   esac
 done
 
-for b in byo shelltest kafkatest; do
+for b in "${BINARIES[@]}"; do
   if [ -e "$BYO_BIN_DIR/$b" ]; then
     rm -f "$BYO_BIN_DIR/$b"
     echo "removed $BYO_BIN_DIR/$b"
@@ -30,7 +34,7 @@ done
 if [ "$PURGE" = 1 ]; then
   if [ -d "$BYO_HOME" ]; then
     if [ "$YES" != 1 ]; then
-      printf 'Delete %s (progress, run history, installed site)? Type yes: ' "$BYO_HOME"
+      printf 'Delete %s (progress, run history, catalogs, installed site)? Type yes: ' "$BYO_HOME"
       read -r answer
       [ "$answer" = yes ] || { echo "kept $BYO_HOME"; exit 0; }
     fi

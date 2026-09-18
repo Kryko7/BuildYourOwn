@@ -1,0 +1,199 @@
+{
+	"track": "wasm",
+	"generatedAt": "2026-09-18T15:22:19.879Z",
+	"sections": [
+		{
+			"id": "A",
+			"title": "Binary format & decoding",
+			"stages": [
+				1
+			]
+		},
+		{
+			"id": "B",
+			"title": "Validation & type checking",
+			"stages": [
+				2
+			]
+		},
+		{
+			"id": "C",
+			"title": "Numeric instructions & traps",
+			"stages": [
+				3
+			]
+		},
+		{
+			"id": "D",
+			"title": "Control flow",
+			"stages": [
+				4
+			]
+		},
+		{
+			"id": "E",
+			"title": "Memory & bulk operations",
+			"stages": [
+				5
+			]
+		},
+		{
+			"id": "F",
+			"title": "Tables, globals, indirect calls",
+			"stages": [
+				6
+			]
+		},
+		{
+			"id": "G",
+			"title": "WASI preview1",
+			"stages": [
+				7
+			]
+		},
+		{
+			"id": "H",
+			"title": "Robustness & scale",
+			"stages": [
+				8
+			]
+		}
+	],
+	"stages": [
+		{
+			"number": 1,
+			"slug": "binary-format-decoding",
+			"name": "Binary format & decoding",
+			"ext": false,
+			"section": "A",
+			"file": "",
+			"planDone": false,
+			"planned": true,
+			"hints": [
+				"The module preamble (`\\0asm`, version 1) and the section framing that follows it",
+				"LEB128: unsigned, signed, and the encodings a decoder must reject",
+				"Types, imports, functions, exports, code — read them all before executing anything"
+			],
+			"tests": []
+		},
+		{
+			"number": 2,
+			"slug": "validation-type-checking",
+			"name": "Validation & type checking",
+			"ext": false,
+			"section": "B",
+			"file": "",
+			"planDone": false,
+			"planned": true,
+			"hints": [
+				"Validate the whole module before running a single instruction",
+				"The stack-polymorphic type checker: operand types, block types, unreachable code",
+				"A module that does not validate must fail before it has any observable effect"
+			],
+			"tests": []
+		},
+		{
+			"number": 3,
+			"slug": "numeric-instructions-traps",
+			"name": "Numeric instructions & traps",
+			"ext": false,
+			"section": "C",
+			"file": "",
+			"planDone": false,
+			"planned": true,
+			"hints": [
+				"i32/i64/f32/f64 arithmetic, comparison, conversion and reinterpretation",
+				"The spec’s canonical trap reasons — \"integer divide by zero\", \"integer overflow\"",
+				"Float semantics: NaN propagation, rounding, saturating truncation"
+			],
+			"tests": []
+		},
+		{
+			"number": 4,
+			"slug": "control-flow",
+			"name": "Control flow",
+			"ext": false,
+			"section": "D",
+			"file": "",
+			"planDone": false,
+			"planned": true,
+			"hints": [
+				"block, loop, if/else and the label stack br/br_if/br_table branch to",
+				"Calls, returns and multi-value results",
+				"`unreachable` traps with the spec’s own wording"
+			],
+			"tests": []
+		},
+		{
+			"number": 5,
+			"slug": "memory-bulk-operations",
+			"name": "Memory & bulk operations",
+			"ext": false,
+			"section": "E",
+			"file": "",
+			"planDone": false,
+			"planned": true,
+			"hints": [
+				"Linear memory: loads, stores, alignment, `memory.grow`, out-of-bounds traps",
+				"Data segments, active and passive",
+				"`memory.copy`, `memory.fill`, `memory.init`, `data.drop`"
+			],
+			"tests": []
+		},
+		{
+			"number": 6,
+			"slug": "tables-globals-indirect-calls",
+			"name": "Tables, globals, indirect calls",
+			"ext": false,
+			"section": "F",
+			"file": "",
+			"planDone": false,
+			"planned": true,
+			"hints": [
+				"Tables of funcrefs, element segments, `table.get`/`set`/`grow`",
+				"`call_indirect` with its type check, and the traps for a bad index or type",
+				"Mutable and immutable globals, imported and exported"
+			],
+			"tests": []
+		},
+		{
+			"number": 7,
+			"slug": "wasi-preview1",
+			"name": "WASI preview1",
+			"ext": false,
+			"section": "G",
+			"file": "",
+			"planDone": false,
+			"planned": true,
+			"hints": [
+				"`_start`, the command ABI, and exiting with `proc_exit`",
+				"`fd_write` to stdout and stderr, `args_get`/`args_sizes_get`, `environ_*`",
+				"Errno values, iovecs, and the pointers a host has to bounds-check"
+			],
+			"tests": []
+		},
+		{
+			"number": 8,
+			"slug": "robustness-scale",
+			"name": "Robustness & scale",
+			"ext": false,
+			"section": "H",
+			"file": "",
+			"planDone": false,
+			"planned": true,
+			"hints": [
+				"Fuzzed and truncated modules: reject them, never panic and never hang",
+				"Deep recursion, big memories, long-running loops",
+				"Interop: modules a real toolchain emitted, run end to end"
+			],
+			"tests": []
+		}
+	],
+	"totals": {
+		"stages": 8,
+		"tests": 0,
+		"ext": 0
+	},
+	"pending": true,
+	"source": "placeholder — wasmtest has not published a catalog or a plan yet"
+}

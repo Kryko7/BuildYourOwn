@@ -1,30 +1,29 @@
 <script lang="ts">
 	/**
-	 * One Kafka example: the request and the response side by side, each with the wire
-	 * inspector's annotated byte view. Hovering a field lights up its bytes and hovering a
-	 * byte selects its field, in both directions, with the request and the response tracked
-	 * independently.
+	 * One worked example made of bytes: every block the tester annotated, side by side,
+	 * each with the wire inspector's annotated byte view. Hovering a field lights up its
+	 * bytes and hovering a byte selects its field, in both directions, with each block
+	 * tracked independently.
+	 *
+	 * Nothing here knows which track it is drawing. A Kafka exchange is `request` +
+	 * `response`; a wasm example is a module and the stdout of an invocation; a TLS example
+	 * is one or more handshake messages; a link example is ELF structures and the linked
+	 * program's output. They are all blocks with fields, plus an optional transcript.
 	 */
+	import Transcript from './Transcript.svelte';
 	import { printable, toHex } from '$lib/lab/kafka';
-	import { hasBytes } from '$lib/examples/kafka';
-	import type { KafkaExample, KafkaExampleSide } from '$lib/types';
+	import { hasBytes } from '$lib/examples/bytes';
+	import type { ByteExample, ExampleBlock } from '$lib/types';
 
-	let { example, copyable = true }: { example: KafkaExample; copyable?: boolean } = $props();
+	let { example, copyable = true }: { example: ByteExample; copyable?: boolean } = $props();
 
-	// One selection per side: hovering the response must not un-highlight the request.
-	let active = $state<{ request: number | null; response: number | null }>({
-		request: null,
-		response: null
-	});
+	// One selection per block: hovering the response must not un-highlight the request.
+	let active = $state<Record<string, number | null>>({});
+	let expanded = $state<Record<string, boolean>>({});
 
-	const sides = $derived(
-		[
-			{ key: 'request' as const, label: 'request →', side: example.request },
-			{ key: 'response' as const, label: '← response', side: example.response }
-		].filter((s) => s.side.summary || hasBytes(s.side))
-	);
+	const blocks = $derived(example.blocks.filter((b) => b.summary || hasBytes(b)));
 
-	/** Only worth a chip when it is *not* the ordinary case of bytes going both ways. */
+	/** Only worth a chip when it is *not* the ordinary case of bytes being shown. */
 	const kindLabel = $derived(
 		example.kind === 'silence'
 			? 'nothing on the wire'
@@ -41,43 +40,47 @@
 	 * at 256 and says so; asking for a field further in opens the rest.
 	 */
 	const DUMP_LIMIT = 256;
-	let expanded = $state<{ request: boolean; response: boolean }>({ request: false, response: false });
 
-	function shown(side: KafkaExampleSide, key: 'request' | 'response') {
-		const total = side.bytes?.length ?? 0;
-		return expanded[key] ? total : Math.min(total, DUMP_LIMIT);
+	function shown(block: ExampleBlock) {
+		const total = block.bytes?.length ?? 0;
+		return expanded[block.key] ? total : Math.min(total, DUMP_LIMIT);
 	}
 
-	function rows(side: KafkaExampleSide, key: 'request' | 'response') {
-		const bytes = side.bytes;
+	function rows(block: ExampleBlock) {
+		const bytes = block.bytes;
 		if (!bytes) return [];
-		const limit = shown(side, key);
+		const limit = shown(block);
 		const out: { offset: number; slice: number[] }[] = [];
 		for (let i = 0; i < limit; i += 8)
 			out.push({ offset: i, slice: [...bytes.subarray(i, Math.min(i + 8, limit))] });
 		return out;
 	}
 
-	function fieldAt(side: KafkaExampleSide, index: number) {
-		return side.fields.findIndex((f) => index >= f.offset && index < f.offset + f.length);
+	function fieldAt(block: ExampleBlock, index: number) {
+		return block.fields.findIndex((f) => index >= f.offset && index < f.offset + f.length);
 	}
 
 	/** Selecting a field whose bytes are past the cut reveals them rather than doing nothing. */
-	function select(key: 'request' | 'response', side: KafkaExampleSide, index: number) {
-		const f = side.fields[index];
-		if (f && f.offset + f.length > DUMP_LIMIT) expanded = { ...expanded, [key]: true };
-		active = { ...active, [key]: index };
+	function select(block: ExampleBlock, index: number) {
+		const f = block.fields[index];
+		if (f && f.offset + f.length > DUMP_LIMIT) expanded = { ...expanded, [block.key]: true };
+		active = { ...active, [block.key]: index };
 	}
 
-	function inActive(side: KafkaExampleSide, key: 'request' | 'response', index: number) {
-		const i = active[key];
+	function hover(block: ExampleBlock, byteIndex: number) {
+		const f = fieldAt(block, byteIndex);
+		if (f >= 0) active = { ...active, [block.key]: f };
+	}
+
+	function inActive(block: ExampleBlock, index: number) {
+		const i = active[block.key] ?? null;
 		if (i === null) return false;
-		const f = side.fields[i];
+		const f = block.fields[i];
 		return Boolean(f) && index >= f.offset && index < f.offset + f.length;
 	}
 
-	function copy(side: KafkaExampleSide) {
-		if (side.bytes) void navigator.clipboard?.writeText(toHex(side.bytes));
+	function copy(block: ExampleBlock) {
+		if (block.bytes) void navigator.clipboard?.writeText(toHex(block.bytes));
 	}
 </script>
 
@@ -103,20 +106,20 @@
 		</p>
 	{/if}
 
-	<div class="sides" class:one={sides.length === 1}>
-		{#each sides as { key, label, side } (key)}
-			<section class="side {key}">
+	<div class="sides" class:one={blocks.length === 1} class:many={blocks.length > 2}>
+		{#each blocks as block (block.key)}
+			<section class="side {block.key}">
 				<p class="lbl">
-					<span class="eyebrow">{label}</span>
-					{#if copyable && hasBytes(side)}
-						<button class="btn btn-sm btn-ghost" onclick={() => copy(side)}>copy hex</button>
+					<span class="eyebrow">{block.label}</span>
+					{#if copyable && hasBytes(block)}
+						<button class="btn btn-sm btn-ghost" onclick={() => copy(block)}>copy hex</button>
 					{/if}
 				</p>
-				{#if side.summary}<p class="summary">{side.summary}</p>{/if}
+				{#if block.summary}<p class="summary">{block.summary}</p>{/if}
 
-				{#if hasBytes(side)}
-					<div class="hex" role="group" aria-label="{label} bytes">
-						{#each rows(side, key) as row (row.offset)}
+				{#if hasBytes(block)}
+					<div class="hex" role="group" aria-label="{block.label} bytes">
+						{#each rows(block) as row (row.offset)}
 							<div class="hexrow">
 								<span class="off">{row.offset.toString(16).padStart(4, '0')}</span>
 								<span class="cells">
@@ -125,43 +128,38 @@
 										<!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
 										<span
 											class="b"
-											class:hot={inActive(side, key, idx)}
-											class:known={fieldAt(side, idx) >= 0}
-											onmouseenter={() => {
-												const f = fieldAt(side, idx);
-												if (f >= 0) active = { ...active, [key]: f };
-											}}
-											onclick={() => {
-												const f = fieldAt(side, idx);
-												if (f >= 0) active = { ...active, [key]: f };
-											}}>{b.toString(16).padStart(2, '0')}</span
+											class:hot={inActive(block, idx)}
+											class:known={fieldAt(block, idx) >= 0}
+											onmouseenter={() => hover(block, idx)}
+											onclick={() => hover(block, idx)}
+											>{b.toString(16).padStart(2, '0')}</span
 										>
 									{/each}
 								</span>
 								<span class="ascii">{row.slice.map(printable).join('')}</span>
 							</div>
 						{/each}
-						{#if shown(side, key) < (side.bytes?.length ?? 0)}
+						{#if shown(block) < (block.bytes?.length ?? 0)}
 							<button
 								class="btn btn-sm more"
-								onclick={() => (expanded = { ...expanded, [key]: true })}
+								onclick={() => (expanded = { ...expanded, [block.key]: true })}
 							>
-								show all {side.bytes!.length} bytes
+								show all {block.bytes!.length} bytes
 							</button>
 						{/if}
 					</div>
 
-					{#if side.fields.length}
-						<ol class="fields" aria-label="{label} fields">
-							{#each side.fields as f, i (i)}
+					{#if block.fields.length}
+						<ol class="fields" aria-label="{block.label} fields">
+							{#each block.fields as f, i (i)}
 								<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-								<li class:on={active[key] === i} onmouseenter={() => select(key, side, i)}>
-									<button onclick={() => select(key, side, i)}>
+								<li class:on={active[block.key] === i} onmouseenter={() => select(block, i)}>
+									<button onclick={() => select(block, i)}>
 										<span class="fname mono">{f.name}</span>
 										<span class="fval mono" class:varies={f.varies}>{f.value}</span>
 										<span class="fat tiny muted">@{f.offset}·{f.length}B</span>
 									</button>
-									{#if f.varies && active[key] === i}
+									{#if f.varies && active[block.key] === i}
 										<p class="vnote tiny">
 											varies per run — a generated id, a timestamp or a CRC; match the shape, not
 											this value
@@ -171,12 +169,19 @@
 							{/each}
 						</ol>
 					{/if}
-				{:else if !side.summary}
+				{:else if !block.summary}
 					<p class="tiny muted">Nothing on the wire for this one.</p>
 				{/if}
 			</section>
 		{/each}
 	</div>
+
+	{#if example.transcript.length}
+		<div class="run">
+			<span class="eyebrow">and it prints</span>
+			<Transcript lines={example.transcript} bare />
+		</div>
+	{/if}
 
 	{#if example.note}
 		<p class="note"><span aria-hidden="true">🌱</span> {example.note}</p>
@@ -204,13 +209,15 @@
 		font-size: 1rem;
 		margin: 0;
 	}
+	/* Two blocks read as a conversation; three or more as a column of evidence. */
 	.sides {
 		display: grid;
 		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 		gap: var(--s-4);
 		align-items: start;
 	}
-	.sides.one {
+	.sides.one,
+	.sides.many {
 		grid-template-columns: minmax(0, 1fr);
 	}
 	@media (max-width: 780px) {
@@ -350,6 +357,11 @@
 	}
 	.fixture {
 		white-space: nowrap;
+	}
+	.run {
+		display: flex;
+		flex-direction: column;
+		gap: 5px;
 	}
 	.note {
 		margin: 0;

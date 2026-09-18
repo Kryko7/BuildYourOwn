@@ -432,7 +432,7 @@ turns green as `byo test` finishes.
 
 ---
 
-## Part 5 — Three more tracks (added 2026-09-18)
+## Part 5 — Four more tracks (added 2026-09-18)
 
 Requirements added by the user:
 
@@ -453,15 +453,17 @@ Requirements added by the user:
 | `wasmtest/` | `wasm` | a WebAssembly runtime (binary decoder + validator + interpreter + WASI preview1) | `wasmtime` 48.0.2, downloaded and cached in `~/.cache/wasmtest` |
 | `tlstest/` | `tls` | a TLS 1.3 server (RFC 8446) | `openssl s_server` from the system OpenSSL 3.x |
 | `linktest/` | `link` | a static ELF64 linker for x86-64 | `/usr/bin/ld` (GNU ld) |
+| `disttest/` | `dist` | a distributed system, in three ladders: algorithms → a durable node → a replicated cluster | `etcd` 3.7.1, cached in `~/.cache/disttest` (ladders B/C) and `examples/reference_primitives` (ladder A) |
 
-Why these three: each is a real, specified, byte-exact artefact with a production reference
-that is either installed or pinned-downloadable, and the three cover different muscles —
-**decode + execute** (wasm), **crypto + state machine** (tls), **emit a binary that the
-kernel actually runs** (link). None of them is a tutorial-shaped toy.
+Why these four: each is a real, specified artefact with a production reference that is either
+installed or pinned-downloadable, and they cover different muscles — **decode + execute**
+(wasm), **crypto + state machine** (tls), **emit a binary that the kernel actually runs**
+(link), **agree under partition** (dist). None of them is a tutorial-shaped toy.
 
 The suite self-check is the same contract as the two existing testers: pointing the tester
 at the real implementation must be **all green**. `wasmtest --runtime wasmtime --validate`,
-`tlstest --server openssl --validate`, `linktest --linker gnu_ld --validate`.
+`tlstest --server openssl --validate`, `linktest --linker gnu_ld --validate`,
+`disttest --target etcd --validate`.
 
 ### 5.2 Shared contracts (every tester, old and new)
 
@@ -535,22 +537,49 @@ Sections (~42 stages): A reading relocatable objects · B emitting a runnable ex
 C symbol resolution (weak, common, COMDAT, visibility) · D relocations and overflow ·
 E archives and link order · F real multi-object programs, fuzz, soak.
 
-### 5.6 Everything else becomes track-agnostic
+### 5.6 disttest — build your own distributed system
+
+The one track with **levels**, because the user asked for whole implementations, algorithms and
+small integrations in the same place. Every stage is tagged with its ladder:
+
+- **Ladder A — primitives** (`primitives`): a line-oriented CLI answering one JSON object per
+  command. Lamport and vector clocks, version vectors, hybrid logical clocks, consistent and
+  rendezvous hashing, quorum math, Bloom filters, HyperLogLog, Merkle diff, five CRDTs checked
+  by replaying every permutation of the delivery order, Chandy–Lamport snapshots, causal
+  broadcast, token/leaky buckets, backoff jitter distributions, phi-accrual and SWIM.
+  The oracle is the tester's own brute-force specification, never a second implementation.
+- **Ladder B — a durable node** (`node`): a server speaking a subset of the **etcd v3 HTTP/JSON
+  API** — `kv/put`, `kv/range`, `kv/deleterange`, `kv/txn`, `kv/compaction`, leases, watches,
+  `maintenance/status`. MVCC revisions, compare-and-swap transactions, lease expiry, watch
+  delivery, and durability proved by `SIGKILL` mid-workload followed by restart.
+- **Ladder C — a cluster** (`cluster`): 3- and 5-node clusters with a userspace TCP proxy in
+  front of every peer link, so partitions, delays, drops, duplicates and reordering are injected
+  without privileges. Leader election, replication, linearizable reads, minority-partition write
+  refusal, failover with no acknowledged write lost, snapshot catch-up, membership change,
+  whole-cluster restart — and a Wing-and-Gong-style **linearizability checker** run over
+  randomized concurrent workloads with a seeded fault schedule, printing the minimal offending
+  sub-history when it fails.
+
+The etcd subset is what makes `--validate` possible: real etcd is the reference for ladders B
+and C, so the suite self-checks against a production consensus implementation.
+
+### 5.7 Everything else becomes track-agnostic
 
 - `byo`: `Track` stops being a two-value enum and becomes a registry entry (id, tester binary,
   target flag, data files, blurb, colour). `byo init <track>`, `byo test`, `byo status`,
   `byo doctor` and the API work for any registered track with no per-track branches left.
-- `install.sh`: builds and installs all five testers plus `byo`, copies every track's data
+- `install.sh`: builds and installs all six testers plus `byo`, copies every track's data
   files and catalogs, sources the repo-root `.env`.
 - `site/`: the track list comes from the catalogs on disk; `params/track.ts`, the home page,
   the nav, the map, resources, conventions and the lab all iterate the registry. Each track
   gets its own accent palette, garden mascot and conventions list.
-- Resources: `resources.wasm.json`, `resources.tls.json`, `resources.link.json`, same schema,
-  ≥ 30 verified links each (spec sections, RFCs, psABI, papers, reference implementations).
+- Resources: `resources.wasm.json`, `resources.tls.json`, `resources.link.json`,
+  `resources.dist.json`, same schema, ≥ 30 verified links each (spec sections, RFCs, psABI, papers, reference implementations).
 
-### 5.7 Execution
+### 5.8 Execution
 
 Phase 1 (parallel, one agent each): **W1** wasmtest · **T1** tlstest · **L1** linktest ·
+**D1** disttest ·
 **B2** byo track registry + install.sh · **S1** site N-track generalization on placeholder
 catalogs. Phase 2: **R2** resources + conventions for the new tracks · per-track lab tools ·
 catalog resync. Phase 3: verification — every `--validate` green, `cargo test`, clippy, site

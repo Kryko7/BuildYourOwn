@@ -1,10 +1,17 @@
 import shellResources from './data/resources.shell.json';
 import kafkaResources from './data/resources.kafka.json';
+import wasmResources from './data/resources.wasm.json';
+import tlsResources from './data/resources.tls.json';
+import linkResources from './data/resources.link.json';
+import { trackIds } from './tracks';
 import type { Resource, TrackId } from './types';
 
 /**
- * R1 drops verified files at these exact paths; the loader stays tolerant so a
- * replacement with more (or differently shaped) entries cannot break a page.
+ * The resource files are curated by another agent and dropped at these exact paths, one
+ * per registered track. The loader stays tolerant so a replacement with more (or
+ * differently shaped) entries cannot break a page — and an empty file is normal: a track
+ * whose reading list has not been written yet simply has no resources, and every caller
+ * already copes with an empty list.
  */
 /**
  * Concept tags are a filter menu, so they have to read as concepts. A bare number
@@ -49,7 +56,10 @@ function sanitize(raw: unknown, fallbackTrack: TrackId): Resource[] {
 
 const byTrack: Record<TrackId, Resource[]> = {
 	shell: sanitize(shellResources, 'shell'),
-	kafka: sanitize(kafkaResources, 'kafka')
+	kafka: sanitize(kafkaResources, 'kafka'),
+	wasm: sanitize(wasmResources, 'wasm'),
+	tls: sanitize(tlsResources, 'tls'),
+	link: sanitize(linkResources, 'link')
 };
 
 const LEVEL_RANK: Record<Resource['level'], number> = { intro: 0, core: 1, deep: 2 };
@@ -76,13 +86,21 @@ export function compareResources(a: Resource, b: Resource): number {
 
 export function allResources(): Resource[] {
 	const seen = new Set<string>();
-	return [...byTrack.shell, ...byTrack.kafka]
+	return trackIds
+		.flatMap((t) => byTrack[t])
 		.filter((r) => {
 			if (seen.has(r.id)) return false;
 			seen.add(r.id);
 			return true;
 		})
 		.sort(compareResources);
+}
+
+/** How many resources each track has — the /resources page says so when one has none. */
+export function resourceCounts(): Record<TrackId, number> {
+	const out = {} as Record<TrackId, number>;
+	for (const t of trackIds) out[t] = resourcesForTrack(t).length;
+	return out;
 }
 
 export function resourcesForTrack(track: TrackId): Resource[] {

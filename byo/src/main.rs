@@ -1,15 +1,21 @@
 //! `byo` — one command for the BuildYourOwn tracks: run the testers, keep progress in
 //! SQLite, and serve the journey site with its JSON API.
+//!
+//! Every track-shaped decision here (which flags `byo init` accepts, what `byo <track>`
+//! means, what error message lists the tracks) is answered by the
+//! [registry][byo::track::TRACKS], so `byo` grows a sixth track without growing a `match`.
 
 use anyhow::{bail, Context, Result};
 use byo::config::{self, Project, TargetKind};
-use byo::paths::{Paths, Track};
+use byo::paths::Paths;
+use byo::track::{self, Track};
 use byo::{db, doctor, runner, server, status};
 use clap::{Args, Parser, Subcommand};
+use std::collections::BTreeMap;
 use std::io::Write;
 use std::path::PathBuf;
 
-/// Build Your Own — shell and Kafka tracks in one command.
+/// Build Your Own — five tracks, one command.
 #[derive(Parser, Debug)]
 #[command(name = "byo", version, about, long_about = None)]
 struct Cli {
@@ -19,14 +25,10 @@ struct Cli {
 
 #[derive(Subcommand, Debug)]
 enum Cmd {
-    /// Set up the current directory as a shell or Kafka project (writes byo.toml)
+    /// Set up the current directory as a project for one of the tracks (writes byo.toml)
     Init(InitArgs),
     /// Run the tester for this project and record the result
     Test(TestArgs),
-    /// Run the shell tester explicitly (alias for `byo test` on the shell track)
-    Shell(TestArgs),
-    /// Run the Kafka tester explicitly (alias for `byo test` on the kafka track)
-    Kafka(TestArgs),
     /// Show progress: per-section bars, next stage, last run, streak
     Status,
     /// Mark a stage done
@@ -42,27 +44,47 @@ enum Cmd {
     Db(DbCmd),
     /// Check that binaries, data, the database and the environment are in order
     Doctor,
+    /// List the registered tracks and whether their testers are installed
+    Tracks,
+    /// `byo <track> [tester flags…]` — run one track's tester explicitly
+    #[command(external_subcommand)]
+    Track(Vec<String>),
 }
 
 #[derive(Args, Debug)]
 struct InitArgs {
-    /// `shell` or `kafka`
+    /// Which track: shell, kafka, wasm, tls or link
     track: String,
     /// Path to the program you are building, e.g. ./your_program.sh
     #[arg(long, value_name = "PATH")]
     command: Option<String>,
+    /// A target already registered for this track (any track), e.g. bash
+    #[arg(long, short = 't', value_name = "NAME")]
+    target: Option<String>,
     /// A shell registered in shells.yaml (shell track), e.g. bash
     #[arg(long, value_name = "NAME")]
     shell: Option<String>,
     /// A broker registered in brokers.yaml (kafka track), e.g. my_broker
     #[arg(long, value_name = "NAME")]
     broker: Option<String>,
-    /// Port the broker must listen on (kafka track)
+    /// A runtime registered in runtimes.yaml (wasm track), e.g. wasmtime
+    #[arg(long, value_name = "NAME")]
+    runtime: Option<String>,
+    /// A server registered in servers.yaml (tls track), e.g. openssl
+    #[arg(long, value_name = "NAME")]
+    server: Option<String>,
+    /// A linker registered in linkers.yaml (link track), e.g. gnu_ld
+    #[arg(long, value_name = "NAME")]
+    linker: Option<String>,
+    /// Port the program must listen on (tracks that have a `port` key, e.g. kafka)
     #[arg(long)]
     port: Option<u16>,
-    /// Kafka log directory (kafka track)
+    /// Log directory (tracks that have a `log_dir` key, e.g. kafka)
     #[arg(long, value_name = "DIR")]
     log_dir: Option<String>,
+    /// Any other track-specific key: --set key=value (repeatable)
+    #[arg(long = "set", value_name = "KEY=VALUE")]
+    set: Vec<String>,
     /// Overwrite an existing byo.toml
     #[arg(long)]
     force: bool,
@@ -142,10 +164,11 @@ fn run() -> Result<i32> {
     let cli = Cli::parse();
     let paths = Paths::resolve()?;
     match cli.command {
-        Cmd::Init(a) => init(&paths, a),
+        Cmd::Init(a) => {
+            let root = std::env::current_dir().context("cannot read the current directory")?;
+            init(&paths, root, a)
+        }
         Cmd::Test(a) => test(&paths, None, &a.args),
-        Cmd::Shell(a) => test(&paths, Some(Track::Shell), &a.args),
-        Cmd::Kafka(a) => test(&paths, Some(Track::Kafka), &a.args),
         Cmd::Status => {
             status::print(&paths)?;
             Ok(0)
@@ -156,12 +179,51 @@ fn run() -> Result<i32> {
         Cmd::Site(a) => site(&paths, a),
         Cmd::Db(c) => database(&paths, c),
         Cmd::Doctor => doctor::run(&paths),
+        Cmd::Tracks => {
+            tracks();
+            Ok(0)
+        }
+        Cmd::Track(argv) => track_alias(&paths, argv),
     }
 }
 
-fn init(paths: &Paths, a: InitArgs) -> Result<i32> {
+/// `byo shell …`, `byo kafka …`, `byo wasm …` — an explicit-track alias for `byo test`.
+///
+/// Any subcommand clap does not know lands here; if it is a registered track id it runs
+/// that track's tester, and if it is not, this is where the "did you mean" message is.
+fn track_alias(paths: &Paths, argv: Vec<String>) -> Result<i32> {
+    let (name, rest) = argv.split_first().context("empty command")?;
+    match Track::find(name) {
+        Some(t) => test(paths, Some(t), rest),
+        None => bail!(
+            "unknown command or track '{name}'.\n\
+             Commands: init, test, status, done, undone, note, site, db, doctor, tracks.\n\
+             Tracks:   {} (used as `byo {name} --stage 1`).",
+            track::names()
+        ),
+    }
+}
+
+/// `byo tracks` — the registry, as the terminal sees it.
+fn tracks() {
+    println!();
+    for t in Track::all() {
+        let def = t.def();
+        let state = match byo::paths::locate_tester(def.tester) {
+            Some(p) => format!("installed ({})", p.display()),
+            None => format!("not installed — build {}/", def.dir),
+        };
+        println!("{:<6} {}", def.id, def.title);
+        println!("       {}", def.blurb);
+        println!("       {} {} · {state}", def.tester, def.target_flag);
+    }
+    println!("\nStart one with: byo init <track> --command ./your_program.sh");
+}
+
+/// `byo init <track>` in `root` (the current directory, except in tests).
+fn init(paths: &Paths, root: PathBuf, a: InitArgs) -> Result<i32> {
     let track = Track::parse(&a.track)?;
-    let root = std::env::current_dir().context("cannot read the current directory")?;
+    let def = track.def();
     let existing = root.join(config::FILE);
     if existing.exists() && !a.force {
         bail!(
@@ -169,46 +231,85 @@ fn init(paths: &Paths, a: InitArgs) -> Result<i32> {
             existing.display()
         );
     }
-    let registered = match track {
-        Track::Shell => {
-            if a.broker.is_some() {
-                bail!("--broker belongs to the kafka track; use --shell or --command");
-            }
-            a.shell.clone()
+
+    // The per-track sugar flags (--shell, --broker, …) are one registry key each: a flag
+    // that is not this track's key is the user asking for the wrong track.
+    let named: [(&str, &Option<String>); 5] = [
+        ("shell", &a.shell),
+        ("broker", &a.broker),
+        ("runtime", &a.runtime),
+        ("server", &a.server),
+        ("linker", &a.linker),
+    ];
+    let mut registered = a.target.clone();
+    for (key, value) in named {
+        let Some(v) = value else { continue };
+        if key != def.target_key {
+            let owner = Track::by_target_key(key).map(|t| t.as_str()).unwrap_or(key);
+            bail!(
+                "--{key} belongs to the {owner} track; a {} project uses --{} or --command",
+                def.id,
+                def.target_key
+            );
         }
-        Track::Kafka => {
-            if a.shell.is_some() {
-                bail!("--shell belongs to the shell track; use --broker or --command");
-            }
-            a.broker.clone()
+        if registered.is_some() {
+            bail!("name the target once: --target or --{key}, not both");
         }
-    };
-    let (target, target_kind) = match (registered, a.command.clone()) {
+        registered = Some(v.clone());
+    }
+
+    // Extra keys: the two sugar flags, plus --set key=value for anything a later track adds.
+    let mut extras: BTreeMap<String, String> = BTreeMap::new();
+    if let Some(p) = a.port {
+        extras.insert("port".into(), p.to_string());
+    }
+    if let Some(d) = &a.log_dir {
+        extras.insert("log_dir".into(), d.clone());
+    }
+    for pair in &a.set {
+        let (k, v) = pair
+            .split_once('=')
+            .with_context(|| format!("--set wants key=value, got '{pair}'"))?;
+        extras.insert(k.trim().to_string(), v.to_string());
+    }
+    if let Some(key) = extras.keys().find(|k| track.extra_key(k).is_none()) {
+        let owner = Track::all().find(|t| t.extra_key(key).is_some());
+        match owner {
+            Some(t) => bail!(
+                "`{key}` is a {t}-track key; the {} track has no such key",
+                def.id
+            ),
+            None => bail!(
+                "`{key}` is not a key of the {} track ({})",
+                def.id,
+                if def.extra_keys.is_empty() {
+                    "it has no extra keys".to_string()
+                } else {
+                    format!(
+                        "it has: {}",
+                        def.extra_keys
+                            .iter()
+                            .map(|k| k.name)
+                            .collect::<Vec<_>>()
+                            .join(", ")
+                    )
+                }
+            ),
+        }
+    }
+    // Registry defaults fill in whatever the user did not give.
+    for key in def.extra_keys {
+        if let (None, Some(d)) = (extras.get(key.name), key.default) {
+            extras.insert(key.name.to_string(), d.to_string());
+        }
+    }
+
+    let command = match (&registered, a.command.clone()) {
         (Some(_), Some(_)) => bail!("pass either a registered name or --command, not both"),
-        (Some(n), None) => (n, TargetKind::Registered),
-        (None, Some(c)) => (c, TargetKind::Command),
-        (None, None) => (
-            match track {
-                Track::Shell => "./your_program.sh".to_string(),
-                Track::Kafka => "./your_program.sh".to_string(),
-            },
-            TargetKind::Command,
-        ),
+        (Some(_), None) => None,
+        (None, c) => Some(c.unwrap_or_else(|| def.default_command.to_string())),
     };
-    let project = Project {
-        root: root.clone(),
-        track,
-        target,
-        target_kind,
-        port: a.port.or(match track {
-            Track::Kafka => Some(9092),
-            Track::Shell => None,
-        }),
-        log_dir: a.log_dir.or(match track {
-            Track::Kafka => Some("/tmp/kraft-combined-logs".to_string()),
-            Track::Shell => None,
-        }),
-    };
+    let project = config::build(root.clone(), track, registered, command, extras)?;
     let path = project.save()?;
     paths.ensure()?;
     let conn = db::open(&paths.db())?;
@@ -222,7 +323,8 @@ fn init(paths: &Paths, a: InitArgs) -> Result<i32> {
 
     println!("byo: wrote {}", path.display());
     println!(
-        "     track {track}, testing {} `{}`",
+        "     {} — testing {} `{}`",
+        def.title,
         project.target_kind.as_str(),
         project.target
     );
@@ -230,6 +332,12 @@ fn init(paths: &Paths, a: InitArgs) -> Result<i32> {
         println!(
             "     note: {} does not exist yet — that is fine, write it and then run the tests",
             project.target
+        );
+    }
+    if !byo::paths::tester_installed(track) {
+        println!(
+            "     warning: {} is not installed yet — run ./install.sh from the BuildYourOwn repo",
+            def.tester
         );
     }
     println!("\nNext:  byo test --stage 1        run the first stage");
@@ -258,7 +366,7 @@ fn project_for(track: Option<Track>, user: &[String]) -> Result<Project> {
             Ok(p)
         }
         Err(e) => {
-            let track = track.unwrap_or(Track::Shell);
+            let track = track.unwrap_or(Track::SHELL);
             let flag = track.target_flag();
             let inline = user
                 .iter()
@@ -274,8 +382,7 @@ fn project_for(track: Option<Track>, user: &[String]) -> Result<Project> {
                     track,
                     target,
                     target_kind: TargetKind::Registered,
-                    port: None,
-                    log_dir: None,
+                    extras: BTreeMap::new(),
                 }),
                 None => Err(e),
             }
@@ -295,7 +402,10 @@ fn resolve_track(explicit: &Option<String>) -> Result<Track> {
     let cwd = std::env::current_dir().context("cannot read the current directory")?;
     match config::load_from(&cwd) {
         Ok(p) => Ok(p.track),
-        Err(e) => Err(e.context("pass --track shell or --track kafka to say which track you mean")),
+        Err(e) => Err(e.context(format!(
+            "pass --track <{}> to say which track you mean",
+            track::names()
+        ))),
     }
 }
 
@@ -402,7 +512,36 @@ fn database(paths: &Paths, cmd: DbCmd) -> Result<i32> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use byo::track::TRACKS;
     use clap::CommandFactory;
+
+    fn init_args(track: &str) -> InitArgs {
+        InitArgs {
+            track: track.into(),
+            command: None,
+            target: None,
+            shell: None,
+            broker: None,
+            runtime: None,
+            server: None,
+            linker: None,
+            port: None,
+            log_dir: None,
+            set: vec![],
+            force: false,
+        }
+    }
+
+    /// A temporary project directory plus its own `$BYO_HOME`.
+    fn sandbox() -> (tempfile::TempDir, PathBuf, Paths) {
+        let dir = tempfile::tempdir().expect("temp dir");
+        let root = dir.path().join("project");
+        std::fs::create_dir_all(&root).expect("project dir");
+        let paths = Paths {
+            home: dir.path().join("byo-home"),
+        };
+        (dir, root, paths)
+    }
 
     #[test]
     fn cli_definition_is_valid() {
@@ -424,15 +563,32 @@ mod tests {
     }
 
     #[test]
-    fn track_aliases_take_the_same_pass_through_args() {
-        for (name, want) in [("shell", Track::Shell), ("kafka", Track::Kafka)] {
-            let cli = Cli::try_parse_from(["byo", name, "--all", "--no-color"]).unwrap();
-            let args = match cli.command {
-                Cmd::Shell(a) | Cmd::Kafka(a) => a.args,
+    fn every_registered_track_is_an_alias_subcommand() {
+        for t in Track::all() {
+            let cli =
+                Cli::try_parse_from(["byo", t.as_str(), "--all", "--no-color"]).expect("parses");
+            match cli.command {
+                Cmd::Track(argv) => {
+                    assert_eq!(argv[0], t.as_str());
+                    assert_eq!(&argv[1..], &["--all", "--no-color"]);
+                    assert_eq!(Track::find(&argv[0]), Some(t));
+                }
                 other => panic!("{other:?}"),
-            };
-            assert_eq!(args, vec!["--all", "--no-color"]);
-            assert_eq!(Track::parse(name).unwrap(), want);
+            }
+        }
+    }
+
+    #[test]
+    fn an_unknown_alias_lists_commands_and_tracks() {
+        let paths = Paths {
+            home: std::env::temp_dir().join("byo-test-unused"),
+        };
+        let e = track_alias(&paths, vec!["redis".into()])
+            .unwrap_err()
+            .to_string();
+        assert!(e.contains("unknown command or track 'redis'"), "{e}");
+        for t in TRACKS {
+            assert!(e.contains(t.id), "{e} should list {}", t.id);
         }
     }
 
@@ -445,14 +601,14 @@ mod tests {
                 track: None
             })
         ));
-        match Cli::try_parse_from(["byo", "note", "1", "hi", "--track", "kafka"])
+        match Cli::try_parse_from(["byo", "note", "1", "hi", "--track", "wasm"])
             .unwrap()
             .command
         {
             Cmd::Note(a) => {
                 assert_eq!(
                     (a.stage, a.text.as_str(), a.track.as_deref()),
-                    (1, "hi", Some("kafka"))
+                    (1, "hi", Some("wasm"))
                 )
             }
             other => panic!("{other:?}"),
@@ -478,20 +634,83 @@ mod tests {
     }
 
     #[test]
-    fn init_rejects_cross_track_flags() {
-        let paths = Paths {
-            home: std::env::temp_dir().join("byo-test-unused"),
-        };
-        let a = InitArgs {
-            track: "shell".into(),
-            command: None,
-            shell: None,
-            broker: Some("my_broker".into()),
-            port: None,
-            log_dir: None,
-            force: false,
-        };
-        let e = init(&paths, a).unwrap_err();
+    fn init_writes_a_project_for_every_registered_track() {
+        let (_d, root, paths) = sandbox();
+        for t in Track::all() {
+            let mut a = init_args(t.as_str());
+            a.force = true;
+            assert_eq!(init(&paths, root.clone(), a).unwrap(), 0);
+            let p = config::load_from(&root).expect("config round-trips");
+            assert_eq!(p.track, t);
+            assert_eq!(p.target, t.def().default_command);
+            assert_eq!(p.target_kind, TargetKind::Command);
+            for key in t.def().extra_keys {
+                if let Some(d) = key.default {
+                    assert_eq!(p.extra(key.name), Some(d), "{t} {}", key.name);
+                }
+            }
+            let conn = db::open(&paths.db()).unwrap();
+            assert!(db::latest_project(&conn, t).unwrap().is_some());
+        }
+    }
+
+    #[test]
+    fn init_refuses_to_overwrite_without_force() {
+        let (_d, root, paths) = sandbox();
+        init(&paths, root.clone(), init_args("shell")).unwrap();
+        let e = init(&paths, root.clone(), init_args("kafka")).unwrap_err();
+        assert!(e.to_string().contains("--force"), "{e}");
+        let mut a = init_args("kafka");
+        a.force = true;
+        init(&paths, root.clone(), a).unwrap();
+        assert_eq!(config::load_from(&root).unwrap().track, Track::KAFKA);
+    }
+
+    #[test]
+    fn init_accepts_the_per_track_target_flags() {
+        let (_d, root, paths) = sandbox();
+        let mut a = init_args("shell");
+        a.shell = Some("bash".into());
+        init(&paths, root.clone(), a).unwrap();
+        let p = config::load_from(&root).unwrap();
+        assert_eq!(
+            (p.target.as_str(), p.target_kind),
+            ("bash", TargetKind::Registered)
+        );
+
+        let mut a = init_args("wasm");
+        a.target = Some("wasmtime".into());
+        a.force = true;
+        init(&paths, root.clone(), a).unwrap();
+        let p = config::load_from(&root).unwrap();
+        assert_eq!(p.track, Track::WASM);
+        assert_eq!(p.target, "wasmtime");
+    }
+
+    #[test]
+    fn init_rejects_cross_track_flags_and_keys() {
+        let (_d, root, paths) = sandbox();
+        let mut a = init_args("shell");
+        a.broker = Some("my_broker".into());
+        let e = init(&paths, root.clone(), a).unwrap_err();
         assert!(e.to_string().contains("kafka track"), "{e}");
+
+        let mut a = init_args("wasm");
+        a.port = Some(9092);
+        let e = init(&paths, root.clone(), a).unwrap_err();
+        assert!(e.to_string().contains("kafka-track key"), "{e}");
+
+        let e = init(&paths, root.clone(), init_args("redis")).unwrap_err();
+        assert!(e.to_string().contains("unknown track 'redis'"), "{e}");
+        assert!(!root.join(config::FILE).exists(), "nothing was written");
+    }
+
+    #[test]
+    fn init_rejects_an_unregistered_set_key() {
+        let (_d, root, paths) = sandbox();
+        let mut a = init_args("link");
+        a.set = vec!["colour=blue".into()];
+        let e = init(&paths, root, a).unwrap_err();
+        assert!(e.to_string().contains("not a key of the link track"), "{e}");
     }
 }

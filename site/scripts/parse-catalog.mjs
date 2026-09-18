@@ -152,6 +152,9 @@ export function buildCatalog({ track, plan, yamlDocs, generatedAt, pending = fal
 			section: s.section,
 			file: s.file,
 			planDone: s.planDone,
+			// A stage the tester's plan lists but has not shipped tests for; the site says so
+			// instead of showing an empty test list as if it were a finished stage.
+			...(s.planned ? { planned: true } : {}),
 			hints: s.hints,
 			tests
 		};

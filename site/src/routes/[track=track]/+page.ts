@@ -1,11 +1,11 @@
 import { error } from '@sveltejs/kit';
-import { getCatalog, isTrack } from '$lib/catalog';
+import { getCatalog, isTrack, trackIds } from '$lib/catalog';
 import type { PageLoad } from './$types';
 
 export const prerender = true;
 
 export function entries() {
-	return [{ track: 'shell' }, { track: 'kafka' }];
+	return trackIds.map((track) => ({ track }));
 }
 
 export const load: PageLoad = ({ params }) => {
