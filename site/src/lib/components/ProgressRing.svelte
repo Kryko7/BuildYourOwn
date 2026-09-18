@@ -5,9 +5,18 @@
 		size = 84,
 		stroke = 7,
 		accent = 'var(--ink)',
-		label = ''
-	}: { value?: number; total?: number; size?: number; stroke?: number; accent?: string; label?: string } =
-		$props();
+		label = '',
+		unit = 'stages'
+	}: {
+		value?: number;
+		total?: number;
+		size?: number;
+		stroke?: number;
+		accent?: string;
+		label?: string;
+		/** What is being counted, for the screen-reader line: stages, or waypoints. */
+		unit?: string;
+	} = $props();
 
 	const r = $derived((size - stroke) / 2);
 	const c = $derived(2 * Math.PI * r);
@@ -35,7 +44,7 @@
 		<strong>{pct}<span>%</span></strong>
 		{#if label}<span class="tiny muted">{label}</span>{/if}
 	</div>
-	<span class="visually-hidden">{value} of {total} complete</span>
+	<span class="visually-hidden">{value} of {total} {unit} complete</span>
 </div>
 
 <style>

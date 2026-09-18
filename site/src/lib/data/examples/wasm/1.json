@@ -1,0 +1,134 @@
+[
+	{
+		"title": "The smallest module that returns a number",
+		"kind": "module",
+		"request": "the eight-byte header, a type section for `() -> i32`, a function section, an export named `f`, and a body of `i32.const 7`  —  `run --invoke f mod.wasm`",
+		"request_hex": "0061736d010000000105016000017f03020100070501016600000a0601040041070b",
+		"response": "7",
+		"response_hex": "",
+		"note": "Read the first eight bytes before anything else: 00 61 73 6d 01 00 00 00. Everything after them is a sequence of sections, each one an id byte, a uLEB128 size, and that many bytes.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "header.magic",
+				"value": "\\0asm"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.version",
+				"value": "1 (little-endian)"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "section[1].id",
+				"value": "type section"
+			},
+			{
+				"offset": 9,
+				"length": 1,
+				"field": "section[1].size",
+				"value": "5 bytes"
+			},
+			{
+				"offset": 11,
+				"length": 4,
+				"field": "type[0]",
+				"value": "() -> (i32)"
+			},
+			{
+				"offset": 15,
+				"length": 1,
+				"field": "section[3].id",
+				"value": "function section"
+			},
+			{
+				"offset": 16,
+				"length": 1,
+				"field": "section[3].size",
+				"value": "2 bytes"
+			},
+			{
+				"offset": 18,
+				"length": 1,
+				"field": "function[0]",
+				"value": "type 0 () -> (i32)"
+			},
+			{
+				"offset": 19,
+				"length": 1,
+				"field": "section[7].id",
+				"value": "export section"
+			},
+			{
+				"offset": 20,
+				"length": 1,
+				"field": "section[7].size",
+				"value": "5 bytes"
+			},
+			{
+				"offset": 22,
+				"length": 4,
+				"field": "export[0]",
+				"value": "'f' → func 0"
+			},
+			{
+				"offset": 26,
+				"length": 1,
+				"field": "section[10].id",
+				"value": "code section"
+			},
+			{
+				"offset": 27,
+				"length": 1,
+				"field": "section[10].size",
+				"value": "6 bytes"
+			},
+			{
+				"offset": 29,
+				"length": 1,
+				"field": "code[0].size",
+				"value": "4 bytes"
+			},
+			{
+				"offset": 30,
+				"length": 4,
+				"field": "code[0].body",
+				"value": "i32.const 7"
+			}
+		],
+		"response_fields": []
+	},
+	{
+		"title": "A version written the wrong way round",
+		"kind": "module",
+		"request": "the same module with the version bytes reversed to 00 00 00 01  —  `run --invoke f mod.wasm`",
+		"request_hex": "0061736d000000010105016000017f03020100070501016600000a0601040041070b",
+		"response": "nothing on stdout, a message on stderr, and a non-zero exit status — the module never runs",
+		"response_hex": "",
+		"note": "The version is a little-endian u32. Reading it big-endian gives 16 777 216, and a module that is refused must be refused before a single instruction executes: stdout stays empty.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "header.magic",
+				"value": "[00, 61, 73, 6d]"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.version",
+				"value": "16777216 (little-endian)"
+			},
+			{
+				"offset": 8,
+				"length": 26,
+				"field": "(the rest of a valid module)",
+				"value": "type, function, export and code sections for `f() -> i32 { 7 }`"
+			}
+		],
+		"response_fields": []
+	}
+]

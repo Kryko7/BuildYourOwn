@@ -1,0 +1,386 @@
+[
+	{
+		"title": "A two-entry dispatch table",
+		"kind": "module",
+		"request": "a six-slot `funcref` table filled by two active element segments, and an `f` that calls slot 0 and slot 1 through the same `call_indirect` and adds the results  —  `run --invoke f mod.wasm`",
+		"request_hex": "0061736d010000000111036000017f60027f7f017f60027f7e017f030605000001020004040170000607050101660004090f020041000b030001020041040b01030a26050400410a0b040041140b0700200020016b0b040020000b0d00410011000041011100006a0b",
+		"response": "30",
+		"response_hex": "",
+		"note": "Slots 3 and 5 are never written, so calling them traps with `uninitialized element`; slot 6 does not exist, so it traps with `undefined element` / `out of bounds table access`; slot 4 holds `(i32 i64) -> i32`, so calling it as `(i32 i32) -> i32` traps with `indirect call type mismatch`.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "header.magic",
+				"value": "\\0asm"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.version",
+				"value": "1 (little-endian)"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "section[1].id",
+				"value": "type section"
+			},
+			{
+				"offset": 9,
+				"length": 1,
+				"field": "section[1].size",
+				"value": "17 bytes"
+			},
+			{
+				"offset": 11,
+				"length": 4,
+				"field": "type[0]",
+				"value": "() -> (i32)"
+			},
+			{
+				"offset": 15,
+				"length": 6,
+				"field": "type[1]",
+				"value": "(i32 i32) -> (i32)"
+			},
+			{
+				"offset": 21,
+				"length": 6,
+				"field": "type[2]",
+				"value": "(i32 i64) -> (i32)"
+			},
+			{
+				"offset": 27,
+				"length": 1,
+				"field": "section[3].id",
+				"value": "function section"
+			},
+			{
+				"offset": 28,
+				"length": 1,
+				"field": "section[3].size",
+				"value": "6 bytes"
+			},
+			{
+				"offset": 30,
+				"length": 1,
+				"field": "function[0]",
+				"value": "type 0 () -> (i32)"
+			},
+			{
+				"offset": 31,
+				"length": 1,
+				"field": "function[1]",
+				"value": "type 0 () -> (i32)"
+			},
+			{
+				"offset": 32,
+				"length": 1,
+				"field": "function[2]",
+				"value": "type 1 (i32 i32) -> (i32)"
+			},
+			{
+				"offset": 33,
+				"length": 1,
+				"field": "function[3]",
+				"value": "type 2 (i32 i64) -> (i32)"
+			},
+			{
+				"offset": 34,
+				"length": 1,
+				"field": "function[4]",
+				"value": "type 0 () -> (i32)"
+			},
+			{
+				"offset": 35,
+				"length": 1,
+				"field": "section[4].id",
+				"value": "table section"
+			},
+			{
+				"offset": 36,
+				"length": 1,
+				"field": "section[4].size",
+				"value": "4 bytes"
+			},
+			{
+				"offset": 38,
+				"length": 3,
+				"field": "table[0]",
+				"value": "funcref, min 6, no max"
+			},
+			{
+				"offset": 41,
+				"length": 1,
+				"field": "section[7].id",
+				"value": "export section"
+			},
+			{
+				"offset": 42,
+				"length": 1,
+				"field": "section[7].size",
+				"value": "5 bytes"
+			},
+			{
+				"offset": 44,
+				"length": 4,
+				"field": "export[0]",
+				"value": "'f' → func 4"
+			},
+			{
+				"offset": 48,
+				"length": 1,
+				"field": "section[9].id",
+				"value": "element section"
+			},
+			{
+				"offset": 49,
+				"length": 1,
+				"field": "section[9].size",
+				"value": "15 bytes"
+			},
+			{
+				"offset": 51,
+				"length": 8,
+				"field": "elem[0]",
+				"value": "active into table 0, 3 funcs [0, 1, 2]"
+			},
+			{
+				"offset": 59,
+				"length": 6,
+				"field": "elem[1]",
+				"value": "active into table 0, 1 funcs [3]"
+			},
+			{
+				"offset": 65,
+				"length": 1,
+				"field": "section[10].id",
+				"value": "code section"
+			},
+			{
+				"offset": 66,
+				"length": 1,
+				"field": "section[10].size",
+				"value": "38 bytes"
+			},
+			{
+				"offset": 68,
+				"length": 1,
+				"field": "code[0].size",
+				"value": "4 bytes"
+			},
+			{
+				"offset": 69,
+				"length": 4,
+				"field": "code[0].body",
+				"value": "i32.const 10"
+			},
+			{
+				"offset": 73,
+				"length": 1,
+				"field": "code[1].size",
+				"value": "4 bytes"
+			},
+			{
+				"offset": 74,
+				"length": 4,
+				"field": "code[1].body",
+				"value": "i32.const 20"
+			},
+			{
+				"offset": 78,
+				"length": 1,
+				"field": "code[2].size",
+				"value": "7 bytes"
+			},
+			{
+				"offset": 79,
+				"length": 7,
+				"field": "code[2].body",
+				"value": "local.get 0, local.get 1, i32.sub"
+			},
+			{
+				"offset": 86,
+				"length": 1,
+				"field": "code[3].size",
+				"value": "4 bytes"
+			},
+			{
+				"offset": 87,
+				"length": 4,
+				"field": "code[3].body",
+				"value": "local.get 0"
+			},
+			{
+				"offset": 91,
+				"length": 1,
+				"field": "code[4].size",
+				"value": "13 bytes"
+			},
+			{
+				"offset": 92,
+				"length": 13,
+				"field": "code[4].body",
+				"value": "i32.const 0, call_indirect (type 0) (table 0), i32.const 1, call_indirect (type 0) (table 0), i32.add"
+			}
+		],
+		"response_fields": []
+	},
+	{
+		"title": "The same type, written twice",
+		"kind": "module",
+		"request": "a type section holding `(i32) -> i32` twice; the callee is declared with type 0 and reached by a `call_indirect` whose immediate is type 1  —  `run --invoke f mod.wasm`",
+		"request_hex": "0061736d01000000010f0360017f017f60017f017f6000017f0303020002040401700001070501016600010907010041000b01000a130207002000410a6c0b0900410741001101000b",
+		"response": "70",
+		"response_hex": "",
+		"note": "The type immediate is an index into the type section, but the check is structural: compare parameters and results, never indices. Canonicalising the type section into a table of distinct types, and comparing the canonical ids, is the usual way to get this both right and fast.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "header.magic",
+				"value": "\\0asm"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.version",
+				"value": "1 (little-endian)"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "section[1].id",
+				"value": "type section"
+			},
+			{
+				"offset": 9,
+				"length": 1,
+				"field": "section[1].size",
+				"value": "15 bytes"
+			},
+			{
+				"offset": 11,
+				"length": 5,
+				"field": "type[0]",
+				"value": "(i32) -> (i32)"
+			},
+			{
+				"offset": 16,
+				"length": 5,
+				"field": "type[1]",
+				"value": "(i32) -> (i32) — byte for byte the same as type[0]"
+			},
+			{
+				"offset": 21,
+				"length": 4,
+				"field": "type[2]",
+				"value": "() -> (i32)"
+			},
+			{
+				"offset": 25,
+				"length": 1,
+				"field": "section[3].id",
+				"value": "function section"
+			},
+			{
+				"offset": 26,
+				"length": 1,
+				"field": "section[3].size",
+				"value": "3 bytes"
+			},
+			{
+				"offset": 28,
+				"length": 1,
+				"field": "function[0]",
+				"value": "type 0, the callee"
+			},
+			{
+				"offset": 29,
+				"length": 1,
+				"field": "function[1]",
+				"value": "type 2, the caller"
+			},
+			{
+				"offset": 30,
+				"length": 1,
+				"field": "section[4].id",
+				"value": "table section"
+			},
+			{
+				"offset": 31,
+				"length": 1,
+				"field": "section[4].size",
+				"value": "4 bytes"
+			},
+			{
+				"offset": 33,
+				"length": 3,
+				"field": "table[0]",
+				"value": "funcref, min 1, no max"
+			},
+			{
+				"offset": 36,
+				"length": 1,
+				"field": "section[7].id",
+				"value": "export section"
+			},
+			{
+				"offset": 37,
+				"length": 1,
+				"field": "section[7].size",
+				"value": "5 bytes"
+			},
+			{
+				"offset": 39,
+				"length": 4,
+				"field": "export[0]",
+				"value": "'f' → func 1"
+			},
+			{
+				"offset": 43,
+				"length": 1,
+				"field": "section[9].id",
+				"value": "element section"
+			},
+			{
+				"offset": 44,
+				"length": 1,
+				"field": "section[9].size",
+				"value": "7 bytes"
+			},
+			{
+				"offset": 46,
+				"length": 6,
+				"field": "elem[0]",
+				"value": "active into table 0 at offset 0, funcs [0]"
+			},
+			{
+				"offset": 52,
+				"length": 1,
+				"field": "section[10].id",
+				"value": "code section"
+			},
+			{
+				"offset": 53,
+				"length": 1,
+				"field": "section[10].size",
+				"value": "19 bytes"
+			},
+			{
+				"offset": 55,
+				"length": 8,
+				"field": "code[0]",
+				"value": "local.get 0, i32.const 10, i32.mul"
+			},
+			{
+				"offset": 63,
+				"length": 10,
+				"field": "code[1]",
+				"value": "i32.const 7, i32.const 0, call_indirect (type 1) (table 0)"
+			}
+		],
+		"response_fields": []
+	}
+]

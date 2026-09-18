@@ -7,12 +7,12 @@
 	 */
 	import CopyButton from './CopyButton.svelte';
 	import { journey } from '$lib/stores/journey.svelte';
-	import { tracks } from '$lib/catalog';
+	import { tracks, trackIds } from '$lib/catalog';
 	import type { TrackId } from '$lib/types';
 
 	let { track = null, compact = false }: { track?: TrackId | null; compact?: boolean } = $props();
 
-	const initCommand = $derived(track ? `byo init ${track}` : 'byo init shell');
+	const initCommand = $derived(`byo init ${track ?? trackIds[0]}`);
 	const needsInit = $derived(track !== null && journey.needsInit(track));
 </script>
 
@@ -44,7 +44,7 @@
 		<div>
 			<strong>No {tracks[track].tester} project yet.</strong>
 			byo is running, but nothing has been registered for this track. In the repo where you are writing
-			your own {track === 'shell' ? 'shell' : 'broker'}, run <code>{initCommand}</code>, then
+			your own {tracks[track].building.replace(/^an? /, '')}, run <code>{initCommand}</code>, then
 			<code>byo test --stage 1</code>.
 		</div>
 		<CopyButton text={initCommand} label="copy" />

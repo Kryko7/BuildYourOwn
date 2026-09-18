@@ -1,0 +1,326 @@
+[
+	{
+		"title": "Copying a passive segment into memory",
+		"kind": "module",
+		"request": "one page of memory, a passive segment holding \"abcdefgh\", and a body of `i32.const 0; i32.const 0; i32.const 8; memory.init 0` followed by a read of byte 0  —  `run --invoke f mod.wasm`",
+		"request_hex": "0061736d010000000105016000017f030201000503010001070501016600000c01020a13011100410041004108fc08000041002d00000b0b100201086162636465666768010358595a",
+		"response": "97",
+		"response_hex": "",
+		"note": "97 is 'a'. Before the `memory.init` that byte was 0: a passive segment is not copied at instantiation, which is the whole difference between it and an active one.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "header.magic",
+				"value": "\\0asm"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.version",
+				"value": "1 (little-endian)"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "section[1].id",
+				"value": "type section"
+			},
+			{
+				"offset": 9,
+				"length": 1,
+				"field": "section[1].size",
+				"value": "5 bytes"
+			},
+			{
+				"offset": 11,
+				"length": 4,
+				"field": "type[0]",
+				"value": "() -> (i32)"
+			},
+			{
+				"offset": 15,
+				"length": 1,
+				"field": "section[3].id",
+				"value": "function section"
+			},
+			{
+				"offset": 16,
+				"length": 1,
+				"field": "section[3].size",
+				"value": "2 bytes"
+			},
+			{
+				"offset": 18,
+				"length": 1,
+				"field": "function[0]",
+				"value": "type 0 () -> (i32)"
+			},
+			{
+				"offset": 19,
+				"length": 1,
+				"field": "section[5].id",
+				"value": "memory section"
+			},
+			{
+				"offset": 20,
+				"length": 1,
+				"field": "section[5].size",
+				"value": "3 bytes"
+			},
+			{
+				"offset": 22,
+				"length": 2,
+				"field": "memory[0]",
+				"value": "min 1, no max (64 KiB pages)"
+			},
+			{
+				"offset": 24,
+				"length": 1,
+				"field": "section[7].id",
+				"value": "export section"
+			},
+			{
+				"offset": 25,
+				"length": 1,
+				"field": "section[7].size",
+				"value": "5 bytes"
+			},
+			{
+				"offset": 27,
+				"length": 4,
+				"field": "export[0]",
+				"value": "'f' → func 0"
+			},
+			{
+				"offset": 31,
+				"length": 1,
+				"field": "section[12].id",
+				"value": "data count section"
+			},
+			{
+				"offset": 32,
+				"length": 1,
+				"field": "section[12].size",
+				"value": "1 bytes"
+			},
+			{
+				"offset": 33,
+				"length": 1,
+				"field": "data_count.count",
+				"value": "2 data segments, declared before the code section"
+			},
+			{
+				"offset": 34,
+				"length": 1,
+				"field": "section[10].id",
+				"value": "code section"
+			},
+			{
+				"offset": 35,
+				"length": 1,
+				"field": "section[10].size",
+				"value": "19 bytes"
+			},
+			{
+				"offset": 37,
+				"length": 1,
+				"field": "code[0].size",
+				"value": "17 bytes"
+			},
+			{
+				"offset": 38,
+				"length": 17,
+				"field": "code[0].body",
+				"value": "i32.const 0, i32.const 0, i32.const 8, memory.init 0, i32.const 0, i32.load8_u align=1 offset=0"
+			},
+			{
+				"offset": 55,
+				"length": 1,
+				"field": "section[11].id",
+				"value": "data section"
+			},
+			{
+				"offset": 56,
+				"length": 1,
+				"field": "section[11].size",
+				"value": "16 bytes"
+			},
+			{
+				"offset": 58,
+				"length": 10,
+				"field": "data[0]",
+				"value": "passive, 8 bytes 'abcdefgh'"
+			},
+			{
+				"offset": 68,
+				"length": 5,
+				"field": "data[1]",
+				"value": "passive, 3 bytes 'XYZ'"
+			}
+		],
+		"response_fields": []
+	},
+	{
+		"title": "An init after the segment was dropped",
+		"kind": "module",
+		"request": "the same module with a `data.drop 0` in front of the `memory.init`  —  `run --invoke f mod.wasm`",
+		"request_hex": "0061736d010000000105016000017f030201000503010001070501016600000c01020a16011400fc0900410041004101fc08000041002d00000b0b100201086162636465666768010358595a",
+		"response": "nothing on stdout, `wasm trap: out of bounds memory access` on stderr, and a non-zero exit status",
+		"response_hex": "",
+		"note": "A dropped segment is an empty segment, so asking for one byte of it is a source range of 0..1 against a length of 0 — out of bounds. Ask for zero bytes instead and the same module runs to the end.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "header.magic",
+				"value": "\\0asm"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.version",
+				"value": "1 (little-endian)"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "section[1].id",
+				"value": "type section"
+			},
+			{
+				"offset": 9,
+				"length": 1,
+				"field": "section[1].size",
+				"value": "5 bytes"
+			},
+			{
+				"offset": 11,
+				"length": 4,
+				"field": "type[0]",
+				"value": "() -> (i32)"
+			},
+			{
+				"offset": 15,
+				"length": 1,
+				"field": "section[3].id",
+				"value": "function section"
+			},
+			{
+				"offset": 16,
+				"length": 1,
+				"field": "section[3].size",
+				"value": "2 bytes"
+			},
+			{
+				"offset": 18,
+				"length": 1,
+				"field": "function[0]",
+				"value": "type 0 () -> (i32)"
+			},
+			{
+				"offset": 19,
+				"length": 1,
+				"field": "section[5].id",
+				"value": "memory section"
+			},
+			{
+				"offset": 20,
+				"length": 1,
+				"field": "section[5].size",
+				"value": "3 bytes"
+			},
+			{
+				"offset": 22,
+				"length": 2,
+				"field": "memory[0]",
+				"value": "min 1, no max (64 KiB pages)"
+			},
+			{
+				"offset": 24,
+				"length": 1,
+				"field": "section[7].id",
+				"value": "export section"
+			},
+			{
+				"offset": 25,
+				"length": 1,
+				"field": "section[7].size",
+				"value": "5 bytes"
+			},
+			{
+				"offset": 27,
+				"length": 4,
+				"field": "export[0]",
+				"value": "'f' → func 0"
+			},
+			{
+				"offset": 31,
+				"length": 1,
+				"field": "section[12].id",
+				"value": "data count section"
+			},
+			{
+				"offset": 32,
+				"length": 1,
+				"field": "section[12].size",
+				"value": "1 bytes"
+			},
+			{
+				"offset": 33,
+				"length": 1,
+				"field": "data_count.count",
+				"value": "2 data segments, declared before the code section"
+			},
+			{
+				"offset": 34,
+				"length": 1,
+				"field": "section[10].id",
+				"value": "code section"
+			},
+			{
+				"offset": 35,
+				"length": 1,
+				"field": "section[10].size",
+				"value": "22 bytes"
+			},
+			{
+				"offset": 37,
+				"length": 1,
+				"field": "code[0].size",
+				"value": "20 bytes"
+			},
+			{
+				"offset": 38,
+				"length": 20,
+				"field": "code[0].body",
+				"value": "data.drop 0, i32.const 0, i32.const 0, i32.const 1, memory.init 0, i32.const 0, i32.load8_u align=1 offset=0"
+			},
+			{
+				"offset": 58,
+				"length": 1,
+				"field": "section[11].id",
+				"value": "data section"
+			},
+			{
+				"offset": 59,
+				"length": 1,
+				"field": "section[11].size",
+				"value": "16 bytes"
+			},
+			{
+				"offset": 61,
+				"length": 10,
+				"field": "data[0]",
+				"value": "passive, 8 bytes 'abcdefgh'"
+			},
+			{
+				"offset": 71,
+				"length": 5,
+				"field": "data[1]",
+				"value": "passive, 3 bytes 'XYZ'"
+			}
+		],
+		"response_fields": []
+	}
+]

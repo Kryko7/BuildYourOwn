@@ -191,6 +191,8 @@ impl AlertDescription {
     pub const DECRYPT_ERROR: AlertDescription = AlertDescription(51);
     /// `protocol_version(70)`
     pub const PROTOCOL_VERSION: AlertDescription = AlertDescription(70);
+    /// `insufficient_security(71)`
+    pub const INSUFFICIENT_SECURITY: AlertDescription = AlertDescription(71);
     /// `internal_error(80)`
     pub const INTERNAL_ERROR: AlertDescription = AlertDescription(80);
     /// `inappropriate_fallback(86)`

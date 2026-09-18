@@ -64,7 +64,7 @@ describe('ProgressRing', () => {
 	it('renders the rounded percentage and an accessible total', () => {
 		const c = mount(ProgressRing, { target: host, props: { value: 3, total: 4, label: 'stages' } });
 		expect(host.textContent).toContain('75');
-		expect(host.textContent).toContain('3 of 4 complete');
+		expect(host.textContent).toContain('3 of 4 stages complete');
 		unmount(c);
 		expect(errors).toEqual([]);
 	});
@@ -95,15 +95,18 @@ describe('TestList', () => {
 	});
 
 	it('explains an empty pending catalog instead of showing nothing', () => {
-		const c = mount(TestList, { target: host, props: { tests: [], pending: true } });
-		expect(host.textContent).toMatch(/kafkatest/);
+		const c = mount(TestList, { target: host, props: { tests: [], pending: true, tester: 'tlstest' } });
+		// The message names whichever tester the stage belongs to, not a hard-coded one.
+		expect(host.textContent).toMatch(/tlstest/);
+		expect(host.textContent).toContain('has not published a');
 		unmount(c);
 	});
 
 	it('says a planned stage is not in the tester yet', () => {
-		const c = mount(TestList, { target: host, props: { tests: [], planned: true } });
+		const c = mount(TestList, { target: host, props: { tests: [], planned: true, tester: 'linktest' } });
 		expect(host.textContent).toContain('Not yet in the tester');
-		expect(host.textContent).toMatch(/PLAN\.md/);
+		expect(host.textContent).toMatch(/linktest/);
+		expect(host.textContent).toContain('npm run sync');
 		unmount(c);
 		expect(errors).toEqual([]);
 	});

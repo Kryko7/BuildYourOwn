@@ -1,0 +1,206 @@
+[
+	{
+		"title": "An unreachable that is never reached",
+		"kind": "module",
+		"request": "`i32.const 7  return  unreachable` — a well-formed function body  —  `run --invoke f mod.wasm`",
+		"request_hex": "0061736d010000000105016000017f03020100070501016600000a0801060041070f000b",
+		"response": "7",
+		"response_hex": "",
+		"note": "Everything after the `return` is unreachable code. It still has to decode and type-check — a decoder that stops at the `return` will mis-read the next function's body — but it never runs, so the trap never happens.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "header.magic",
+				"value": "\\0asm"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.version",
+				"value": "1 (little-endian)"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "section[1].id",
+				"value": "type section"
+			},
+			{
+				"offset": 9,
+				"length": 1,
+				"field": "section[1].size",
+				"value": "5 bytes"
+			},
+			{
+				"offset": 11,
+				"length": 4,
+				"field": "type[0]",
+				"value": "() -> (i32)"
+			},
+			{
+				"offset": 15,
+				"length": 1,
+				"field": "section[3].id",
+				"value": "function section"
+			},
+			{
+				"offset": 16,
+				"length": 1,
+				"field": "section[3].size",
+				"value": "2 bytes"
+			},
+			{
+				"offset": 18,
+				"length": 1,
+				"field": "function[0]",
+				"value": "type 0 () -> (i32)"
+			},
+			{
+				"offset": 19,
+				"length": 1,
+				"field": "section[7].id",
+				"value": "export section"
+			},
+			{
+				"offset": 20,
+				"length": 1,
+				"field": "section[7].size",
+				"value": "5 bytes"
+			},
+			{
+				"offset": 22,
+				"length": 4,
+				"field": "export[0]",
+				"value": "'f' → func 0"
+			},
+			{
+				"offset": 26,
+				"length": 1,
+				"field": "section[10].id",
+				"value": "code section"
+			},
+			{
+				"offset": 27,
+				"length": 1,
+				"field": "section[10].size",
+				"value": "8 bytes"
+			},
+			{
+				"offset": 29,
+				"length": 1,
+				"field": "code[0].size",
+				"value": "6 bytes"
+			},
+			{
+				"offset": 30,
+				"length": 6,
+				"field": "code[0].body",
+				"value": "i32.const 7, return, unreachable"
+			}
+		],
+		"response_fields": []
+	},
+	{
+		"title": "The same unreachable, reached",
+		"kind": "module",
+		"request": "the same function with the `return` replaced by a `drop`  —  `run --invoke f mod.wasm`",
+		"request_hex": "0061736d010000000105016000017f03020100070501016600000a0801060041071a000b",
+		"response": "nothing on stdout, `wasm trap: wasm \\`unreachable\\` instruction executed` on stderr, and a non-zero exit status",
+		"response_hex": "",
+		"note": "A trap aborts the program. The call produced no result, so stdout stays empty; the canonical reason goes to stderr and the exit status is non-zero (the number itself is the runtime's business).",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "header.magic",
+				"value": "\\0asm"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.version",
+				"value": "1 (little-endian)"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "section[1].id",
+				"value": "type section"
+			},
+			{
+				"offset": 9,
+				"length": 1,
+				"field": "section[1].size",
+				"value": "5 bytes"
+			},
+			{
+				"offset": 11,
+				"length": 4,
+				"field": "type[0]",
+				"value": "() -> (i32)"
+			},
+			{
+				"offset": 15,
+				"length": 1,
+				"field": "section[3].id",
+				"value": "function section"
+			},
+			{
+				"offset": 16,
+				"length": 1,
+				"field": "section[3].size",
+				"value": "2 bytes"
+			},
+			{
+				"offset": 18,
+				"length": 1,
+				"field": "function[0]",
+				"value": "type 0 () -> (i32)"
+			},
+			{
+				"offset": 19,
+				"length": 1,
+				"field": "section[7].id",
+				"value": "export section"
+			},
+			{
+				"offset": 20,
+				"length": 1,
+				"field": "section[7].size",
+				"value": "5 bytes"
+			},
+			{
+				"offset": 22,
+				"length": 4,
+				"field": "export[0]",
+				"value": "'f' → func 0"
+			},
+			{
+				"offset": 26,
+				"length": 1,
+				"field": "section[10].id",
+				"value": "code section"
+			},
+			{
+				"offset": 27,
+				"length": 1,
+				"field": "section[10].size",
+				"value": "8 bytes"
+			},
+			{
+				"offset": 29,
+				"length": 1,
+				"field": "code[0].size",
+				"value": "6 bytes"
+			},
+			{
+				"offset": 30,
+				"length": 6,
+				"field": "code[0].body",
+				"value": "i32.const 7, drop, unreachable"
+			}
+		],
+		"response_fields": []
+	}
+]

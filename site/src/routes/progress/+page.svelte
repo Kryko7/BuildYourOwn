@@ -10,13 +10,24 @@
 	import FailureBlock from '$lib/components/FailureBlock.svelte';
 	import CopyButton from '$lib/components/CopyButton.svelte';
 	import ConnectionNote from '$lib/components/ConnectionNote.svelte';
-	import Bunny from '$lib/components/garden/Bunny.svelte';
+	import { mascots } from '$lib/components/garden/mascots';
 	import { formatDuration } from '$lib/report';
 	import { reports } from '$lib/stores/reports.svelte';
 	import { journey } from '$lib/stores/journey.svelte';
 	import { progress } from '$lib/stores/progress.svelte';
 	import { catalogs, tracks, trackIds } from '$lib/catalog';
 	import type { Report, TrackId } from '$lib/types';
+
+	/**
+	 * The mascots of whichever tracks have a project registered, peering over the header —
+	 * or the first three, before anything is registered. A row of animals rather than one,
+	 * because there are six trails now and the page belongs to all of them.
+	 */
+	const peekers = $derived.by(() => {
+		const withProjects = trackIds.filter((t) => journey.project(t) !== null);
+		const ids = withProjects.length ? withProjects : trackIds.slice(0, 3);
+		return ids.slice(0, 4).map((id) => ({ id, Animal: mascots[tracks[id].mascot] }));
+	});
 
 	let message = $state('');
 	let error = $state('');
@@ -51,8 +62,11 @@
 
 	const quickstart = [
 		{
-			cmd: 'byo init shell --command ./your_program.sh',
-			why: 'once, in the repo where you are writing your shell (or `byo init kafka`)'
+			cmd: `byo init ${trackIds[0]} --command ./your_program.sh`,
+			why: `once, in the repo where you are writing your ${tracks[trackIds[0]].building.replace(/^an? /, '')} (${trackIds
+				.slice(1)
+				.map((t) => `byo init ${t}`)
+				.join(', ')} for the others)`
 		},
 		{ cmd: 'byo test --stage 1', why: 'run one stage; `--until 12` or `--all` for more' },
 		{ cmd: 'byo status', why: 'the same progress, in the terminal' },
@@ -120,7 +134,9 @@
 				what they saw.
 			</p>
 		</div>
-		<span class="peek" aria-hidden="true"><Bunny size={92} /></span>
+		<span class="peek" aria-hidden="true">
+			{#each peekers as { id, Animal } (id)}<Animal size={64} />{/each}
+		</span>
 	</header>
 
 	<ConnectionNote />
@@ -151,7 +167,7 @@
 		{#if latest.length}
 			<section class="latestrow">
 				{#each latest as { track, report } (track)}
-					<article class="card sum" style="--accent:{track === 'shell' ? 'var(--shell)' : 'var(--kafka)'}">
+					<article class="card sum" style="--accent:{tracks[track].accent}">
 						<div class="sumhead">
 							<div>
 								<p class="eyebrow">latest {tracks[track].tester} run</p>
@@ -378,8 +394,13 @@
 	.lede {
 		color: var(--ink-2);
 	}
+	/* The animals overlap slightly, like a row of them peering over a fence. */
 	.peek {
+		display: flex;
 		flex: none;
+	}
+	.peek :global(svg) + :global(svg) {
+		margin-left: -18px;
 	}
 	@media (max-width: 760px) {
 		.peek {

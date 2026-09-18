@@ -1,0 +1,206 @@
+[
+	{
+		"title": "A three-way jump table",
+		"kind": "module",
+		"request": "four nested blocks; the innermost ends in `br_table 0 1 2 3` on the function's argument, and each landing site stores 100, 200 or 300  —  `run --invoke f mod.wasm 1`",
+		"request_hex": "0061736d0100000001060160017f017f03020100070501016600000a36013401017f41e7072101024002400240024020000e03000102030b41e40021010c020b41c80121010c010b41ac0221010c000b20010b",
+		"response": "200",
+		"response_hex": "",
+		"note": "Pass 0, 1 or 2 and the answer is 100, 200 or 300; pass anything else and the default label 3 takes control out of the outermost block, leaving the local at the 999 it was seeded with.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "header.magic",
+				"value": "\\0asm"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.version",
+				"value": "1 (little-endian)"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "section[1].id",
+				"value": "type section"
+			},
+			{
+				"offset": 9,
+				"length": 1,
+				"field": "section[1].size",
+				"value": "6 bytes"
+			},
+			{
+				"offset": 11,
+				"length": 5,
+				"field": "type[0]",
+				"value": "(i32) -> (i32)"
+			},
+			{
+				"offset": 16,
+				"length": 1,
+				"field": "section[3].id",
+				"value": "function section"
+			},
+			{
+				"offset": 17,
+				"length": 1,
+				"field": "section[3].size",
+				"value": "2 bytes"
+			},
+			{
+				"offset": 19,
+				"length": 1,
+				"field": "function[0]",
+				"value": "type 0 (i32) -> (i32)"
+			},
+			{
+				"offset": 20,
+				"length": 1,
+				"field": "section[7].id",
+				"value": "export section"
+			},
+			{
+				"offset": 21,
+				"length": 1,
+				"field": "section[7].size",
+				"value": "5 bytes"
+			},
+			{
+				"offset": 23,
+				"length": 4,
+				"field": "export[0]",
+				"value": "'f' → func 0"
+			},
+			{
+				"offset": 27,
+				"length": 1,
+				"field": "section[10].id",
+				"value": "code section"
+			},
+			{
+				"offset": 28,
+				"length": 1,
+				"field": "section[10].size",
+				"value": "54 bytes"
+			},
+			{
+				"offset": 30,
+				"length": 1,
+				"field": "code[0].size",
+				"value": "52 bytes"
+			},
+			{
+				"offset": 31,
+				"length": 52,
+				"field": "code[0].body",
+				"value": "locals 1×i32; i32.const 999, local.set 1, block { block { block { block { local.get 0, br_table [0, 1, 2] default 3 }, i32.const 100, local.set 1, br 2 }, i32.const 200, local.set 1, br 1 }, i32.const 300, local.set 1, br 0 }, local.get 1"
+			}
+		],
+		"response_fields": []
+	},
+	{
+		"title": "The same table, with -1",
+		"kind": "module",
+		"request": "the identical table with `i32.const -1` as the index  —  `run --invoke f mod.wasm`",
+		"request_hex": "0061736d010000000105016000017f03020100070501016600000a36013401017f41e70721000240024002400240417f0e03000102030b41e40021000c020b41c80121000c010b41ac0221000c000b20000b",
+		"response": "999",
+		"response_hex": "",
+		"note": "The index is unsigned: -1 is 4294967295, which is past the end of a three-entry table, so the default is taken. It is not a trap — there is no such thing as an out-of-range br_table index at run time.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "header.magic",
+				"value": "\\0asm"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.version",
+				"value": "1 (little-endian)"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "section[1].id",
+				"value": "type section"
+			},
+			{
+				"offset": 9,
+				"length": 1,
+				"field": "section[1].size",
+				"value": "5 bytes"
+			},
+			{
+				"offset": 11,
+				"length": 4,
+				"field": "type[0]",
+				"value": "() -> (i32)"
+			},
+			{
+				"offset": 15,
+				"length": 1,
+				"field": "section[3].id",
+				"value": "function section"
+			},
+			{
+				"offset": 16,
+				"length": 1,
+				"field": "section[3].size",
+				"value": "2 bytes"
+			},
+			{
+				"offset": 18,
+				"length": 1,
+				"field": "function[0]",
+				"value": "type 0 () -> (i32)"
+			},
+			{
+				"offset": 19,
+				"length": 1,
+				"field": "section[7].id",
+				"value": "export section"
+			},
+			{
+				"offset": 20,
+				"length": 1,
+				"field": "section[7].size",
+				"value": "5 bytes"
+			},
+			{
+				"offset": 22,
+				"length": 4,
+				"field": "export[0]",
+				"value": "'f' → func 0"
+			},
+			{
+				"offset": 26,
+				"length": 1,
+				"field": "section[10].id",
+				"value": "code section"
+			},
+			{
+				"offset": 27,
+				"length": 1,
+				"field": "section[10].size",
+				"value": "54 bytes"
+			},
+			{
+				"offset": 29,
+				"length": 1,
+				"field": "code[0].size",
+				"value": "52 bytes"
+			},
+			{
+				"offset": 30,
+				"length": 52,
+				"field": "code[0].body",
+				"value": "locals 1×i32; i32.const 999, local.set 0, block { block { block { block { i32.const -1, br_table [0, 1, 2] default 3 }, i32.const 100, local.set 0, br 2 }, i32.const 200, local.set 0, br 1 }, i32.const 300, local.set 0, br 0 }, local.get 0"
+			}
+		],
+		"response_fields": []
+	}
+]

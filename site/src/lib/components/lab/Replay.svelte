@@ -6,7 +6,7 @@
 	import { trackIds } from '$lib/catalog';
 	import type { TrackId } from '$lib/types';
 
-	let track = $state<TrackId>('shell');
+	let track = $state<TrackId>(trackIds[0]);
 	let picked = $state(0);
 	let step = $state(0);
 

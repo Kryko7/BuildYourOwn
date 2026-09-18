@@ -13,7 +13,7 @@
 	const track = $derived(data.track);
 	const stage = $derived(data.stage);
 	const meta = $derived(tracks[track]);
-	const accent = $derived(track === 'shell' ? 'var(--shell)' : 'var(--kafka)');
+	const accent = $derived(meta.accent);
 	const report = $derived(activeReport(track));
 	const section = $derived(sectionOf(track, stage.number));
 	const badge = $derived(section ? badgeFor(track, section.id) : null);

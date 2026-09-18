@@ -1,0 +1,231 @@
+{
+	"track": "dist",
+	"generatedAt": "2026-09-18T19:03:54.380Z",
+	"sections": [
+		{
+			"id": "A",
+			"title": "Clocks & causality",
+			"stages": [
+				1
+			]
+		},
+		{
+			"id": "B",
+			"title": "Partitioning & quorums",
+			"stages": [
+				2
+			]
+		},
+		{
+			"id": "C",
+			"title": "Probabilistic & anti-entropy structures",
+			"stages": [
+				3
+			]
+		},
+		{
+			"id": "D",
+			"title": "CRDTs & convergence",
+			"stages": [
+				4
+			]
+		},
+		{
+			"id": "E",
+			"title": "Flow control & failure detection",
+			"stages": [
+				5
+			]
+		},
+		{
+			"id": "F",
+			"title": "A durable single node",
+			"stages": [
+				6
+			]
+		},
+		{
+			"id": "G",
+			"title": "Replication & consensus",
+			"stages": [
+				7
+			]
+		},
+		{
+			"id": "H",
+			"title": "Faults & partitions",
+			"stages": [
+				8
+			]
+		},
+		{
+			"id": "I",
+			"title": "Linearizability under fault injection",
+			"stages": [
+				9
+			]
+		}
+	],
+	"stages": [
+		{
+			"number": 1,
+			"slug": "clocks-causality",
+			"name": "Clocks & causality",
+			"ext": false,
+			"section": "A",
+			"file": "",
+			"planDone": false,
+			"planned": true,
+			"ladder": "primitives",
+			"hints": [
+				"Lamport clocks, and what a scalar counter can and cannot tell you",
+				"Vector clocks and version vectors: happens-before, concurrent, dominated",
+				"Hybrid logical clocks — physical time you can still order"
+			],
+			"tests": []
+		},
+		{
+			"number": 2,
+			"slug": "partitioning-quorums",
+			"name": "Partitioning & quorums",
+			"ext": false,
+			"section": "B",
+			"file": "",
+			"planDone": false,
+			"planned": true,
+			"ladder": "primitives",
+			"hints": [
+				"Consistent hashing with virtual nodes, and what moves when a node joins",
+				"Rendezvous (highest random weight) hashing as the alternative",
+				"The N/R/W quorum arithmetic, and when R + W > N actually buys you something"
+			],
+			"tests": []
+		},
+		{
+			"number": 3,
+			"slug": "probabilistic-anti-entropy-structures",
+			"name": "Probabilistic & anti-entropy structures",
+			"ext": false,
+			"section": "C",
+			"file": "",
+			"planDone": false,
+			"planned": true,
+			"ladder": "primitives",
+			"hints": [
+				"Bloom filters: bit math, hash count, and the false-positive rate you promised",
+				"HyperLogLog cardinality estimation",
+				"Merkle trees for finding the difference between two replicas cheaply"
+			],
+			"tests": []
+		},
+		{
+			"number": 4,
+			"slug": "crdts-convergence",
+			"name": "CRDTs & convergence",
+			"ext": false,
+			"section": "D",
+			"file": "",
+			"planDone": false,
+			"planned": true,
+			"ladder": "primitives",
+			"hints": [
+				"G-Counter and PN-Counter: merge is a join, not an assignment",
+				"LWW-Register and OR-Set, with the tombstones that make removal work",
+				"RGA for ordered sequences, and convergence under any delivery order"
+			],
+			"tests": []
+		},
+		{
+			"number": 5,
+			"slug": "flow-control-failure-detection",
+			"name": "Flow control & failure detection",
+			"ext": false,
+			"section": "E",
+			"file": "",
+			"planDone": false,
+			"planned": true,
+			"ladder": "primitives",
+			"hints": [
+				"Token bucket rate limiting, and backoff with jitter that does not synchronize",
+				"Phi-accrual failure detection instead of a fixed timeout",
+				"SWIM: gossip, indirect probes, suspicion"
+			],
+			"tests": []
+		},
+		{
+			"number": 6,
+			"slug": "a-durable-single-node",
+			"name": "A durable single node",
+			"ext": false,
+			"section": "F",
+			"file": "",
+			"planDone": false,
+			"planned": true,
+			"ladder": "node",
+			"hints": [
+				"MVCC revisions: every key keeps its history, reads pick a revision",
+				"Transactions, leases and watches",
+				"Crash recovery — everything acknowledged is still there after a kill -9"
+			],
+			"tests": []
+		},
+		{
+			"number": 7,
+			"slug": "replication-consensus",
+			"name": "Replication & consensus",
+			"ext": false,
+			"section": "G",
+			"file": "",
+			"planDone": false,
+			"planned": true,
+			"ladder": "cluster",
+			"hints": [
+				"Leader election, terms, and the votes that decide one",
+				"Log replication, commit index, and applying in order",
+				"Linearizable reads: read index or lease, never just \"ask the leader\""
+			],
+			"tests": []
+		},
+		{
+			"number": 8,
+			"slug": "faults-partitions",
+			"name": "Faults & partitions",
+			"ext": false,
+			"section": "H",
+			"file": "",
+			"planDone": false,
+			"planned": true,
+			"ladder": "cluster",
+			"hints": [
+				"A minority partition must refuse to make progress",
+				"Leader failover with no lost acknowledged write",
+				"Snapshots, log compaction and membership change"
+			],
+			"tests": []
+		},
+		{
+			"number": 9,
+			"slug": "linearizability-under-fault-injection",
+			"name": "Linearizability under fault injection",
+			"ext": false,
+			"section": "I",
+			"file": "",
+			"planDone": false,
+			"planned": true,
+			"ladder": "cluster",
+			"hints": [
+				"Randomized concurrent workloads recorded as a history",
+				"The history is checked against a linearizability model, not against a golden file",
+				"Partitions, pauses and crashes injected mid-run, with a seed so it replays"
+			],
+			"tests": []
+		}
+	],
+	"totals": {
+		"stages": 9,
+		"tests": 0,
+		"ext": 0
+	},
+	"pending": true,
+	"source": "placeholder — disttest has not published a catalog or a plan yet"
+}

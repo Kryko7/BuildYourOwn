@@ -1,0 +1,338 @@
+[
+	{
+		"title": "Hello, through one iovec",
+		"kind": "module",
+		"request": "imports `wasi_snapshot_preview1::fd_write`, exports its memory, puts \"hello wasi\" at address 0 with a data segment, builds one iovec at 0x100 and calls fd_write(1, 0x100, 1, 0x200)  —  `run mod.wasm`",
+		"request_hex": "0061736d01000000010c0260047f7f7f7f017f60000002230116776173695f736e617073686f745f70726576696577310866645f77726974650000030201010503010001071302066d656d6f72790200065f737461727400010a23012101027f4180024100360200418402410a3602004101418002410141800410001a0b0b10010041000b0a68656c6c6f2077617369",
+		"response": "hello wasi",
+		"response_hex": "",
+		"note": "The module exports `memory` because the host has to read the buffer out of it; a WASI module that forgets is refused before `_start` runs. An iovec is two i32s — a pointer and a length — not the bytes themselves.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "header.magic",
+				"value": "\\0asm"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.version",
+				"value": "1 (little-endian)"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "section[1].id",
+				"value": "type section"
+			},
+			{
+				"offset": 9,
+				"length": 1,
+				"field": "section[1].size",
+				"value": "12 bytes"
+			},
+			{
+				"offset": 11,
+				"length": 8,
+				"field": "type[0]",
+				"value": "(i32 i32 i32 i32) -> (i32)"
+			},
+			{
+				"offset": 19,
+				"length": 3,
+				"field": "type[1]",
+				"value": "() -> ()"
+			},
+			{
+				"offset": 22,
+				"length": 1,
+				"field": "section[2].id",
+				"value": "import section"
+			},
+			{
+				"offset": 23,
+				"length": 1,
+				"field": "section[2].size",
+				"value": "35 bytes"
+			},
+			{
+				"offset": 25,
+				"length": 34,
+				"field": "import[0]",
+				"value": "wasi_snapshot_preview1::fd_write — func type 0 (i32 i32 i32 i32) -> (i32)"
+			},
+			{
+				"offset": 59,
+				"length": 1,
+				"field": "section[3].id",
+				"value": "function section"
+			},
+			{
+				"offset": 60,
+				"length": 1,
+				"field": "section[3].size",
+				"value": "2 bytes"
+			},
+			{
+				"offset": 62,
+				"length": 1,
+				"field": "function[1]",
+				"value": "type 1 () -> ()"
+			},
+			{
+				"offset": 63,
+				"length": 1,
+				"field": "section[5].id",
+				"value": "memory section"
+			},
+			{
+				"offset": 64,
+				"length": 1,
+				"field": "section[5].size",
+				"value": "3 bytes"
+			},
+			{
+				"offset": 66,
+				"length": 2,
+				"field": "memory[0]",
+				"value": "min 1, no max (64 KiB pages)"
+			},
+			{
+				"offset": 68,
+				"length": 1,
+				"field": "section[7].id",
+				"value": "export section"
+			},
+			{
+				"offset": 69,
+				"length": 1,
+				"field": "section[7].size",
+				"value": "19 bytes"
+			},
+			{
+				"offset": 71,
+				"length": 9,
+				"field": "export[0]",
+				"value": "'memory' → memory 0"
+			},
+			{
+				"offset": 80,
+				"length": 9,
+				"field": "export[1]",
+				"value": "'_start' → func 1"
+			},
+			{
+				"offset": 89,
+				"length": 1,
+				"field": "section[10].id",
+				"value": "code section"
+			},
+			{
+				"offset": 90,
+				"length": 1,
+				"field": "section[10].size",
+				"value": "35 bytes"
+			},
+			{
+				"offset": 92,
+				"length": 1,
+				"field": "code[1].size",
+				"value": "33 bytes"
+			},
+			{
+				"offset": 93,
+				"length": 33,
+				"field": "code[1].body",
+				"value": "locals 2×i32; i32.const 256, i32.const 0, i32.store align=4 offset=0, i32.const 260, i32.const 10, i32.store align=4 offset=0, i32.const 1, i32.const 256, i32.const 1, i32.const 512, call 0, drop"
+			},
+			{
+				"offset": 126,
+				"length": 1,
+				"field": "section[11].id",
+				"value": "data section"
+			},
+			{
+				"offset": 127,
+				"length": 1,
+				"field": "section[11].size",
+				"value": "16 bytes"
+			},
+			{
+				"offset": 129,
+				"length": 15,
+				"field": "data[0]",
+				"value": "active into memory 0, 10 bytes 'hello wasi'"
+			}
+		],
+		"response_fields": []
+	},
+	{
+		"title": "Two iovecs, one call, and a byte count",
+		"kind": "module",
+		"request": "the same message split across two iovecs at 0x100 and 0x108, written with one fd_write(1, 0x100, 2, 0x200), after which the module prints the byte count the host stored at 0x200 — on stderr, so stdout stays exactly what was written  —  `run mod.wasm`",
+		"request_hex": "0061736d01000000010c0260047f7f7f7f017f60000002230116776173695f736e617073686f745f70726576696577310866645f77726974650000030201010503010001071302066d656d6f72790200065f737461727400010a9201018f0101027f418002410036020041840241063602004188024106360200418c0241043602004101418002410241800410001a4180042802002100418f08410a3a0000418f08210102400340200141016b2101200141302000410a706a3a00002000410a6e21002000450d010c000b0b418002200136020041840241900820016b3602004102418002410141800410001a0b0b10010041000b0a68656c6c6f2077617369",
+		"response": "hello wasi   (stdout)\n10           (stderr: the byte count)",
+		"response_hex": "",
+		"note": "The third argument counts iovecs, not bytes. fd_write is allowed to write fewer bytes than it was given and say so in *nwritten — wasmtime writes the first iovec and answers 6 — so a caller that does not check the count loses data.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "header.magic",
+				"value": "\\0asm"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.version",
+				"value": "1 (little-endian)"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "section[1].id",
+				"value": "type section"
+			},
+			{
+				"offset": 9,
+				"length": 1,
+				"field": "section[1].size",
+				"value": "12 bytes"
+			},
+			{
+				"offset": 11,
+				"length": 8,
+				"field": "type[0]",
+				"value": "(i32 i32 i32 i32) -> (i32)"
+			},
+			{
+				"offset": 19,
+				"length": 3,
+				"field": "type[1]",
+				"value": "() -> ()"
+			},
+			{
+				"offset": 22,
+				"length": 1,
+				"field": "section[2].id",
+				"value": "import section"
+			},
+			{
+				"offset": 23,
+				"length": 1,
+				"field": "section[2].size",
+				"value": "35 bytes"
+			},
+			{
+				"offset": 25,
+				"length": 34,
+				"field": "import[0]",
+				"value": "wasi_snapshot_preview1::fd_write — func type 0 (i32 i32 i32 i32) -> (i32)"
+			},
+			{
+				"offset": 59,
+				"length": 1,
+				"field": "section[3].id",
+				"value": "function section"
+			},
+			{
+				"offset": 60,
+				"length": 1,
+				"field": "section[3].size",
+				"value": "2 bytes"
+			},
+			{
+				"offset": 62,
+				"length": 1,
+				"field": "function[1]",
+				"value": "type 1 () -> ()"
+			},
+			{
+				"offset": 63,
+				"length": 1,
+				"field": "section[5].id",
+				"value": "memory section"
+			},
+			{
+				"offset": 64,
+				"length": 1,
+				"field": "section[5].size",
+				"value": "3 bytes"
+			},
+			{
+				"offset": 66,
+				"length": 2,
+				"field": "memory[0]",
+				"value": "min 1, no max (64 KiB pages)"
+			},
+			{
+				"offset": 68,
+				"length": 1,
+				"field": "section[7].id",
+				"value": "export section"
+			},
+			{
+				"offset": 69,
+				"length": 1,
+				"field": "section[7].size",
+				"value": "19 bytes"
+			},
+			{
+				"offset": 71,
+				"length": 9,
+				"field": "export[0]",
+				"value": "'memory' → memory 0"
+			},
+			{
+				"offset": 80,
+				"length": 9,
+				"field": "export[1]",
+				"value": "'_start' → func 1"
+			},
+			{
+				"offset": 89,
+				"length": 1,
+				"field": "section[10].id",
+				"value": "code section"
+			},
+			{
+				"offset": 90,
+				"length": 2,
+				"field": "section[10].size",
+				"value": "146 bytes"
+			},
+			{
+				"offset": 93,
+				"length": 2,
+				"field": "code[1].size",
+				"value": "143 bytes"
+			},
+			{
+				"offset": 95,
+				"length": 143,
+				"field": "code[1].body",
+				"value": "locals 2×i32; i32.const 256, i32.const 0, i32.store align=4 offset=0, i32.const 260, i32.const 6, i32.store align=4 offset=0, i32.const 264, i32.const 6, i32.store align=4 offset=0, i32.const 268, i32.const 4, i32.store align=4 offset=0, i32.const 1, i32.const 256, i32.const 2, i32.const 512, call 0, drop, i32.const 512, i32.load align=4 offset=0, local.set 0, i32.const 1039, i32.const 10, i32.store8 align=1 offset=0, i32.const 1039, local.set 1, block { loop { local.get 1, i32.const 1, i32.sub, local.set 1, local.get 1, i32.const 48, local.get 0, i32.const 10, i32.rem_u, i32.add, i32.store8 align=1 offset=0, local.get 0, i32.const 10, i32.div_u, local.set 0, local.get 0, i32.eqz, br_if 1, br 0 } }, i32.const 256, local.get 1, i32.store align=4 offset=0, i32.const 260, i32.const 1040, local.get 1, i32.sub, i32.store align=4 offset=0, i32.const 2, i32.const 256, i32.const 1, i32.const 512, call 0, drop"
+			},
+			{
+				"offset": 238,
+				"length": 1,
+				"field": "section[11].id",
+				"value": "data section"
+			},
+			{
+				"offset": 239,
+				"length": 1,
+				"field": "section[11].size",
+				"value": "16 bytes"
+			},
+			{
+				"offset": 241,
+				"length": 15,
+				"field": "data[0]",
+				"value": "active into memory 0, 10 bytes 'hello wasi'"
+			}
+		],
+		"response_fields": []
+	}
+]

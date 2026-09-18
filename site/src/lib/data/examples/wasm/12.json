@@ -1,0 +1,380 @@
+[
+	{
+		"title": "A start function that prints",
+		"kind": "module",
+		"request": "a WASI command importing `fd_write`, exporting its memory, with `ran\\n` at address 0 and a start section naming the function that writes it  —  `run mod.wasm`",
+		"request_hex": "0061736d01000000010c0260047f7f7f7f017f60000002230116776173695f736e617073686f745f70726576696577310866645f77726974650000030201010503010001070a01066d656d6f727902000801010a21011f00418002410036020041840241043602004101418002410141800410001a0b0b0a010041000b0472616e0a",
+		"response": "ran",
+		"response_hex": "",
+		"note": "The start section runs its function at instantiation, before any export is callable and without anyone asking. It has to be a `() -> ()`: there are no arguments to give it and nobody to take a result.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "header.magic",
+				"value": "\\0asm"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.version",
+				"value": "1 (little-endian)"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "section[1].id",
+				"value": "type section"
+			},
+			{
+				"offset": 9,
+				"length": 1,
+				"field": "section[1].size",
+				"value": "12 bytes"
+			},
+			{
+				"offset": 11,
+				"length": 8,
+				"field": "type[0]",
+				"value": "(i32 i32 i32 i32) -> (i32)"
+			},
+			{
+				"offset": 19,
+				"length": 3,
+				"field": "type[1]",
+				"value": "() -> ()"
+			},
+			{
+				"offset": 22,
+				"length": 1,
+				"field": "section[2].id",
+				"value": "import section"
+			},
+			{
+				"offset": 23,
+				"length": 1,
+				"field": "section[2].size",
+				"value": "35 bytes"
+			},
+			{
+				"offset": 25,
+				"length": 34,
+				"field": "import[0]",
+				"value": "wasi_snapshot_preview1::fd_write — func type 0 (i32 i32 i32 i32) -> (i32)"
+			},
+			{
+				"offset": 59,
+				"length": 1,
+				"field": "section[3].id",
+				"value": "function section"
+			},
+			{
+				"offset": 60,
+				"length": 1,
+				"field": "section[3].size",
+				"value": "2 bytes"
+			},
+			{
+				"offset": 62,
+				"length": 1,
+				"field": "function[1]",
+				"value": "type 1 () -> ()"
+			},
+			{
+				"offset": 63,
+				"length": 1,
+				"field": "section[5].id",
+				"value": "memory section"
+			},
+			{
+				"offset": 64,
+				"length": 1,
+				"field": "section[5].size",
+				"value": "3 bytes"
+			},
+			{
+				"offset": 66,
+				"length": 2,
+				"field": "memory[0]",
+				"value": "min 1, no max (64 KiB pages)"
+			},
+			{
+				"offset": 68,
+				"length": 1,
+				"field": "section[7].id",
+				"value": "export section"
+			},
+			{
+				"offset": 69,
+				"length": 1,
+				"field": "section[7].size",
+				"value": "10 bytes"
+			},
+			{
+				"offset": 71,
+				"length": 9,
+				"field": "export[0]",
+				"value": "'memory' → memory 0"
+			},
+			{
+				"offset": 80,
+				"length": 1,
+				"field": "section[8].id",
+				"value": "start section"
+			},
+			{
+				"offset": 81,
+				"length": 1,
+				"field": "section[8].size",
+				"value": "1 bytes"
+			},
+			{
+				"offset": 82,
+				"length": 1,
+				"field": "start.func",
+				"value": "function 1 runs before any export is callable"
+			},
+			{
+				"offset": 83,
+				"length": 1,
+				"field": "section[10].id",
+				"value": "code section"
+			},
+			{
+				"offset": 84,
+				"length": 1,
+				"field": "section[10].size",
+				"value": "33 bytes"
+			},
+			{
+				"offset": 86,
+				"length": 1,
+				"field": "code[1].size",
+				"value": "31 bytes"
+			},
+			{
+				"offset": 87,
+				"length": 31,
+				"field": "code[1].body",
+				"value": "i32.const 256, i32.const 0, i32.store align=4 offset=0, i32.const 260, i32.const 4, i32.store align=4 offset=0, i32.const 1, i32.const 256, i32.const 1, i32.const 512, call 0, drop"
+			},
+			{
+				"offset": 118,
+				"length": 1,
+				"field": "section[11].id",
+				"value": "data section"
+			},
+			{
+				"offset": 119,
+				"length": 1,
+				"field": "section[11].size",
+				"value": "10 bytes"
+			},
+			{
+				"offset": 121,
+				"length": 9,
+				"field": "data[0]",
+				"value": "active into memory 0, 4 bytes 'ran.'"
+			}
+		],
+		"response_fields": []
+	},
+	{
+		"title": "The same module, plus one function nobody calls",
+		"kind": "module",
+		"request": "exactly the module above with one more function added — a `() -> ()` whose body is `call 777`, an index the module does not have  —  `run mod.wasm`",
+		"request_hex": "0061736d01000000010c0260047f7f7f7f017f60000002230116776173695f736e617073686f745f70726576696577310866645f7772697465000003030201010503010001070a01066d656d6f727902000801010a28021f00418002410036020041840241043602004101418002410141800410001a0b06001089061a0b0b0a010041000b0472616e0a",
+		"response": "nothing on stdout, a message on stderr, and a non-zero exit status — the start function never runs",
+		"response_hex": "",
+		"note": "Nothing ever calls function 2, and it makes no difference: validation covers every body in the code section, and a module that fails it is not instantiated at all. The empty stdout is the whole test.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "header.magic",
+				"value": "\\0asm"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.version",
+				"value": "1 (little-endian)"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "section[1].id",
+				"value": "type section"
+			},
+			{
+				"offset": 9,
+				"length": 1,
+				"field": "section[1].size",
+				"value": "12 bytes"
+			},
+			{
+				"offset": 11,
+				"length": 8,
+				"field": "type[0]",
+				"value": "(i32 i32 i32 i32) -> (i32)"
+			},
+			{
+				"offset": 19,
+				"length": 3,
+				"field": "type[1]",
+				"value": "() -> ()"
+			},
+			{
+				"offset": 22,
+				"length": 1,
+				"field": "section[2].id",
+				"value": "import section"
+			},
+			{
+				"offset": 23,
+				"length": 1,
+				"field": "section[2].size",
+				"value": "35 bytes"
+			},
+			{
+				"offset": 25,
+				"length": 34,
+				"field": "import[0]",
+				"value": "wasi_snapshot_preview1::fd_write — func type 0 (i32 i32 i32 i32) -> (i32)"
+			},
+			{
+				"offset": 59,
+				"length": 1,
+				"field": "section[3].id",
+				"value": "function section"
+			},
+			{
+				"offset": 60,
+				"length": 1,
+				"field": "section[3].size",
+				"value": "3 bytes"
+			},
+			{
+				"offset": 62,
+				"length": 1,
+				"field": "function[1]",
+				"value": "type 1 () -> ()"
+			},
+			{
+				"offset": 63,
+				"length": 1,
+				"field": "function[2]",
+				"value": "type 1 () -> ()"
+			},
+			{
+				"offset": 64,
+				"length": 1,
+				"field": "section[5].id",
+				"value": "memory section"
+			},
+			{
+				"offset": 65,
+				"length": 1,
+				"field": "section[5].size",
+				"value": "3 bytes"
+			},
+			{
+				"offset": 67,
+				"length": 2,
+				"field": "memory[0]",
+				"value": "min 1, no max (64 KiB pages)"
+			},
+			{
+				"offset": 69,
+				"length": 1,
+				"field": "section[7].id",
+				"value": "export section"
+			},
+			{
+				"offset": 70,
+				"length": 1,
+				"field": "section[7].size",
+				"value": "10 bytes"
+			},
+			{
+				"offset": 72,
+				"length": 9,
+				"field": "export[0]",
+				"value": "'memory' → memory 0"
+			},
+			{
+				"offset": 81,
+				"length": 1,
+				"field": "section[8].id",
+				"value": "start section"
+			},
+			{
+				"offset": 82,
+				"length": 1,
+				"field": "section[8].size",
+				"value": "1 bytes"
+			},
+			{
+				"offset": 83,
+				"length": 1,
+				"field": "start.func",
+				"value": "function 1 runs before any export is callable"
+			},
+			{
+				"offset": 84,
+				"length": 1,
+				"field": "section[10].id",
+				"value": "code section"
+			},
+			{
+				"offset": 85,
+				"length": 1,
+				"field": "section[10].size",
+				"value": "40 bytes"
+			},
+			{
+				"offset": 87,
+				"length": 1,
+				"field": "code[1].size",
+				"value": "31 bytes"
+			},
+			{
+				"offset": 88,
+				"length": 31,
+				"field": "code[1].body",
+				"value": "i32.const 256, i32.const 0, i32.store align=4 offset=0, i32.const 260, i32.const 4, i32.store align=4 offset=0, i32.const 1, i32.const 256, i32.const 1, i32.const 512, call 0, drop"
+			},
+			{
+				"offset": 119,
+				"length": 1,
+				"field": "code[2].size",
+				"value": "6 bytes"
+			},
+			{
+				"offset": 120,
+				"length": 6,
+				"field": "code[2].body",
+				"value": "call 777, drop"
+			},
+			{
+				"offset": 126,
+				"length": 1,
+				"field": "section[11].id",
+				"value": "data section"
+			},
+			{
+				"offset": 127,
+				"length": 1,
+				"field": "section[11].size",
+				"value": "10 bytes"
+			},
+			{
+				"offset": 129,
+				"length": 9,
+				"field": "data[0]",
+				"value": "active into memory 0, 4 bytes 'ran.'"
+			}
+		],
+		"response_fields": []
+	}
+]

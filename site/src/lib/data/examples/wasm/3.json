@@ -1,0 +1,158 @@
+[
+	{
+		"title": "Five sections, ascending",
+		"kind": "module",
+		"request": "the type, function, memory, export and code sections of `f() -> i32 { 7 }`, each one an id byte, a uLEB128 size and that many bytes of body  —  `run --invoke f mod.wasm`",
+		"request_hex": "0061736d010000000105016000017f030201000503010001070501016600000a0601040041070b",
+		"response": "7",
+		"response_hex": "",
+		"note": "Ids 1, 3, 5, 7, 10 — strictly ascending. Remember the last id you decoded and refuse anything that is not larger; that single rule catches both a repeated section and a section in the wrong place.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "header.magic",
+				"value": "\\0asm"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.version",
+				"value": "1 (little-endian)"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "section[1].id",
+				"value": "type section"
+			},
+			{
+				"offset": 9,
+				"length": 1,
+				"field": "section[1].size",
+				"value": "5 bytes"
+			},
+			{
+				"offset": 15,
+				"length": 1,
+				"field": "section[3].id",
+				"value": "function section"
+			},
+			{
+				"offset": 16,
+				"length": 1,
+				"field": "section[3].size",
+				"value": "2 bytes"
+			},
+			{
+				"offset": 19,
+				"length": 1,
+				"field": "section[5].id",
+				"value": "memory section"
+			},
+			{
+				"offset": 20,
+				"length": 1,
+				"field": "section[5].size",
+				"value": "3 bytes"
+			},
+			{
+				"offset": 24,
+				"length": 1,
+				"field": "section[7].id",
+				"value": "export section"
+			},
+			{
+				"offset": 25,
+				"length": 1,
+				"field": "section[7].size",
+				"value": "5 bytes"
+			},
+			{
+				"offset": 31,
+				"length": 1,
+				"field": "section[10].id",
+				"value": "code section"
+			},
+			{
+				"offset": 32,
+				"length": 1,
+				"field": "section[10].size",
+				"value": "6 bytes"
+			}
+		],
+		"response_fields": []
+	},
+	{
+		"title": "A size three bytes short",
+		"kind": "module",
+		"request": "the same module whose type section declares three bytes and is followed by five  —  `run --invoke f mod.wasm`",
+		"request_hex": "0061736d010000000103016000017f03020100070501016600000a0601040041070b",
+		"response": "nothing on stdout, a message on stderr, and a non-zero exit status",
+		"response_hex": "",
+		"note": "After three bytes the decoder is standing on `01`, the last two bytes of the function type, and reads it as another type section with a size of 0x7f. The size field is the only thing that says where a section ends, so a decoder that carries on from wherever its body parser stopped will follow a lie all the way to the end of the file.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "header.magic",
+				"value": "\\0asm"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.version",
+				"value": "1 (little-endian)"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "section[1].id",
+				"value": "type section"
+			},
+			{
+				"offset": 9,
+				"length": 1,
+				"field": "section[1].size",
+				"value": "3, but the body is 5 bytes"
+			},
+			{
+				"offset": 15,
+				"length": 1,
+				"field": "section[3].id",
+				"value": "function section"
+			},
+			{
+				"offset": 16,
+				"length": 1,
+				"field": "section[3].size",
+				"value": "2 bytes"
+			},
+			{
+				"offset": 19,
+				"length": 1,
+				"field": "section[7].id",
+				"value": "export section"
+			},
+			{
+				"offset": 20,
+				"length": 1,
+				"field": "section[7].size",
+				"value": "5 bytes"
+			},
+			{
+				"offset": 26,
+				"length": 1,
+				"field": "section[10].id",
+				"value": "code section"
+			},
+			{
+				"offset": 27,
+				"length": 1,
+				"field": "section[10].size",
+				"value": "6 bytes"
+			}
+		],
+		"response_fields": []
+	}
+]

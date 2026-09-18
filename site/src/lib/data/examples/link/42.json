@@ -1,0 +1,671 @@
+[
+	{
+		"title": "The program the toolchain is pointed at",
+		"kind": "object",
+		"command": "ld -o interop main.o other.o data.o && readelf -a interop",
+		"request": "main.o, the first of three: a .rodata string, a .text that writes it and calls the undefined 'other', joined by other.o (which defines it) and data.o (a .data and a .bss with two globals and no code at all)",
+		"request_hex": "7f454c4602010100000000000000000001003e000100000000000000000000000000000000000000800100000000000000000000400000000000400007000600b801000000bf01000000488d3500000000ba080000000f05e80000000089c7b83c0000000f05696e7465726f700a00000d000000000000000200000003000000fcffffffffffffff19000000000000000400000005000000fcffffffffffffff000000000000000000000000000000000000000000000000000000000300010000000000000000000000000000000000000000000300020000000000000000000000000000000000010000000100020000000000000000000800000000000000090000001200010000000000000000000000000000000000100000001000000000000000000000000000000000000000006d657373616765005f7374617274006f7468657200002e74657874002e726f64617461002e72656c612e74657874002e73796d746162002e737472746162002e7368737472746162000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000010000000600000000000000000000000000000040000000000000002600000000000000000000000000000010000000000000000000000000000000070000000100000002000000000000000000000000000000660000000000000008000000000000000000000000000000010000000000000000000000000000000f0000000400000040000000000000000000000000000000700000000000000030000000000000000400000001000000080000000000000018000000000000001a0000000200000000000000000000000000000000000000a0000000000000009000000000000000050000000400000008000000000000001800000000000000220000000300000000000000000000000000000000000000300100000000000016000000000000000000000000000000010000000000000000000000000000002a000000030000000000000000000000000000000000000046010000000000003400000000000000000000000000000001000000000000000000000000000000",
+		"response": "A file readelf -h calls EXEC on X86-64 with the same entry point the suite computed, readelf -lW shows with the same PT_LOADs and the same R/RW/RE flags, nm lists _start, other, table and slot at the suite's addresses in, and objdump -d disassembles from the entry point with no (bad) opcodes",
+		"response_hex": "",
+		"note": "This is the leg that catches a linker whose output runs but whose section header table is a fiction: the kernel never reads section headers, and every debugger, profiler and disassembler reads nothing else.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "header.e_ident.magic",
+				"value": "7f 45 4c 46 — \\x7fELF"
+			},
+			{
+				"offset": 4,
+				"length": 1,
+				"field": "header.e_ident[EI_CLASS]",
+				"value": "2 (ELFCLASS64)"
+			},
+			{
+				"offset": 5,
+				"length": 1,
+				"field": "header.e_ident[EI_DATA]",
+				"value": "1 (little-endian)"
+			},
+			{
+				"offset": 6,
+				"length": 1,
+				"field": "header.e_ident[EI_VERSION]",
+				"value": "1"
+			},
+			{
+				"offset": 7,
+				"length": 1,
+				"field": "header.e_ident[EI_OSABI]",
+				"value": "0"
+			},
+			{
+				"offset": 8,
+				"length": 8,
+				"field": "header.e_ident.padding",
+				"value": "reserved, all zero"
+			},
+			{
+				"offset": 16,
+				"length": 2,
+				"field": "header.e_type",
+				"value": "1 (ET_REL, a relocatable object)"
+			},
+			{
+				"offset": 18,
+				"length": 2,
+				"field": "header.e_machine",
+				"value": "62 (EM_X86_64)"
+			},
+			{
+				"offset": 20,
+				"length": 4,
+				"field": "header.e_version",
+				"value": "1"
+			},
+			{
+				"offset": 24,
+				"length": 8,
+				"field": "header.e_entry",
+				"value": "0x0"
+			},
+			{
+				"offset": 32,
+				"length": 8,
+				"field": "header.e_phoff",
+				"value": "0"
+			},
+			{
+				"offset": 40,
+				"length": 8,
+				"field": "header.e_shoff",
+				"value": "384 (the section header table)"
+			},
+			{
+				"offset": 48,
+				"length": 4,
+				"field": "header.e_flags",
+				"value": "0x0"
+			},
+			{
+				"offset": 52,
+				"length": 2,
+				"field": "header.e_ehsize",
+				"value": "64"
+			},
+			{
+				"offset": 54,
+				"length": 2,
+				"field": "header.e_phentsize",
+				"value": "0"
+			},
+			{
+				"offset": 56,
+				"length": 2,
+				"field": "header.e_phnum",
+				"value": "0"
+			},
+			{
+				"offset": 58,
+				"length": 2,
+				"field": "header.e_shentsize",
+				"value": "64"
+			},
+			{
+				"offset": 60,
+				"length": 2,
+				"field": "header.e_shnum",
+				"value": "7 section headers"
+			},
+			{
+				"offset": 62,
+				"length": 2,
+				"field": "header.e_shstrndx",
+				"value": "6 (the section name string table)"
+			},
+			{
+				"offset": 64,
+				"length": 38,
+				"field": ".text.contents",
+				"value": "38 bytes of machine code"
+			},
+			{
+				"offset": 102,
+				"length": 8,
+				"field": ".rodata.contents",
+				"value": "8 bytes: \"interop\\n\""
+			},
+			{
+				"offset": 112,
+				"length": 8,
+				"field": ".rela.text[0].r_offset",
+				"value": "0xd — the field to patch, inside '.text'"
+			},
+			{
+				"offset": 120,
+				"length": 8,
+				"field": ".rela.text[0].r_info",
+				"value": "symbol 3 ('message'), type R_X86_64_PC32"
+			},
+			{
+				"offset": 128,
+				"length": 8,
+				"field": ".rela.text[0].r_addend",
+				"value": "-4 (the A in S + A - P)"
+			},
+			{
+				"offset": 136,
+				"length": 8,
+				"field": ".rela.text[1].r_offset",
+				"value": "0x19 — the field to patch, inside '.text'"
+			},
+			{
+				"offset": 144,
+				"length": 8,
+				"field": ".rela.text[1].r_info",
+				"value": "symbol 5 ('other'), type R_X86_64_PLT32"
+			},
+			{
+				"offset": 152,
+				"length": 8,
+				"field": ".rela.text[1].r_addend",
+				"value": "-4 (the A in S + A - P)"
+			},
+			{
+				"offset": 160,
+				"length": 4,
+				"field": "symtab[0].st_name",
+				"value": "(unnamed)"
+			},
+			{
+				"offset": 164,
+				"length": 1,
+				"field": "symtab[0].st_info",
+				"value": "STB_LOCAL STT_NOTYPE"
+			},
+			{
+				"offset": 165,
+				"length": 1,
+				"field": "symtab[0].st_other",
+				"value": "STV_DEFAULT"
+			},
+			{
+				"offset": 166,
+				"length": 2,
+				"field": "symtab[0].st_shndx",
+				"value": "SHN_UNDEF (a reference, not a definition)"
+			},
+			{
+				"offset": 168,
+				"length": 8,
+				"field": "symtab[0].st_value",
+				"value": "0x0"
+			},
+			{
+				"offset": 176,
+				"length": 8,
+				"field": "symtab[0].st_size",
+				"value": "0"
+			},
+			{
+				"offset": 184,
+				"length": 4,
+				"field": "symtab[1].st_name",
+				"value": "(unnamed)"
+			},
+			{
+				"offset": 188,
+				"length": 1,
+				"field": "symtab[1].st_info",
+				"value": "STB_LOCAL STT_SECTION"
+			},
+			{
+				"offset": 189,
+				"length": 1,
+				"field": "symtab[1].st_other",
+				"value": "STV_DEFAULT"
+			},
+			{
+				"offset": 190,
+				"length": 2,
+				"field": "symtab[1].st_shndx",
+				"value": "1 ('.text')"
+			},
+			{
+				"offset": 192,
+				"length": 8,
+				"field": "symtab[1].st_value",
+				"value": "0x0"
+			},
+			{
+				"offset": 200,
+				"length": 8,
+				"field": "symtab[1].st_size",
+				"value": "0"
+			},
+			{
+				"offset": 208,
+				"length": 4,
+				"field": "symtab[2].st_name",
+				"value": "(unnamed)"
+			},
+			{
+				"offset": 212,
+				"length": 1,
+				"field": "symtab[2].st_info",
+				"value": "STB_LOCAL STT_SECTION"
+			},
+			{
+				"offset": 213,
+				"length": 1,
+				"field": "symtab[2].st_other",
+				"value": "STV_DEFAULT"
+			},
+			{
+				"offset": 214,
+				"length": 2,
+				"field": "symtab[2].st_shndx",
+				"value": "2 ('.rodata')"
+			},
+			{
+				"offset": 216,
+				"length": 8,
+				"field": "symtab[2].st_value",
+				"value": "0x0"
+			},
+			{
+				"offset": 224,
+				"length": 8,
+				"field": "symtab[2].st_size",
+				"value": "0"
+			},
+			{
+				"offset": 232,
+				"length": 4,
+				"field": "symtab[3].st_name",
+				"value": "'message'"
+			},
+			{
+				"offset": 236,
+				"length": 1,
+				"field": "symtab[3].st_info",
+				"value": "STB_LOCAL STT_OBJECT"
+			},
+			{
+				"offset": 237,
+				"length": 1,
+				"field": "symtab[3].st_other",
+				"value": "STV_DEFAULT"
+			},
+			{
+				"offset": 238,
+				"length": 2,
+				"field": "symtab[3].st_shndx",
+				"value": "2 ('.rodata')"
+			},
+			{
+				"offset": 240,
+				"length": 8,
+				"field": "symtab[3].st_value",
+				"value": "0x0"
+			},
+			{
+				"offset": 248,
+				"length": 8,
+				"field": "symtab[3].st_size",
+				"value": "8"
+			},
+			{
+				"offset": 256,
+				"length": 4,
+				"field": "symtab[4].st_name",
+				"value": "'_start'"
+			},
+			{
+				"offset": 260,
+				"length": 1,
+				"field": "symtab[4].st_info",
+				"value": "STB_GLOBAL STT_FUNC"
+			},
+			{
+				"offset": 261,
+				"length": 1,
+				"field": "symtab[4].st_other",
+				"value": "STV_DEFAULT"
+			},
+			{
+				"offset": 262,
+				"length": 2,
+				"field": "symtab[4].st_shndx",
+				"value": "1 ('.text')"
+			},
+			{
+				"offset": 264,
+				"length": 8,
+				"field": "symtab[4].st_value",
+				"value": "0x0"
+			},
+			{
+				"offset": 272,
+				"length": 8,
+				"field": "symtab[4].st_size",
+				"value": "0"
+			},
+			{
+				"offset": 280,
+				"length": 4,
+				"field": "symtab[5].st_name",
+				"value": "'other'"
+			},
+			{
+				"offset": 284,
+				"length": 1,
+				"field": "symtab[5].st_info",
+				"value": "STB_GLOBAL STT_NOTYPE"
+			},
+			{
+				"offset": 285,
+				"length": 1,
+				"field": "symtab[5].st_other",
+				"value": "STV_DEFAULT"
+			},
+			{
+				"offset": 286,
+				"length": 2,
+				"field": "symtab[5].st_shndx",
+				"value": "SHN_UNDEF (a reference, not a definition)"
+			},
+			{
+				"offset": 288,
+				"length": 8,
+				"field": "symtab[5].st_value",
+				"value": "0x0"
+			},
+			{
+				"offset": 296,
+				"length": 8,
+				"field": "symtab[5].st_size",
+				"value": "0"
+			},
+			{
+				"offset": 304,
+				"length": 22,
+				"field": ".strtab.contents",
+				"value": "22 bytes of NUL-terminated strings"
+			},
+			{
+				"offset": 326,
+				"length": 52,
+				"field": ".shstrtab.contents",
+				"value": "52 bytes of NUL-terminated strings"
+			},
+			{
+				"offset": 384,
+				"length": 4,
+				"field": "sections[0].sh_name",
+				"value": "'(the null section)'"
+			},
+			{
+				"offset": 388,
+				"length": 4,
+				"field": "sections[0].sh_type",
+				"value": "NULL"
+			},
+			{
+				"offset": 392,
+				"length": 8,
+				"field": "sections[0].sh_flags",
+				"value": "0x0"
+			},
+			{
+				"offset": 408,
+				"length": 8,
+				"field": "sections[0].sh_offset",
+				"value": "0 (where '(the null section)' starts in the file)"
+			},
+			{
+				"offset": 416,
+				"length": 8,
+				"field": "sections[0].sh_size",
+				"value": "0 bytes"
+			},
+			{
+				"offset": 432,
+				"length": 8,
+				"field": "sections[0].sh_addralign",
+				"value": "0"
+			},
+			{
+				"offset": 448,
+				"length": 4,
+				"field": "sections[1].sh_name",
+				"value": "'.text'"
+			},
+			{
+				"offset": 452,
+				"length": 4,
+				"field": "sections[1].sh_type",
+				"value": "PROGBITS"
+			},
+			{
+				"offset": 456,
+				"length": 8,
+				"field": "sections[1].sh_flags",
+				"value": "0x6 (SHF_ALLOC | SHF_EXECINSTR)"
+			},
+			{
+				"offset": 472,
+				"length": 8,
+				"field": "sections[1].sh_offset",
+				"value": "64 (where '.text' starts in the file)"
+			},
+			{
+				"offset": 480,
+				"length": 8,
+				"field": "sections[1].sh_size",
+				"value": "38 bytes"
+			},
+			{
+				"offset": 496,
+				"length": 8,
+				"field": "sections[1].sh_addralign",
+				"value": "16"
+			},
+			{
+				"offset": 512,
+				"length": 4,
+				"field": "sections[2].sh_name",
+				"value": "'.rodata'"
+			},
+			{
+				"offset": 516,
+				"length": 4,
+				"field": "sections[2].sh_type",
+				"value": "PROGBITS"
+			},
+			{
+				"offset": 520,
+				"length": 8,
+				"field": "sections[2].sh_flags",
+				"value": "0x2 (SHF_ALLOC)"
+			},
+			{
+				"offset": 536,
+				"length": 8,
+				"field": "sections[2].sh_offset",
+				"value": "102 (where '.rodata' starts in the file)"
+			},
+			{
+				"offset": 544,
+				"length": 8,
+				"field": "sections[2].sh_size",
+				"value": "8 bytes"
+			},
+			{
+				"offset": 560,
+				"length": 8,
+				"field": "sections[2].sh_addralign",
+				"value": "1"
+			},
+			{
+				"offset": 576,
+				"length": 4,
+				"field": "sections[3].sh_name",
+				"value": "'.rela.text'"
+			},
+			{
+				"offset": 580,
+				"length": 4,
+				"field": "sections[3].sh_type",
+				"value": "RELA"
+			},
+			{
+				"offset": 584,
+				"length": 8,
+				"field": "sections[3].sh_flags",
+				"value": "0x40 (SHF_INFO_LINK)"
+			},
+			{
+				"offset": 600,
+				"length": 8,
+				"field": "sections[3].sh_offset",
+				"value": "112 (where '.rela.text' starts in the file)"
+			},
+			{
+				"offset": 608,
+				"length": 8,
+				"field": "sections[3].sh_size",
+				"value": "48 bytes"
+			},
+			{
+				"offset": 624,
+				"length": 8,
+				"field": "sections[3].sh_addralign",
+				"value": "8"
+			},
+			{
+				"offset": 640,
+				"length": 4,
+				"field": "sections[4].sh_name",
+				"value": "'.symtab'"
+			},
+			{
+				"offset": 644,
+				"length": 4,
+				"field": "sections[4].sh_type",
+				"value": "SYMTAB"
+			},
+			{
+				"offset": 648,
+				"length": 8,
+				"field": "sections[4].sh_flags",
+				"value": "0x0"
+			},
+			{
+				"offset": 664,
+				"length": 8,
+				"field": "sections[4].sh_offset",
+				"value": "160 (where '.symtab' starts in the file)"
+			},
+			{
+				"offset": 672,
+				"length": 8,
+				"field": "sections[4].sh_size",
+				"value": "144 bytes"
+			},
+			{
+				"offset": 688,
+				"length": 8,
+				"field": "sections[4].sh_addralign",
+				"value": "8"
+			},
+			{
+				"offset": 704,
+				"length": 4,
+				"field": "sections[5].sh_name",
+				"value": "'.strtab'"
+			},
+			{
+				"offset": 708,
+				"length": 4,
+				"field": "sections[5].sh_type",
+				"value": "STRTAB"
+			},
+			{
+				"offset": 712,
+				"length": 8,
+				"field": "sections[5].sh_flags",
+				"value": "0x0"
+			},
+			{
+				"offset": 728,
+				"length": 8,
+				"field": "sections[5].sh_offset",
+				"value": "304 (where '.strtab' starts in the file)"
+			},
+			{
+				"offset": 736,
+				"length": 8,
+				"field": "sections[5].sh_size",
+				"value": "22 bytes"
+			},
+			{
+				"offset": 752,
+				"length": 8,
+				"field": "sections[5].sh_addralign",
+				"value": "1"
+			},
+			{
+				"offset": 768,
+				"length": 4,
+				"field": "sections[6].sh_name",
+				"value": "'.shstrtab'"
+			},
+			{
+				"offset": 772,
+				"length": 4,
+				"field": "sections[6].sh_type",
+				"value": "STRTAB"
+			},
+			{
+				"offset": 776,
+				"length": 8,
+				"field": "sections[6].sh_flags",
+				"value": "0x0"
+			},
+			{
+				"offset": 792,
+				"length": 8,
+				"field": "sections[6].sh_offset",
+				"value": "326 (where '.shstrtab' starts in the file)"
+			},
+			{
+				"offset": 800,
+				"length": 8,
+				"field": "sections[6].sh_size",
+				"value": "52 bytes"
+			},
+			{
+				"offset": 816,
+				"length": 8,
+				"field": "sections[6].sh_addralign",
+				"value": "1"
+			}
+		],
+		"response_fields": [],
+		"stdout": "interop\n",
+		"exit_status": 19
+	},
+	{
+		"title": "readelf -a, and what a clean run means",
+		"kind": "text",
+		"command": "readelf -a interop 2>&1 | grep -i -e warning -e error",
+		"request": "The finished executable, handed to readelf's everything-mode: the ELF header, the section headers, the program headers, the section-to-segment mapping, the symbol table and any relocations left in the file",
+		"request_hex": "",
+		"response": "Exit status 0, nothing at all on stderr, and not one line of the dump containing 'warning', 'error', 'corrupt' or 'unable to'",
+		"response_hex": "",
+		"note": "sh_link on .symtab, sh_info on .symtab, sh_entsize on anything with fixed-size entries: get one of those wrong and the program still runs, readelf still prints a table, and one small warning line is the only thing that ever tells you.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

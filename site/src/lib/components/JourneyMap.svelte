@@ -1,8 +1,7 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
 	import Bloom from './garden/Bloom.svelte';
-	import Fox from './garden/Fox.svelte';
-	import Bunny from './garden/Bunny.svelte';
+	import { mascotFor } from './garden/mascots';
 	import { badgeFor } from '$lib/catalog';
 	import { stageState, stateLabel } from '$lib/stage-state';
 	import { progress } from '$lib/stores/progress.svelte';
@@ -25,6 +24,9 @@
 		celebrate?: number;
 		onselect: (stage: number) => void;
 	} = $props();
+
+	/** The track's own animal, from the registry. */
+	const Mascot = $derived(mascotFor(track));
 
 	/* ------------------------------- geometry -------------------------------
 	   Everything below is in "map units". The SVG viewBox is sized so that at
@@ -166,7 +168,9 @@
 
 	/** Grass tufts and fallen petals scattered over the meadow — fixed, never random per render. */
 	const scatter = $derived.by(() => {
-		const rnd = seeded(track === 'shell' ? 1337 : 4242);
+		// One fixed seed per track, derived from its id, so the scatter is stable per trail
+		// and different between trails — and a new track needs no new number here.
+		const rnd = seeded([...track].reduce((n, c) => (n * 31 + c.charCodeAt(0)) >>> 0, 1337));
 		const w = layout.width;
 		const h = layout.height;
 		return Array.from({ length: Math.min(130, Math.round((w * h) / 5200)) }, (_, i) => ({
@@ -572,11 +576,7 @@
 			style="transform: translate3d({mascotPos.x}px, {mascotPos.y}px, 0)"
 			aria-hidden="true"
 		>
-			{#if track === 'shell'}
-				<Fox size={74} {mood} />
-			{:else}
-				<Bunny size={74} {mood} />
-			{/if}
+			<Mascot size={74} {mood} />
 		</div>
 	{/if}
 

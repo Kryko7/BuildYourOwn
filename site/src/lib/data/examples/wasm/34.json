@@ -1,0 +1,242 @@
+[
+	{
+		"title": "An overlapping copy",
+		"kind": "module",
+		"request": "write 1..8 into bytes 0..8, then `memory.copy` eight bytes from address 0 to address 2, and read byte 4  —  `run --invoke f mod.wasm`",
+		"request_hex": "0061736d010000000105016000017f030201000503010001070501016600000a4b014900410041013a0000410141023a0000410241033a0000410341043a0000410441053a0000410541063a0000410641073a0000410741083a0000410241004108fc0a000041042d00000b",
+		"response": "3",
+		"response_hex": "",
+		"note": "The source must be read as it was before the copy started, so byte 4 gets the original byte 2, which was 3. A forward byte loop has already written byte 2 by then and prints 1 instead.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "header.magic",
+				"value": "\\0asm"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.version",
+				"value": "1 (little-endian)"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "section[1].id",
+				"value": "type section"
+			},
+			{
+				"offset": 9,
+				"length": 1,
+				"field": "section[1].size",
+				"value": "5 bytes"
+			},
+			{
+				"offset": 11,
+				"length": 4,
+				"field": "type[0]",
+				"value": "() -> (i32)"
+			},
+			{
+				"offset": 15,
+				"length": 1,
+				"field": "section[3].id",
+				"value": "function section"
+			},
+			{
+				"offset": 16,
+				"length": 1,
+				"field": "section[3].size",
+				"value": "2 bytes"
+			},
+			{
+				"offset": 18,
+				"length": 1,
+				"field": "function[0]",
+				"value": "type 0 () -> (i32)"
+			},
+			{
+				"offset": 19,
+				"length": 1,
+				"field": "section[5].id",
+				"value": "memory section"
+			},
+			{
+				"offset": 20,
+				"length": 1,
+				"field": "section[5].size",
+				"value": "3 bytes"
+			},
+			{
+				"offset": 22,
+				"length": 2,
+				"field": "memory[0]",
+				"value": "min 1, no max (64 KiB pages)"
+			},
+			{
+				"offset": 24,
+				"length": 1,
+				"field": "section[7].id",
+				"value": "export section"
+			},
+			{
+				"offset": 25,
+				"length": 1,
+				"field": "section[7].size",
+				"value": "5 bytes"
+			},
+			{
+				"offset": 27,
+				"length": 4,
+				"field": "export[0]",
+				"value": "'f' → func 0"
+			},
+			{
+				"offset": 31,
+				"length": 1,
+				"field": "section[10].id",
+				"value": "code section"
+			},
+			{
+				"offset": 32,
+				"length": 1,
+				"field": "section[10].size",
+				"value": "75 bytes"
+			},
+			{
+				"offset": 34,
+				"length": 1,
+				"field": "code[0].size",
+				"value": "73 bytes"
+			},
+			{
+				"offset": 35,
+				"length": 73,
+				"field": "code[0].body",
+				"value": "i32.const 0, i32.const 1, i32.store8 align=1 offset=0, i32.const 1, i32.const 2, i32.store8 align=1 offset=0, i32.const 2, i32.const 3, i32.store8 align=1 offset=0, i32.const 3, i32.const 4, i32.store8 align=1 offset=0, i32.const 4, i32.const 5, i32.store8 align=1 offset=0, i32.const 5, i32.const 6, i32.store8 align=1 offset=0, i32.const 6, i32.const 7, i32.store8 align=1 offset=0, i32.const 7, i32.const 8, i32.store8 align=1 offset=0, i32.const 2, i32.const 0, i32.const 8, memory.copy, i32.const 4, i32.load8_u align=1 offset=0"
+			}
+		],
+		"response_fields": []
+	},
+	{
+		"title": "A fill value wider than a byte",
+		"kind": "module",
+		"request": "`memory.fill` of four bytes at address 0 with the value 0x1ff, then read byte 0  —  `run --invoke f mod.wasm`",
+		"request_hex": "0061736d010000000105016000017f030201000503010001070501016600000a13011100410041ff034104fc0b0041002d00000b",
+		"response": "255",
+		"response_hex": "",
+		"note": "The value operand is an i32 but a fill writes bytes: only the low eight bits are used, so 0x1ff and 0xff fill identically and 0x100 fills with zeroes.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "header.magic",
+				"value": "\\0asm"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.version",
+				"value": "1 (little-endian)"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "section[1].id",
+				"value": "type section"
+			},
+			{
+				"offset": 9,
+				"length": 1,
+				"field": "section[1].size",
+				"value": "5 bytes"
+			},
+			{
+				"offset": 11,
+				"length": 4,
+				"field": "type[0]",
+				"value": "() -> (i32)"
+			},
+			{
+				"offset": 15,
+				"length": 1,
+				"field": "section[3].id",
+				"value": "function section"
+			},
+			{
+				"offset": 16,
+				"length": 1,
+				"field": "section[3].size",
+				"value": "2 bytes"
+			},
+			{
+				"offset": 18,
+				"length": 1,
+				"field": "function[0]",
+				"value": "type 0 () -> (i32)"
+			},
+			{
+				"offset": 19,
+				"length": 1,
+				"field": "section[5].id",
+				"value": "memory section"
+			},
+			{
+				"offset": 20,
+				"length": 1,
+				"field": "section[5].size",
+				"value": "3 bytes"
+			},
+			{
+				"offset": 22,
+				"length": 2,
+				"field": "memory[0]",
+				"value": "min 1, no max (64 KiB pages)"
+			},
+			{
+				"offset": 24,
+				"length": 1,
+				"field": "section[7].id",
+				"value": "export section"
+			},
+			{
+				"offset": 25,
+				"length": 1,
+				"field": "section[7].size",
+				"value": "5 bytes"
+			},
+			{
+				"offset": 27,
+				"length": 4,
+				"field": "export[0]",
+				"value": "'f' → func 0"
+			},
+			{
+				"offset": 31,
+				"length": 1,
+				"field": "section[10].id",
+				"value": "code section"
+			},
+			{
+				"offset": 32,
+				"length": 1,
+				"field": "section[10].size",
+				"value": "19 bytes"
+			},
+			{
+				"offset": 34,
+				"length": 1,
+				"field": "code[0].size",
+				"value": "17 bytes"
+			},
+			{
+				"offset": 35,
+				"length": 17,
+				"field": "code[0].body",
+				"value": "i32.const 0, i32.const 511, i32.const 4, memory.fill, i32.const 0, i32.load8_u align=1 offset=0"
+			}
+		],
+		"response_fields": []
+	}
+]

@@ -1,0 +1,140 @@
+[
+	{
+		"title": "The empty module",
+		"kind": "module",
+		"request": "the eight-byte header and nothing else: no sections at all  —  `run mod.wasm`",
+		"request_hex": "0061736d01000000",
+		"response": "nothing at all, and an exit status of 0",
+		"response_hex": "",
+		"note": "Every section is optional, so this is a valid module — it simply has no functions, no exports and no `_start`. `run --invoke f` on it fails naming `f`, not the bytes, and that difference is how you tell a module that would not decode from one that decoded and had nothing to offer.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "header.magic",
+				"value": "\\0asm"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.version",
+				"value": "1 (little-endian)"
+			}
+		],
+		"response_fields": []
+	},
+	{
+		"title": "One function, three names",
+		"kind": "module",
+		"request": "one `() -> i32` function returning 7, and an export section with three entries all pointing at function index 0  —  `run --invoke also_f mod.wasm`",
+		"request_hex": "0061736d010000000105016000017f030201000718030166000006616c736f5f66000007665f616761696e00000a0601040041070b",
+		"response": "7",
+		"response_hex": "",
+		"note": "An export is a name plus a kind byte plus an index, so the mapping is many names to one thing. The one constraint is the other way round: no two entries may share a name, and a module that breaks it is refused at validation with nothing run.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "header.magic",
+				"value": "\\0asm"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.version",
+				"value": "1 (little-endian)"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "section[1].id",
+				"value": "type section"
+			},
+			{
+				"offset": 9,
+				"length": 1,
+				"field": "section[1].size",
+				"value": "5 bytes"
+			},
+			{
+				"offset": 11,
+				"length": 4,
+				"field": "type[0]",
+				"value": "() -> (i32)"
+			},
+			{
+				"offset": 15,
+				"length": 1,
+				"field": "section[3].id",
+				"value": "function section"
+			},
+			{
+				"offset": 16,
+				"length": 1,
+				"field": "section[3].size",
+				"value": "2 bytes"
+			},
+			{
+				"offset": 18,
+				"length": 1,
+				"field": "function[0]",
+				"value": "type 0 () -> (i32)"
+			},
+			{
+				"offset": 19,
+				"length": 1,
+				"field": "section[7].id",
+				"value": "export section"
+			},
+			{
+				"offset": 20,
+				"length": 1,
+				"field": "section[7].size",
+				"value": "24 bytes"
+			},
+			{
+				"offset": 22,
+				"length": 4,
+				"field": "export[0]",
+				"value": "'f' → func 0"
+			},
+			{
+				"offset": 26,
+				"length": 9,
+				"field": "export[1]",
+				"value": "'also_f' → func 0"
+			},
+			{
+				"offset": 35,
+				"length": 10,
+				"field": "export[2]",
+				"value": "'f_again' → func 0"
+			},
+			{
+				"offset": 45,
+				"length": 1,
+				"field": "section[10].id",
+				"value": "code section"
+			},
+			{
+				"offset": 46,
+				"length": 1,
+				"field": "section[10].size",
+				"value": "6 bytes"
+			},
+			{
+				"offset": 48,
+				"length": 1,
+				"field": "code[0].size",
+				"value": "4 bytes"
+			},
+			{
+				"offset": 49,
+				"length": 4,
+				"field": "code[0].body",
+				"value": "i32.const 7"
+			}
+		],
+		"response_fields": []
+	}
+]

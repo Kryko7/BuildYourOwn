@@ -1,0 +1,398 @@
+[
+	{
+		"title": "Active at instantiation, passive on demand",
+		"kind": "module",
+		"request": "one active segment putting `one` at slot 0 and one passive segment holding `two` and `three`; `f` calls slot 0, asks whether slot 4 is empty, runs `table.init 1 0` to copy the passive segment to slot 4, and calls slot 5  —  `run --invoke f mod.wasm`",
+		"request_hex": "0061736d01000000010b026000017f6000037f7f7f0305040000000104040170000607050101660003090c020041000b010001000201020a2c04040041010b040041020b040041030b1b00410011000041042500d1410441004102fc0c010041051100000b",
+		"response": "1\n1\n3",
+		"response_hex": "",
+		"note": "The active segment was applied before `f` was callable; the passive one was still sitting in the module, which is why slot 4 answered 1 (null) until `table.init` ran. Segment indices count active, passive and declarative segments alike, so the passive one here is segment 1.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "header.magic",
+				"value": "\\0asm"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.version",
+				"value": "1 (little-endian)"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "section[1].id",
+				"value": "type section"
+			},
+			{
+				"offset": 9,
+				"length": 1,
+				"field": "section[1].size",
+				"value": "11 bytes"
+			},
+			{
+				"offset": 11,
+				"length": 4,
+				"field": "type[0]",
+				"value": "() -> (i32)"
+			},
+			{
+				"offset": 15,
+				"length": 6,
+				"field": "type[1]",
+				"value": "() -> (i32 i32 i32)"
+			},
+			{
+				"offset": 21,
+				"length": 1,
+				"field": "section[3].id",
+				"value": "function section"
+			},
+			{
+				"offset": 22,
+				"length": 1,
+				"field": "section[3].size",
+				"value": "5 bytes"
+			},
+			{
+				"offset": 24,
+				"length": 1,
+				"field": "function[0]",
+				"value": "type 0 () -> (i32)"
+			},
+			{
+				"offset": 25,
+				"length": 1,
+				"field": "function[1]",
+				"value": "type 0 () -> (i32)"
+			},
+			{
+				"offset": 26,
+				"length": 1,
+				"field": "function[2]",
+				"value": "type 0 () -> (i32)"
+			},
+			{
+				"offset": 27,
+				"length": 1,
+				"field": "function[3]",
+				"value": "type 1 () -> (i32 i32 i32)"
+			},
+			{
+				"offset": 28,
+				"length": 1,
+				"field": "section[4].id",
+				"value": "table section"
+			},
+			{
+				"offset": 29,
+				"length": 1,
+				"field": "section[4].size",
+				"value": "4 bytes"
+			},
+			{
+				"offset": 31,
+				"length": 3,
+				"field": "table[0]",
+				"value": "funcref, min 6, no max"
+			},
+			{
+				"offset": 34,
+				"length": 1,
+				"field": "section[7].id",
+				"value": "export section"
+			},
+			{
+				"offset": 35,
+				"length": 1,
+				"field": "section[7].size",
+				"value": "5 bytes"
+			},
+			{
+				"offset": 37,
+				"length": 4,
+				"field": "export[0]",
+				"value": "'f' → func 3"
+			},
+			{
+				"offset": 41,
+				"length": 1,
+				"field": "section[9].id",
+				"value": "element section"
+			},
+			{
+				"offset": 42,
+				"length": 1,
+				"field": "section[9].size",
+				"value": "12 bytes"
+			},
+			{
+				"offset": 44,
+				"length": 6,
+				"field": "elem[0]",
+				"value": "active into table 0, 1 funcs [0]"
+			},
+			{
+				"offset": 50,
+				"length": 5,
+				"field": "elem[1]",
+				"value": "passive, 2 funcs [1, 2]"
+			},
+			{
+				"offset": 55,
+				"length": 1,
+				"field": "section[10].id",
+				"value": "code section"
+			},
+			{
+				"offset": 56,
+				"length": 1,
+				"field": "section[10].size",
+				"value": "44 bytes"
+			},
+			{
+				"offset": 58,
+				"length": 1,
+				"field": "code[0].size",
+				"value": "4 bytes"
+			},
+			{
+				"offset": 59,
+				"length": 4,
+				"field": "code[0].body",
+				"value": "i32.const 1"
+			},
+			{
+				"offset": 63,
+				"length": 1,
+				"field": "code[1].size",
+				"value": "4 bytes"
+			},
+			{
+				"offset": 64,
+				"length": 4,
+				"field": "code[1].body",
+				"value": "i32.const 2"
+			},
+			{
+				"offset": 68,
+				"length": 1,
+				"field": "code[2].size",
+				"value": "4 bytes"
+			},
+			{
+				"offset": 69,
+				"length": 4,
+				"field": "code[2].body",
+				"value": "i32.const 3"
+			},
+			{
+				"offset": 73,
+				"length": 1,
+				"field": "code[3].size",
+				"value": "27 bytes"
+			},
+			{
+				"offset": 74,
+				"length": 27,
+				"field": "code[3].body",
+				"value": "i32.const 0, call_indirect (type 0) (table 0), i32.const 4, table.get 0, ref.is_null, i32.const 4, i32.const 0, i32.const 2, table.init 1 0, i32.const 5, call_indirect (type 0) (table 0)"
+			}
+		],
+		"response_fields": []
+	},
+	{
+		"title": "An active segment that does not fit",
+		"kind": "module",
+		"request": "a four-slot table and an active segment of two entries at offset 3, so the second entry would land on a slot that does not exist  —  `run --invoke f mod.wasm`",
+		"request_hex": "0061736d010000000105016000017f03050400000000040401700004070501016600030908010041030b0200010a1804040041010b040041020b040041030b070041001100000b",
+		"response": "nothing on stdout, `wasm trap: out of bounds table access` on stderr, and a non-zero exit",
+		"response_hex": "",
+		"note": "This is a trap at instantiation, not a validation error: the module is well-formed and type-correct, and the check that fails is arithmetic against a size the validator does not necessarily know. Refusing it at load time is the usual mistake, and it is visible from outside — the wording says `trap`.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "header.magic",
+				"value": "\\0asm"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.version",
+				"value": "1 (little-endian)"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "section[1].id",
+				"value": "type section"
+			},
+			{
+				"offset": 9,
+				"length": 1,
+				"field": "section[1].size",
+				"value": "5 bytes"
+			},
+			{
+				"offset": 11,
+				"length": 4,
+				"field": "type[0]",
+				"value": "() -> (i32)"
+			},
+			{
+				"offset": 15,
+				"length": 1,
+				"field": "section[3].id",
+				"value": "function section"
+			},
+			{
+				"offset": 16,
+				"length": 1,
+				"field": "section[3].size",
+				"value": "5 bytes"
+			},
+			{
+				"offset": 18,
+				"length": 1,
+				"field": "function[0]",
+				"value": "type 0 () -> (i32)"
+			},
+			{
+				"offset": 19,
+				"length": 1,
+				"field": "function[1]",
+				"value": "type 0 () -> (i32)"
+			},
+			{
+				"offset": 20,
+				"length": 1,
+				"field": "function[2]",
+				"value": "type 0 () -> (i32)"
+			},
+			{
+				"offset": 21,
+				"length": 1,
+				"field": "function[3]",
+				"value": "type 0 () -> (i32)"
+			},
+			{
+				"offset": 22,
+				"length": 1,
+				"field": "section[4].id",
+				"value": "table section"
+			},
+			{
+				"offset": 23,
+				"length": 1,
+				"field": "section[4].size",
+				"value": "4 bytes"
+			},
+			{
+				"offset": 25,
+				"length": 3,
+				"field": "table[0]",
+				"value": "funcref, min 4, no max"
+			},
+			{
+				"offset": 28,
+				"length": 1,
+				"field": "section[7].id",
+				"value": "export section"
+			},
+			{
+				"offset": 29,
+				"length": 1,
+				"field": "section[7].size",
+				"value": "5 bytes"
+			},
+			{
+				"offset": 31,
+				"length": 4,
+				"field": "export[0]",
+				"value": "'f' → func 3"
+			},
+			{
+				"offset": 35,
+				"length": 1,
+				"field": "section[9].id",
+				"value": "element section"
+			},
+			{
+				"offset": 36,
+				"length": 1,
+				"field": "section[9].size",
+				"value": "8 bytes"
+			},
+			{
+				"offset": 38,
+				"length": 7,
+				"field": "elem[0]",
+				"value": "active into table 0, 2 funcs [0, 1]"
+			},
+			{
+				"offset": 45,
+				"length": 1,
+				"field": "section[10].id",
+				"value": "code section"
+			},
+			{
+				"offset": 46,
+				"length": 1,
+				"field": "section[10].size",
+				"value": "24 bytes"
+			},
+			{
+				"offset": 48,
+				"length": 1,
+				"field": "code[0].size",
+				"value": "4 bytes"
+			},
+			{
+				"offset": 49,
+				"length": 4,
+				"field": "code[0].body",
+				"value": "i32.const 1"
+			},
+			{
+				"offset": 53,
+				"length": 1,
+				"field": "code[1].size",
+				"value": "4 bytes"
+			},
+			{
+				"offset": 54,
+				"length": 4,
+				"field": "code[1].body",
+				"value": "i32.const 2"
+			},
+			{
+				"offset": 58,
+				"length": 1,
+				"field": "code[2].size",
+				"value": "4 bytes"
+			},
+			{
+				"offset": 59,
+				"length": 4,
+				"field": "code[2].body",
+				"value": "i32.const 3"
+			},
+			{
+				"offset": 63,
+				"length": 1,
+				"field": "code[3].size",
+				"value": "7 bytes"
+			},
+			{
+				"offset": 64,
+				"length": 7,
+				"field": "code[3].body",
+				"value": "i32.const 0, call_indirect (type 0) (table 0)"
+			}
+		],
+		"response_fields": []
+	}
+]

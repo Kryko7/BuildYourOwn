@@ -12,7 +12,8 @@
 import { browser } from '$app/environment';
 import { load, save, remove } from './persist';
 import { journey } from './journey.svelte';
-import { allStages, trackIds, tracks } from '../catalog';
+import { allStages } from '../catalog';
+import { byTrack, trackIds, tracks } from '../tracks';
 import type { TrackId } from '../types';
 import type { ApiStageState } from '../api/client';
 
@@ -49,8 +50,8 @@ function empty(): ProgressData {
 		version: 1,
 		stages: {},
 		activity: [],
-		targets: { shell: tracks.shell.targetExample, kafka: tracks.kafka.targetExample },
-		lastVisited: { shell: 1, kafka: 1 },
+		targets: byTrack((t) => tracks[t].targetExample),
+		lastVisited: byTrack(() => 1),
 		settings: { sound: false, petals: true }
 	};
 }

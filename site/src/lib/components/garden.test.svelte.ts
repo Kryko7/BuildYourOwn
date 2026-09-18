@@ -12,13 +12,14 @@ import Bunny from './garden/Bunny.svelte';
 import Cat from './garden/Cat.svelte';
 import Flutterers from './garden/Flutterers.svelte';
 import ShellTranscript from './examples/ShellTranscript.svelte';
-import WireExample from './examples/WireExample.svelte';
+import ByteExample from './examples/ByteExample.svelte';
 import StageExamples from './examples/StageExamples.svelte';
 import ConnectionNote from './ConnectionNote.svelte';
 import { getCatalog } from '$lib/catalog';
-import { kafkaExamples, loadKafkaExampleData } from '$lib/examples/kafka';
+import { inlineExamples, loadExampleData } from '$lib/examples/bytes';
 import { shellExamples } from '$lib/examples/shell';
 import { journey } from '$lib/stores/journey.svelte';
+import { byTrack } from '$lib/tracks';
 import fixture from '$lib/data/fixtures/kafka-examples.sample.json';
 import type { StageSpec } from '$lib/types';
 
@@ -184,11 +185,11 @@ describe('ShellTranscript', () => {
 	});
 });
 
-describe('WireExample', () => {
-	const example = kafkaExamples(exampleStage(fixture.examples))[0];
+describe('ByteExample', () => {
+	const example = inlineExamples(exampleStage(fixture.examples))[0];
 
 	it('shows request and response side by side with their bytes', () => {
-		const c = mount(WireExample, { target: host, props: { example } });
+		const c = mount(ByteExample, { target: host, props: { example } });
 		expect(host.querySelectorAll('.side').length).toBe(2);
 		expect(host.textContent).toContain('ApiVersions(18) v4');
 		expect(host.textContent).toContain('error_code 0');
@@ -200,7 +201,7 @@ describe('WireExample', () => {
 	});
 
 	it('lights a field’s bytes when the field is hovered, and only on that side', () => {
-		const c = mount(WireExample, { target: host, props: { example } });
+		const c = mount(ByteExample, { target: host, props: { example } });
 		const apiKeyRow = [...host.querySelectorAll('.side.request .fields li')][1];
 		apiKeyRow.dispatchEvent(new MouseEvent('mouseenter', { bubbles: false }));
 		flushSync();
@@ -215,7 +216,7 @@ describe('WireExample', () => {
 	});
 
 	it('finds the field when a byte is hovered', () => {
-		const c = mount(WireExample, { target: host, props: { example } });
+		const c = mount(ByteExample, { target: host, props: { example } });
 		const bytes = [...host.querySelectorAll<HTMLElement>('.side.response .b')];
 		// offset 8-9 is the response's error_code
 		bytes[8].dispatchEvent(new MouseEvent('mouseenter', { bubbles: false }));
@@ -229,7 +230,7 @@ describe('WireExample', () => {
 
 	it('stops a huge frame at 256 bytes and opens the rest on request', () => {
 		const big = Array.from({ length: 600 }, (_, i) => i % 256);
-		const huge = kafkaExamples(
+		const huge = inlineExamples(
 			exampleStage([
 				{
 					title: 'A long response',
@@ -244,7 +245,7 @@ describe('WireExample', () => {
 				}
 			])
 		)[0];
-		const c = mount(WireExample, { target: host, props: { example: huge } });
+		const c = mount(ByteExample, { target: host, props: { example: huge } });
 		expect(host.querySelectorAll('.side.response .b')).toHaveLength(256);
 		const more = [...host.querySelectorAll<HTMLButtonElement>('.side.response button')].find((b) =>
 			b.textContent?.includes('show all 600 bytes')
@@ -259,7 +260,7 @@ describe('WireExample', () => {
 
 	it('opens the rest of a dump when a field past the cut is selected', () => {
 		const big = Array.from({ length: 600 }, () => 0);
-		const huge = kafkaExamples(
+		const huge = inlineExamples(
 			exampleStage([
 				{
 					title: 'A long response',
@@ -272,7 +273,7 @@ describe('WireExample', () => {
 				}
 			])
 		)[0];
-		const c = mount(WireExample, { target: host, props: { example: huge } });
+		const c = mount(ByteExample, { target: host, props: { example: huge } });
 		expect(host.querySelectorAll('.side.response .b')).toHaveLength(256);
 		const rows = [...host.querySelectorAll('.side.response .fields li')];
 		rows[1].dispatchEvent(new MouseEvent('mouseenter'));
@@ -284,7 +285,7 @@ describe('WireExample', () => {
 	});
 
 	it('flags a value that changes every run instead of presenting it as a constant', () => {
-		const ex = kafkaExamples(
+		const ex = inlineExamples(
 			exampleStage([
 				{
 					title: 'Topic id',
@@ -297,7 +298,7 @@ describe('WireExample', () => {
 				}
 			])
 		)[0];
-		const c = mount(WireExample, { target: host, props: { example: ex } });
+		const c = mount(ByteExample, { target: host, props: { example: ex } });
 		expect(host.querySelector('.fval.varies')).toBeTruthy();
 		[...host.querySelectorAll('.side.response .fields li')][1].dispatchEvent(
 			new MouseEvent('mouseenter')
@@ -309,7 +310,7 @@ describe('WireExample', () => {
 	});
 
 	it('labels a stage where the lesson is that nothing goes on the wire', () => {
-		const ex = kafkaExamples(
+		const ex = inlineExamples(
 			exampleStage([
 				{
 					title: 'acks = 0',
@@ -321,7 +322,7 @@ describe('WireExample', () => {
 				}
 			])
 		)[0];
-		const c = mount(WireExample, { target: host, props: { example: ex } });
+		const c = mount(ByteExample, { target: host, props: { example: ex } });
 		expect(host.textContent).toContain('nothing on the wire');
 		expect(host.querySelectorAll('.hexrow')).toHaveLength(0);
 		unmount(c);
@@ -329,7 +330,7 @@ describe('WireExample', () => {
 	});
 
 	it('shows the fixture an example was captured against', () => {
-		const ex = kafkaExamples(
+		const ex = inlineExamples(
 			exampleStage([
 				{
 					title: 'Describe',
@@ -341,7 +342,7 @@ describe('WireExample', () => {
 				}
 			])
 		)[0];
-		const c = mount(WireExample, { target: host, props: { example: ex } });
+		const c = mount(ByteExample, { target: host, props: { example: ex } });
 		expect(host.textContent).toContain('set up with');
 		expect(host.textContent).toContain('t1-ex131');
 		expect(host.textContent).toContain('3 partitions');
@@ -351,10 +352,10 @@ describe('WireExample', () => {
 	});
 
 	it('renders a text-only side without inventing a hex dump', () => {
-		const prose = kafkaExamples(
+		const prose = inlineExamples(
 			exampleStage([{ title: 'Bind', request: 'a TCP connect', response: 'nothing at all' }])
 		)[0];
-		const c = mount(WireExample, { target: host, props: { example: prose } });
+		const c = mount(ByteExample, { target: host, props: { example: prose } });
 		expect(host.querySelectorAll('.hexrow')).toHaveLength(0);
 		expect(host.textContent).toContain('a TCP connect');
 		unmount(c);
@@ -385,7 +386,7 @@ describe('StageExamples', () => {
 		const stage = getCatalog('kafka').stages.find((s) => (s.exampleCount ?? 0) > 0);
 		// kafkatest ships these; if it ever stops, this test says so rather than passing empty
 		expect(stage).toBeDefined();
-		const preloaded = await loadKafkaExampleData(stage!.number);
+		const preloaded = await loadExampleData('kafka', stage!.number);
 		expect(preloaded).not.toBeNull();
 		const c = mount(StageExamples, {
 			target: host,
@@ -457,13 +458,13 @@ describe('ConnectionNote', () => {
 			ok: true,
 			version: '0.1.0',
 			db: '/db',
-			tracks: { shell: { project: null }, kafka: { project: null } }
+			tracks: byTrack(() => ({ project: null }))
 		};
 		const c = mount(ConnectionNote, { target: host, props: { track: 'kafka' as const } });
 		expect(host.textContent).toContain('byo init kafka');
 		unmount(c);
 
-		journey.health.tracks.shell = {
+		journey.health!.tracks.shell = {
 			project: { id: 1, track: 'shell', path: '/p', command: 'bash' }
 		};
 		const quiet = mount(ConnectionNote, { target: host, props: { track: 'shell' as const } });

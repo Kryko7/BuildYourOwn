@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { ByoApi, ApiError, normalizeProgress, normalizeStageRow } from './client';
+import { trackIds } from '../tracks';
 
 /** A fetch that answers from a table of routes; anything unlisted is a 404. */
 function fakeFetch(routes: Record<string, { status?: number; body: unknown }>) {
@@ -193,5 +194,58 @@ describe('ByoApi', () => {
 	it('treats a missing catalog as "use the bundled one"', async () => {
 		const { fetcher } = fakeFetch({});
 		expect(await new ByoApi(fetcher).catalog('shell')).toBeNull();
+	});
+});
+
+describe('a byo that is older (or newer) than this site', () => {
+	it('fills in every registered track the API did not mention', async () => {
+		// `/api/progress` from a byo that only knows two tracks must still produce a record
+		// the six-track UI can index, not `undefined.stages`.
+		const progress = normalizeProgress(PROGRESS);
+		for (const track of trackIds) {
+			expect(progress[track], track).toBeDefined();
+			expect(progress[track].stages, track).toBeDefined();
+		}
+		expect(progress.wasm).toEqual({ latestRunId: null, stages: {} });
+		expect(progress.shell.latestRunId).toBe(3);
+	});
+
+	it('does the same for the health probe’s project list', async () => {
+		const { fetcher } = fakeFetch({ '/api/health': { body: HEALTH } });
+		const health = await new ByoApi(fetcher).health();
+		expect(health).not.toBeNull();
+		for (const track of trackIds) expect(health!.tracks[track], track).toBeDefined();
+		expect(health!.tracks.shell.project?.command).toBe('bash');
+		expect(health!.tracks.link.project).toBeNull();
+	});
+
+	it('reads GET /api/tracks when byo serves it', async () => {
+		const { fetcher, calls } = fakeFetch({
+			'/api/tracks': {
+				body: [
+					{ id: 'shell', title: 'Shell', blurb: 'b', accent: '#a9551f', installed: true, testerVersion: '0.2.0' },
+					{ id: 'wasm', title: 'Wasm', blurb: 'b', accent: '#6845b6', installed: false },
+					{ id: 'redis', title: 'Not a track here', blurb: '', accent: '' }
+				]
+			}
+		});
+		const list = await new ByoApi(fetcher).tracks();
+		expect(calls).toEqual(['GET /api/tracks']);
+		// An id this build does not know is dropped rather than crashing a lookup.
+		expect(list?.map((t) => t.id)).toEqual(['shell', 'wasm']);
+		expect(list?.[0].testerVersion).toBe('0.2.0');
+		expect(list?.[1].installed).toBe(false);
+		expect(list?.[1].testerVersion).toBeNull();
+	});
+
+	it('treats a byo with no /api/tracks as "use the built-in registry"', async () => {
+		const { fetcher } = fakeFetch({});
+		expect(await new ByoApi(fetcher).tracks()).toBeNull();
+		// and a body that is not a list at all
+		const odd = fakeFetch({ '/api/tracks': { body: { tracks: 'soon' } } });
+		expect(await new ByoApi(odd.fetcher).tracks()).toBeNull();
+		// a `{ tracks: [...] }` envelope is accepted too
+		const wrapped = fakeFetch({ '/api/tracks': { body: { tracks: [{ id: 'tls' }] } } });
+		expect((await new ByoApi(wrapped.fetcher).tracks())?.[0].id).toBe('tls');
 	});
 });

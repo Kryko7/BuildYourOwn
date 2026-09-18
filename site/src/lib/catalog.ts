@@ -10,18 +10,20 @@ import kafkaCatalog from './data/catalog.kafka.json';
 import wasmCatalog from './data/catalog.wasm.json';
 import tlsCatalog from './data/catalog.tls.json';
 import linkCatalog from './data/catalog.link.json';
+import distCatalog from './data/catalog.dist.json';
 import { tracks, trackIds } from './tracks';
 import type { Catalog, StageSpec, TrackId } from './types';
 
-export { tracks, trackIds, allTracks, isTrack, byTrack, badgeFor } from './tracks';
-export type { TrackMeta, TrackId, MascotName, ExampleKind } from './tracks';
+export { tracks, trackIds, allTracks, isTrack, byTrack, badgeFor, ladderOfSection } from './tracks';
+export type { TrackMeta, TrackId, MascotName, ExampleKind, Ladder } from './tracks';
 
 export const catalogs: Record<TrackId, Catalog> = {
 	shell: shellCatalog as unknown as Catalog,
 	kafka: kafkaCatalog as unknown as Catalog,
 	wasm: wasmCatalog as unknown as Catalog,
 	tls: tlsCatalog as unknown as Catalog,
-	link: linkCatalog as unknown as Catalog
+	link: linkCatalog as unknown as Catalog,
+	dist: distCatalog as unknown as Catalog
 };
 
 export function getCatalog(track: TrackId): Catalog {

@@ -6,19 +6,32 @@
 	import { reports } from '$lib/stores/reports.svelte';
 	import { journey } from '$lib/stores/journey.svelte';
 	import { progress, rankName } from '$lib/stores/progress.svelte';
+	import { allTracks, trackIds } from '$lib/tracks';
+	import { catalogs } from '$lib/catalog';
 
 	let { onpalette }: { onpalette: () => void } = $props();
 
-	const links = [
-		{ href: '/shell', label: 'Shell' },
-		{ href: '/kafka', label: 'Kafka' },
+	/**
+	 * Six trails will not fit next to the brand and the tools, so they live behind one
+	 * "Trails" button; the pages that are not trails stay as their own links. The menu is
+	 * built from the registry, so a new track appears in it with no change here.
+	 */
+	const trailLinks = allTracks.map((t) => ({
+		href: `/${t.id}`,
+		label: t.short,
+		title: t.title,
+		accent: t.accent,
+		pending: catalogs[t.id].pending === true
+	}));
+
+	const pageLinks = [
 		{ href: '/resources', label: 'Resources' },
 		{ href: '/lab', label: 'Lab' },
 		{ href: '/progress', label: 'Runs' }
 	];
 
 	const current = $derived(page.url.pathname.replace(/\/+$/, '') || '/');
-	const live = $derived(Boolean(reports.live.shell || reports.live.kafka));
+	const live = $derived(trackIds.some((t) => reports.live[t] !== null));
 	/* Three states worth a pill: connected to byo, connected-but-stalled, and no byo at all.
 	   `probing` shows nothing — a flash of "offline" on every load helps nobody. */
 	const link = $derived(journey.status);
@@ -28,25 +41,34 @@
 	);
 
 	const isActive = (href: string) => current === href || current.startsWith(href + '/');
+	const onATrail = $derived(trailLinks.some((l) => isActive(l.href)));
+	const currentTrail = $derived(trailLinks.find((l) => isActive(l.href)) ?? null);
 
-	/* The narrow-screen menu. Below 640 px the pill row cannot fit next to the brand and the
-	   tools without pushing the document sideways, so it collapses into this. */
+	/* Two popovers: the trails menu at every width (six trails will not fit in a row), and
+	   the whole nav below 760 px, where even the three page links push the bar sideways. */
+	let trailsOpen = $state(false);
 	let menuOpen = $state(false);
 	let header: HTMLElement | undefined = $state();
 
-	// Any navigation closes it; `current` changes on every route change.
+	// Any navigation closes both; `current` changes on every route change.
 	$effect(() => {
 		current;
 		menuOpen = false;
+		trailsOpen = false;
 	});
 
 	function onWindowKeydown(e: KeyboardEvent) {
-		if (e.key === 'Escape' && menuOpen) menuOpen = false;
+		if (e.key !== 'Escape') return;
+		menuOpen = false;
+		trailsOpen = false;
 	}
 
 	function onWindowPointerDown(e: PointerEvent) {
-		if (!menuOpen) return;
-		if (header && !header.contains(e.target as Node)) menuOpen = false;
+		if (!menuOpen && !trailsOpen) return;
+		if (header && !header.contains(e.target as Node)) {
+			menuOpen = false;
+			trailsOpen = false;
+		}
 	}
 </script>
 
@@ -70,7 +92,29 @@
 		</a>
 
 		<nav class="wide" aria-label="Primary">
-			{#each links as l (l.href)}
+			<div class="trailsbox">
+				<button
+					class="trailsbtn"
+					class:active={onATrail}
+					aria-expanded={trailsOpen}
+					aria-controls="trails-menu"
+					onclick={() => (trailsOpen = !trailsOpen)}
+					style={currentTrail ? `--accent:${currentTrail.accent}` : ''}
+				>
+					{currentTrail ? currentTrail.label : 'Trails'}
+					<span class="caret" aria-hidden="true">▾</span>
+				</button>
+				<div id="trails-menu" class="trails" class:open={trailsOpen} hidden={!trailsOpen}>
+					{#each trailLinks as l (l.href)}
+						<a href={l.href} class:active={isActive(l.href)} style="--accent:{l.accent}" title={l.title}>
+							<span class="swatch" aria-hidden="true"></span>
+							<span class="tlabel">{l.label}</span>
+							{#if l.pending}<span class="tiny muted soon">being written</span>{/if}
+						</a>
+					{/each}
+				</div>
+			</div>
+			{#each pageLinks as l (l.href)}
 				<a href={l.href} class:active={isActive(l.href)}>{l.label}</a>
 			{/each}
 		</nav>
@@ -121,7 +165,16 @@
 
 	<nav id="nav-menu" class="drop" class:open={menuOpen} aria-label="Primary" hidden={!menuOpen}>
 		<div class="wrap">
-			{#each links as l (l.href)}
+			<span class="group eyebrow">trails</span>
+			{#each trailLinks as l (l.href)}
+				<a href={l.href} class:active={isActive(l.href)} style="--accent:{l.accent}">
+					<span class="swatch" aria-hidden="true"></span>
+					{l.label}
+					{#if l.pending}<span class="tiny muted soon">being written</span>{/if}
+				</a>
+			{/each}
+			<span class="group eyebrow">the rest</span>
+			{#each pageLinks as l (l.href)}
 				<a href={l.href} class:active={isActive(l.href)}>{l.label}</a>
 			{/each}
 			<span class="rank tiny muted">Lv{progress.level.level} · {rankName(progress.level.level)}</span>
@@ -225,6 +278,71 @@
 		background: var(--pink-soft);
 		font-weight: 700;
 	}
+	/* the trails popover */
+	.trailsbox {
+		position: relative;
+		flex: none;
+	}
+	.trailsbtn {
+		display: inline-flex;
+		align-items: center;
+		gap: 5px;
+		background: none;
+		border: 0;
+		border-radius: var(--r-full);
+		padding: 5px 13px;
+		font-size: 0.88rem;
+		color: var(--ink-2);
+		cursor: pointer;
+		white-space: nowrap;
+	}
+	.trailsbtn:hover {
+		background: var(--bg-3);
+		color: var(--ink);
+	}
+	.trailsbtn.active {
+		color: var(--ink);
+		background: color-mix(in srgb, var(--accent, var(--pink)) 16%, transparent);
+		font-weight: 700;
+	}
+	.caret {
+		font-size: 0.7em;
+		color: var(--ink-3);
+	}
+	.trails {
+		position: absolute;
+		top: calc(100% + 6px);
+		left: 0;
+		z-index: 70;
+		min-width: 220px;
+		background: var(--bg-2);
+		border: 1px solid var(--line);
+		border-radius: var(--r-2);
+		box-shadow: var(--shadow-2);
+		padding: 5px;
+		display: flex;
+		flex-direction: column;
+		gap: 1px;
+	}
+	.trails a {
+		display: flex;
+		align-items: center;
+		gap: var(--s-2);
+		padding: 6px 9px;
+	}
+	.swatch {
+		width: 9px;
+		height: 9px;
+		border-radius: 50%;
+		background: var(--accent, var(--ink-3));
+		flex: none;
+	}
+	.tlabel {
+		flex: 1;
+	}
+	.soon {
+		font-size: 0.68rem;
+	}
 	nav.wide a.active::after {
 		content: '';
 		position: absolute;
@@ -323,6 +441,14 @@
 	nav.drop .rank {
 		padding: var(--s-2) 11px 0;
 	}
+	nav.drop .group {
+		padding: var(--s-2) 11px 2px;
+	}
+	nav.drop a {
+		display: flex;
+		align-items: center;
+		gap: var(--s-2);
+	}
 
 	@media (max-width: 900px) {
 		.rank,
@@ -334,7 +460,7 @@
 			display: block;
 		}
 	}
-	@media (max-width: 640px) {
+	@media (max-width: 760px) {
 		.bar {
 			gap: var(--s-3);
 		}

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import Cat from '$lib/components/garden/Cat.svelte';
+	import { allTracks } from '$lib/tracks';
 </script>
 
 <div class="wrap box">
@@ -11,8 +12,9 @@
 		<p class="muted">{page.error?.message ?? 'Nothing grows at that address.'}</p>
 		<div class="row">
 			<a class="btn btn-primary" href="/">Back to the garden</a>
-			<a class="btn" href="/shell">Shell trail</a>
-			<a class="btn" href="/kafka">Kafka trail</a>
+			{#each allTracks as t (t.id)}
+				<a class="btn" href="/{t.id}" style="--accent:{t.accent}">{t.short}</a>
+			{/each}
 		</div>
 	</div>
 </div>

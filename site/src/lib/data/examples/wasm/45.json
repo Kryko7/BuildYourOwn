@@ -1,0 +1,338 @@
+[
+	{
+		"title": "A counted loop, ten thousand rounds",
+		"kind": "module",
+		"request": "`h = 0xcbf29ce484222325; for i in 0..10000 { h ^= i; h *= 0x100000001b3 }`, written as a `block` holding a `loop` whose `br_if 1` leaves and whose `br 0` goes round again. The test runs two hundred thousand rounds, two hundred and twenty times  —  `run --invoke f mod.wasm`",
+		"request_hex": "0061736d010000000105016000017e03020100070501016600000a3f013d01027e42a5c688a1c89ca7f94b2101420021000240034020004290ce005a0d01200120008542b383808080207e2101200042017c21000c000b0b20010b",
+		"response": "2284529141941492341",
+		"response_hex": "",
+		"note": "The whole loop is two locals-worth of state and no allocation: the operand stack is empty at the top of every iteration, which is what makes a `loop` cheap. i64 results print signed, so a hash whose top bit is set comes out negative.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "header.magic",
+				"value": "\\0asm"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.version",
+				"value": "1 (little-endian)"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "section[1].id",
+				"value": "type section"
+			},
+			{
+				"offset": 9,
+				"length": 1,
+				"field": "section[1].size",
+				"value": "5 bytes"
+			},
+			{
+				"offset": 11,
+				"length": 4,
+				"field": "type[0]",
+				"value": "() -> (i64)"
+			},
+			{
+				"offset": 15,
+				"length": 1,
+				"field": "section[3].id",
+				"value": "function section"
+			},
+			{
+				"offset": 16,
+				"length": 1,
+				"field": "section[3].size",
+				"value": "2 bytes"
+			},
+			{
+				"offset": 18,
+				"length": 1,
+				"field": "function[0]",
+				"value": "type 0 () -> (i64)"
+			},
+			{
+				"offset": 19,
+				"length": 1,
+				"field": "section[7].id",
+				"value": "export section"
+			},
+			{
+				"offset": 20,
+				"length": 1,
+				"field": "section[7].size",
+				"value": "5 bytes"
+			},
+			{
+				"offset": 22,
+				"length": 4,
+				"field": "export[0]",
+				"value": "'f' → func 0"
+			},
+			{
+				"offset": 26,
+				"length": 1,
+				"field": "section[10].id",
+				"value": "code section"
+			},
+			{
+				"offset": 27,
+				"length": 1,
+				"field": "section[10].size",
+				"value": "63 bytes"
+			},
+			{
+				"offset": 29,
+				"length": 1,
+				"field": "code[0].size",
+				"value": "61 bytes"
+			},
+			{
+				"offset": 30,
+				"length": 61,
+				"field": "code[0].body",
+				"value": "locals 2×i64; i64.const -3750763034362895579, local.set 1, i64.const 0, local.set 0, block { loop { local.get 0, i64.const 10000, i64.ge_u, br_if 1, local.get 1, local.get 0, i64.xor, i64.const 1099511628211, i64.mul, local.set 1, local.get 0, i64.const 1, i64.add, local.set 0, br 0 } }, local.get 1"
+			}
+		],
+		"response_fields": []
+	},
+	{
+		"title": "Every feature in one module",
+		"kind": "module",
+		"request": "a memory with a data segment, a two-entry table reached by `call_indirect`, a mutable global, a loop with an `if`/`else` inside it, a byte stored and read back, and four results — i32, i64, f32 and f64 — derived from the accumulator  —  `run --invoke f mod.wasm`",
+		"request_hex": "0061736d01000000010d0260017f017f6000047f7e7d7c03040300000104040170000205030100010607017f0141e4000b070501016600020908010041000b0200010aac01030700200041016a0b0700200041036c0b990101037f410021004100210102400340200041084f0d0120002d00002102200120026a20024101711100002101200241044b0440200141e4006a210105200141016a21010b230020026a2400200041c0006a20013a0000200041016a21000c000b0b200123006a41c7002d00006a2001ac42c3843d7e42077c2001b24300008040952001b744000000000000e03fa244000000000000c03fa00b0b0e010041000b080301040105090206",
+		"response": "1993\n1699005104\n424.75\n849.625",
+		"response_hex": "",
+		"note": "Four returned values, four lines, in declaration order. The test runs this module fifty times and demands the same four lines, byte for byte, every time: nothing in it can observe the clock, the host or the run number.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "header.magic",
+				"value": "\\0asm"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.version",
+				"value": "1 (little-endian)"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "section[1].id",
+				"value": "type section"
+			},
+			{
+				"offset": 9,
+				"length": 1,
+				"field": "section[1].size",
+				"value": "13 bytes"
+			},
+			{
+				"offset": 11,
+				"length": 5,
+				"field": "type[0]",
+				"value": "(i32) -> (i32)"
+			},
+			{
+				"offset": 16,
+				"length": 7,
+				"field": "type[1]",
+				"value": "() -> (i32 i64 f32 f64)"
+			},
+			{
+				"offset": 23,
+				"length": 1,
+				"field": "section[3].id",
+				"value": "function section"
+			},
+			{
+				"offset": 24,
+				"length": 1,
+				"field": "section[3].size",
+				"value": "4 bytes"
+			},
+			{
+				"offset": 26,
+				"length": 1,
+				"field": "function[0]",
+				"value": "type 0 (i32) -> (i32)"
+			},
+			{
+				"offset": 27,
+				"length": 1,
+				"field": "function[1]",
+				"value": "type 0 (i32) -> (i32)"
+			},
+			{
+				"offset": 28,
+				"length": 1,
+				"field": "function[2]",
+				"value": "type 1 () -> (i32 i64 f32 f64)"
+			},
+			{
+				"offset": 29,
+				"length": 1,
+				"field": "section[4].id",
+				"value": "table section"
+			},
+			{
+				"offset": 30,
+				"length": 1,
+				"field": "section[4].size",
+				"value": "4 bytes"
+			},
+			{
+				"offset": 32,
+				"length": 3,
+				"field": "table[0]",
+				"value": "funcref, min 2, no max"
+			},
+			{
+				"offset": 35,
+				"length": 1,
+				"field": "section[5].id",
+				"value": "memory section"
+			},
+			{
+				"offset": 36,
+				"length": 1,
+				"field": "section[5].size",
+				"value": "3 bytes"
+			},
+			{
+				"offset": 38,
+				"length": 2,
+				"field": "memory[0]",
+				"value": "min 1, no max (64 KiB pages)"
+			},
+			{
+				"offset": 40,
+				"length": 1,
+				"field": "section[6].id",
+				"value": "global section"
+			},
+			{
+				"offset": 41,
+				"length": 1,
+				"field": "section[6].size",
+				"value": "7 bytes"
+			},
+			{
+				"offset": 43,
+				"length": 6,
+				"field": "global[0]",
+				"value": "mut i32, init i32.const 100"
+			},
+			{
+				"offset": 49,
+				"length": 1,
+				"field": "section[7].id",
+				"value": "export section"
+			},
+			{
+				"offset": 50,
+				"length": 1,
+				"field": "section[7].size",
+				"value": "5 bytes"
+			},
+			{
+				"offset": 52,
+				"length": 4,
+				"field": "export[0]",
+				"value": "'f' → func 2"
+			},
+			{
+				"offset": 56,
+				"length": 1,
+				"field": "section[9].id",
+				"value": "element section"
+			},
+			{
+				"offset": 57,
+				"length": 1,
+				"field": "section[9].size",
+				"value": "8 bytes"
+			},
+			{
+				"offset": 59,
+				"length": 7,
+				"field": "elem[0]",
+				"value": "active into table 0, 2 funcs [0, 1]"
+			},
+			{
+				"offset": 66,
+				"length": 1,
+				"field": "section[10].id",
+				"value": "code section"
+			},
+			{
+				"offset": 67,
+				"length": 2,
+				"field": "section[10].size",
+				"value": "172 bytes"
+			},
+			{
+				"offset": 70,
+				"length": 1,
+				"field": "code[0].size",
+				"value": "7 bytes"
+			},
+			{
+				"offset": 71,
+				"length": 7,
+				"field": "code[0].body",
+				"value": "local.get 0, i32.const 1, i32.add"
+			},
+			{
+				"offset": 78,
+				"length": 1,
+				"field": "code[1].size",
+				"value": "7 bytes"
+			},
+			{
+				"offset": 79,
+				"length": 7,
+				"field": "code[1].body",
+				"value": "local.get 0, i32.const 3, i32.mul"
+			},
+			{
+				"offset": 86,
+				"length": 2,
+				"field": "code[2].size",
+				"value": "153 bytes"
+			},
+			{
+				"offset": 88,
+				"length": 153,
+				"field": "code[2].body",
+				"value": "locals 3×i32; i32.const 0, local.set 0, i32.const 0, local.set 1, block { loop { local.get 0, i32.const 8, i32.ge_u, br_if 1, local.get 0, i32.load8_u align=1 offset=0, local.set 2, local.get 1, local.get 2, i32.add, local.get 2, i32.const 1, i32.and, call_indirect (type 0) (table 0), local.set 1, local.get 2, i32.const 4, i32.gt_u, if { local.get 1, i32.const 100, i32.add, local.set 1 } else { local.get 1, i32.const 1, i32.add, local.set 1 }, global.get 0, local.get 2, i32.add, global.set 0, local.get 0, i32.const 64, i32.add, local.get 1, i32.store8 align=1 offset=0, local.get 0, i32.const 1, i32.add, local.set 0, br 0 } }, local.get 1, global.get 0, i32.add, i32.const 71, i32.load8_u align=1 offset=0, i32.add, local.get 1, i64.extend_i32_s, i64.const 1000003, i64.mul, i64.const 7, i64.add, local.get 1, f32.convert_i32_s, f32.const 4.0, f32.div, local.get 1, f64.convert_i32_s, f64.const 0.5, f64.mul, f64.const 0.125, f64.add"
+			},
+			{
+				"offset": 241,
+				"length": 1,
+				"field": "section[11].id",
+				"value": "data section"
+			},
+			{
+				"offset": 242,
+				"length": 1,
+				"field": "section[11].size",
+				"value": "14 bytes"
+			},
+			{
+				"offset": 244,
+				"length": 13,
+				"field": "data[0]",
+				"value": "active into memory 0, 8 bytes '........'"
+			}
+		],
+		"response_fields": []
+	}
+]

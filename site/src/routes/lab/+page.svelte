@@ -1,72 +1,38 @@
 <script lang="ts">
 	import { pageTitle } from '$lib/branding';
-	import Tokenizer from '$lib/components/lab/Tokenizer.svelte';
-	import WireInspector from '$lib/components/lab/WireInspector.svelte';
-	import BatchBuilder from '$lib/components/lab/BatchBuilder.svelte';
-	import Replay from '$lib/components/lab/Replay.svelte';
+	import { labTools, accentFor } from '$lib/components/lab/tools';
+	import { tracks } from '$lib/tracks';
 
-	const tabs = [
-		{
-			id: 'tokenizer',
-			label: 'Shell tokenizer',
-			accent: 'var(--shell)',
-			blurb:
-				'Type a command line and watch the quote state machine run: every character coloured by the state that produced it, the words that survive quote removal, and the pipeline and redirection graph.',
-			stages: '/shell/13'
-		},
-		{
-			id: 'wire',
-			label: 'Kafka wire inspector',
-			accent: 'var(--kafka)',
-			blurb:
-				'Four real requests, byte by byte. Hover a byte to find its field, hover a field to find its bytes; varints, compact arrays and tagged fields are spelled out. Paste your own hex to debug a frame.',
-			stages: '/kafka/5'
-		},
-		{
-			id: 'batch',
-			label: 'RecordBatch anatomy',
-			accent: 'var(--kafka)',
-			blurb:
-				'Build a v2 record batch from records and watch the bytes appear, with a live CRC32C and the attribute bits that select a compression codec.',
-			stages: '/kafka/34'
-		},
-		{
-			id: 'replay',
-			label: 'Journey replay',
-			accent: 'var(--bad)',
-			blurb:
-				'Import a tester report and step through a failing test: the input it sent, the output it got, and the diff against what the suite expected.',
-			stages: '/progress'
-		}
-	];
-
-	let active = $state('tokenizer');
-	const current = $derived(tabs.find((t) => t.id === active) ?? tabs[0]);
+	let active = $state(labTools[0].id);
+	const current = $derived(labTools.find((t) => t.id === active) ?? labTools[0]);
+	const Instrument = $derived(current.component);
+	const accent = $derived(accentFor(current));
 </script>
 
 <svelte:head>
 	<title>{pageTitle('Lab')}</title>
 </svelte:head>
 
-<div class="wrap page" style="--accent:{current.accent}">
+<div class="wrap page" style="--accent:{accent}">
 	<header>
 		<p class="eyebrow">playgrounds</p>
 		<h1>The lab</h1>
 		<p class="lede">
-			Four instruments for the two tracks. Each one is also embedded in the stages it belongs to, so
-			you can poke at the thing you are about to implement.
+			{labTools.length} instruments for the trails. Each one is also embedded in the stages it belongs
+			to, so you can poke at the thing you are about to implement — and every one of them runs
+			entirely in this page, with no network and nothing installed.
 		</p>
 	</header>
 
 	<div class="tabs" role="tablist" aria-label="Playgrounds">
-		{#each tabs as t (t.id)}
+		{#each labTools as t (t.id)}
 			<button
 				role="tab"
 				aria-selected={active === t.id}
 				aria-controls="panel-{t.id}"
 				id="tab-{t.id}"
 				class:on={active === t.id}
-				style="--accent:{t.accent}"
+				style="--accent:{accentFor(t)}"
 				onclick={() => (active = t.id)}
 			>
 				{t.label}
@@ -74,18 +40,17 @@
 		{/each}
 	</div>
 
-	<p class="blurb">{current.blurb} <a href={current.stages}>related stage →</a></p>
+	<p class="blurb">
+		{current.blurb}
+		<a href={current.stageHref}>
+			{current.track ? `${tracks[current.track].short} stage →` : 'your runs →'}
+		</a>
+	</p>
 
 	<div class="panel card" role="tabpanel" id="panel-{current.id}" aria-labelledby="tab-{current.id}">
-		{#if active === 'tokenizer'}
-			<Tokenizer />
-		{:else if active === 'wire'}
-			<WireInspector />
-		{:else if active === 'batch'}
-			<BatchBuilder />
-		{:else}
-			<Replay />
-		{/if}
+		{#key current.id}
+			<Instrument />
+		{/key}
 	</div>
 </div>
 

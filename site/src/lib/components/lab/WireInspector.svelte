@@ -1,6 +1,7 @@
 <script lang="ts">
+	import HexFields from './HexFields.svelte';
 	import { samples, type Sample } from '$lib/lab/samples';
-	import { decodeRequest, parseHex, toHex, printable, crc32c } from '$lib/lab/kafka';
+	import { decodeRequest, parseHex, toHex, crc32c } from '$lib/lab/kafka';
 
 	let { initialSample = 'apiversions-v4' }: { initialSample?: string } = $props();
 
@@ -9,41 +10,33 @@
 	let pasted = $state('');
 	let usePasted = $state(false);
 	let active = $state<number | null>(null);
-	let pasteError = $state('');
 
 	const sample = $derived<Sample>(samples.find((s) => s.id === chosen) ?? samples[0]);
 
-	const bytes = $derived.by(() => {
-		if (!usePasted) return sample.bytes;
+	/**
+	 * Parsing and its error are one value: writing to a `$state` from inside a `$derived`
+	 * is forbidden in runes mode, and doing it here used to throw the moment a paste went
+	 * wrong — which is exactly when the message was needed.
+	 */
+	const parsed = $derived.by(() => {
+		if (!usePasted) return { bytes: sample.bytes, error: '' };
 		try {
 			const b = parseHex(pasted);
-			pasteError = b.length === 0 ? 'Paste some hex bytes.' : '';
-			return b;
+			return { bytes: b, error: b.length === 0 ? 'Paste some hex bytes.' : '' };
 		} catch (e) {
-			pasteError = e instanceof Error ? e.message : 'Could not read that hex.';
-			return new Uint8Array();
+			return {
+				bytes: new Uint8Array(),
+				error: e instanceof Error ? e.message : 'Could not read that hex.'
+			};
 		}
 	});
+
+	const bytes = $derived(parsed.bytes);
+	const pasteError = $derived(parsed.error);
 
 	const decoded = $derived(bytes.length ? decodeRequest(bytes) : null);
 	const fields = $derived(decoded?.fields ?? []);
 	const crc = $derived(bytes.length ? crc32c(bytes) : 0);
-
-	const rows = $derived.by(() => {
-		const out: { offset: number; slice: number[] }[] = [];
-		for (let i = 0; i < bytes.length; i += 16) out.push({ offset: i, slice: [...bytes.subarray(i, i + 16)] });
-		return out;
-	});
-
-	function fieldAt(index: number): number {
-		return fields.findIndex((f) => index >= f.start && index < f.end);
-	}
-
-	const activeRange = $derived(active !== null && fields[active] ? fields[active] : null);
-
-	function inActive(i: number) {
-		return activeRange ? i >= activeRange.start && i < activeRange.end : false;
-	}
 
 	function useSample(id: string) {
 		chosen = id;
@@ -98,56 +91,7 @@
 		{/if}
 	{/if}
 
-	<div class="split">
-		<div class="hex" role="group" aria-label="Hex dump">
-			{#each rows as row (row.offset)}
-				<div class="hexrow">
-					<span class="off">{row.offset.toString(16).padStart(4, '0')}</span>
-					<span class="cells">
-						{#each row.slice as b, i (i)}
-							{@const idx = row.offset + i}
-							<!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
-							<span
-								class="b"
-								class:hot={inActive(idx)}
-								class:known={fieldAt(idx) >= 0}
-								onmouseenter={() => {
-									const f = fieldAt(idx);
-									if (f >= 0) active = f;
-								}}
-								onclick={() => {
-									const f = fieldAt(idx);
-									if (f >= 0) active = f;
-								}}>{b.toString(16).padStart(2, '0')}</span
-							>
-						{/each}
-					</span>
-					<span class="ascii">{row.slice.map(printable).join('')}</span>
-				</div>
-			{/each}
-			{#if rows.length === 0}<p class="tiny muted">No bytes to show.</p>{/if}
-		</div>
-
-		<ol class="fields" aria-label="Decoded fields">
-			{#each fields as f, i (i)}
-				<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-				<li
-					class:on={active === i}
-					style="--depth:{f.depth}"
-					onmouseenter={() => (active = i)}
-					onfocusin={() => (active = i)}
-				>
-					<button class="frow" onclick={() => (active = i)}>
-						<span class="fname mono">{f.name}</span>
-						<span class="ftype tiny muted">{f.type}</span>
-						<span class="fval mono">{f.value}</span>
-						<span class="fbytes tiny muted">@{f.start}..{f.end}</span>
-					</button>
-					{#if f.note && active === i}<p class="note tiny">{f.note}</p>{/if}
-				</li>
-			{/each}
-		</ol>
-	</div>
+	<HexFields {bytes} {fields} bind:active />
 </div>
 
 <style>
@@ -195,117 +139,5 @@
 		flex-wrap: wrap;
 		align-items: center;
 		gap: 6px;
-	}
-	.split {
-		display: grid;
-		grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
-		gap: var(--s-4);
-		align-items: start;
-	}
-	@media (max-width: 860px) {
-		.split {
-			grid-template-columns: 1fr;
-		}
-	}
-	.hex {
-		background: var(--bg-sunk);
-		border: 1px solid var(--line);
-		border-radius: var(--r-2);
-		padding: var(--s-3);
-		font-family: var(--font-mono);
-		font-size: 0.74rem;
-		line-height: 1.85;
-		overflow-x: auto;
-		max-height: 420px;
-		overflow-y: auto;
-	}
-	.hexrow {
-		display: flex;
-		gap: var(--s-3);
-		white-space: nowrap;
-	}
-	.off {
-		color: var(--ink-3);
-		user-select: none;
-	}
-	.cells {
-		display: inline-flex;
-		gap: 4px;
-	}
-	.b {
-		border-radius: 3px;
-		padding: 0 2px;
-		cursor: pointer;
-		transition: background 120ms var(--ease), color 120ms var(--ease);
-	}
-	.b.known {
-		color: var(--ink);
-	}
-	.b:not(.known) {
-		color: var(--ink-3);
-	}
-	.b.hot {
-		background: var(--accent, var(--ink));
-		color: var(--bg-2);
-	}
-	.ascii {
-		color: var(--ink-3);
-		letter-spacing: 0.06em;
-	}
-	.fields {
-		list-style: none;
-		margin: 0;
-		padding: 0;
-		border: 1px solid var(--line);
-		border-radius: var(--r-2);
-		max-height: 420px;
-		overflow-y: auto;
-	}
-	.fields li {
-		border-top: 1px solid var(--line);
-		padding-left: calc(var(--depth) * 12px);
-	}
-	.fields li:first-child {
-		border-top: 0;
-	}
-	.fields li.on {
-		background: color-mix(in srgb, var(--accent, var(--ink)) 10%, transparent);
-	}
-	.frow {
-		display: grid;
-		grid-template-columns: minmax(0, 1.35fr) auto minmax(0, 1fr) auto;
-		align-items: baseline;
-		gap: var(--s-2);
-		width: 100%;
-		background: none;
-		border: 0;
-		text-align: left;
-		padding: 4px var(--s-3);
-		cursor: pointer;
-		font-size: 0.76rem;
-	}
-	.fname {
-		overflow: hidden;
-		text-overflow: ellipsis;
-	}
-	.fval {
-		color: var(--accent, var(--ink));
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-	}
-	.note {
-		margin: 0;
-		padding: 0 var(--s-3) 7px calc(var(--s-3));
-		color: var(--ink-2);
-	}
-	@media (max-width: 560px) {
-		.frow {
-			grid-template-columns: 1fr auto;
-		}
-		.ftype,
-		.fbytes {
-			display: none;
-		}
 	}
 </style>

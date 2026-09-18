@@ -5,9 +5,11 @@ import { join, resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parse as parseYaml } from 'yaml';
 import { parsePlan, buildCatalog, testsFromYaml, slugFromFile, auditCounts } from './parse-catalog.mjs';
-import { normalizeKafkaCatalog, mergePlannedStages } from './normalize-catalog.mjs';
+import { normalizeCatalog, normalizeKafkaCatalog, mergePlannedStages } from './normalize-catalog.mjs';
 import { parseTesterPlan as parseKafkaPlan } from './parse-tester-plan.mjs';
 import { kafkaPlaceholderPlan } from './kafka-placeholder.mjs';
+import { placeholderPlan, sectionTitles } from './placeholders.mjs';
+import { tracks, trackIds } from '../src/lib/tracks.ts';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const shelltest = resolve(here, '../../shelltest');
@@ -419,19 +421,154 @@ describe.skipIf(!existsSync(join(kafkatest, 'PLAN.md')))('the real kafkatest sou
 	});
 });
 
+describe('the placeholder plans (a tester that has not landed yet)', () => {
+	const placeholders = trackIds
+		.map((track) => ({ track, plan: placeholderPlan(track) }))
+		.filter(({ plan }) => plan !== null);
+
+	it('covers every track whose tester may not exist yet', () => {
+		// shell is parsed from its own PLAN.md and never needs one; every other track does,
+		// because `npm run sync` has to produce a complete site from an empty repo.
+		expect(placeholders.map((p) => p.track).sort()).toEqual(
+			trackIds.filter((t) => t !== 'shell').sort()
+		);
+	});
+
+	it('gives each section one honest waypoint, with what it will cover', () => {
+		for (const { track, plan } of placeholders) {
+			if (track === 'kafka') continue; // kafka's placeholder is its real stage list
+			expect(plan.stages.length, track).toBe(plan.sections.length);
+			for (const stage of plan.stages) {
+				expect(stage.planned, `${track} ${stage.number}`).toBe(true);
+				expect(stage.tests, `${track} ${stage.number}`).toEqual([]);
+				expect(stage.hints.length, `${track} ${stage.number}`).toBeGreaterThanOrEqual(2);
+				expect(stage.name, `${track} ${stage.number}`).toMatch(/\S/);
+			}
+			// Every section is covered exactly once, in order.
+			expect(plan.sections.flatMap((s) => s.stages)).toEqual(plan.stages.map((s) => s.number));
+		}
+	});
+
+	it('uses the section letters the registry has garden names for', () => {
+		for (const { track, plan } of placeholders) {
+			for (const section of plan.sections) {
+				expect(tracks[track].sectionBadges[section.id], `${track} ${section.id}`).toBeDefined();
+			}
+			expect(Object.keys(sectionTitles(track)).length === 0 || plan.sections.length).toBeTruthy();
+		}
+	});
+
+	it('tags the dist waypoints with the ladders the registry declares', () => {
+		const plan = placeholderPlan('dist');
+		const ladders = tracks.dist.ladders;
+		for (const stage of plan.stages) {
+			const ladder = ladders.find((l) => l.sections.includes(stage.section));
+			expect(ladder, `dist section ${stage.section}`).toBeDefined();
+			expect(stage.ladder, `dist stage ${stage.number}`).toBe(ladder.id);
+		}
+	});
+
+	it('builds a pending catalog that still prerenders every stage', () => {
+		for (const { track, plan } of placeholders) {
+			const catalog = buildCatalog({
+				track,
+				plan,
+				yamlDocs: {},
+				generatedAt: 'x',
+				pending: true,
+				source: 'placeholder'
+			});
+			expect(catalog.pending, track).toBe(true);
+			expect(catalog.totals.tests, track).toBe(0);
+			expect(catalog.totals.stages, track).toBe(plan.stages.length);
+			const covered = catalog.sections.flatMap((s) => s.stages).sort((a, b) => a - b);
+			expect(covered, track).toEqual(catalog.stages.map((s) => s.number));
+		}
+	});
+});
+
+describe('normalizeCatalog, for any tester', () => {
+	it('reads a wasm-shaped catalog without knowing anything about wasm', () => {
+		const catalog = normalizeCatalog(
+			{
+				track: 'wasm',
+				sections: [{ id: 'a', title: 'Binary format & decoding', stages: [1] }],
+				stages: [
+					{
+						number: 1,
+						name: 'The magic number and the version',
+						hints: ['read the first eight bytes'],
+						tests: [{ name: 'rejects a bad magic' }],
+						examples: [{ title: 'x', request_hex: '00' }]
+					}
+				]
+			},
+			{ track: 'wasm', generatedAt: 'x', titles: sectionTitles('wasm'), source: 'wasmtest/catalog.json' }
+		);
+		expect(catalog.track).toBe('wasm');
+		expect(catalog.sections[0].id).toBe('A');
+		expect(catalog.totals).toEqual({ stages: 1, tests: 1, ext: 0 });
+		// examples are copied through verbatim for the sync script to split out
+		expect(catalog.stages[0].examples).toHaveLength(1);
+		expect(catalog.source).toBe('wasmtest/catalog.json');
+	});
+
+	it('carries a ladder through, under either spelling, and omits it otherwise', () => {
+		const withLadder = normalizeCatalog(
+			{ stages: [{ number: 1, name: 'Clocks', section: 'a', ladder: 'primitives' }] },
+			{ track: 'dist', generatedAt: 'x' }
+		);
+		expect(withLadder.stages[0].ladder).toBe('primitives');
+		const withTier = normalizeCatalog(
+			{ stages: [{ number: 1, name: 'Clocks', section: 'a', tier: 'cluster' }] },
+			{ track: 'dist', generatedAt: 'x' }
+		);
+		expect(withTier.stages[0].ladder).toBe('cluster');
+		const without = normalizeCatalog(
+			{ stages: [{ number: 1, name: 'Bind', section: 'a' }] },
+			{ track: 'tls', generatedAt: 'x' }
+		);
+		expect(without.stages[0].ladder).toBeUndefined();
+	});
+
+	it('does not apply kafka’s stage-number section ranges to another track', () => {
+		const wasm = normalizeCatalog(
+			{ track: 'wasm', stages: [{ number: 40, name: 'fd_write' }] },
+			{ track: 'wasm', generatedAt: 'x' }
+		);
+		expect(wasm.stages[0].section).toBe('A');
+	});
+});
+
 describe('the generated catalogs on disk', () => {
-	it('has a prerenderable page for every stage a resource links to', async () => {
-		const catalogs = {
-			shell: JSON.parse(await readFile(join(here, '../src/lib/data/catalog.shell.json'), 'utf8')),
-			kafka: JSON.parse(await readFile(join(here, '../src/lib/data/catalog.kafka.json'), 'utf8'))
-		};
-		expect(catalogs.kafka.totals.stages).toBe(45);
-		expect(catalogs.shell.totals.stages).toBe(57);
-		for (const track of ['shell', 'kafka']) {
-			const numbers = new Set(catalogs[track].stages.map((s) => s.number));
+	async function catalogOf(track) {
+		return JSON.parse(await readFile(join(here, `../src/lib/data/catalog.${track}.json`), 'utf8'));
+	}
+
+	it('has a committed catalog for every registered track', async () => {
+		for (const track of trackIds) {
+			const catalog = await catalogOf(track);
+			expect(catalog.track, track).toBe(track);
+			expect(catalog.stages.length, track).toBeGreaterThan(0);
+			// Every stage sits in exactly one section, or the map and the camps lose it.
+			const covered = catalog.sections.flatMap((s) => s.stages).sort((a, b) => a - b);
+			expect(covered, track).toEqual(catalog.stages.map((s) => s.number).sort((a, b) => a - b));
+			expect(new Set(covered).size, track).toBe(covered.length);
+		}
+	});
+
+	it('still has the two finished trails at full size', async () => {
+		expect((await catalogOf('kafka')).totals.stages).toBe(45);
+		expect((await catalogOf('shell')).totals.stages).toBe(57);
+	});
+
+	it('has a resource file for every track, and every link points at a real stage', async () => {
+		for (const track of trackIds) {
+			const numbers = new Set((await catalogOf(track)).stages.map((s) => s.number));
 			const resources = JSON.parse(
 				await readFile(join(here, `../src/lib/data/resources.${track}.json`), 'utf8')
 			);
+			expect(Array.isArray(resources), track).toBe(true);
 			for (const r of resources) {
 				for (const stage of r.stages ?? []) {
 					expect(
@@ -439,6 +576,19 @@ describe('the generated catalogs on disk', () => {
 						`${track} resource ${r.id} links to stage ${stage}`
 					).toEqual({ id: r.id, stage, exists: true });
 				}
+			}
+		}
+	});
+
+	it('keeps the worked examples out of the catalogs and in per-stage files', async () => {
+		for (const track of trackIds) {
+			const catalog = await catalogOf(track);
+			for (const stage of catalog.stages) {
+				expect(stage.examples, `${track} ${stage.number}`).toBeUndefined();
+				if (!stage.exampleCount) continue;
+				const file = join(here, `../src/lib/data/examples/${track}/${stage.number}.json`);
+				expect(existsSync(file), `${track} stage ${stage.number} example file`).toBe(true);
+				expect(JSON.parse(await readFile(file, 'utf8'))).toHaveLength(stage.exampleCount);
 			}
 		}
 	});

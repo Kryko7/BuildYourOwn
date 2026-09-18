@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { catalogs, trackIds, tracks } from '$lib/catalog';
+	import { labTools } from '$lib/components/lab/tools';
 	import { allResources } from '$lib/resources';
 
 	let open = $state(false);
@@ -18,23 +19,24 @@
 	}
 
 	const items: Item[] = [
-		{ id: 'p-home', label: 'Home', hint: 'Both tracks, XP and streak', group: 'Pages', href: '/' },
-		{
-			id: 'p-shell',
-			label: 'Shell garden trail',
-			hint: `${catalogs.shell.totals.stages} stages`,
+		{ id: 'p-home', label: 'Home', hint: `All ${trackIds.length} trails, XP and streak`, group: 'Pages', href: '/' },
+		...trackIds.map((track) => ({
+			id: `p-${track}`,
+			label: `${tracks[track].title} — the trail`,
+			hint: catalogs[track].pending
+				? `${tracks[track].tester} still being written`
+				: `${catalogs[track].totals.stages} stages`,
 			group: 'Pages',
-			href: '/shell'
-		},
-		{
-			id: 'p-kafka',
-			label: 'Kafka garden trail',
-			hint: `${catalogs.kafka.totals.stages} stages`,
-			group: 'Pages',
-			href: '/kafka'
-		},
+			href: `/${track}`
+		})),
 		{ id: 'p-res', label: 'Resources', hint: 'Curated reading', group: 'Pages', href: '/resources' },
-		{ id: 'p-lab', label: 'Lab', hint: 'Tokenizer, wire inspector, batches, replay', group: 'Pages', href: '/lab' },
+		{
+			id: 'p-lab',
+			label: 'Lab',
+			hint: labTools.map((t) => t.label.toLowerCase()).join(', '),
+			group: 'Pages',
+			href: '/lab'
+		},
 		{
 			id: 'p-prog',
 			label: 'Runs',
@@ -47,7 +49,7 @@
 				id: `${track}-${s.number}`,
 				label: `Stage ${String(s.number).padStart(2, '0')} — ${s.name}`,
 				hint: `${tracks[track].tester}${s.ext ? ' · ext' : ''}${s.planned ? ' · planned' : ''}`,
-				group: track === 'shell' ? 'Shell stages' : 'Kafka stages',
+				group: `${tracks[track].short} stages`,
 				href: `/${track}/${s.number}`
 			}))
 		),

@@ -62,6 +62,8 @@ export function normalizeCatalog(raw, { track, generatedAt, titles = {}, source 
 			section: String(s.section ?? sectionForNumber(raw, number)).toUpperCase(),
 			file: String(s.file ?? ''),
 			planDone: Boolean(s.planDone ?? s.done ?? false),
+			// `ladder` is dist's rung (primitives | node | cluster); every other tester omits it.
+			...(s.ladder || s.tier ? { ladder: String(s.ladder ?? s.tier) } : {}),
 			hints: Array.isArray(s.hints) ? s.hints.map(String) : [],
 			tests,
 			// Worked examples (PLAN.md §4.2, §5.2) are copied through verbatim, snake_case keys
@@ -143,6 +145,7 @@ export function mergePlannedStages(catalog, plan, titles = {}) {
 			file: String(p.file ?? ''),
 			planDone: Boolean(p.planDone),
 			planned: true,
+			...(p.ladder ? { ladder: String(p.ladder) } : {}),
 			hints: Array.isArray(p.hints) ? p.hints.map(String) : [],
 			tests: []
 		};

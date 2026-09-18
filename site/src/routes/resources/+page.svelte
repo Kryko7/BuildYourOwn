@@ -1,30 +1,32 @@
 <script lang="ts">
 	import { pageTitle } from '$lib/branding';
-	import { allResources, compareResources, typeGlyphs, typeLabels } from '$lib/resources';
+	import { allResources, compareResources, resourceCounts, typeGlyphs, typeLabels } from '$lib/resources';
 	import { progress } from '$lib/stores/progress.svelte';
 	import { stageOf, tracks, trackIds } from '$lib/catalog';
-	import type { Resource } from '$lib/types';
+	import type { Resource, TrackId } from '$lib/types';
 
 	const resources = allResources();
+	const counts = resourceCounts();
+	/** Tracks whose reading list has not been curated yet — said out loud, not hidden. */
+	const empty = trackIds.filter((t) => counts[t] === 0);
 	const types = [...new Set(resources.map((r) => r.type))].sort();
 	const concepts = [...new Set(resources.flatMap((r) => r.concepts))].sort();
 
 	let q = $state('');
-	let track = $state<'all' | 'shell' | 'kafka'>('all');
+	let track = $state<'all' | TrackId>('all');
 	let type = $state<'all' | Resource['type']>('all');
 	let level = $state<'all' | Resource['level']>('all');
 	let concept = $state('all');
 	let onlyCurrent = $state(false);
 
-	const currentStages = $derived({
-		shell: progress.nextStage('shell'),
-		kafka: progress.nextStage('kafka')
-	});
+	const currentStages = $derived(
+		Object.fromEntries(trackIds.map((t) => [t, progress.nextStage(t)])) as Record<TrackId, number>
+	);
 
+	/** True when a resource is attached to the stage you are up to on a track it covers. */
 	function isCurrent(r: Resource) {
-		return (
-			(r.track !== 'kafka' && r.stages.includes(currentStages.shell)) ||
-			(r.track !== 'shell' && r.stages.includes(currentStages.kafka))
+		return trackIds.some(
+			(t) => (r.track === t || r.track === 'both') && r.stages.includes(currentStages[t])
 		);
 	}
 
@@ -60,7 +62,7 @@
 
 	/** A resource may cite a stage the tester has not published — link only what exists. */
 	function stageHref(r: Resource, stage: number): string | null {
-		const track = r.track === 'both' ? 'shell' : r.track;
+		const track = r.track === 'both' ? trackIds[0] : r.track;
 		return stageOf(track, stage) ? `/${track}/${stage}` : null;
 	}
 
@@ -97,7 +99,7 @@
 			<span class="tiny muted">track</span>
 			<select bind:value={track}>
 				<option value="all">all</option>
-				{#each trackIds as t (t)}<option value={t}>{t}</option>{/each}
+				{#each trackIds as t (t)}<option value={t}>{tracks[t].short.toLowerCase()}</option>{/each}
 			</select>
 		</label>
 		<label>
@@ -125,7 +127,9 @@
 		</label>
 		<label class="check">
 			<input type="checkbox" bind:checked={onlyCurrent} />
-			<span class="tiny">only my current stages ({currentStages.shell} / {currentStages.kafka})</span>
+			<span class="tiny" title={trackIds.map((t) => `${tracks[t].short} ${currentStages[t]}`).join(' · ')}>
+				only my current stages
+			</span>
 		</label>
 		<button class="btn btn-sm btn-ghost" onclick={reset}>reset</button>
 	</div>
@@ -133,6 +137,13 @@
 	<p class="count tiny muted">
 		{filtered.length} of {resources.length} resources · ordered by the stage that first needs them
 	</p>
+
+	{#if empty.length}
+		<p class="nolist tiny">
+			No reading curated yet for {empty.map((t) => tracks[t].short).join(', ')} — those testers are
+			still being written, and their lists land with them. Every other trail is covered.
+		</p>
+	{/if}
 
 	{#each grouped as [groupName, list] (groupName)}
 		<section>
@@ -196,6 +207,13 @@
 	}
 	.lede {
 		color: var(--ink-2);
+	}
+	.nolist {
+		background: var(--lav-soft);
+		color: var(--ink-2);
+		border-radius: var(--r-2);
+		padding: var(--s-2) var(--s-3);
+		margin: 0;
 	}
 	.filters {
 		display: flex;

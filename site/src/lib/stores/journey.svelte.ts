@@ -12,8 +12,15 @@
  * another terminal turns the map green without a reload.
  */
 import { browser } from '$app/environment';
-import { ByoApi, type ApiHealth, type ApiProgress, type ApiRunSummary, type ApiStageRow } from '../api/client';
-import { trackIds } from '../catalog';
+import {
+	ByoApi,
+	type ApiHealth,
+	type ApiProgress,
+	type ApiRunSummary,
+	type ApiStageRow,
+	type ApiTrack
+} from '../api/client';
+import { byTrack, trackIds } from '../tracks';
 import type { Report, TrackId } from '../types';
 
 export const POLL_MS = 2000;
@@ -21,8 +28,7 @@ export const POLL_MS = 2000;
 export type ConnectionStatus = 'probing' | 'connected' | 'reconnecting' | 'offline';
 
 const emptyProgress = (): ApiProgress => ({
-	shell: { latestRunId: null, stages: {} },
-	kafka: { latestRunId: null, stages: {} },
+	...byTrack(() => ({ latestRunId: null, stages: {} })),
 	streak: 0,
 	xp: 0,
 	level: 1
@@ -33,7 +39,13 @@ export class JourneyStore {
 	health = $state<ApiHealth | null>(null);
 	data = $state<ApiProgress>(emptyProgress());
 	runs = $state<ApiRunSummary[]>([]);
-	latest = $state<Record<TrackId, Report | null>>({ shell: null, kafka: null });
+	latest = $state<Record<TrackId, Report | null>>(byTrack(() => null));
+	/**
+	 * What `GET /api/tracks` said, when the running byo serves it (PLAN.md §5.6). It is not
+	 * in byo/API.md yet, so this stays null on every byo that does not have it and the
+	 * built-in registry is the whole truth — nothing on the site depends on it.
+	 */
+	serverTracks = $state<ApiTrack[] | null>(null);
 	lastSyncAt = $state<string | null>(null);
 	/** Bumped on every successful poll that changed something — a cheap "did it move" signal. */
 	revision = $state(0);
@@ -41,7 +53,7 @@ export class JourneyStore {
 	#api: ByoApi;
 	#timer: ReturnType<typeof setInterval> | null = null;
 	#inFlight = false;
-	#latestIds: Record<TrackId, number | null> = { shell: null, kafka: null };
+	#latestIds: Record<TrackId, number | null> = byTrack(() => null);
 	#runsSignature = '';
 
 	constructor(api: ByoApi = new ByoApi()) {
@@ -60,6 +72,11 @@ export class JourneyStore {
 
 	project(track: TrackId) {
 		return this.health?.tracks?.[track]?.project ?? null;
+	}
+
+	/** What byo says about a track, when it serves `/api/tracks`; null otherwise. */
+	serverTrack(track: TrackId): ApiTrack | null {
+		return this.serverTracks?.find((t) => t.id === track) ?? null;
 	}
 
 	/** True when byo is running but `byo init <track>` has never been run here. */
@@ -116,6 +133,8 @@ export class JourneyStore {
 					return;
 				}
 				this.health = health;
+				// Optional, and asked for only while the health probe is running anyway.
+				this.serverTracks = await this.#api.tracks();
 			}
 			const progress = await this.#api.progress();
 			this.data = progress;

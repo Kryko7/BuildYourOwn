@@ -1,19 +1,21 @@
 import { describe, it, expect } from 'vitest';
 import { shellExamples } from './shell';
 import {
-	kafkaExampleCount,
-	kafkaExamples,
-	loadKafkaExampleData,
-	loadKafkaExamples,
-	normalizeKafkaExample,
+	blockOf,
+	byteExampleCount,
+	hasBytes,
+	inlineExamples,
+	loadExampleData,
+	loadExamples,
+	normalizeByteExample,
 	readHex
-} from './kafka';
+} from './bytes';
 import { exampleCount } from './index';
-import { getCatalog } from '../catalog';
+import { getCatalog, trackIds } from '../catalog';
 import { samples } from '../lab/samples';
 import { toHex } from '../lab/kafka';
 import fixture from '../data/fixtures/kafka-examples.sample.json';
-import type { KafkaExample, StageSpec } from '../types';
+import type { ByteExample, ExampleBlock, StageSpec } from '../types';
 
 function stage(partial: Partial<StageSpec>): StageSpec {
 	return {
@@ -215,16 +217,16 @@ describe('readHex', () => {
 	});
 });
 
-describe('kafkaExamples (tolerant reader)', () => {
+describe('the byte-example reader (tolerant by design)', () => {
 	it('returns nothing when the catalog has no examples at all', () => {
-		expect(kafkaExamples(stage({}))).toEqual([]);
-		expect(kafkaExamples(stage({ examples: [] }))).toEqual([]);
-		expect(kafkaExamples(stage({ examples: 'nope' as unknown as unknown[] }))).toEqual([]);
-		expect(kafkaExamples(null)).toEqual([]);
+		expect(inlineExamples(stage({}))).toEqual([]);
+		expect(inlineExamples(stage({ examples: [] }))).toEqual([]);
+		expect(inlineExamples(stage({ examples: 'nope' as unknown as unknown[] }))).toEqual([]);
+		expect(inlineExamples(null)).toEqual([]);
 	});
 
 	it('ignores fields it has never heard of and keeps the ones it knows', () => {
-		const [ex] = kafkaExamples(
+		const [ex] = inlineExamples(
 			stage({
 				examples: [
 					{
@@ -240,15 +242,15 @@ describe('kafkaExamples (tolerant reader)', () => {
 			})
 		);
 		expect(ex.title).toBe('Hello');
-		expect([...(ex.request.bytes ?? [])]).toEqual([0, 1]);
+		expect([...(blockOf(ex, 'request')!.bytes ?? [])]).toEqual([0, 1]);
 		// an empty hex string means "this side is prose, not a frame"
-		expect(ex.response.bytes).toBeNull();
-		expect(ex.response.summary).toBe('a response');
-		expect(ex.request.fields).toEqual([{ offset: 0, length: 2, name: 'size', value: '1' }]);
+		expect(blockOf(ex, 'response')!.bytes).toBeNull();
+		expect(blockOf(ex, 'response')!.summary).toBe('a response');
+		expect(blockOf(ex, 'request')!.fields).toEqual([{ offset: 0, length: 2, name: 'size', value: '1' }]);
 	});
 
 	it('clamps a field range that runs off the end of the frame', () => {
-		const [ex] = kafkaExamples(
+		const [ex] = inlineExamples(
 			stage({
 				examples: [
 					{
@@ -264,33 +266,33 @@ describe('kafkaExamples (tolerant reader)', () => {
 				]
 			})
 		);
-		expect(ex.request.fields).toEqual([
+		expect(blockOf(ex, 'request')!.fields).toEqual([
 			{ offset: 2, length: 2, name: 'body', value: '…' },
 			{ offset: 4, length: 0, name: 'past the end', value: '' }
 		]);
 	});
 
 	it('names an untitled example and drops an entirely empty one', () => {
-		expect(normalizeKafkaExample({ request: 'only a summary' }, 2)?.title).toBe('Example 3');
-		expect(normalizeKafkaExample({}, 0)).toBeNull();
-		expect(normalizeKafkaExample('a string', 0)).toBeNull();
-		expect(normalizeKafkaExample(null, 0)).toBeNull();
+		expect(normalizeByteExample({ request: 'only a summary' }, 2)?.title).toBe('Example 3');
+		expect(normalizeByteExample({}, 0)).toBeNull();
+		expect(normalizeByteExample('a string', 0)).toBeNull();
+		expect(normalizeByteExample(null, 0)).toBeNull();
 	});
 
 	it('accepts camelCase keys too, in case the generator changes its mind', () => {
-		const ex = normalizeKafkaExample({ request: 'r', requestHex: 'aabb', requestFields: [{ offset: 0, length: 2, field: 'x', value: 'y' }] });
-		expect([...(ex?.request.bytes ?? [])]).toEqual([0xaa, 0xbb]);
-		expect(ex?.request.fields[0].name).toBe('x');
+		const ex = normalizeByteExample({ request: 'r', requestHex: 'aabb', requestFields: [{ offset: 0, length: 2, field: 'x', value: 'y' }] });
+		expect([...(blockOf(ex!, 'request')!.bytes ?? [])]).toEqual([0xaa, 0xbb]);
+		expect(blockOf(ex!, 'request')!.fields[0].name).toBe('x');
 	});
 });
 
 describe('the example fixture', () => {
-	const examples = kafkaExamples(stage({ examples: fixture.examples }));
+	const examples = inlineExamples(stage({ examples: fixture.examples }));
 
 	it('reads as two complete examples', () => {
 		expect(examples).toHaveLength(2);
-		expect(examples[0].request.bytes?.length).toBe(41);
-		expect(examples[0].response.bytes?.length).toBe(37);
+		expect(blockOf(examples[0], 'request')!.bytes?.length).toBe(41);
+		expect(blockOf(examples[0], 'response')!.bytes?.length).toBe(37);
 		expect(examples[0].note).toContain('response');
 	});
 
@@ -298,11 +300,11 @@ describe('the example fixture', () => {
 		// The fixture is hand-written in kafkatest's schema; this is what keeps it honest.
 		const built = samples.find((s) => s.id === 'apiversions-v4');
 		expect(built).toBeDefined();
-		expect(toHex(examples[0].request.bytes!)).toBe(toHex(built!.bytes));
+		expect(toHex(blockOf(examples[0], 'request')!.bytes!)).toBe(toHex(built!.bytes));
 	});
 
 	it('annotates every byte of each frame, in order, without gaps', () => {
-		for (const side of [examples[0].request, examples[0].response]) {
+		for (const side of examples[0].blocks) {
 			let cursor = 0;
 			for (const f of side.fields) {
 				expect(f.offset).toBe(cursor);
@@ -314,7 +316,7 @@ describe('the example fixture', () => {
 
 	it('declares a size field matching the bytes that follow it', () => {
 		for (const ex of examples) {
-			for (const side of [ex.request, ex.response]) {
+			for (const side of ex.blocks) {
 				const bytes = side.bytes!;
 				const declared = (bytes[0] << 24) | (bytes[1] << 16) | (bytes[2] << 8) | bytes[3];
 				expect(declared).toBe(bytes.length - 4);
@@ -325,16 +327,16 @@ describe('the example fixture', () => {
 
 describe('the kafkatest extras: kind, env and varies', () => {
 	it('reads the kind, and infers one when the generator does not send it', () => {
-		expect(normalizeKafkaExample({ kind: 'silence', request: 'a connect', response: 'nothing' })?.kind).toBe('silence');
-		expect(normalizeKafkaExample({ kind: 'text', request: 'r', response: 's' })?.kind).toBe('text');
-		expect(normalizeKafkaExample({ request: 'r', request_hex: 'aabb' })?.kind).toBe('wire');
-		expect(normalizeKafkaExample({ request: 'r' })?.kind).toBe('text');
+		expect(normalizeByteExample({ kind: 'silence', request: 'a connect', response: 'nothing' })?.kind).toBe('silence');
+		expect(normalizeByteExample({ kind: 'text', request: 'r', response: 's' })?.kind).toBe('text');
+		expect(normalizeByteExample({ request: 'r', request_hex: 'aabb' })?.kind).toBe('wire');
+		expect(normalizeByteExample({ request: 'r' })?.kind).toBe('text');
 		// a kind from the future is neither guessed at nor fatal
-		expect(normalizeKafkaExample({ kind: 'hologram', request: 'r' })?.kind).toBe('other');
+		expect(normalizeByteExample({ kind: 'hologram', request: 'r' })?.kind).toBe('other');
 	});
 
 	it('keeps the fixture the exchange was captured against', () => {
-		const ex = normalizeKafkaExample({
+		const ex = normalizeByteExample({
 			request: 'r',
 			env: {
 				topics: {
@@ -349,12 +351,12 @@ describe('the kafkatest extras: kind, env and varies', () => {
 		expect(ex?.env?.topics).toEqual([
 			{ key: 't1', name: 't1-ex121', id: '33df85ca-2e51-4259-986f-33bff3f3da4b', partitions: 1 }
 		]);
-		expect(normalizeKafkaExample({ request: 'r' })?.env).toBeNull();
-		expect(normalizeKafkaExample({ request: 'r', env: { topics: {} } })?.env).toBeNull();
+		expect(normalizeByteExample({ request: 'r' })?.env).toBeNull();
+		expect(normalizeByteExample({ request: 'r', env: { topics: {} } })?.env).toBeNull();
 	});
 
 	it('marks a field the generator says changes between captures', () => {
-		const ex = normalizeKafkaExample({
+		const ex = normalizeByteExample({
 			request: 'r',
 			request_hex: 'aabbccdd',
 			request_fields: [
@@ -362,21 +364,21 @@ describe('the kafkatest extras: kind, env and varies', () => {
 				{ offset: 2, length: 2, field: 'topic_id', value: 'uuid', varies: true }
 			]
 		});
-		expect(ex?.request.fields[0].varies).toBeUndefined();
-		expect(ex?.request.fields[1].varies).toBe(true);
+		expect(blockOf(ex!, 'request')!.fields[0].varies).toBeUndefined();
+		expect(blockOf(ex!, 'request')!.fields[1].varies).toBe(true);
 	});
 });
 
 describe('the real kafkatest catalog', () => {
 	const catalog = getCatalog('kafka');
-	const counted = catalog.stages.filter((s) => kafkaExampleCount(s) > 0);
+	const counted = catalog.stages.filter((s) => byteExampleCount(s) > 0);
 
 	/** Everything kafkatest shipped, pulled through the same lazy loader the UI uses. */
 	async function everything() {
-		const out: { stage: StageSpec; raw: unknown[]; examples: KafkaExample[] }[] = [];
+		const out: { stage: StageSpec; raw: unknown[]; examples: ByteExample[] }[] = [];
 		for (const stage of counted) {
-			const raw = (await loadKafkaExampleData(stage.number)) ?? [];
-			out.push({ stage, raw, examples: await loadKafkaExamples(stage) });
+			const raw = (await loadExampleData('kafka', stage.number)) ?? [];
+			out.push({ stage, raw, examples: await loadExamples('kafka', stage) });
 		}
 		return out;
 	}
@@ -390,16 +392,16 @@ describe('the real kafkatest catalog', () => {
 
 	it('loads every counted stage, and nothing for a stage with none', async () => {
 		for (const { stage, examples } of await everything()) {
-			expect(examples.length, `stage ${stage.number}`).toBe(kafkaExampleCount(stage));
+			expect(examples.length, `stage ${stage.number}`).toBe(byteExampleCount(stage));
 		}
-		expect(await loadKafkaExamples(stage({ number: 9999 }))).toEqual([]);
-		expect(await loadKafkaExampleData(9999)).toBeNull();
+		expect(await loadExamples('kafka', stage({ number: 9999 }))).toEqual([]);
+		expect(await loadExampleData('kafka', 9999)).toBeNull();
 	});
 
 	it('never annotates a byte that is not there, on any example', async () => {
 		for (const { stage, examples } of await everything()) {
 			for (const ex of examples) {
-				for (const side of [ex.request, ex.response]) {
+				for (const side of ex.blocks) {
 					const limit = side.bytes?.length ?? 0;
 					for (const f of side.fields) {
 						expect(
@@ -418,8 +420,8 @@ describe('the real kafkatest catalog', () => {
 				const source = raw.find((e) => (e as { title?: string }).title === ex.title) as
 					| { request_hex?: string; response_hex?: string }
 					| undefined;
-				if (source?.request_hex) expect(ex.request.bytes, ex.title).not.toBeNull();
-				if (source?.response_hex) expect(ex.response.bytes, ex.title).not.toBeNull();
+				if (source?.request_hex) expect(blockOf(ex, 'request')!.bytes, ex.title).not.toBeNull();
+				if (source?.response_hex) expect(blockOf(ex, 'response')!.bytes, ex.title).not.toBeNull();
 			}
 		}
 	});
@@ -428,7 +430,7 @@ describe('the real kafkatest catalog', () => {
 		const all = (await everything()).flatMap((s) => s.examples);
 		const quiet = all.filter((e) => e.kind !== 'wire');
 		expect(quiet.length).toBeGreaterThan(0);
-		for (const ex of quiet) expect(ex.request.summary || ex.response.summary).toBeTruthy();
+		for (const ex of quiet) expect(ex.blocks.some((b: ExampleBlock) => b.summary)).toBe(true);
 	});
 
 	it('carries the fixture and the varies flags kafkatest generates', async () => {
@@ -436,8 +438,161 @@ describe('the real kafkatest catalog', () => {
 		expect(all.some((e) => e.env?.topics.length)).toBe(true);
 		expect(all.some((e) => e.env?.group)).toBe(true);
 		expect(
-			all.some((e) => [...e.request.fields, ...e.response.fields].some((f) => f.varies))
+			all.some((e) => e.blocks.some((b) => b.fields.some((f) => f.varies)))
 		).toBe(true);
+	});
+});
+
+describe('the generic block shapes (every track past kafka)', () => {
+	it('turns any `<name>_hex` key into a labelled block of bytes', () => {
+		const ex = normalizeByteExample({
+			title: 'add(2, 3)',
+			kind: 'module',
+			module: 'four sections, one export',
+			module_hex: '00 61 73 6d',
+			module_fields: [{ offset: 0, length: 4, field: 'magic', value: '\\0asm' }]
+		})!;
+		expect(ex.blocks).toHaveLength(1);
+		expect(ex.blocks[0].key).toBe('module');
+		expect(ex.blocks[0].label).toBe('module');
+		expect(ex.blocks[0].summary).toBe('four sections, one export');
+		expect([...ex.blocks[0].bytes!]).toEqual([0x00, 0x61, 0x73, 0x6d]);
+		expect(ex.blocks[0].fields[0].name).toBe('magic');
+	});
+
+	it('keeps several blocks, request and response first', () => {
+		const ex = normalizeByteExample({
+			client_hello_hex: 'aa',
+			response_hex: 'bb',
+			request_hex: 'cc',
+			certificate_hex: 'dd'
+		})!;
+		expect(ex.blocks.map((b) => b.key)).toEqual([
+			'request',
+			'response',
+			'client_hello',
+			'certificate'
+		]);
+		expect(ex.blocks[2].label).toBe('client hello');
+	});
+
+	it('takes an explicit `blocks` array, with its own labels and order', () => {
+		const ex = normalizeByteExample({
+			blocks: [
+				{ key: 'object', label: 'main.o', summary: 'one undefined symbol', hex: '7f 45 4c 46' },
+				{ name: 'rela_text', hex: '00', fields: [{ offset: 0, length: 1, name: 'r_offset', value: '0' }] }
+			]
+		})!;
+		expect(ex.blocks.map((b) => b.label)).toEqual(['main.o', 'rela text']);
+		expect(ex.blocks[1].fields[0].name).toBe('r_offset');
+	});
+
+	it('labels the conventional names by kind, so a module is not a "request"', () => {
+		const wire = normalizeByteExample({ request: 'a frame', request_hex: '00' })!;
+		expect(wire.blocks[0].label).toBe('request →');
+		const module = normalizeByteExample({ kind: 'module', request: 'a module', request_hex: '00', response: '7' })!;
+		expect(module.blocks.map((b) => b.label)).toEqual(['the module', 'it prints']);
+		// An explicit label from the generator always wins.
+		const named = normalizeByteExample({ kind: 'module', request_hex: '00', request_label: 'the object' })!;
+		expect(named.blocks[0].label).toBe('the object');
+	});
+
+	it('labels a linker example by what its two sides actually are', () => {
+		const ex = normalizeByteExample({
+			kind: 'object',
+			request: 'hello.o',
+			request_hex: '7f 45 4c 46',
+			response: 'an ET_EXEC with one PT_LOAD',
+			command: 'ld -o prog hello.o',
+			stdout: 'hello, linker',
+			exit_status: 0
+		})!;
+		expect(ex.blocks.map((b) => b.label)).toEqual(['the input object', 'what your linker must emit']);
+		// `response` is prose here, so it renders as a summary and no hex dump.
+		expect(hasBytes(blockOf(ex, 'response'))).toBe(false);
+		expect(ex.transcript.at(-1)).toEqual({ kind: 'exit', text: '0' });
+	});
+
+	it('builds a transcript from what the example says running it prints', () => {
+		const ex = normalizeByteExample({
+			module_hex: '00',
+			invoke: 'run --invoke add add.wasm 2 3',
+			stdout: '5',
+			stderr: 'warning: slow',
+			exit_code: 0
+		})!;
+		expect(ex.transcript).toEqual([
+			{ kind: 'input', text: 'run --invoke add add.wasm 2 3' },
+			{ kind: 'stdout', text: '5' },
+			{ kind: 'stderr', text: 'warning: slow' },
+			{ kind: 'exit', text: '0' }
+		]);
+	});
+
+	it('takes an explicit transcript, as strings or as rows, and splits newlines', () => {
+		expect(normalizeByteExample({ request: 'x', transcript: ['a', 'b'] })!.transcript).toEqual([
+			{ kind: 'stdout', text: 'a' },
+			{ kind: 'stdout', text: 'b' }
+		]);
+		expect(
+			normalizeByteExample({
+				request: 'x',
+				transcript: [{ kind: 'stderr', text: 'one\ntwo' }, { stream: 'nonsense', line: 'three' }]
+			})!.transcript
+		).toEqual([
+			{ kind: 'stderr', text: 'one' },
+			{ kind: 'stderr', text: 'two' },
+			{ kind: 'stdout', text: 'three' }
+		]);
+	});
+
+	it('keeps an example that is only a transcript, and drops one that is nothing', () => {
+		expect(normalizeByteExample({ stdout: 'hello' })?.transcript).toHaveLength(1);
+		expect(normalizeByteExample({ note: 'just a note' })).toBeNull();
+	});
+
+	it('finds a block by key and says whether it has bytes worth drawing', () => {
+		const ex = normalizeByteExample({ module_hex: '00 01', response: 'prose' })!;
+		expect(blockOf(ex, 'module')?.bytes?.length).toBe(2);
+		expect(blockOf(ex, 'nope')).toBeUndefined();
+		expect(hasBytes(blockOf(ex, 'module'))).toBe(true);
+		expect(hasBytes(blockOf(ex, 'response'))).toBe(false);
+		expect(hasBytes(undefined)).toBe(false);
+	});
+});
+
+describe('the worked examples every tester has shipped so far', () => {
+	const withExamples = trackIds
+		.map((track) => ({
+			track,
+			stages: getCatalog(track).stages.filter((s) => byteExampleCount(s) > 0)
+		}))
+		.filter((t) => t.stages.length > 0);
+
+	it('has at least one track shipping byte examples', () => {
+		expect(withExamples.length).toBeGreaterThan(0);
+	});
+
+	it('reads every one of them without losing a block or overrunning a frame', async () => {
+		for (const { track, stages } of withExamples) {
+			for (const stage of stages) {
+				const examples = await loadExamples(track, stage);
+				expect(examples.length, `${track} ${stage.number}`).toBe(byteExampleCount(stage));
+				for (const ex of examples) {
+					expect(ex.title, `${track} ${stage.number}`).toMatch(/\S/);
+					expect(ex.blocks.length, `${track} ${stage.number} ${ex.title}`).toBeGreaterThan(0);
+					for (const block of ex.blocks) {
+						const limit = block.bytes?.length ?? 0;
+						for (const f of block.fields) {
+							expect(
+								f.offset + f.length,
+								`${track} ${stage.number} · ${ex.title} · ${f.name}`
+							).toBeLessThanOrEqual(limit);
+						}
+					}
+				}
+			}
+		}
 	});
 });
 
@@ -451,11 +606,11 @@ describe('exampleCount', () => {
 	});
 
 	it('reads the split catalog’s count without loading a single frame', () => {
-		expect(kafkaExampleCount(stage({ exampleCount: 4 }))).toBe(4);
+		expect(byteExampleCount(stage({ exampleCount: 4 }))).toBe(4);
 		// inline examples, when something supplies them, still win over the metadata
-		expect(kafkaExampleCount(stage({ exampleCount: 4, examples: fixture.examples }))).toBe(2);
-		expect(kafkaExampleCount(stage({}))).toBe(0);
-		expect(kafkaExampleCount(null)).toBe(0);
+		expect(byteExampleCount(stage({ exampleCount: 4, examples: fixture.examples }))).toBe(2);
+		expect(byteExampleCount(stage({}))).toBe(0);
+		expect(byteExampleCount(null)).toBe(0);
 		const real = getCatalog('kafka').stages.find((s) => s.number === 5)!;
 		expect(exampleCount('kafka', real)).toBe(real.exampleCount);
 	});

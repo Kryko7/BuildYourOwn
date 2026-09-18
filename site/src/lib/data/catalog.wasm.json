@@ -1,199 +1,2202 @@
 {
 	"track": "wasm",
-	"generatedAt": "2026-09-18T15:22:19.879Z",
+	"generatedAt": "2026-09-18T19:03:54.380Z",
 	"sections": [
 		{
 			"id": "A",
 			"title": "Binary format & decoding",
 			"stages": [
-				1
+				1,
+				2,
+				3,
+				4,
+				5,
+				6
 			]
 		},
 		{
 			"id": "B",
 			"title": "Validation & type checking",
 			"stages": [
-				2
+				7,
+				8,
+				9,
+				10,
+				11,
+				12
 			]
 		},
 		{
 			"id": "C",
 			"title": "Numeric instructions & traps",
 			"stages": [
-				3
+				13,
+				14,
+				15,
+				16,
+				17,
+				18,
+				19,
+				20
 			]
 		},
 		{
 			"id": "D",
 			"title": "Control flow",
 			"stages": [
-				4
+				21,
+				22,
+				23,
+				24,
+				25,
+				26,
+				27
 			]
 		},
 		{
 			"id": "E",
 			"title": "Memory & bulk operations",
 			"stages": [
-				5
+				28,
+				29,
+				30,
+				31,
+				32,
+				33,
+				34
 			]
 		},
 		{
 			"id": "F",
 			"title": "Tables, globals, indirect calls",
 			"stages": [
-				6
+				35,
+				36,
+				37,
+				38,
+				39
 			]
 		},
 		{
 			"id": "G",
 			"title": "WASI preview1",
 			"stages": [
-				7
+				40,
+				41,
+				42
 			]
 		},
 		{
 			"id": "H",
 			"title": "Robustness & scale",
 			"stages": [
-				8
+				43,
+				44,
+				45
 			]
 		}
 	],
 	"stages": [
 		{
 			"number": 1,
-			"slug": "binary-format-decoding",
-			"name": "Binary format & decoding",
+			"slug": "magic_and_version",
+			"name": "The magic number and the version",
 			"ext": false,
 			"section": "A",
-			"file": "",
+			"file": "src/stages/s01_magic_and_version.rs",
 			"planDone": false,
-			"planned": true,
 			"hints": [
-				"The module preamble (`\\0asm`, version 1) and the section framing that follows it",
-				"LEB128: unsigned, signed, and the encodings a decoder must reject",
-				"Types, imports, functions, exports, code — read them all before executing anything"
+				"A module begins with the four bytes 00 61 73 6d — a NUL followed by 'asm' — and then a four-byte version",
+				"The version is 01 00 00 00: little-endian 1, not the big-endian 00 00 00 01 a network protocol would write",
+				"Check both before you decode anything else, and refuse the module without running a single instruction",
+				"A file shorter than those eight bytes is not a truncated module, it is not a module at all"
 			],
-			"tests": []
+			"tests": [
+				{
+					"name": "the eight-byte header is accepted"
+				},
+				{
+					"name": "a wrong magic byte is refused"
+				},
+				{
+					"name": "the ASCII text 'asm' without the leading NUL is refused"
+				},
+				{
+					"name": "version 0 is refused"
+				},
+				{
+					"name": "version 2 is refused"
+				},
+				{
+					"name": "a big-endian version is refused"
+				},
+				{
+					"name": "an empty file is refused"
+				},
+				{
+					"name": "a file holding only the magic is refused"
+				}
+			],
+			"exampleCount": 2
 		},
 		{
 			"number": 2,
-			"slug": "validation-type-checking",
-			"name": "Validation & type checking",
+			"slug": "leb128",
+			"name": "LEB128 integers and their edges",
 			"ext": false,
-			"section": "B",
-			"file": "",
+			"section": "A",
+			"file": "src/stages/s02_leb128.rs",
 			"planDone": false,
-			"planned": true,
 			"hints": [
-				"Validate the whole module before running a single instruction",
-				"The stack-polymorphic type checker: operand types, block types, unreachable code",
-				"A module that does not validate must fail before it has any observable effect"
+				"Read a uLEB128 seven bits at a time, lowest group first, and stop at the first byte whose top bit is clear — the count of bytes is not fixed and nothing tells you it in advance",
+				"A u32 field may legally take up to five bytes and a u64 up to ten, so accept padding; refuse a sixth (or eleventh) byte and refuse a value whose bits run past the field's width",
+				"Signed operands like the one in i32.const are sLEB128: sign-extend the last group from its bit 6, which is why i32.const -1 is the single byte 7f",
+				"A LEB128 that reaches the end of the file with its continuation bit still set is a malformed module, not a zero"
 			],
-			"tests": []
+			"tests": [
+				{
+					"name": "a size, a count, an index and a constant in their longest legal form decode the same"
+				},
+				{
+					"name": "a padded signed operand keeps its sign"
+				},
+				{
+					"name": "a uLEB128 that runs past the width of its field is refused"
+				},
+				{
+					"name": "an sLEB128 operand that runs past the width of its value is refused"
+				},
+				{
+					"name": "a u32 field holding a number that does not fit in 32 bits is refused"
+				},
+				{
+					"name": "a LEB128 still asking for another byte at the end of the file is refused"
+				},
+				{
+					"name": "i32.const of the smallest i32 needs all five bytes"
+				},
+				{
+					"name": "i64.const of the smallest i64 needs all ten bytes"
+				}
+			],
+			"exampleCount": 2
 		},
 		{
 			"number": 3,
-			"slug": "numeric-instructions-traps",
-			"name": "Numeric instructions & traps",
+			"slug": "section_framing",
+			"name": "Section order, duplicates and unknown ids",
 			"ext": false,
-			"section": "C",
-			"file": "",
+			"section": "A",
+			"file": "src/stages/s03_section_framing.rs",
 			"planDone": false,
-			"planned": true,
 			"hints": [
-				"i32/i64/f32/f64 arithmetic, comparison, conversion and reinterpretation",
-				"The spec’s canonical trap reasons — \"integer divide by zero\", \"integer overflow\"",
-				"Float semantics: NaN propagation, rounding, saturating truncation"
+				"Read sections in a loop: one id byte, a uLEB128 size, then exactly that many bytes of body — and start the next section at the byte after them, never where the body happened to stop parsing",
+				"Keep the id of the last non-custom section you saw and refuse anything whose id is not strictly larger; that one check catches both duplicates and out-of-order sections",
+				"The data count section has id 12 but belongs before the code section, so treat it as the exception to ascending order rather than sorting by id",
+				"An id above 12 is a malformed module, not something to skip: only id 0, the custom section, may carry bytes you do not understand"
 			],
-			"tests": []
+			"tests": [
+				{
+					"name": "a module whose sections are in ascending id order runs"
+				},
+				{
+					"name": "a second type section is refused"
+				},
+				{
+					"name": "the code section may not come before the function section"
+				},
+				{
+					"name": "a section id no version of the format defines is refused"
+				},
+				{
+					"name": "a section body of zero bytes is refused"
+				},
+				{
+					"name": "a section whose size stops short makes the next id be read from its body"
+				},
+				{
+					"name": "a section whose size runs past the end of the file is refused"
+				},
+				{
+					"name": "the data count must agree with the number of data segments"
+				}
+			],
+			"exampleCount": 2
 		},
 		{
 			"number": 4,
-			"slug": "control-flow",
-			"name": "Control flow",
-			"ext": false,
-			"section": "D",
-			"file": "",
+			"slug": "custom_sections",
+			"name": "Custom sections and the name section",
+			"ext": true,
+			"section": "A",
+			"file": "src/stages/s04_custom_sections.rs",
 			"planDone": false,
-			"planned": true,
 			"hints": [
-				"block, loop, if/else and the label stack br/br_if/br_table branch to",
-				"Calls, returns and multi-value results",
-				"`unreachable` traps with the spec’s own wording"
+				"Id 0 is a custom section: read its size, skip exactly that many bytes, and go back to the loop without touching the last-section-id check that orders the others",
+				"It is legal before the first section, after the last one, in every gap between two, and repeated under a name you have already seen — none of that is an error to report",
+				"The `name` section is debug information for stack traces; whatever is in it, the module computes the same thing, so never let it reach validation",
+				"Skipping is not the same as not reading: the section's size and its UTF-8 name are still part of the frame, so a wrong size or a name that is not UTF-8 is a malformed module"
 			],
-			"tests": []
+			"tests": [
+				{
+					"name": "a custom section in every gap changes nothing",
+					"ext": true
+				},
+				{
+					"name": "the same custom section name may be used twice",
+					"ext": true
+				},
+				{
+					"name": "a name section full of rubbish is still ignored",
+					"ext": true
+				},
+				{
+					"name": "a megabyte of payload changes nothing",
+					"ext": true
+				},
+				{
+					"name": "a custom section may have an empty name",
+					"ext": true
+				},
+				{
+					"name": "a custom section whose declared size is wrong is refused",
+					"ext": true
+				},
+				{
+					"name": "a custom section name that is not valid UTF-8 is refused",
+					"ext": true
+				}
+			],
+			"exampleCount": 2
 		},
 		{
 			"number": 5,
-			"slug": "memory-bulk-operations",
-			"name": "Memory & bulk operations",
+			"slug": "truncated_modules",
+			"name": "Truncated modules and sizes that lie",
 			"ext": false,
-			"section": "E",
-			"file": "",
+			"section": "A",
+			"file": "src/stages/s05_truncated_modules.rs",
 			"planDone": false,
-			"planned": true,
 			"hints": [
-				"Linear memory: loads, stores, alignment, `memory.grow`, out-of-bounds traps",
-				"Data segments, active and passive",
-				"`memory.copy`, `memory.fill`, `memory.init`, `data.drop`"
+				"Make every read of the module bounds-checked and make the failure a value you return, not a panic: a short file is ordinary input, not a bug in your program",
+				"A section's size and a function body's size are promises about bytes that may not be there — compare them against what is left of the file before you slice",
+				"A body's size is also its end: parse the instructions inside that window and refuse a body whose `end` falls outside it, rather than reading on into the next one",
+				"The code section's vector count and the function section's must agree, and both must agree with how many bodies the file actually holds"
 			],
-			"tests": []
+			"tests": [
+				{
+					"name": "a file cut off inside the magic or the version is refused"
+				},
+				{
+					"name": "every truncation after the header is refused, except the prefixes that are whole modules"
+				},
+				{
+					"name": "a module one byte short of its last end is refused"
+				},
+				{
+					"name": "a section size promising more bytes than the file holds is refused"
+				},
+				{
+					"name": "a function body whose size stops before its end is refused"
+				},
+				{
+					"name": "a function body whose size runs past the code section is refused"
+				},
+				{
+					"name": "a code section that declares more bodies than follow it is refused"
+				},
+				{
+					"name": "bytes after the last section are not ignored"
+				}
+			],
+			"exampleCount": 2
 		},
 		{
 			"number": 6,
-			"slug": "tables-globals-indirect-calls",
-			"name": "Tables, globals, indirect calls",
+			"slug": "minimal_modules",
+			"name": "Minimal modules and the export section",
 			"ext": false,
-			"section": "F",
-			"file": "",
+			"section": "A",
+			"file": "src/stages/s06_minimal_modules.rs",
 			"planDone": false,
-			"planned": true,
 			"hints": [
-				"Tables of funcrefs, element segments, `table.get`/`set`/`grow`",
-				"`call_indirect` with its type check, and the traps for a bad index or type",
-				"Mutable and immutable globals, imported and exported"
+				"Every section is optional: the eight-byte header alone is a valid module, so build your decoder around a loop that may run zero times rather than around a list of sections you require",
+				"An export is a name, a one-byte kind (0 func, 1 table, 2 memory, 3 global) and an index into that kind's index space — and the same index may be exported under as many names as you like",
+				"Export names are arbitrary UTF-8, including the empty string, so store them as bytes you validate rather than as an identifier you parse",
+				"Two exports with the same name is a validation error, not a decoding one: the bytes decode, the module is still refused, and nothing runs"
 			],
-			"tests": []
+			"tests": [
+				{
+					"name": "the eight-byte header on its own is a complete module"
+				},
+				{
+					"name": "a module holding only a type section or only a custom section is complete"
+				},
+				{
+					"name": "a missing export is a different failure from a module that will not decode"
+				},
+				{
+					"name": "one function exported under two names answers on both"
+				},
+				{
+					"name": "a memory, a global and a function can be exported side by side"
+				},
+				{
+					"name": "an export name may be empty or non-ASCII"
+				},
+				{
+					"name": "two exports with the same name are refused"
+				}
+			],
+			"exampleCount": 2
 		},
 		{
 			"number": 7,
-			"slug": "wasi-preview1",
-			"name": "WASI preview1",
+			"slug": "function_bodies",
+			"name": "Function bodies: arity and result types",
 			"ext": false,
-			"section": "G",
-			"file": "",
+			"section": "B",
+			"file": "src/stages/s07_function_bodies.rs",
 			"planDone": false,
-			"planned": true,
 			"hints": [
-				"`_start`, the command ABI, and exiting with `proc_exit`",
-				"`fd_write` to stdout and stderr, `args_get`/`args_sizes_get`, `environ_*`",
-				"Errno values, iovecs, and the pointers a host has to bounds-check"
+				"Type-check every body against its declared signature before you execute anything: at the body's final `end` the stack must hold exactly the result types, in order",
+				"Falling off the end of a `() -> i32` body with an empty stack is a validation error, not an implicit zero — and a leftover value in a `() -> ()` body is one too",
+				"The function section and the code section are two parallel vectors: entry i of one describes entry i of the other, so different lengths make the module malformed",
+				"A function's local index space is its parameters first and then its declared locals, which come in runs of a count and a type — `3 i32` is three locals, not three bytes"
 			],
-			"tests": []
+			"tests": [
+				{
+					"name": "a body that leaves exactly its declared results is accepted"
+				},
+				{
+					"name": "a body that falls off the end with an empty stack is refused"
+				},
+				{
+					"name": "a body that leaves an i64 where an i32 belongs is refused"
+				},
+				{
+					"name": "a body that leaves two values where one is declared is refused"
+				},
+				{
+					"name": "a body with no results that leaves a value behind is refused"
+				},
+				{
+					"name": "a function whose declared type index does not exist is refused"
+				},
+				{
+					"name": "the code section must hold exactly one body per function"
+				},
+				{
+					"name": "locals declared in runs of a count and a type are accepted"
+				}
+			],
+			"exampleCount": 2
 		},
 		{
 			"number": 8,
-			"slug": "robustness-scale",
-			"name": "Robustness & scale",
+			"slug": "stack_discipline",
+			"name": "Operand stack underflow and leftovers",
 			"ext": false,
-			"section": "H",
-			"file": "",
+			"section": "B",
+			"file": "src/stages/s08_stack_discipline.rs",
 			"planDone": false,
-			"planned": true,
 			"hints": [
-				"Fuzzed and truncated modules: reject them, never panic and never hang",
-				"Deep recursion, big memories, long-running loops",
-				"Interop: modules a real toolchain emitted, run end to end"
+				"Validate with a stack of types, not values: push the result types of each instruction and pop the operand types it needs, refusing the module the moment a pop finds nothing",
+				"Every instruction that takes operands can underflow — `drop`, `local.set`, `if`'s condition and a `call`'s arguments as much as `i32.add`",
+				"A `return` in the middle of a body must supply the function's results there and then; it does not inherit them from the end of the body",
+				"Check the types as well as the depth: `i32.add` on an i64 is as wrong as `i32.add` on an empty stack, and a stack that is merely the right height is not the right stack"
 			],
-			"tests": []
+			"tests": [
+				{
+					"name": "i32.add with fewer than two operands is refused"
+				},
+				{
+					"name": "drop on an empty stack is refused"
+				},
+				{
+					"name": "local.set with nothing to set is refused"
+				},
+				{
+					"name": "a call whose arguments are not on the stack is refused"
+				},
+				{
+					"name": "a return that does not supply the results is refused"
+				},
+				{
+					"name": "an if with no condition on the stack is refused"
+				},
+				{
+					"name": "a body that stacks sixty-four values and folds them is accepted"
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 9,
+			"slug": "unreachable_typing",
+			"name": "Unreachable code and the polymorphic stack",
+			"ext": true,
+			"section": "B",
+			"file": "src/stages/s09_unreachable_typing.rs",
+			"planDone": false,
+			"hints": [
+				"Give each block frame an `unreachable` flag; `unreachable`, `br`, `br_table` and `return` set it, and the block's `end` clears it",
+				"While the flag is set, popping an operand from an empty frame succeeds and yields whatever type was asked for — that is what makes `unreachable; i32.add` valid",
+				"It supplies types, it does not swallow them: a concrete value pushed inside unreachable code still has to match the block's result type at the `end`",
+				"Decode unreachable code anyway: an undefined opcode or an index that names nothing is a rejection even when the instruction can never run"
+			],
+			"tests": [
+				{
+					"name": "unreachable gives the rest of the block a polymorphic stack",
+					"ext": true
+				},
+				{
+					"name": "br in a typed block makes the rest of that block unreachable",
+					"ext": true
+				},
+				{
+					"name": "code after return and after br_table is unreachable too",
+					"ext": true
+				},
+				{
+					"name": "a module that reaches the unreachable instruction still traps",
+					"ext": true
+				},
+				{
+					"name": "an undefined opcode inside unreachable code is still refused",
+					"ext": true
+				},
+				{
+					"name": "an out-of-range index inside unreachable code is still refused",
+					"ext": true
+				},
+				{
+					"name": "the polymorphic stack does not survive the enclosing end",
+					"ext": true
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 10,
+			"slug": "block_types",
+			"name": "Block, loop and if result types",
+			"ext": false,
+			"section": "B",
+			"file": "src/stages/s10_block_types.rs",
+			"planDone": false,
+			"hints": [
+				"Read a block type as a function type: 0x40 means `() -> ()`, a value type byte means `() -> (that type)`, and anything else is a signed LEB128 naming a type in the type section",
+				"Push a frame at `block`, `loop` and `if` recording the stack height and the block's results, and at `end` check that exactly those results sit above that height",
+				"An `if` with a result type and no `else` cannot validate: the false path produces nothing, so a missing `else` is an error rather than an empty one",
+				"A `loop`'s label carries its parameter types, not its results — `br` to a loop is a jump back to the top, and the values it carries start the next iteration"
+			],
+			"tests": [
+				{
+					"name": "a block with a result that leaves nothing is refused"
+				},
+				{
+					"name": "a block with a result that leaves the wrong type is refused"
+				},
+				{
+					"name": "a block with one result that leaves two values is refused"
+				},
+				{
+					"name": "the two arms of an if must produce the same type"
+				},
+				{
+					"name": "an if with a result and no else at all is refused"
+				},
+				{
+					"name": "a loop's back edge must carry the loop's label types"
+				},
+				{
+					"name": "nested blocks with results give the right answer"
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 11,
+			"slug": "unknown_indices",
+			"name": "Unknown indices and immutable globals",
+			"ext": false,
+			"section": "B",
+			"file": "src/stages/s11_unknown_indices.rs",
+			"planDone": false,
+			"hints": [
+				"Every index in a body is checked against the size of its space before the body runs: functions, types, locals, globals, tables and memories are all dense and zero-based",
+				"A label index is a depth, not a declaration: count it against the frames you are holding, remembering that the function body is itself the outermost frame",
+				"A load or a store names memory 0 implicitly, so a module with no memory section cannot hold one at all",
+				"A global carries a mutability flag next to its type, and `global.set` on a global whose flag is 0 is a validation error, not a trap"
+			],
+			"tests": [
+				{
+					"name": "a call to a function index that does not exist is refused"
+				},
+				{
+					"name": "local.get past the last local is refused"
+				},
+				{
+					"name": "global.get past the last global is refused"
+				},
+				{
+					"name": "call_indirect naming a type index that does not exist is refused"
+				},
+				{
+					"name": "a br one past the outermost label is refused"
+				},
+				{
+					"name": "a table index and a memory index that do not exist are refused"
+				},
+				{
+					"name": "global.set on an immutable global is refused"
+				},
+				{
+					"name": "the last valid index of every index space is accepted"
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 12,
+			"slug": "validation_before_execution",
+			"name": "Validation runs before anything executes",
+			"ext": false,
+			"section": "B",
+			"file": "src/stages/s12_validation_before_execution.rs",
+			"planDone": false,
+			"hints": [
+				"Validate the whole module — every function body, not only the ones that are reachable — before you instantiate it or run its start function",
+				"A refused module must produce no side effects at all: nothing on stdout, no memory initialised, no start function called",
+				"Instantiation is a separate phase after validation: an active data or element segment that does not fit is a trap at instantiation, and the start function still never runs",
+				"Every label of a `br_table` has to carry the same result types, because one instruction has to be able to jump to any of them"
+			],
+			"tests": [
+				{
+					"name": "a bad index in a function nobody calls stops the start function"
+				},
+				{
+					"name": "a type error in a later function stops the start function"
+				},
+				{
+					"name": "an undefined opcode in a function nobody calls stops the start function"
+				},
+				{
+					"name": "every label of a br_table must carry the same result types"
+				},
+				{
+					"name": "a start function whose type is not () -> () is refused"
+				},
+				{
+					"name": "a data segment past the end of memory fails at instantiation"
+				},
+				{
+					"name": "the same module with nothing wrong prints from its start function"
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 13,
+			"slug": "i32_arithmetic",
+			"name": "i32 arithmetic and its edge values",
+			"ext": false,
+			"section": "C",
+			"file": "src/stages/s13_i32_arithmetic.rs",
+			"planDone": false,
+			"hints": [
+				"i32.add, i32.sub and i32.mul are arithmetic modulo 2^32: compute in a wider type and mask, or use your language's wrapping operators — never the ones that panic on overflow",
+				"None of the three ever traps, so i32.mul of -2147483648 by -1 is -2147483648 again; only div_s and rem_s have an overflow trap, and that is the next stage but one",
+				"The operands come off the stack right to left: the value pushed first is the left operand, so `i32.const 10, i32.const 3, i32.sub` is 7 and not -7",
+				"and, or and xor operate on all thirty-two bits including the sign bit; keep the value in an unsigned 32-bit register internally and only reinterpret it as signed when you print it"
+			],
+			"tests": [
+				{
+					"name": "add wraps at both ends of the range"
+				},
+				{
+					"name": "sub is add of the negation, and it wraps too"
+				},
+				{
+					"name": "mul keeps the low thirty-two bits and throws the rest away"
+				},
+				{
+					"name": "and, or and xor work on all thirty-two bits"
+				},
+				{
+					"name": "the sign bit is just another bit to the bitwise operators"
+				},
+				{
+					"name": "zero and one are the identities, and zero annihilates"
+				},
+				{
+					"name": "add and sub undo one another even across the wrap"
+				},
+				{
+					"name": "operands are taken off the stack in the order they were pushed"
+				},
+				{
+					"name": "arguments given on the command line reach the function"
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 14,
+			"slug": "i64_arithmetic",
+			"name": "i64 arithmetic, wrapping and extension",
+			"ext": false,
+			"section": "C",
+			"file": "src/stages/s14_i64_arithmetic.rs",
+			"planDone": false,
+			"hints": [
+				"Keep i64 values in a real 64-bit register: a multiply done at thirty-two bits gives 0 for 65536 * 65536 where the answer is 4294967296",
+				"i32.wrap_i64 keeps the low thirty-two bits and drops the rest, sign bit and all, so the i64 2147483648 becomes the i32 -2147483648",
+				"i64.extend_i32_s copies the argument's sign bit into the top half and i64.extend_i32_u writes zeros there; they differ for every negative i32, and -1 becomes -1 or 4294967295 accordingly",
+				"An i64 constant is a signed LEB128 up to ten bytes long, so i64::MIN and i64::MAX need the full ten and a decoder that stops at five will silently truncate them"
+			],
+			"tests": [
+				{
+					"name": "add and sub wrap at the sixty-four-bit edges"
+				},
+				{
+					"name": "mul keeps the low sixty-four bits"
+				},
+				{
+					"name": "a product that overflows thirty-two bits is not truncated"
+				},
+				{
+					"name": "and, or and xor work on all sixty-four bits"
+				},
+				{
+					"name": "i32.wrap_i64 keeps the low thirty-two bits and drops the rest"
+				},
+				{
+					"name": "extend_i32_s and extend_i32_u disagree about a negative i32"
+				},
+				{
+					"name": "narrowing then widening only round trips when the value fits"
+				},
+				{
+					"name": "a sixty-four-bit constant survives its ten-byte encoding"
+				},
+				{
+					"name": "arguments given on the command line reach a sixty-four-bit function"
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 15,
+			"slug": "division_traps",
+			"name": "Division, remainder and the two integer traps",
+			"ext": false,
+			"section": "C",
+			"file": "src/stages/s15_division_traps.rs",
+			"planDone": false,
+			"hints": [
+				"div_s truncates towards zero, so -7 / 2 is -3; rem_s takes the sign of the dividend, so -7 % 2 is -1 and 7 % -2 is 1",
+				"Check the divisor for zero before dividing anything: all eight of div_s, div_u, rem_s and rem_u at both widths trap with 'integer divide by zero'",
+				"i32::MIN / -1 and i64::MIN / -1 trap with 'integer overflow' — but div_u of the same bit patterns is 0, and it must not trap",
+				"i32::MIN rem_s -1 is 0 and is NOT a trap, so do not compute the remainder by dividing first; most hardware divide instructions fault on exactly this pair"
+			],
+			"tests": [
+				{
+					"name": "div_s truncates towards zero, not towards minus infinity"
+				},
+				{
+					"name": "rem_s takes its sign from the dividend"
+				},
+				{
+					"name": "div_u and rem_u read both operands as unsigned"
+				},
+				{
+					"name": "every division and remainder by zero traps"
+				},
+				{
+					"name": "the most negative value divided by -1 traps with integer overflow"
+				},
+				{
+					"name": "the most negative value remaindered by -1 is 0, not a trap"
+				},
+				{
+					"name": "quotient and remainder reconstruct the dividend"
+				},
+				{
+					"name": "a trap leaves nothing on stdout, whatever ran before it"
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 16,
+			"slug": "comparisons_and_shifts",
+			"name": "Comparisons, shifts and rotates",
+			"ext": false,
+			"section": "C",
+			"file": "src/stages/s16_comparisons_and_shifts.rs",
+			"planDone": false,
+			"hints": [
+				"Every comparison returns an i32 that is 0 or 1 — never -1, never the operand — even when the operands are i64",
+				"The signed and unsigned comparisons differ only in how they read the top bit: -1 lt_s 1 is 1 and -1 lt_u 1 is 0",
+				"Mask the shift count: count & 31 for i32 and count & 63 for i64, so 1 shl 32 is 1 and 1 shl 33 is 2, and a negative count is its unsigned value masked the same way",
+				"shr_s copies the sign bit into the top and shr_u writes zeros there; shr_s is not division, because -3 shr_s 1 is -2 while -3 div_s 2 is -1"
+			],
+			"tests": [
+				{
+					"name": "eqz, eq and ne answer exactly 0 or exactly 1"
+				},
+				{
+					"name": "lt and gt disagree about the top bit"
+				},
+				{
+					"name": "le and ge are the strict comparisons with equality allowed"
+				},
+				{
+					"name": "the sixty-four-bit comparisons still answer a thirty-two-bit boolean"
+				},
+				{
+					"name": "shl and shr_u move bits without regard for the sign"
+				},
+				{
+					"name": "shr_s copies the sign bit down from the top"
+				},
+				{
+					"name": "the shift count is taken modulo the width"
+				},
+				{
+					"name": "rotl and rotr carry the bits round the end"
+				},
+				{
+					"name": "the sixty-four-bit shifts and rotates count modulo sixty-four"
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 17,
+			"slug": "bit_counting",
+			"name": "clz, ctz, popcnt and sign extension",
+			"ext": true,
+			"section": "C",
+			"file": "src/stages/s17_bit_counting.rs",
+			"planDone": false,
+			"hints": [
+				"clz and ctz of 0 are the width of the type — 32 for i32 and 64 for i64 — and that is the case a host intrinsic most often leaves undefined, so handle it before you call one",
+				"i32.clz, i32.ctz and i32.popcnt return an i32; their i64 counterparts return an i64, so i64.popcnt of -1 is the i64 value 64",
+				"i32.extend8_s takes the low eight bits, reads them as a signed byte and widens that: 0x7f is 127, 0x80 is -128, and whatever sat in the high twenty-four bits is discarded first",
+				"i64.extend32_s is the same idea at thirty-two bits and is a different instruction from i64.extend_i32_s, which takes an i32 operand rather than an i64 one"
+			],
+			"tests": [
+				{
+					"name": "clz counts the zeros above the highest set bit",
+					"ext": true
+				},
+				{
+					"name": "ctz counts the zeros below the lowest set bit",
+					"ext": true
+				},
+				{
+					"name": "popcnt counts the ones and nothing else",
+					"ext": true
+				},
+				{
+					"name": "the sixty-four-bit counters answer up to sixty-four",
+					"ext": true
+				},
+				{
+					"name": "i32.extend8_s and i32.extend16_s widen a signed narrow value",
+					"ext": true
+				},
+				{
+					"name": "the i64 sign extensions cover eight, sixteen and thirty-two bits",
+					"ext": true
+				},
+				{
+					"name": "sign extension reads the low bits and discards everything above them",
+					"ext": true
+				},
+				{
+					"name": "clz, ctz and popcnt agree with each other and with a loop",
+					"ext": true
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 18,
+			"slug": "float_arithmetic",
+			"name": "f32 and f64 arithmetic",
+			"ext": false,
+			"section": "C",
+			"file": "src/stages/s18_float_arithmetic.rs",
+			"planDone": false,
+			"hints": [
+				"f32.const and f64.const carry four and eight raw little-endian bytes, not a LEB128: read them with from_le_bytes and never sign-extend them",
+				"Do every f32 operation at f32 width — computing in f64 and rounding once at the end gives a different answer for add, sub, mul, div and sqrt, and double rounding is how it shows up",
+				"ceil, floor and trunc all return a float, not an integer, and ceil(-0.5) is -0: keep the sign bit rather than normalising every zero to +0",
+				"Dividing a float by zero is not a trap — it is +inf, -inf or NaN depending on the signs, and only the integer divisions trap"
+			],
+			"tests": [
+				{
+					"name": "add, sub, mul and div of exactly representable f32 values"
+				},
+				{
+					"name": "the same four operations at f64 width"
+				},
+				{
+					"name": "0.1 + 0.2 is not 0.3 at f64 width, and a comparison is the only honest way to say so"
+				},
+				{
+					"name": "sqrt is exact on a perfect square and has the hardware's bits on 2"
+				},
+				{
+					"name": "abs and neg move the sign bit and nothing else"
+				},
+				{
+					"name": "ceil, floor and trunc round the way their names say"
+				},
+				{
+					"name": "ceil of a small negative is negative zero, not zero"
+				},
+				{
+					"name": "dividing a float by zero gives an infinity or a NaN, never a trap"
+				},
+				{
+					"name": "demote loses precision, promote never does"
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 19,
+			"slug": "float_special_values",
+			"name": "NaN, signed zeros, infinities, min/max and nearest",
+			"ext": false,
+			"section": "C",
+			"file": "src/stages/s19_float_special_values.rs",
+			"planDone": false,
+			"hints": [
+				"f32.min and f32.max are not fmin and fmax: if either operand is a NaN the result is a NaN, and min(+0, -0) is -0 while max(+0, -0) is +0",
+				"f32.nearest rounds a tie to the even neighbour — 0.5 and 2.5 both become 2's neighbours 0 and 2 — so it is neither round() nor trunc(x + 0.5)",
+				"copysign takes the magnitude of its first operand and the sign bit of its second, whatever that second operand is: a negative zero and a negative NaN both make the result negative",
+				"Every comparison with a NaN is false except ne, which is true; keep that rule out of your min/max and sorting code"
+			],
+			"tests": [
+				{
+					"name": "min and max answer a NaN when either operand is a NaN"
+				},
+				{
+					"name": "min and max tell the two zeros apart"
+				},
+				{
+					"name": "nearest rounds a tie to the even neighbour"
+				},
+				{
+					"name": "copysign takes the sign of its second operand"
+				},
+				{
+					"name": "abs and neg are sign-bit operations, on a NaN too"
+				},
+				{
+					"name": "arithmetic on infinities"
+				},
+				{
+					"name": "an operation with a NaN operand produces a quiet NaN"
+				},
+				{
+					"name": "every comparison with a NaN is false except ne"
+				},
+				{
+					"name": "the two zeros compare equal and have different bits"
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 20,
+			"slug": "conversions",
+			"name": "Truncation traps, trunc_sat and reinterpret",
+			"ext": true,
+			"section": "C",
+			"file": "src/stages/s20_conversions.rs",
+			"planDone": false,
+			"hints": [
+				"i32.trunc_f32_s rounds towards zero first and then checks the range, so -1.9 becomes -1 and 2147483647.5 becomes 2147483647 — test the truncated value, not the float",
+				"A NaN traps with 'invalid conversion to integer'; an infinity and any out-of-range finite value trap with 'integer overflow'. They are two different traps and a learner's runtime usually conflates them",
+				"The unsigned truncations accept everything that truncates to zero, so -0.5 is fine and -1.0 is an overflow; do not reject on the sign bit",
+				"The 0xfc-prefixed trunc_sat family never traps: NaN gives 0, too large gives the type's maximum, too small its minimum — and reinterpret moves bits without touching them at all"
+			],
+			"tests": [
+				{
+					"name": "truncation rounds towards zero at every width",
+					"ext": true
+				},
+				{
+					"name": "the signed truncations accept the values that just fit",
+					"ext": true
+				},
+				{
+					"name": "the unsigned truncations accept -0.5 and refuse -1",
+					"ext": true
+				},
+				{
+					"name": "a NaN is an invalid conversion, an infinity is an integer overflow",
+					"ext": true
+				},
+				{
+					"name": "a finite value one step past the range is an integer overflow",
+					"ext": true
+				},
+				{
+					"name": "the saturating truncations never trap on a NaN or an infinity",
+					"ext": true
+				},
+				{
+					"name": "the saturating truncations clamp to the type's own extremes",
+					"ext": true
+				},
+				{
+					"name": "reinterpret moves the bits in all four directions",
+					"ext": true
+				},
+				{
+					"name": "reinterpret is not convert, and it names the exact bits",
+					"ext": true
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 21,
+			"slug": "blocks_and_loops",
+			"name": "block, loop and br to every depth",
+			"ext": false,
+			"section": "D",
+			"file": "src/stages/s21_blocks_and_loops.rs",
+			"planDone": false,
+			"hints": [
+				"`br l` counts labels outward from the branch: 0 is the innermost enclosing block, loop or if, and the function body itself is the outermost label",
+				"Branching to a `block` continues after its `end`; branching to a `loop` jumps back to the instruction after the `loop`. That one difference is the whole of iteration",
+				"A `br` takes the label's arity off the top of the stack, throws the rest of the frame away, and makes everything after it in the same block unreachable",
+				"Falling off the end of a block or a loop is not a branch: control simply carries on, which is why a `loop` nobody branches back to runs exactly once"
+			],
+			"tests": [
+				{
+					"name": "a br to a block continues after its end"
+				},
+				{
+					"name": "a br to a loop starts the body again"
+				},
+				{
+					"name": "br 0 through br 5 each land at their own depth"
+				},
+				{
+					"name": "a br out of a typed block carries a value with it"
+				},
+				{
+					"name": "a loop counts to a bound and stops"
+				},
+				{
+					"name": "a br out of the block enclosing a loop ends the loop"
+				},
+				{
+					"name": "a br as the last instruction of a function returns from it"
+				},
+				{
+					"name": "a block entered and left with no branch changes nothing"
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 22,
+			"slug": "if_else",
+			"name": "if / else and br_if",
+			"ext": false,
+			"section": "D",
+			"file": "src/stages/s22_if_else.rs",
+			"planDone": false,
+			"hints": [
+				"`if` pops one i32 and runs its first body when that value is anything but zero; `br_if l` pops one i32 and branches to `l` on the same test",
+				"Truth is 'not zero', not 'equal to one': -1, 2 and INT_MIN are all true, and the condition is consumed either way",
+				"`if bt … else … end` is a single block with two bodies, so both arms must leave exactly what the block type promises — an `if (result i32)` with no `else` cannot validate",
+				"A `br_if` that does not branch leaves everything except the condition where it was, so the value it would have carried is still on the stack"
+			],
+			"tests": [
+				{
+					"name": "an if with no else runs its body only when the condition is true"
+				},
+				{
+					"name": "every non-zero condition is true and only zero is false"
+				},
+				{
+					"name": "an if with a result type yields the value of the arm that ran"
+				},
+				{
+					"name": "nested ifs choose an arm at each level"
+				},
+				{
+					"name": "an if inside a loop decides afresh on every iteration"
+				},
+				{
+					"name": "br_if branches when its condition is true and falls through when it is false"
+				},
+				{
+					"name": "br_if consumes its condition and nothing else"
+				},
+				{
+					"name": "max3 returns the largest of its three arguments"
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 23,
+			"slug": "br_table",
+			"name": "br_table, its default and a runtime index",
+			"ext": false,
+			"section": "D",
+			"file": "src/stages/s23_br_table.rs",
+			"planDone": false,
+			"hints": [
+				"`br_table l0 l1 … ln ld` pops one i32: if it is less than the number of labels it branches to that label, and otherwise to the default `ld`",
+				"The index is **unsigned**, so -1 is 4294967295 and takes the default. An out-of-range index is a runtime decision, never a trap and never a validation error",
+				"Every label in the table, the default included, must have the same arity, and `br_table` carries that many values off the stack exactly as `br` does",
+				"The entries are relative depths like any other branch target, so the same label may appear more than once and the table need not be in any order"
+			],
+			"tests": [
+				{
+					"name": "each index selects the label at that position"
+				},
+				{
+					"name": "an index past the end of the table takes the default"
+				},
+				{
+					"name": "a br_table with one label is a br"
+				},
+				{
+					"name": "repeated entries send several indices to the same label"
+				},
+				{
+					"name": "a br_table carries a result value out of a typed block"
+				},
+				{
+					"name": "a table three blocks deep reaches each of the three"
+				},
+				{
+					"name": "a br_table as the last instruction of a function returns from it"
+				},
+				{
+					"name": "a br_table drives a state machine that terminates"
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 24,
+			"slug": "return_and_unreachable",
+			"name": "return, unreachable, nop and drop",
+			"ext": false,
+			"section": "D",
+			"file": "src/stages/s24_return_and_unreachable.rs",
+			"planDone": false,
+			"hints": [
+				"`return` is a branch to the function's own label: it takes the result types off the top of the stack and discards whatever is underneath, from any depth",
+				"`unreachable` traps with the canonical reason 'unreachable'. The process exits non-zero, stderr says so, and stdout stays empty because the call never produced a result",
+				"Unreachable code still has to type-check, so `i32.const 7  return  unreachable` validates and returns 7 — refusing to decode what follows a `return` is wrong",
+				"`drop` pops exactly one value whatever its type, and `nop` does nothing at all; neither may be folded away into a type error"
+			],
+			"tests": [
+				{
+					"name": "return hands back what is on top of the stack"
+				},
+				{
+					"name": "return leaves the function from inside a block, a loop or an if"
+				},
+				{
+					"name": "the instructions after a return never run"
+				},
+				{
+					"name": "unreachable traps and puts nothing on stdout"
+				},
+				{
+					"name": "an unreachable control never reaches is harmless"
+				},
+				{
+					"name": "any number of nops change nothing"
+				},
+				{
+					"name": "drop removes exactly one value of any type"
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 25,
+			"slug": "select",
+			"name": "select, typed and untyped",
+			"ext": false,
+			"section": "D",
+			"file": "src/stages/s25_select.rs",
+			"planDone": false,
+			"hints": [
+				"`select` pops the condition, then the second operand, then the first, and yields the **first** operand when the condition is non-zero",
+				"Both operands are already on the stack when it runs, so nothing is skipped: a trap in the operand that loses still happens",
+				"The two operands must have the same type, and that type is the result type — there is no promotion and no mixing",
+				"The untyped 0x1b form only accepts numeric operands; a funcref or externref needs the typed 0x1c form, which writes the type out"
+			],
+			"tests": [
+				{
+					"name": "select yields the first operand when the condition is true"
+				},
+				{
+					"name": "select works on all four numeric types"
+				},
+				{
+					"name": "every non-zero condition picks the first operand"
+				},
+				{
+					"name": "select implements a branchless max"
+				},
+				{
+					"name": "both operands are evaluated before select runs"
+				},
+				{
+					"name": "the typed form behaves like the untyped one on numbers"
+				},
+				{
+					"name": "a reference operand needs the typed form"
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 26,
+			"slug": "calls_and_recursion",
+			"name": "Calls, recursion and call stack exhausted",
+			"ext": false,
+			"section": "D",
+			"file": "src/stages/s26_calls_and_recursion.rs",
+			"planDone": false,
+			"hints": [
+				"`call n` names a function index — imports first, then the module's own functions — and pops one argument per parameter, the first parameter being the value pushed first",
+				"The index space is complete before any body runs, so a function may call one defined later, may call itself, and two functions may call each other",
+				"The callee gets a fresh frame: the arguments become locals 0..n-1, the declared locals after them start at zero, and the operand stack starts empty",
+				"Count the call depth yourself and trap with 'call stack exhausted' when your own limit is reached; running out of the host's stack and dying is not a trap"
+			],
+			"tests": [
+				{
+					"name": "a call returns the callee's result to the caller"
+				},
+				{
+					"name": "arguments arrive in the order they were pushed"
+				},
+				{
+					"name": "a chain of five calls returns through all five"
+				},
+				{
+					"name": "factorial by recursion matches the same factorial in Rust"
+				},
+				{
+					"name": "fibonacci by recursion matches the same fibonacci in Rust"
+				},
+				{
+					"name": "two mutually recursive functions agree on which numbers are even"
+				},
+				{
+					"name": "unbounded recursion is a clean trap, not a crash"
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 27,
+			"slug": "multi_value",
+			"name": "Multi-value blocks: results and parameters",
+			"ext": true,
+			"section": "D",
+			"file": "src/stages/s27_multi_value.rs",
+			"planDone": false,
+			"hints": [
+				"A block type that is neither 0x40 nor a value type is a **signed** LEB128 index into the type section, which gives the block both parameters and several results",
+				"A block's parameters are popped off the enclosing stack when it is entered; the values below them are untouchable until the block's `end`",
+				"A `loop`'s label arity is its **parameter** count, not its result count: a `br` back to a loop carries the next iteration's parameters",
+				"A function with several results returns them in order, and a runtime prints one per line"
+			],
+			"tests": [
+				{
+					"name": "a function returning two values prints one per line",
+					"ext": true
+				},
+				{
+					"name": "a function returning three values prints them in order",
+					"ext": true
+				},
+				{
+					"name": "a block with a multi-value result type leaves every value behind",
+					"ext": true
+				},
+				{
+					"name": "a block with parameters takes them off the enclosing stack",
+					"ext": true
+				},
+				{
+					"name": "a loop with parameters carries an accumulator round",
+					"ext": true
+				},
+				{
+					"name": "a br carries every value the label's type asks for",
+					"ext": true
+				},
+				{
+					"name": "both arms of an if produce two values, and a call consumes them",
+					"ext": true
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 28,
+			"slug": "loads_and_stores",
+			"name": "Loads and stores: every width and signedness",
+			"ext": false,
+			"section": "E",
+			"file": "src/stages/s28_loads_and_stores.rs",
+			"planDone": false,
+			"hints": [
+				"A load and a store both take a memory immediate — an alignment hint and a static offset — before they touch the stack; decode both even when you ignore the alignment",
+				"The narrow loads come in pairs: `load8_s` sign-extends the byte into the result type, `load8_u` zero-extends it, and 0xff is -1 or 255 depending on which one you wrote",
+				"A narrow store truncates: `i32.store8` writes the low byte of the operand and nothing else, so the three bytes after it must still hold whatever they held before",
+				"Memory starts as a page of zeroes, and a store followed by a load of the same address and width must give back exactly what went in — floats included, bit for bit"
+			],
+			"tests": [
+				{
+					"name": "a fresh memory is a page of zeroes"
+				},
+				{
+					"name": "an 8-bit load extends according to its signedness"
+				},
+				{
+					"name": "a 16-bit load extends according to its signedness"
+				},
+				{
+					"name": "a 32-bit load into an i64 extends according to its signedness"
+				},
+				{
+					"name": "a narrow store writes only its own bytes"
+				},
+				{
+					"name": "every integer store and load round-trips"
+				},
+				{
+					"name": "a float store and load round-trips bit for bit"
+				},
+				{
+					"name": "a narrow load takes the low bytes of a wide store"
+				},
+				{
+					"name": "a load and a store move bytes, not types"
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 29,
+			"slug": "offset_and_alignment",
+			"name": "offset, align and little-endian byte order",
+			"ext": false,
+			"section": "E",
+			"file": "src/stages/s29_offset_and_alignment.rs",
+			"planDone": false,
+			"hints": [
+				"The effective address is the dynamic operand plus the static `offset` immediate, added as unsigned 33-bit arithmetic — compute it in a u64 so a huge offset traps instead of wrapping back into the page",
+				"`align` is only a hint: it must never change the result and never trap, but a declared alignment larger than the width's natural one makes the module invalid, so check it while validating",
+				"The alignment immediate is a log2: 0, 1, 2, 3 stand for 1, 2, 4 and 8 bytes, and the natural alignment of a load is its width in bytes",
+				"Memory is little-endian for every type: the low byte of an i64 goes at the lowest address, and reading it back with eight `i32.load8_u` must give the bytes in that order"
+			],
+			"tests": [
+				{
+					"name": "the offset immediate adds to the dynamic address"
+				},
+				{
+					"name": "address and offset add as unsigned 33-bit arithmetic, so a huge offset traps"
+				},
+				{
+					"name": "a smaller declared alignment is legal and changes nothing"
+				},
+				{
+					"name": "an alignment larger than the natural one is a validation error"
+				},
+				{
+					"name": "an unaligned access works at every width"
+				},
+				{
+					"name": "an i64 is stored little-endian, low byte first"
+				},
+				{
+					"name": "an i32 and a float are stored little-endian too"
+				},
+				{
+					"name": "a value written byte by byte reads back as one wide load"
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 30,
+			"slug": "memory_size_and_grow",
+			"name": "memory.size and memory.grow",
+			"ext": false,
+			"section": "E",
+			"file": "src/stages/s30_memory_size_and_grow.rs",
+			"planDone": false,
+			"hints": [
+				"`memory.size` answers in pages of 65 536 bytes and starts at the memory's declared minimum, so divide by the page size rather than returning a byte count",
+				"`memory.grow n` returns the size *before* the growth; only the failure case returns -1, and -1 is a value, not a trap, so execution continues with it on the stack",
+				"A failed grow must leave everything alone: the same size, the same bytes, no partial allocation — write the new size only once you know it fits",
+				"Two limits can refuse a grow: the declared maximum, and the 65 536-page ceiling of a 32-bit memory that applies even when no maximum is declared"
+			],
+			"tests": [
+				{
+					"name": "memory.size counts pages, not bytes"
+				},
+				{
+					"name": "memory.grow returns the size before it grew"
+				},
+				{
+					"name": "memory.grow 0 is legal and changes nothing"
+				},
+				{
+					"name": "growing past the declared maximum returns -1"
+				},
+				{
+					"name": "a failed grow leaves the memory and its size untouched"
+				},
+				{
+					"name": "a memory with no declared maximum still refuses an implausible grow"
+				},
+				{
+					"name": "a page that only exists after a grow"
+				},
+				{
+					"name": "a failed grow is not a trap"
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 31,
+			"slug": "memory_bounds",
+			"name": "Out-of-bounds memory traps at the byte boundary",
+			"ext": false,
+			"section": "E",
+			"file": "src/stages/s31_memory_bounds.rs",
+			"planDone": false,
+			"hints": [
+				"Bound the whole access, not its first byte: an access at address `a` of `w` bytes is in bounds when `a + w <= size_in_bytes`, computed wide enough not to overflow",
+				"That makes the last legal address width-dependent — 65 535 for one byte, 65 532 for four, 65 528 for eight on a one-page memory — and one past it must trap",
+				"Addresses are unsigned: `i32.const -1` means 4 294 967 295, so it is far outside the memory rather than one byte back from the end",
+				"The bound follows the current size, so recompute it after every `memory.grow` rather than caching the limit at instantiation"
+			],
+			"tests": [
+				{
+					"name": "the last valid address of a load depends on its width"
+				},
+				{
+					"name": "one byte past a load's last valid address traps"
+				},
+				{
+					"name": "the last valid address of a store depends on its width"
+				},
+				{
+					"name": "one byte past a store's last valid address traps"
+				},
+				{
+					"name": "an address of -1 is 4294967295 and traps"
+				},
+				{
+					"name": "the boundary follows the declared size"
+				},
+				{
+					"name": "a grow moves the boundary with it"
+				},
+				{
+					"name": "memory.fill of length zero is legal at the very end of memory",
+					"ext": true
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 32,
+			"slug": "data_segments",
+			"name": "Active and passive data segments",
+			"ext": false,
+			"section": "E",
+			"file": "src/stages/s32_data_segments.rs",
+			"planDone": false,
+			"hints": [
+				"Copy every active segment into its memory at instantiation, in the order the section lists them, before the start function runs and before any export is callable",
+				"A passive segment is copied nowhere: keep its bytes in the instance for `memory.init` and leave the memory as it was",
+				"A segment that does not fit is an instantiation trap, not a validation error — the module validates, then instantiation fails with `out of bounds memory access` and nothing runs",
+				"The offset is a constant expression, so it may be a `global.get` of an immutable global rather than a literal, and its value is only known once the instance is being built"
+			],
+			"tests": [
+				{
+					"name": "an active segment is in memory before any code runs"
+				},
+				{
+					"name": "several active segments each land at their own offset"
+				},
+				{
+					"name": "a later segment overwrites an earlier one where they overlap"
+				},
+				{
+					"name": "a segment offset may be a global.get of an immutable global"
+				},
+				{
+					"name": "an empty segment and one that ends exactly at the end of memory"
+				},
+				{
+					"name": "a segment that runs past the end of memory is an instantiation trap"
+				},
+				{
+					"name": "a passive segment is not copied into memory"
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 33,
+			"slug": "memory_init",
+			"name": "memory.init and data.drop",
+			"ext": true,
+			"section": "E",
+			"file": "src/stages/s33_memory_init.rs",
+			"planDone": false,
+			"hints": [
+				"`memory.init seg` pops length, then source offset, then destination — the operands are pushed in the order destination, source, length, so pop them the other way round",
+				"Check both ranges before copying anything: `d + n` against the memory size and `s + n` against the segment length, in arithmetic wide enough that a huge length cannot wrap",
+				"Length 0 is legal wherever both ends are in range, which includes the end of memory and the end of the segment; it copies nothing and must not trap",
+				"`data.drop` replaces the segment with an empty one rather than setting a flag: dropping twice is fine, and a later `memory.init` of length 0 from it is fine too"
+			],
+			"tests": [
+				{
+					"name": "memory.init copies a whole passive segment",
+					"ext": true
+				},
+				{
+					"name": "memory.init copies a slice from the middle of a segment",
+					"ext": true
+				},
+				{
+					"name": "a memory.init of length zero is legal at either end",
+					"ext": true
+				},
+				{
+					"name": "a destination past the end of memory traps",
+					"ext": true
+				},
+				{
+					"name": "a source range past the end of the segment traps",
+					"ext": true
+				},
+				{
+					"name": "data.drop empties a segment, and dropping twice is not an error",
+					"ext": true
+				},
+				{
+					"name": "memory.init of a segment that does not exist is a validation error",
+					"ext": true
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 34,
+			"slug": "memory_copy_fill",
+			"name": "memory.copy and memory.fill",
+			"ext": true,
+			"section": "E",
+			"file": "src/stages/s34_memory_copy_fill.rs",
+			"planDone": false,
+			"hints": [
+				"`memory.copy` must behave like `memmove`: when the ranges overlap, copy backwards if the destination is above the source and forwards if it is below, or the result is scrambled one way round",
+				"Its operands are pushed destination, source, length, so they come off the stack length first — the same order `memory.init` uses",
+				"`memory.fill` uses only the low eight bits of its value operand: 0x1ff fills with 0xff and 0x100 fills with zeroes",
+				"Check every bound before writing anything, and treat length 0 as legal wherever the addresses are in range — a copy of nothing at the end of memory must not trap"
+			],
+			"tests": [
+				{
+					"name": "memory.copy handles an overlap with the destination above the source",
+					"ext": true
+				},
+				{
+					"name": "memory.copy handles an overlap with the destination below the source",
+					"ext": true
+				},
+				{
+					"name": "a copy of length zero is legal anywhere in range",
+					"ext": true
+				},
+				{
+					"name": "a copy can span the whole page",
+					"ext": true
+				},
+				{
+					"name": "a copy that runs past either end traps",
+					"ext": true
+				},
+				{
+					"name": "a copy onto itself leaves the bytes where they were",
+					"ext": true
+				},
+				{
+					"name": "memory.fill uses only the low eight bits of its value",
+					"ext": true
+				},
+				{
+					"name": "memory.fill covers exactly its range, and an out-of-range fill traps",
+					"ext": true
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 35,
+			"slug": "globals",
+			"name": "Globals: mutable, immutable and imported",
+			"ext": false,
+			"section": "F",
+			"file": "src/stages/s35_globals.rs",
+			"planDone": false,
+			"hints": [
+				"A global section entry is three things: a value type byte, a one-byte mutability flag (00 const, 01 mut), and a constant expression ending in 0x0b",
+				"Evaluate the initialisers at instantiation, in order, into a per-instance vector of values; `global.get n` and `global.set n` then index that vector",
+				"`global.set` naming a global whose flag is 00 is a validation error, not a runtime trap — refuse the module before a single instruction runs",
+				"Imported globals come first in the global index space, exactly as imported functions come first in the function index space"
+			],
+			"tests": [
+				{
+					"name": "an immutable global reads back its initialiser"
+				},
+				{
+					"name": "a mutable global keeps what global.set wrote"
+				},
+				{
+					"name": "each of several globals is reached by its own index, whatever its type"
+				},
+				{
+					"name": "a global initialiser may read an earlier immutable global"
+				},
+				{
+					"name": "an imported global nobody provides stops the module instantiating"
+				},
+				{
+					"name": "global.set on an immutable global is refused"
+				},
+				{
+					"name": "a global whose initialiser has the wrong type is refused"
+				},
+				{
+					"name": "a global initialised from a later global is refused"
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 36,
+			"slug": "call_indirect",
+			"name": "call_indirect and its three traps",
+			"ext": false,
+			"section": "F",
+			"file": "src/stages/s36_call_indirect.rs",
+			"planDone": false,
+			"hints": [
+				"`call_indirect` is 0x11 followed by two indices: the expected type, then the table — the table index is not optional padding, it selects which table to look in",
+				"Pop the index as an *unsigned* i32, so -1 means 4294967295 and is out of range, not one before the end",
+				"Keep the three failures apart: past the end of the table, a null slot, and a slot whose function has another type are three different traps",
+				"Compare the callee's type with the immediate structurally — same parameters, same results — never by comparing type indices"
+			],
+			"tests": [
+				{
+					"name": "two different functions are reached through the same call_indirect"
+				},
+				{
+					"name": "the index may come from an argument, so the callee is chosen at run time"
+				},
+				{
+					"name": "arguments and results pass through call_indirect in the right order"
+				},
+				{
+					"name": "an index past the end of the table traps"
+				},
+				{
+					"name": "a negative index is out of range, because the index is unsigned"
+				},
+				{
+					"name": "a null table slot traps"
+				},
+				{
+					"name": "a slot whose function has another type traps"
+				},
+				{
+					"name": "two identical function types are interchangeable"
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 37,
+			"slug": "table_operations",
+			"name": "Tables: get, set, size, grow, fill, copy",
+			"ext": true,
+			"section": "F",
+			"file": "src/stages/s37_table_operations.rs",
+			"planDone": false,
+			"hints": [
+				"`table.get` and `table.set` are plain opcodes (0x25, 0x26) with a table index; `size`, `grow`, `fill`, `copy` and `init` are 0xfc-prefixed and carry theirs in the second operand",
+				"`table.grow` returns the size before the growth, or -1 when it refuses, and a refused growth must leave the table untouched",
+				"`table.copy` may overlap in either direction: copy as though the whole source range were read before the first slot is written",
+				"A module may declare more than one table, so carry the table index through every one of these instructions instead of assuming table 0"
+			],
+			"tests": [
+				{
+					"name": "table.get and table.set move a funcref between slots",
+					"ext": true
+				},
+				{
+					"name": "table.size answers each table's own size",
+					"ext": true
+				},
+				{
+					"name": "table.grow returns the old size and the new slots are null",
+					"ext": true
+				},
+				{
+					"name": "table.grow past a declared maximum returns -1 and changes nothing",
+					"ext": true
+				},
+				{
+					"name": "table.fill writes one reference across a range",
+					"ext": true
+				},
+				{
+					"name": "table.copy inside one table survives an overlap either way",
+					"ext": true
+				},
+				{
+					"name": "table.copy moves references between two tables",
+					"ext": true
+				},
+				{
+					"name": "table.get and table.set past the end of a table trap",
+					"ext": true
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 38,
+			"slug": "element_segments",
+			"name": "Element segments: active, passive, declarative",
+			"ext": true,
+			"section": "F",
+			"file": "src/stages/s38_element_segments.rs",
+			"planDone": false,
+			"hints": [
+				"The first byte of a segment is a bitfield, not an enum: bit 0 says passive-or-declarative, bit 1 says 'an explicit table index or element type follows', bit 2 says 'element expressions rather than function indices'",
+				"Apply active segments in order at instantiation, before the start function runs; a passive one waits for `table.init` and a declarative one is never applied at all",
+				"An active segment that does not fit its table is an instantiation *trap*, not a validation error — the module must decode and validate first",
+				"`elem.drop` makes the segment empty rather than removing it, so a later `table.init` of a non-zero length is out of bounds"
+			],
+			"tests": [
+				{
+					"name": "an active segment is in the table before any code runs",
+					"ext": true
+				},
+				{
+					"name": "two active segments fill different parts of one table",
+					"ext": true
+				},
+				{
+					"name": "an active segment past the end of the table stops instantiation",
+					"ext": true
+				},
+				{
+					"name": "an active segment ending exactly at the end of the table is accepted",
+					"ext": true
+				},
+				{
+					"name": "a passive segment reaches the table only through table.init",
+					"ext": true
+				},
+				{
+					"name": "elem.drop makes a later table.init trap",
+					"ext": true
+				},
+				{
+					"name": "a declarative segment puts nothing in any table",
+					"ext": true
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 39,
+			"slug": "references_and_start",
+			"name": "References and the start section",
+			"ext": true,
+			"section": "F",
+			"file": "src/stages/s39_references_and_start.rs",
+			"planDone": false,
+			"hints": [
+				"`ref.null t` (0xd0) carries the reference type as an immediate, `ref.is_null` (0xd1) takes any reference, and `ref.func n` (0xd2) names a function",
+				"Collect the set of function indices that appear anywhere outside a function body — exports, the start section, global initialisers, every element segment — and refuse a `ref.func` naming anything else",
+				"Run the start function at the end of instantiation: after the globals, after every active segment, and before the first export is callable",
+				"A start function that traps aborts instantiation — there is no instance afterwards, so no export can be called and nothing reaches stdout"
+			],
+			"tests": [
+				{
+					"name": "ref.null funcref and ref.null externref are both null",
+					"ext": true
+				},
+				{
+					"name": "ref.is_null tells a null apart from a ref.func",
+					"ext": true
+				},
+				{
+					"name": "a ref.func put into a table survives the round trip and is callable",
+					"ext": true
+				},
+				{
+					"name": "ref.func may only name a function the module declared",
+					"ext": true
+				},
+				{
+					"name": "the start function has already run when an export is called",
+					"ext": true
+				},
+				{
+					"name": "a start function that traps stops the module before any export runs",
+					"ext": true
+				},
+				{
+					"name": "the segments are in place before the start function runs",
+					"ext": true
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 40,
+			"slug": "wasi_fd_write",
+			"name": "WASI: fd_write to stdout and stderr",
+			"ext": true,
+			"section": "G",
+			"file": "src/stages/s40_wasi_fd_write.rs",
+			"planDone": false,
+			"hints": [
+				"Import wasi_snapshot_preview1::fd_write with the signature (i32 i32 i32 i32) -> i32, and export your memory as `memory`: the host reads the buffers out of it",
+				"The third argument counts iovecs, not bytes; each one is {buf: i32, len: i32}, eight bytes, and they go into the stream in order",
+				"Store the number of bytes you really wrote at the fourth argument and return errno 0 — writing fewer than asked is allowed, and the caller is expected to loop",
+				"stdout is fd 1, stderr is fd 2, and a descriptor nobody opened is errno 8 (EBADF) with nothing written"
+			],
+			"tests": [
+				{
+					"name": "a string reaches stdout",
+					"ext": true,
+					"tags": [
+						"wasi"
+					]
+				},
+				{
+					"name": "stderr is a different stream from stdout",
+					"ext": true,
+					"tags": [
+						"wasi"
+					]
+				},
+				{
+					"name": "two iovecs are consumed in order",
+					"ext": true,
+					"tags": [
+						"wasi"
+					]
+				},
+				{
+					"name": "an iovec of length zero writes nothing and is not an error",
+					"ext": true,
+					"tags": [
+						"wasi"
+					]
+				},
+				{
+					"name": "three fd_write calls append to one stream",
+					"ext": true,
+					"tags": [
+						"wasi"
+					]
+				},
+				{
+					"name": "fd_write reports the byte count it wrote",
+					"ext": true,
+					"tags": [
+						"wasi"
+					]
+				},
+				{
+					"name": "fd_write returns errno 0 when it succeeds",
+					"ext": true,
+					"tags": [
+						"wasi"
+					]
+				},
+				{
+					"name": "a descriptor nobody opened is a non-zero errno",
+					"ext": true,
+					"tags": [
+						"wasi"
+					]
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 41,
+			"slug": "wasi_args_and_exit",
+			"name": "WASI: args, environ and proc_exit",
+			"ext": true,
+			"section": "G",
+			"file": "src/stages/s41_wasi_args_and_exit.rs",
+			"planDone": false,
+			"hints": [
+				"args_sizes_get(argc_out, buf_size_out) writes two i32s: how many arguments there are, and how many bytes args_get will need for all of them including one NUL each",
+				"argv[0] is the program name — the basename of the module path the runtime was given — so argc is one more than the number of arguments after the module on the command line",
+				"args_get(argv, argv_buf) writes the strings back to back into argv_buf, each terminated by a NUL, and one pointer into that buffer per argument into argv; pass the bytes through untouched, with no re-splitting on spaces and no re-encoding",
+				"proc_exit(code) ends the whole program there and then with that exit status: nothing after the call runs, no caller up the stack resumes, and its imported type is (i32) -> () because it never returns"
+			],
+			"tests": [
+				{
+					"name": "args_sizes_get counts the program name and the bytes it needs",
+					"ext": true,
+					"tags": [
+						"wasi"
+					]
+				},
+				{
+					"name": "three arguments on the command line make argc four",
+					"ext": true,
+					"tags": [
+						"wasi"
+					]
+				},
+				{
+					"name": "args_get fills the pointer array and the NUL-separated buffer",
+					"ext": true,
+					"tags": [
+						"wasi"
+					]
+				},
+				{
+					"name": "an argument is passed through byte for byte, spaces and UTF-8 included",
+					"ext": true,
+					"tags": [
+						"wasi"
+					]
+				},
+				{
+					"name": "environ_sizes_get and environ_get agree with each other",
+					"ext": true,
+					"tags": [
+						"wasi"
+					]
+				},
+				{
+					"name": "proc_exit(0) ends the program with status 0",
+					"ext": true,
+					"tags": [
+						"wasi"
+					]
+				},
+				{
+					"name": "proc_exit(7) ends the program with status 7 and runs nothing after it",
+					"ext": true,
+					"tags": [
+						"wasi"
+					]
+				},
+				{
+					"name": "proc_exit inside a nested call does not return to its callers",
+					"ext": true,
+					"tags": [
+						"wasi"
+					]
+				}
+			],
+			"exampleCount": 3
+		},
+		{
+			"number": 42,
+			"slug": "wasi_io_and_imports",
+			"name": "WASI: fd_read, clocks, randomness and missing imports",
+			"ext": true,
+			"section": "G",
+			"file": "src/stages/s42_wasi_io_and_imports.rs",
+			"planDone": false,
+			"hints": [
+				"fd_read(fd, iovs, iovs_len, nread) is fd_write backwards: fill the iovecs from the descriptor, store how many bytes you really moved at nread, and return errno 0 — end of input is nread 0 and errno 0, not an error",
+				"clock_time_get(id, precision, time_out) writes an i64 count of nanoseconds: id 0 is the realtime clock, counted from the Unix epoch, and id 1 the monotonic one, counted from an epoch you choose but never going backwards",
+				"random_get(buf, len) fills len bytes of the guest's memory and returns errno 0; a len of 0 is legal and must leave the memory exactly as it was",
+				"A module that imports a name you do not provide must be refused before anything runs: nothing on stdout, a non-zero exit, and a message naming the import — instantiation fails, it does not trap"
+			],
+			"tests": [
+				{
+					"name": "fd_read brings stdin into the guest's memory",
+					"ext": true,
+					"tags": [
+						"wasi"
+					]
+				},
+				{
+					"name": "fd_read at end of input is nread 0 and errno 0, not an error",
+					"ext": true,
+					"tags": [
+						"wasi"
+					]
+				},
+				{
+					"name": "fd_read on a descriptor nobody opened is a non-zero errno",
+					"ext": true,
+					"tags": [
+						"wasi"
+					]
+				},
+				{
+					"name": "the monotonic clock never goes backwards",
+					"ext": true,
+					"tags": [
+						"wasi"
+					]
+				},
+				{
+					"name": "the realtime clock answers a plausible time since the Unix epoch",
+					"ext": true,
+					"tags": [
+						"wasi"
+					]
+				},
+				{
+					"name": "random_get fills a buffer with something that is not one repeated byte",
+					"ext": true,
+					"tags": [
+						"wasi"
+					]
+				},
+				{
+					"name": "random_get of length zero is legal and leaves the memory alone",
+					"ext": true,
+					"tags": [
+						"wasi"
+					]
+				},
+				{
+					"name": "a module importing a name the host does not have never runs",
+					"ext": true,
+					"tags": [
+						"wasi"
+					]
+				}
+			],
+			"exampleCount": 3
+		},
+		{
+			"number": 43,
+			"slug": "fuzz",
+			"name": "Fuzz: 500 seeded mutations of valid modules",
+			"ext": true,
+			"section": "H",
+			"file": "src/stages/s43_fuzz.rs",
+			"planDone": false,
+			"hints": [
+				"Every length in a module is a claim, not a fact: check a section size, a vector count and a name length against the bytes you actually have before you index with them",
+				"A malformed module is input, never a reason to abort — refuse it with a message and a non-zero exit, and never print a byte on stdout, because a module that does not validate has not run",
+				"A uLEB128 that keeps setting the continuation bit must stop being read at the width of the field: ten 0xff bytes in a row is a malformed index, not a very large one",
+				"Run the fuzzer against your own runtime with --seed: the seed and the mutation index in a failure are enough to rebuild the exact bytes that broke it"
+			],
+			"tests": [
+				{
+					"name": "a module with one to three bits flipped is either refused or run, never a crash",
+					"ext": true,
+					"tags": [
+						"slow"
+					]
+				},
+				{
+					"name": "a module truncated or padded at random is either refused or run, never a crash",
+					"ext": true,
+					"tags": [
+						"slow"
+					]
+				},
+				{
+					"name": "a lying section size or vector count leaves it refused or run, never crashed",
+					"ext": true,
+					"tags": [
+						"slow"
+					]
+				},
+				{
+					"name": "a ten-byte LEB128 spliced over an index leaves it refused or run, never crashed",
+					"ext": true,
+					"tags": [
+						"slow"
+					]
+				},
+				{
+					"name": "section surgery leaves the module refused or run, never crashed",
+					"ext": true,
+					"tags": [
+						"slow"
+					]
+				},
+				{
+					"name": "two mutations at once leave the module refused or run, never crashed",
+					"ext": true,
+					"tags": [
+						"slow"
+					]
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 44,
+			"slug": "scale",
+			"name": "Scale: many functions, deep nesting, a big module",
+			"ext": true,
+			"section": "H",
+			"file": "src/stages/s44_scale.rs",
+			"planDone": false,
+			"hints": [
+				"Every section is a vector: read the count, then that many entries — decode them in a loop, because a decoder that recurses once per function dies at a thousand of them",
+				"Block nesting belongs on a stack you own, not on the host's call stack: several hundred levels of `block` must validate without growing a Rust frame per level",
+				"Locals are declared as (count, type) runs, so one run can ask for fifty thousand i32s; size the frame from the total the runs add up to, never from the number of runs",
+				"A multi-megabyte data segment is copied into memory once at instantiation — slice it straight out of the module bytes rather than building a Vec per byte"
+			],
+			"tests": [
+				{
+					"name": "a thousand functions each calling the next return the whole chain's answer",
+					"ext": true,
+					"tags": [
+						"slow"
+					]
+				},
+				{
+					"name": "several hundred nested blocks validate and the innermost br reaches the outermost",
+					"ext": true,
+					"tags": [
+						"slow"
+					]
+				},
+				{
+					"name": "fifty thousand locals and a thirty thousand instruction body both compute the right answer",
+					"ext": true,
+					"tags": [
+						"slow"
+					]
+				},
+				{
+					"name": "a multi-megabyte module decodes, instantiates and runs",
+					"ext": true,
+					"tags": [
+						"slow"
+					]
+				},
+				{
+					"name": "a hundred thousand slot table is callable through its last slot",
+					"ext": true,
+					"tags": [
+						"slow"
+					]
+				},
+				{
+					"name": "one export out of five hundred is found by name",
+					"ext": true,
+					"tags": [
+						"slow"
+					]
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 45,
+			"slug": "soak",
+			"name": "Soak: compute, repetition and determinism",
+			"ext": true,
+			"section": "H",
+			"file": "src/stages/s45_soak.rs",
+			"planDone": false,
+			"hints": [
+				"A hundred million loop iterations must not allocate: the operand stack of a loop body returns to the same height every time round, so reuse the frame instead of pushing a new one",
+				"The same module with the same arguments must print byte-identical output every single time — determinism is the one thing a runtime may never trade for speed",
+				"Integer arithmetic wraps and is exact; float arithmetic is IEEE-754 to the letter, so summing the first ten million integers in f64 gives exactly 50000005000000 and nothing near it",
+				"Growing a memory to eight megabytes and touching every byte is a normal thing for a module to do — keep the pages in one allocation and index it, do not copy on grow more than you must"
+			],
+			"tests": [
+				{
+					"name": "a million Collatz sweeps produce the step count Rust computes",
+					"ext": true,
+					"tags": [
+						"slow"
+					]
+				},
+				{
+					"name": "ten million floating-point additions produce an exact sum",
+					"ext": true,
+					"tags": [
+						"slow"
+					]
+				},
+				{
+					"name": "two hundred and twenty invocations of one module all answer the same",
+					"ext": true,
+					"tags": [
+						"slow"
+					]
+				},
+				{
+					"name": "a module using every feature at once prints byte-identical output fifty times",
+					"ext": true,
+					"tags": [
+						"slow"
+					]
+				},
+				{
+					"name": "sixty-four different arguments each produce the answer Rust computes",
+					"ext": true,
+					"tags": [
+						"slow"
+					]
+				},
+				{
+					"name": "eight megabytes of memory are grown, filled and checksummed",
+					"ext": true,
+					"tags": [
+						"slow"
+					]
+				}
+			],
+			"exampleCount": 2
 		}
 	],
 	"totals": {
-		"stages": 8,
-		"tests": 0,
-		"ext": 0
+		"stages": 45,
+		"tests": 347,
+		"ext": 16
 	},
-	"pending": true,
-	"source": "placeholder — wasmtest has not published a catalog or a plan yet"
+	"source": "wasmtest/catalog.json"
 }

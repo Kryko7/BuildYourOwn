@@ -1,0 +1,206 @@
+[
+	{
+		"title": "min with a NaN operand",
+		"kind": "module",
+		"request": "`f() -> f32` whose body is a NaN with payload 0x7fe00001, then `f32.const 1.5`, then `f32.min`  —  `run --invoke f mod.wasm`",
+		"request_hex": "0061736d010000000105016000017d03020100070501016600000a0f010d00430100e07f430000c03f960b",
+		"response": "NaN",
+		"response_hex": "",
+		"note": "C's fmin(NaN, 1.5) is 1.5; WebAssembly's f32.min is a NaN. Every NaN prints as the bare word `NaN` whatever its sign and payload, so a test that cares which NaN came back has to reinterpret it as an i32 — and then only the exponent bits and the quiet bit are pinned by the spec.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "header.magic",
+				"value": "\\0asm"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.version",
+				"value": "1 (little-endian)"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "section[1].id",
+				"value": "type section"
+			},
+			{
+				"offset": 9,
+				"length": 1,
+				"field": "section[1].size",
+				"value": "5 bytes"
+			},
+			{
+				"offset": 11,
+				"length": 4,
+				"field": "type[0]",
+				"value": "() -> (f32)"
+			},
+			{
+				"offset": 15,
+				"length": 1,
+				"field": "section[3].id",
+				"value": "function section"
+			},
+			{
+				"offset": 16,
+				"length": 1,
+				"field": "section[3].size",
+				"value": "2 bytes"
+			},
+			{
+				"offset": 18,
+				"length": 1,
+				"field": "function[0]",
+				"value": "type 0 () -> (f32)"
+			},
+			{
+				"offset": 19,
+				"length": 1,
+				"field": "section[7].id",
+				"value": "export section"
+			},
+			{
+				"offset": 20,
+				"length": 1,
+				"field": "section[7].size",
+				"value": "5 bytes"
+			},
+			{
+				"offset": 22,
+				"length": 4,
+				"field": "export[0]",
+				"value": "'f' → func 0"
+			},
+			{
+				"offset": 26,
+				"length": 1,
+				"field": "section[10].id",
+				"value": "code section"
+			},
+			{
+				"offset": 27,
+				"length": 1,
+				"field": "section[10].size",
+				"value": "15 bytes"
+			},
+			{
+				"offset": 29,
+				"length": 1,
+				"field": "code[0].size",
+				"value": "13 bytes"
+			},
+			{
+				"offset": 30,
+				"length": 13,
+				"field": "code[0].body",
+				"value": "f32.const 0x7fe00001 (bit pattern), f32.const 1.5, f32.min"
+			}
+		],
+		"response_fields": []
+	},
+	{
+		"title": "nearest of an exact tie",
+		"kind": "module",
+		"request": "`f() -> f32` whose body is `f32.const 2.5` then `f32.nearest`  —  `run --invoke f mod.wasm`",
+		"request_hex": "0061736d010000000105016000017d03020100070501016600000a0a0108004300002040900b",
+		"response": "2",
+		"response_hex": "",
+		"note": "Round-half-to-even, not round-half-up: 0.5 becomes 0, 1.5 becomes 2, 2.5 becomes 2 and 3.5 becomes 4. `trunc(x + 0.5)` gets 2.5 wrong and gets -0.5 wrong twice, because nearest(-0.5) is -0.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "header.magic",
+				"value": "\\0asm"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.version",
+				"value": "1 (little-endian)"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "section[1].id",
+				"value": "type section"
+			},
+			{
+				"offset": 9,
+				"length": 1,
+				"field": "section[1].size",
+				"value": "5 bytes"
+			},
+			{
+				"offset": 11,
+				"length": 4,
+				"field": "type[0]",
+				"value": "() -> (f32)"
+			},
+			{
+				"offset": 15,
+				"length": 1,
+				"field": "section[3].id",
+				"value": "function section"
+			},
+			{
+				"offset": 16,
+				"length": 1,
+				"field": "section[3].size",
+				"value": "2 bytes"
+			},
+			{
+				"offset": 18,
+				"length": 1,
+				"field": "function[0]",
+				"value": "type 0 () -> (f32)"
+			},
+			{
+				"offset": 19,
+				"length": 1,
+				"field": "section[7].id",
+				"value": "export section"
+			},
+			{
+				"offset": 20,
+				"length": 1,
+				"field": "section[7].size",
+				"value": "5 bytes"
+			},
+			{
+				"offset": 22,
+				"length": 4,
+				"field": "export[0]",
+				"value": "'f' → func 0"
+			},
+			{
+				"offset": 26,
+				"length": 1,
+				"field": "section[10].id",
+				"value": "code section"
+			},
+			{
+				"offset": 27,
+				"length": 1,
+				"field": "section[10].size",
+				"value": "10 bytes"
+			},
+			{
+				"offset": 29,
+				"length": 1,
+				"field": "code[0].size",
+				"value": "8 bytes"
+			},
+			{
+				"offset": 30,
+				"length": 8,
+				"field": "code[0].body",
+				"value": "f32.const 2.5, f32.nearest"
+			}
+		],
+		"response_fields": []
+	}
+]

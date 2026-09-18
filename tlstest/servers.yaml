@@ -1,0 +1,33 @@
+# How to launch each TLS 1.3 server `tlstest --server <name>` knows about.
+#
+# The command line is fixed by the track's contract, so an entry only says how to *start*
+# the program. The harness appends the flags itself, with a free port and a certificate it
+# generated for this run:
+#
+#   <command...> -accept <port> -cert <cert.pem> -key <key.pem> -rev [-naccept <n>]
+#
+# Placeholders substituted in `command`, `cwd` and `env`, for a program that would rather
+# read them itself: {PORT} {CERT} {KEY} {TMP}.
+#
+# restart: per_test | per_stage
+#   per_test is the default and the safe one: a test that abandons a handshake, or that
+#   asks for -naccept, changes what the next test would see.
+
+servers:
+  # The reference server, and the --validate target: the system OpenSSL, run as
+  # `openssl s_server -tls1_3 -rev`. Set TLSTEST_OPENSSL to point at a different build.
+  openssl:
+    kind: reference
+    restart: per_test
+
+  # The server you are building (track conventions).
+  my_server:
+    command: ["./your_program.sh"]
+    cwd: "."
+    restart: per_test
+
+  # The deliberately wrong example server shipped with the crate; used to show the red path.
+  broken:
+    command: ["target/release/examples/broken_server"]
+    cwd: "."
+    restart: per_test

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import StageContent from './StageContent.svelte';
-	import { neighbours } from '$lib/catalog';
+	import { neighbours, tracks } from '$lib/catalog';
 	import type { Catalog, Report, StageSpec, TrackId } from '$lib/types';
 
 	let {
@@ -25,7 +25,7 @@
 	let drawer: HTMLElement | undefined = $state();
 	let returnFocusTo: HTMLElement | null = null;
 	const near = $derived(stage ? neighbours(track, stage.number) : { prev: undefined, next: undefined });
-	const accent = $derived(track === 'shell' ? 'var(--shell)' : 'var(--kafka)');
+	const accent = $derived(tracks[track].accent);
 
 	const FOCUSABLE =
 		'a[href], button:not([disabled]), input, textarea, select, [tabindex]:not([tabindex="-1"])';

@@ -2,10 +2,8 @@
 	import CopyButton from './CopyButton.svelte';
 	import TestList from './TestList.svelte';
 	import StageExamples from './examples/StageExamples.svelte';
-	import Tokenizer from './lab/Tokenizer.svelte';
-	import WireInspector from './lab/WireInspector.svelte';
-	import BatchBuilder from './lab/BatchBuilder.svelte';
-	import { badgeFor, commandFor, sectionOf, tracks, untilCommand } from '$lib/catalog';
+	import StageLab from './lab/StageLab.svelte';
+	import { badgeFor, commandFor, ladderOfSection, sectionOf, tracks, untilCommand } from '$lib/catalog';
 	import { journey } from '$lib/stores/journey.svelte';
 	import { conventionsForStage } from '$lib/conventions';
 	import { resourcesForStage, typeGlyphs, typeLabels } from '$lib/resources';
@@ -35,6 +33,10 @@
 	const meta = $derived(tracks[track]);
 	const section = $derived(sectionOf(track, stage.number));
 	const badge = $derived(section ? badgeFor(track, section.id) : { badge: '', icon: '' });
+	// Tracks with ladders (dist) say which rung a stage is on, in the crumbs and as a chip.
+	const ladder = $derived(
+		section ? ladderOfSection(track, section.id) : null
+	);
 	const target = $derived(progress.data.targets[track]);
 	// With byo connected the command is the installed one, run from inside the project.
 	const command = $derived(
@@ -59,21 +61,6 @@
 	const notes = $derived(progress.stage(track, stage.number).notes ?? '');
 	const examples = $derived(exampleCount(track, stage));
 
-	const lab = $derived.by(() => {
-		const n = stage.number;
-		if (track === 'shell') {
-			if ((n >= 13 && n <= 29) || (n >= 36 && n <= 40) || [49, 52, 53, 57].includes(n)) return 'tokenizer';
-			return null;
-		}
-		if ([23, 24, 27, 31, 33, 34, 35, 36, 37].includes(n)) return 'batch';
-		if (n >= 2) return 'wire';
-		return null;
-	});
-
-	const wireSample = $derived(
-		stage.number >= 29 ? 'produce-v11' : stage.number >= 19 ? 'fetch-v16' : stage.number >= 10 ? 'describetopicpartitions-v0' : 'apiversions-v4'
-	);
-
 	function toggleDone() {
 		const newlyDone = progress.toggle(track, stage.number);
 		if (newlyDone) oncomplete?.();
@@ -84,6 +71,7 @@
 	<header>
 		<div class="crumbs eyebrow">
 			<span>{meta.tester}</span>
+			{#if ladder}<span aria-hidden="true">/</span><span>{ladder.title}</span>{/if}
 			<span aria-hidden="true">/</span>
 			<span>{badge.icon} {badge.badge}</span>
 			{#if section}<span aria-hidden="true">/</span><span>{section.title}</span>{/if}
@@ -94,6 +82,7 @@
 		</h2>
 		<div class="flags">
 			<span class="chip chip-{state === 'done' ? 'ok' : state === 'failing' ? 'bad' : ''}">{stateLabel[state]}</span>
+			{#if ladder}<span class="chip ladder" title={ladder.note}>{ladder.title} ladder</span>{/if}
 			{#if stage.ext}<span class="chip chip-ext">beyond the base track</span>{/if}
 			{#if stage.planned}<span class="chip chip-ext">not yet in the tester</span>{/if}
 			{#if stage.file}<span class="chip">{stage.file}</span>{/if}
@@ -148,7 +137,7 @@
 				aria-label="Your {track} under test"
 				spellcheck="false"
 			/>
-			<span class="muted">— the name in {track === 'shell' ? 'shells.yaml' : 'brokers.yaml'} or a path</span>
+			<span class="muted">— the name in {meta.targetFile} or a path</span>
 		</label>
 	</section>
 
@@ -159,6 +148,7 @@
 			{results}
 			pending={catalog.pending ?? false}
 			planned={stage.planned ?? false}
+			tester={meta.tester}
 		/>
 	</section>
 
@@ -194,20 +184,7 @@
 		</section>
 	{/if}
 
-	{#if lab}
-		<section>
-			<h3>Try it</h3>
-			<div class="labbox">
-				{#if lab === 'tokenizer'}
-					<Tokenizer />
-				{:else if lab === 'wire'}
-					<WireInspector initialSample={wireSample} />
-				{:else if lab === 'batch'}
-					<BatchBuilder />
-				{/if}
-			</div>
-		</section>
-	{/if}
+	<StageLab {track} stage={stage.number} />
 
 	<section>
 		<h3>Notes</h3>
@@ -374,11 +351,10 @@
 	.res p {
 		margin: 2px 0 0;
 	}
-	.labbox {
-		border: 1px solid var(--line);
-		border-radius: var(--r-2);
-		padding: var(--s-3);
-		background: var(--bg-2);
+	.ladder {
+		color: var(--accent, var(--ink-2));
+		border-color: color-mix(in srgb, var(--accent, var(--line)) 36%, transparent);
+		background: color-mix(in srgb, var(--accent, var(--bg-3)) 10%, transparent);
 	}
 	textarea {
 		width: 100%;

@@ -3,19 +3,18 @@ import adapterStatic from '@sveltejs/adapter-static';
 import { defineConfig, type Plugin } from 'vitest/config';
 import { readFile, stat } from 'node:fs/promises';
 import { resolve } from 'node:path';
+import { allTracks } from './src/lib/tracks.ts';
 
 /**
- * Live mode: during `npm run dev` the two Rust testers' `--json` reports are served
- * straight off disk so the journey map turns green while a run is in flight.
- *   ../shelltest/report.json  ->  /__reports/shell.json
- *   ../kafkatest/report.json  ->  /__reports/kafka.json
+ * Live mode: during `npm run dev` every tester's `--json` report is served straight off
+ * disk so the journey map turns green while a run is in flight — one entry per registered
+ * track (`../<tester>/report.json` -> `/__reports/<track>.json`).
  * Missing file => 204 No Content, which the client reads as "no live run".
  */
 function liveReports(): Plugin {
-	const sources: Record<string, string> = {
-		'/__reports/shell.json': resolve('../shelltest/report.json'),
-		'/__reports/kafka.json': resolve('../kafkatest/report.json')
-	};
+	const sources: Record<string, string> = Object.fromEntries(
+		allTracks.map((t) => [t.reportPath, resolve(`../${t.dir}/report.json`)])
+	);
 	return {
 		name: 'byo-live-reports',
 		apply: 'serve',

@@ -1,0 +1,242 @@
+[
+	{
+		"title": "A counter in a mutable global",
+		"kind": "module",
+		"request": "one `mut i32` global initialised to 0, and an exported `f` that adds one to it three times with `global.get` / `global.set` before returning it  —  `run --invoke f mod.wasm`",
+		"request_hex": "0061736d010000000105016000017f030201000606017f0141000b070501016600000a1b011900230041016a2400230041016a2400230041016a240023000b",
+		"response": "3",
+		"response_hex": "",
+		"note": "The value belongs to the *instance*, not the module: invoking `f` again builds a new instance and runs the initialiser again, so it answers 3 every time, never 6.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "header.magic",
+				"value": "\\0asm"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.version",
+				"value": "1 (little-endian)"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "section[1].id",
+				"value": "type section"
+			},
+			{
+				"offset": 9,
+				"length": 1,
+				"field": "section[1].size",
+				"value": "5 bytes"
+			},
+			{
+				"offset": 11,
+				"length": 4,
+				"field": "type[0]",
+				"value": "() -> (i32)"
+			},
+			{
+				"offset": 15,
+				"length": 1,
+				"field": "section[3].id",
+				"value": "function section"
+			},
+			{
+				"offset": 16,
+				"length": 1,
+				"field": "section[3].size",
+				"value": "2 bytes"
+			},
+			{
+				"offset": 18,
+				"length": 1,
+				"field": "function[0]",
+				"value": "type 0 () -> (i32)"
+			},
+			{
+				"offset": 19,
+				"length": 1,
+				"field": "section[6].id",
+				"value": "global section"
+			},
+			{
+				"offset": 20,
+				"length": 1,
+				"field": "section[6].size",
+				"value": "6 bytes"
+			},
+			{
+				"offset": 22,
+				"length": 5,
+				"field": "global[0]",
+				"value": "mut i32, init i32.const 0"
+			},
+			{
+				"offset": 27,
+				"length": 1,
+				"field": "section[7].id",
+				"value": "export section"
+			},
+			{
+				"offset": 28,
+				"length": 1,
+				"field": "section[7].size",
+				"value": "5 bytes"
+			},
+			{
+				"offset": 30,
+				"length": 4,
+				"field": "export[0]",
+				"value": "'f' → func 0"
+			},
+			{
+				"offset": 34,
+				"length": 1,
+				"field": "section[10].id",
+				"value": "code section"
+			},
+			{
+				"offset": 35,
+				"length": 1,
+				"field": "section[10].size",
+				"value": "27 bytes"
+			},
+			{
+				"offset": 37,
+				"length": 1,
+				"field": "code[0].size",
+				"value": "25 bytes"
+			},
+			{
+				"offset": 38,
+				"length": 25,
+				"field": "code[0].body",
+				"value": "[3 × global.get 0, i32.const 1, i32.add, global.set 0], global.get 0"
+			}
+		],
+		"response_fields": []
+	},
+	{
+		"title": "A global the host does not provide",
+		"kind": "module",
+		"request": "an import section asking for `env::answer` as a const i32, and an `f` that returns `global.get 0` — the imported global, which comes first in the index space  —  `run --invoke f mod.wasm`",
+		"request_hex": "0061736d010000000105016000017f020f0103656e7606616e73776572037f0003020100070501016600000a0601040023000b",
+		"response": "nothing on stdout, `unknown import` on stderr, and a non-zero exit — the module validates and then fails to instantiate",
+		"response_hex": "",
+		"note": "Imported globals take indices 0..n before any defined global, so adding one import renumbers every `global.get` in the module. This is the one global test that cannot pass: the reference gives a module no host globals at all.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "header.magic",
+				"value": "\\0asm"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.version",
+				"value": "1 (little-endian)"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "section[1].id",
+				"value": "type section"
+			},
+			{
+				"offset": 9,
+				"length": 1,
+				"field": "section[1].size",
+				"value": "5 bytes"
+			},
+			{
+				"offset": 11,
+				"length": 4,
+				"field": "type[0]",
+				"value": "() -> (i32)"
+			},
+			{
+				"offset": 15,
+				"length": 1,
+				"field": "section[2].id",
+				"value": "import section"
+			},
+			{
+				"offset": 16,
+				"length": 1,
+				"field": "section[2].size",
+				"value": "15 bytes"
+			},
+			{
+				"offset": 18,
+				"length": 14,
+				"field": "import[0]",
+				"value": "env::answer — global const i32"
+			},
+			{
+				"offset": 32,
+				"length": 1,
+				"field": "section[3].id",
+				"value": "function section"
+			},
+			{
+				"offset": 33,
+				"length": 1,
+				"field": "section[3].size",
+				"value": "2 bytes"
+			},
+			{
+				"offset": 35,
+				"length": 1,
+				"field": "function[0]",
+				"value": "type 0 () -> (i32)"
+			},
+			{
+				"offset": 36,
+				"length": 1,
+				"field": "section[7].id",
+				"value": "export section"
+			},
+			{
+				"offset": 37,
+				"length": 1,
+				"field": "section[7].size",
+				"value": "5 bytes"
+			},
+			{
+				"offset": 39,
+				"length": 4,
+				"field": "export[0]",
+				"value": "'f' → func 0"
+			},
+			{
+				"offset": 43,
+				"length": 1,
+				"field": "section[10].id",
+				"value": "code section"
+			},
+			{
+				"offset": 44,
+				"length": 1,
+				"field": "section[10].size",
+				"value": "6 bytes"
+			},
+			{
+				"offset": 46,
+				"length": 1,
+				"field": "code[0].size",
+				"value": "4 bytes"
+			},
+			{
+				"offset": 47,
+				"length": 4,
+				"field": "code[0].body",
+				"value": "global.get 0"
+			}
+		],
+		"response_fields": []
+	}
+]

@@ -7,14 +7,17 @@
 		tests,
 		results = {},
 		pending = false,
-		planned = false
+		planned = false,
+		tester = 'the tester'
 	}: {
 		tests: TestSpec[];
 		results?: Record<string, ReportTest>;
-		/** The whole catalog is a placeholder (kafkatest has published no catalog.json). */
+		/** The whole catalog is a placeholder (the tester has published no catalog.json). */
 		pending?: boolean;
 		/** This one stage is in the tester's PLAN.md but not in its catalog.json yet. */
 		planned?: boolean;
+		/** The tester's name, so the message names the crate the learner is waiting on. */
+		tester?: string;
 	} = $props();
 
 	// Keyed by index, never by content: a suite may legitimately repeat a test name or a
@@ -33,12 +36,12 @@
 	<p class="notyet">
 		<strong>Not yet in the tester.</strong>
 		{#if planned}
-			This stage is listed in <code>kafkatest/PLAN.md</code> but has no suite in
+			This stage is listed in <code>{tester}</code>’s plan but has no suite in
 			<code>catalog.json</code> yet, so there is nothing to run against it. What to build below comes
 			straight from the plan; re-run <code>npm run sync</code> once the stage lands and its tests will
 			appear here.
 		{:else}
-			<code>kafkatest</code> has not published a <code>catalog.json</code> yet — the stage list and
+			<code>{tester}</code> has not published a <code>catalog.json</code> yet — the stage list and
 			hints come from the plan in the meantime.
 		{/if}
 	</p>

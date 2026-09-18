@@ -9,6 +9,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount, unmount, flushSync } from 'svelte';
 import LabPage from './+page.svelte';
 import BatchBuilder from '$lib/components/lab/BatchBuilder.svelte';
+import { labTools } from '$lib/components/lab/tools';
 
 class StubResizeObserver {
 	observe() {}
@@ -42,7 +43,8 @@ describe('the lab page', () => {
 		const app = mount(LabPage, { target: host });
 		flushSync();
 		expect(host.querySelector('h1')?.textContent).toBe('The lab');
-		expect(tabs()).toHaveLength(4);
+		// One tab per registered instrument — the registry is the only list.
+		expect(tabs()).toHaveLength(labTools.length);
 		expect(tabs()[0].getAttribute('aria-selected')).toBe('true');
 		// the tokenizer is the default panel
 		expect(host.querySelector('[role="tabpanel"]')?.id).toBe('panel-tokenizer');
@@ -53,7 +55,10 @@ describe('the lab page', () => {
 	it('switches to every playground without errors', () => {
 		const app = mount(LabPage, { target: host });
 		flushSync();
-		const ids = ['tokenizer', 'wire', 'batch', 'replay'];
+		const ids = labTools.map((t) => t.id);
+		expect(ids).toContain('wasm');
+		expect(ids).toContain('tls');
+		expect(ids).toContain('elf');
 		for (const [i, id] of ids.entries()) {
 			tabs()[i].click();
 			flushSync();
@@ -72,14 +77,44 @@ describe('the lab page', () => {
 	it('renders the wire inspector with a decoded frame and the replay empty state', () => {
 		const app = mount(LabPage, { target: host });
 		flushSync();
-		tabs()[1].click();
+		const at = (id: string) => tabs()[labTools.findIndex((t) => t.id === id)];
+
+		at('wire').click();
 		flushSync();
 		expect(host.textContent).toContain('ApiVersions(18)');
 		expect(host.querySelectorAll('.hexrow').length).toBeGreaterThan(0);
 
-		tabs()[3].click();
+		at('replay').click();
 		flushSync();
 		expect(host.textContent).toContain('byo test');
+		unmount(app);
+		expect(noise).toEqual([]);
+	});
+
+	it('decodes a module, a handshake and an object file in the new instruments', () => {
+		const app = mount(LabPage, { target: host });
+		flushSync();
+		const at = (id: string) => tabs()[labTools.findIndex((t) => t.id === id)];
+
+		at('wasm').click();
+		flushSync();
+		// the preamble, a section of the tree, and a disassembled body
+		expect(host.textContent).toContain('\\0asm');
+		expect(host.textContent).toContain('local.get');
+		expect(host.querySelectorAll('.hexrow').length).toBeGreaterThan(0);
+
+		at('tls').click();
+		flushSync();
+		expect(host.textContent).toContain('client_hello');
+		expect(host.textContent).toContain('supported_versions');
+		// the key schedule is on the page whatever the bytes say
+		expect(host.textContent).toContain('c hs traffic');
+
+		at('elf').click();
+		flushSync();
+		expect(host.textContent).toContain('ET_REL');
+		expect(host.textContent).toContain('.rela.text');
+
 		unmount(app);
 		expect(noise).toEqual([]);
 	});

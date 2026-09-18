@@ -1,8 +1,14 @@
 # The journey site
 
-A garden trail through two build-your-own tracks: a POSIX **shell** and a **Kafka broker**.
+A garden trail through six build-your-own tracks: a POSIX **shell**, a **Kafka broker**, a
+**WebAssembly runtime**, a **TLS 1.3 server**, an **ELF linker** and a **distributed store**.
 Every stage shows what to build, **what to expect**, the tests it has to satisfy, the exact command
 to run, curated reading, and live red/green from `byo`'s database.
+
+**There is one list of tracks** (`src/lib/tracks.ts`) and everything reads it: the route matcher,
+the home page, the nav, the command palette, the map, the conventions, `/resources`, `/progress`,
+the lab and `npm run sync`. Adding a seventh track is an entry in that file plus its accent tokens
+in `app.css` and a mascot in `src/lib/components/garden/` — no page needs editing.
 
 SvelteKit 2 + Svelte 5 runes, TypeScript strict, `adapter-static` (fully prerendered), hand-written
 CSS with design tokens. No component libraries, no external assets — every animal, flower and petal
@@ -15,7 +21,8 @@ npm install
 npm run sync      # regenerate the catalogs from the testers (also runs before build)
 npm run dev       # dev server, with the fallback report polling
 npm run check     # svelte-check, 0 errors
-npm run test      # vitest: parsers, API client, progress store, examples, component mounts
+npm run test      # vitest: registry, parsers, API client, progress store, examples,
+                  # the lab decoders, component mounts
 npm run build     # static site in build/
 npm run preview   # serve build/
 ```
@@ -47,53 +54,91 @@ Three states are spelled out to the visitor by `ConnectionNote`:
   fallback is clearly labelled as a copy that `byo status` will never see.
 - **reconnecting** — byo answered before and has stopped; the last data stays on screen rather than
   the page blanking.
-- **no project** — byo is up but `byo init shell` / `byo init kafka` has never been run, with the
-  command to fix it.
+- **no project** — byo is up but `byo init <track>` has never been run here, with the command to
+  fix it.
 
 There is **no report upload**: a report reaches the site by being recorded with `byo test`, which is
 the same thing that moves the map.
+
+**A byo older than this site is fine.** `/api/progress` and `/api/health` are read per registered
+track and a track the server has never heard of simply comes back empty, so a two-track `byo` still
+drives a six-track page. `GET /api/tracks` (id, title, blurb, accent, installed, testerVersion) is
+consumed when the server offers it and is `null` otherwise — it is not in `byo/API.md` yet, so
+nothing on the site depends on it; the built-in registry is the fallback and the display source.
 
 Code: `src/lib/api/client.ts` (typed client over an injectable `fetch`),
 `src/lib/stores/journey.svelte.ts` (connection, polling, optimistic writes),
 `src/lib/stores/progress.svelte.ts` (one façade over both sources).
 
+## The track registry
+
+`src/lib/tracks.ts` carries, per track: the title and blurb, what you are building and what
+`--validate` is checked against, the accent (`--wasm` and friends, AA in both themes — there is a
+test), the garden mascot and the section badges, the tester's name, binary, target flag and target
+file, which example renderer its catalog wants, and — for `dist` — its **ladders**.
+
+It is deliberately import-free plain data, because `scripts/sync-catalog.mjs` imports it directly
+(Node 26 strips the types), so the site and the sync script cannot disagree about what a track is.
+Mascot names are resolved to components in `src/lib/components/garden/mascots.ts`.
+
+**Ladders.** A track may group its sections into rungs; `dist` climbs `primitives` → `node` →
+`cluster`. The track page draws a rung per ladder with its own progress, each camp says which rung
+it is on, and every stage carries `ladder` in the catalog. A track without ladders renders none of
+this and nothing changes for it.
+
 ## Where the stage data comes from
 
-`scripts/sync-catalog.mjs` is the only thing that writes `src/lib/data/catalog.*.json`:
+`scripts/sync-catalog.mjs` is the only thing that writes `src/lib/data/catalog.*.json`. It loops
+the registry; for each track it takes the first of these that exists:
 
-- **shell** — parses `../shelltest/PLAN.md` (stage number, name, `[ext]` flag, hint bullets, yaml
-  file, test count) and every `../shelltest/tests/stages/*.yaml` (test names, tags, `skip_on`, mode,
-  inputs and expectations). 57 stages, 428 tests.
-- **kafka** — prefers `../kafkatest/catalog.json` and normalizes it
-  (`scripts/normalize-kafka.mjs` accepts `stage`/`number` and `skip_on`/`skipOn`, upper-cases the
-  section letters, and copies each stage's `examples` array through verbatim — the sync then
-  splits those out into `src/lib/data/examples/kafka/`, see below). Until that file
-  exists it generates a placeholder from `BuildYourOwn/PLAN.md` §1.5 (`scripts/kafka-placeholder.mjs`)
-  and marks the catalog `pending: true`.
+1. **`../<tester>/catalog.json`** — the real catalog, normalized by `scripts/normalize-catalog.mjs`
+   (accepts `stage`/`number`, `skip_on`/`skipOn`, `ladder`/`tier`, upper-cases the section letters,
+   and copies each stage's `examples` array through verbatim — the sync then splits those out into
+   `src/lib/data/examples/<track>/`, see below). Any holes are filled from the tester's PLAN.md as
+   `planned: true` stages, so every `/<track>/N` prerenders and a planned stage says so instead of
+   showing an empty test list. Shipped stages always win.
+2. **`../<tester>/PLAN.md`** — the real stage list before the tester emits a catalog, every stage
+   `planned: true` and the catalog `pending: true`.
+3. **the built-in placeholder** (`scripts/placeholders.mjs`) — one waypoint per section, named after
+   the section, carrying what that section will cover. Nothing invents a stage list: a tester that
+   does not exist yet gets a trail that is honest about being a placeholder, and a map that is not
+   empty. `npm run sync` throws all of it away the moment the tester lands.
 
-  **Gaps are normal.** `scripts/parse-kafka-plan.mjs` reads `../kafkatest/PLAN.md` and
-  `mergePlannedStages` fills any holes with `planned: true` stages, so every `/kafka/N` prerenders
-  and a planned stage says so instead of showing an empty test list. Shipped stages always win.
+The shell track is the exception only in where its data lives: `../shelltest/PLAN.md` plus every
+`../shelltest/tests/stages/*.yaml`, which carry the tests, their inputs and their expectations.
 
-Resources live in `src/lib/data/resources.{shell,kafka}.json` (schema in PLAN.md §2.5), loaded
-through a tolerant sanitizer.
+Resources live in `src/lib/data/resources.<track>.json` (schema in PLAN.md §2.5), loaded through a
+tolerant sanitizer. **An empty file is normal** — a track whose reading list has not been curated
+yet simply has no resources, `/resources` says which ones those are, and the stage drawer omits the
+section rather than drawing an empty box.
 
-## Worked examples ("What to expect", PLAN.md §4.2)
+## Worked examples ("What to expect", PLAN.md §4.2, §5.2)
 
-Every stage drawer and stage page shows two or three examples under *What to build*.
+Every stage drawer and stage page shows two or three examples under *What to build*. Which of the
+two renderers a track uses is one field in the registry (`examples: 'transcript' | 'bytes'`).
 
 - **Shell** — derived from the catalog's own tests (`src/lib/examples/shell.ts`). No new data: the
   suite already records the stdin lines, the pty key steps and the expectations, so the shortest,
   most literal tests are rendered as a terminal transcript — `$ ` prompts, stdout, stderr in red,
   exit status. A loose expectation (`contains`, `regex`) is labelled as a pattern instead of being
   quoted as literal output, and a trailing `exit 0` is dropped as plumbing.
-- **Kafka** — read from the `examples` array kafkatest writes into `catalog.json`
-  (`src/lib/examples/kafka.ts`), rendered with the wire inspector's annotated byte view: request
-  and response side by side, hover a field to light its bytes and a byte to find its field.
+- **Everything else** — read from the `examples` array the tester writes into `catalog.json`
+  (`src/lib/examples/bytes.ts`) and drawn by one component (`ByteExample.svelte`): **blocks** of
+  annotated bytes, plus an optional transcript of what running it prints. Hover a field to light its
+  bytes and a byte to find its field.
+
+  **A new track needs no new component.** The reader is generic: any `<name>_hex` key becomes a
+  labelled block, with `<name>` as its summary and `<name>_fields` as its annotations. So Kafka's
+  `request`/`response` pair, wasm's module and its stdout, a TLS handshake message and an ELF
+  structure are all the same shape. An explicit `blocks: [{key, label, hex, fields}]` array works
+  too, `<name>_label` overrides a label, and `kind` retitles the conventional names — wasmtest sends
+  `kind: "module"`, so its blocks read "the module" and "it prints" rather than "request" and
+  "response". A transcript comes either from `transcript` or from plain
+  `command`/`stdout`/`stderr`/`exit_code` keys.
 
   **They are not in the bundle.** kafkatest's 91 examples are most of its 800 KB catalog, and a
   single annotated frame can be a kilobyte of hex. `npm run sync` splits them into
-  `src/lib/data/examples/kafka/<n>.json`, one file per stage, and `catalog.kafka.json` keeps only
+  `src/lib/data/examples/<track>/<n>.json`, one file per stage, and the catalog keeps only
   `exampleCount` — which is all the UI needs to decide whether to draw the section. Each file is
   its own chunk (`import.meta.glob`), so opening one Kafka stage fetches that stage's frames and
   nothing else; the deep-linked page's `load` pulls it in during prerender, so `/kafka/13` is
@@ -130,7 +175,10 @@ red poppy when the tester is red on it (`src/lib/components/garden/Bloom.svelte`
 of the path is petal-strewn stepping stones; the rest is pale.
 
 The animals are hand-drawn inline SVG with CSS animation — a fox for the shell, a bunny for Kafka,
-a cat on the home hero, a bird that lands on the nav, butterflies and a bee drifting over the hero.
+an owl for WebAssembly, a hedgehog for TLS, a squirrel for the linker, a duckling for the
+distributed store, a cat on the home hero, a bird that lands on the nav, butterflies and a bee
+drifting over the hero. Each one takes the same props (`size`, `mood`, `flip`, `label`), which is
+what lets the map, the home cards and the runs page pick one from the registry.
 The track's mascot stands at the flower you are up to and walks when it moves; it hops when a stage
 blooms, and the celebration is a burst of petals.
 
@@ -145,14 +193,20 @@ they land in the same places on every render.
 scripts/          sync-catalog.mjs + the pure parsers it uses, and their vitest suite
 src/lib/api/      the byo JSON API client
 src/lib/data/     generated catalogs, resource files, report and example fixtures
-src/lib/data/examples/kafka/<n>.json   one lazy chunk of worked examples per Kafka stage
-src/lib/examples/ shell transcript derivation, tolerant kafka example reader + lazy loader
-src/lib/lab/      shell tokenizer, Kafka wire codec (varints, compact types, CRC32C),
-                  RecordBatch v2 encoder, the four sample requests
+src/lib/data/examples/<track>/<n>.json one lazy chunk of worked examples per stage
+src/lib/tracks.ts the track registry — every page and the sync script read it
+src/lib/examples/ shell transcript derivation, the tolerant byte-example reader + lazy loader
+src/lib/lab/      shell tokenizer; Kafka wire codec (varints, compact types, CRC32C) and
+                  RecordBatch v2 encoder; a wasm decoder + disassembler (LEB128, sections,
+                  opcodes); a TLS record/handshake parser + the key schedule; an ELF64
+                  reader — each with its own sample bytes, encoded by the same file
 src/lib/motion.ts reduced-motion, tab visibility, seeded randomness, the rAF loop
 src/lib/stores/   journey (the API), progress (the façade), reports (fallback), theme
-src/lib/components/garden/    Fox · Bunny · Cat · Bird · Flutterers · Bloom · Petals
-src/lib/components/examples/  ShellTranscript · WireExample · StageExamples
+src/lib/components/garden/    Fox · Bunny · Owl · Hedgehog · Squirrel · Duckling · Cat ·
+                              Bird · Flutterers · Bloom · Petals · mascots.ts
+src/lib/components/examples/  Transcript · ShellTranscript · ByteExample · StageExamples
+src/lib/components/lab/       HexFields (the shared hex+fields instrument) · the seven
+                              playgrounds · tools.ts (which one belongs to which stage)
 src/routes/       / · /[track] · /[track]/[stage] · /resources · /lab · /progress (Runs)
 ```
 
@@ -168,6 +222,27 @@ Keyboard: `Tab` puts you on one waypoint (a roving tabindex — the one you are 
 one), `←` `→` `↑` `↓` walk the trail, `PageUp`/`PageDown` jump a row, `Home`/`End` go to the ends,
 `+`/`−` zoom, and `Enter` or `Space` opens the stage drawer. The view pans to follow. A plain wheel
 pans and hands the gesture back to the page at the ends; `Ctrl`+wheel zooms.
+
+## The lab
+
+Seven instruments, listed once in `src/lib/components/lab/tools.ts` and read by both `/lab` (the tab
+strip) and the stage drawer's *Try it* box — `toolForStage(track, stage)` picks one from the
+**section**, not the stage number, so a tester renumbering its stages cannot silently change which
+instrument appears.
+
+| Instrument | What it does |
+|---|---|
+| Shell tokenizer | the quote state machine, character by character, with the pipeline graph |
+| Kafka wire inspector | four real requests, byte by byte, varints and compact types spelled out |
+| RecordBatch anatomy | build a v2 batch and watch the bytes, with a live CRC32C |
+| Wasm module inspector | section tree, every LEB128 decoded, bodies disassembled to instruction names |
+| TLS record inspector | record framing, handshake messages, extensions by name, and the RFC 8446 key schedule with the exact `HkdfLabel` bytes |
+| ELF viewer | header, sections, symbols and relocations with the formula each one applies |
+| Journey replay | step through a failing test from the latest run |
+
+All four new ones share `HexFields.svelte` — a hex dump wired both ways to a field list — and all of
+them decode in the page: no network, nothing installed, and every sample's bytes are built by the
+same module that reads them, so the decoders are exercised against bytes the site can also print.
 
 ## Runs (`/progress`)
 

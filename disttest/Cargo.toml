@@ -1,0 +1,46 @@
+[package]
+name = "disttest"
+version = "0.1.0"
+edition = "2021"
+description = "stage-by-stage black-box conformance tester for distributed key-value systems"
+license = "MIT"
+
+[dependencies]
+anyhow = "1"
+base64 = "0.22"
+clap = { version = "4.5", features = ["derive"] }
+indexmap = "2"
+libc = "0.2"
+owo-colors = "4"
+rand = "0.9"
+regex = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_yaml = "0.9"
+sha2 = "0.10"
+similar = "2"
+tempfile = "3"
+tokio = { version = "1", features = [
+    "rt-multi-thread",
+    "macros",
+    "net",
+    "io-util",
+    "time",
+    "process",
+    "sync",
+    "fs",
+] }
+
+[dev-dependencies]
+tokio = { version = "1", features = ["full"] }
+
+[[example]]
+name = "reference_primitives"
+path = "examples/reference_primitives.rs"
+
+[[example]]
+name = "broken_node"
+path = "examples/broken_node.rs"
+
+[profile.release]
+strip = true

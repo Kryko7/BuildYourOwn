@@ -1,0 +1,26 @@
+[
+	{
+		"title": "An object cut off inside its section header table",
+		"kind": "text",
+		"command": "ld -o prog cut.o",
+		"request": "cut.o: the first 360 bytes of a 776-byte object. The ELF header is intact and says e_shoff 328, e_shnum 7, e_shentsize 64 — a table that would end at 776",
+		"request_hex": "",
+		"response": "The linker exits non-zero with a message naming `cut.o`, and writes no output file. 328 + 7 * 64 is past the end of a 360-byte file, and that is the whole check",
+		"response_hex": "",
+		"note": "Compute the end of every table in a width that cannot overflow and compare it with the length of the buffer you read. `e_shnum * 64` in 32 bits is enough to wrap for e_shnum near 65535.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "An empty input file",
+		"kind": "text",
+		"command": "ld -o prog empty.o",
+		"request": "empty.o: zero bytes",
+		"request_hex": "",
+		"response": "A non-zero exit naming the file is the clearest answer. GNU ld instead reads it as an empty linker script and exits 0 — with an output that has no PT_LOAD, no entry point and cannot be executed, which is what the suite checks",
+		"response_hex": "",
+		"note": "Whatever you decide, decide it: the one outcome that is always wrong is exit 0 next to a file the shell will happily try to run.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

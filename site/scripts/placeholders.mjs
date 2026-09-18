@@ -16,6 +16,11 @@
  */
 import { kafkaPlaceholderPlan } from './kafka-placeholder.mjs';
 
+/** Which ladder a section sits on, for tracks that have ladders (`dist`). */
+const LADDERS = {
+	dist: { A: 'primitives', B: 'primitives', C: 'primitives', D: 'primitives', E: 'primitives', F: 'node', G: 'cluster', H: 'cluster', I: 'cluster' }
+};
+
 /** [sectionId, title, ...what the section is expected to cover] */
 const SECTIONS = {
 	wasm: [
@@ -82,6 +87,44 @@ const SECTIONS = {
 			'KeyUpdate in both directions',
 			'Session tickets, resumption, early-data rejection, and real-client interop']
 	],
+	dist: [
+		['A', 'Clocks & causality',
+			'Lamport clocks, and what a scalar counter can and cannot tell you',
+			'Vector clocks and version vectors: happens-before, concurrent, dominated',
+			'Hybrid logical clocks — physical time you can still order'],
+		['B', 'Partitioning & quorums',
+			'Consistent hashing with virtual nodes, and what moves when a node joins',
+			'Rendezvous (highest random weight) hashing as the alternative',
+			'The N/R/W quorum arithmetic, and when R + W > N actually buys you something'],
+		['C', 'Probabilistic & anti-entropy structures',
+			'Bloom filters: bit math, hash count, and the false-positive rate you promised',
+			'HyperLogLog cardinality estimation',
+			'Merkle trees for finding the difference between two replicas cheaply'],
+		['D', 'CRDTs & convergence',
+			'G-Counter and PN-Counter: merge is a join, not an assignment',
+			'LWW-Register and OR-Set, with the tombstones that make removal work',
+			'RGA for ordered sequences, and convergence under any delivery order'],
+		['E', 'Flow control & failure detection',
+			'Token bucket rate limiting, and backoff with jitter that does not synchronize',
+			'Phi-accrual failure detection instead of a fixed timeout',
+			'SWIM: gossip, indirect probes, suspicion'],
+		['F', 'A durable single node',
+			'MVCC revisions: every key keeps its history, reads pick a revision',
+			'Transactions, leases and watches',
+			'Crash recovery — everything acknowledged is still there after a kill -9'],
+		['G', 'Replication & consensus',
+			'Leader election, terms, and the votes that decide one',
+			'Log replication, commit index, and applying in order',
+			'Linearizable reads: read index or lease, never just "ask the leader"'],
+		['H', 'Faults & partitions',
+			'A minority partition must refuse to make progress',
+			'Leader failover with no lost acknowledged write',
+			'Snapshots, log compaction and membership change'],
+		['I', 'Linearizability under fault injection',
+			'Randomized concurrent workloads recorded as a history',
+			'The history is checked against a linearizability model, not against a golden file',
+			'Partitions, pauses and crashes injected mid-run, with a seed so it replays']
+	],
 	link: [
 		['A', 'Reading relocatable objects',
 			'Parse ELF64: the header, the section headers, and the string tables behind them',
@@ -136,6 +179,7 @@ function sectionsOnlyPlan(track) {
 	if (!rows) return null;
 	const sections = [];
 	const stages = [];
+	const ladders = LADDERS[track] ?? {};
 	rows.forEach(([id, title, ...hints], i) => {
 		const number = i + 1;
 		sections.push({ id, title, stages: [number] });
@@ -149,6 +193,7 @@ function sectionsOnlyPlan(track) {
 			planDone: false,
 			plannedTests: 0,
 			section: id,
+			...(ladders[id] ? { ladder: ladders[id] } : {}),
 			hints,
 			tests: []
 		});
@@ -160,9 +205,4 @@ function sectionsOnlyPlan(track) {
 export function placeholderPlan(track) {
 	if (track === 'kafka') return kafkaPlaceholderPlan();
 	return sectionsOnlyPlan(track);
-}
-
-/** True when a track's placeholder is only the section list, not a real stage list. */
-export function isSectionsOnly(track) {
-	return Boolean(SECTIONS[track]);
 }

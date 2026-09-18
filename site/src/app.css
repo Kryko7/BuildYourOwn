@@ -45,13 +45,26 @@
 	--leaf-deep: #4f9468;
 	--stem: #7bb98c;
 
-	/* track accents */
-	--shell: #b35b21;
+	/* track accents — one hue per track, every `--<track>` value AA on --bg, --bg-2 and
+	   --bg-3; `-bright` paints (flowers, fills) and `-soft` is a tinted surface. */
+	--shell: #a9551f;
 	--shell-bright: #fabf9c;
 	--shell-soft: #fdeade;
 	--kafka: #10688f;
 	--kafka-bright: #a6d7f2;
 	--kafka-soft: #e4f3fc;
+	--wasm: #6845b6;
+	--wasm-bright: #c4b2ef;
+	--wasm-soft: #efe9fd;
+	--tls: #b03a70;
+	--tls-bright: #f6b3ca;
+	--tls-soft: #fde7ef;
+	--link: #6f5a12;
+	--link-bright: #ddc87e;
+	--link-soft: #f5eed7;
+	--dist: #0e6b72;
+	--dist-bright: #96d8dd;
+	--dist-soft: #ddf2f4;
 
 	/* states */
 	--ok: #14755a;
@@ -142,6 +155,18 @@
 	--kafka: #a9dcf6;
 	--kafka-bright: #8acdf0;
 	--kafka-soft: #12303f;
+	--wasm: #cdbcf8;
+	--wasm-bright: #bda8f2;
+	--wasm-soft: #2c2247;
+	--tls: #f7bfd7;
+	--tls-bright: #f0a8c6;
+	--tls-soft: #3a2135;
+	--link: #ecd9a4;
+	--link-bright: #d8bb70;
+	--link-soft: #33280f;
+	--dist: #8fd8dd;
+	--dist-bright: #6cc7cd;
+	--dist-soft: #123033;
 
 	--ok: #9de5c9;
 	--ok-bright: #7fd8b3;

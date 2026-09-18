@@ -3,6 +3,7 @@ import kafkaResources from './data/resources.kafka.json';
 import wasmResources from './data/resources.wasm.json';
 import tlsResources from './data/resources.tls.json';
 import linkResources from './data/resources.link.json';
+import distResources from './data/resources.dist.json';
 import { trackIds } from './tracks';
 import type { Resource, TrackId } from './types';
 
@@ -59,7 +60,8 @@ const byTrack: Record<TrackId, Resource[]> = {
 	kafka: sanitize(kafkaResources, 'kafka'),
 	wasm: sanitize(wasmResources, 'wasm'),
 	tls: sanitize(tlsResources, 'tls'),
-	link: sanitize(linkResources, 'link')
+	link: sanitize(linkResources, 'link'),
+	dist: sanitize(distResources, 'dist')
 };
 
 const LEVEL_RANK: Record<Resource['level'], number> = { intro: 0, core: 1, deep: 2 };

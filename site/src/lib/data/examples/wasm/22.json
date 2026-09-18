@@ -1,0 +1,206 @@
+[
+	{
+		"title": "An if that picks one of two numbers",
+		"kind": "module",
+		"request": "`if (result i32)` on the function's only parameter, with 10 in the then arm and 20 in the else arm  —  `run --invoke f mod.wasm 0`",
+		"request_hex": "0061736d0100000001060160017f017f03020100070501016600000a0e010c002000047f410a0541140b0b",
+		"response": "20",
+		"response_hex": "",
+		"note": "Pass 1, -1 or 2 instead and the answer is 10: the condition is tested against zero, not against one. Both arms have to leave an i32 behind, which is why an `if (result i32)` with no `else` does not validate.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "header.magic",
+				"value": "\\0asm"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.version",
+				"value": "1 (little-endian)"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "section[1].id",
+				"value": "type section"
+			},
+			{
+				"offset": 9,
+				"length": 1,
+				"field": "section[1].size",
+				"value": "6 bytes"
+			},
+			{
+				"offset": 11,
+				"length": 5,
+				"field": "type[0]",
+				"value": "(i32) -> (i32)"
+			},
+			{
+				"offset": 16,
+				"length": 1,
+				"field": "section[3].id",
+				"value": "function section"
+			},
+			{
+				"offset": 17,
+				"length": 1,
+				"field": "section[3].size",
+				"value": "2 bytes"
+			},
+			{
+				"offset": 19,
+				"length": 1,
+				"field": "function[0]",
+				"value": "type 0 (i32) -> (i32)"
+			},
+			{
+				"offset": 20,
+				"length": 1,
+				"field": "section[7].id",
+				"value": "export section"
+			},
+			{
+				"offset": 21,
+				"length": 1,
+				"field": "section[7].size",
+				"value": "5 bytes"
+			},
+			{
+				"offset": 23,
+				"length": 4,
+				"field": "export[0]",
+				"value": "'f' → func 0"
+			},
+			{
+				"offset": 27,
+				"length": 1,
+				"field": "section[10].id",
+				"value": "code section"
+			},
+			{
+				"offset": 28,
+				"length": 1,
+				"field": "section[10].size",
+				"value": "14 bytes"
+			},
+			{
+				"offset": 30,
+				"length": 1,
+				"field": "code[0].size",
+				"value": "12 bytes"
+			},
+			{
+				"offset": 31,
+				"length": 12,
+				"field": "code[0].body",
+				"value": "local.get 0, if (result i32) { i32.const 10 } else { i32.const 20 }"
+			}
+		],
+		"response_fields": []
+	},
+	{
+		"title": "max3, out of two ifs",
+		"kind": "module",
+		"request": "`max3(a, b, c)`: one `if (result i32)` for max(a, b), a `local.tee` to keep it, and a second for max of that and c  —  `run --invoke f mod.wasm -5 -9 -7`",
+		"request_hex": "0061736d0100000001080160037f7f7f017f03020100070501016600000a20011e01017f200020014a047f20000520010b220320024a047f20030520020b0b",
+		"response": "-5",
+		"response_hex": "",
+		"note": "`local.tee` stores and leaves the value on the stack, which saves the `local.get` that would otherwise follow every `local.set`.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "header.magic",
+				"value": "\\0asm"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.version",
+				"value": "1 (little-endian)"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "section[1].id",
+				"value": "type section"
+			},
+			{
+				"offset": 9,
+				"length": 1,
+				"field": "section[1].size",
+				"value": "8 bytes"
+			},
+			{
+				"offset": 11,
+				"length": 7,
+				"field": "type[0]",
+				"value": "(i32 i32 i32) -> (i32)"
+			},
+			{
+				"offset": 18,
+				"length": 1,
+				"field": "section[3].id",
+				"value": "function section"
+			},
+			{
+				"offset": 19,
+				"length": 1,
+				"field": "section[3].size",
+				"value": "2 bytes"
+			},
+			{
+				"offset": 21,
+				"length": 1,
+				"field": "function[0]",
+				"value": "type 0 (i32 i32 i32) -> (i32)"
+			},
+			{
+				"offset": 22,
+				"length": 1,
+				"field": "section[7].id",
+				"value": "export section"
+			},
+			{
+				"offset": 23,
+				"length": 1,
+				"field": "section[7].size",
+				"value": "5 bytes"
+			},
+			{
+				"offset": 25,
+				"length": 4,
+				"field": "export[0]",
+				"value": "'f' → func 0"
+			},
+			{
+				"offset": 29,
+				"length": 1,
+				"field": "section[10].id",
+				"value": "code section"
+			},
+			{
+				"offset": 30,
+				"length": 1,
+				"field": "section[10].size",
+				"value": "32 bytes"
+			},
+			{
+				"offset": 32,
+				"length": 1,
+				"field": "code[0].size",
+				"value": "30 bytes"
+			},
+			{
+				"offset": 33,
+				"length": 30,
+				"field": "code[0].body",
+				"value": "locals 1×i32; local.get 0, local.get 1, i32.gt_s, if (result i32) { local.get 0 } else { local.get 1 }, local.tee 3, local.get 2, i32.gt_s, if (result i32) { local.get 3 } else { local.get 2 }"
+			}
+		],
+		"response_fields": []
+	}
+]

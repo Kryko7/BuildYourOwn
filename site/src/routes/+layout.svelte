@@ -7,6 +7,10 @@
 	import { reports } from '$lib/stores/reports.svelte';
 	import { journey } from '$lib/stores/journey.svelte';
 	import { trackTabVisibility } from '$lib/motion';
+	import { allTracks } from '$lib/tracks';
+
+	/** The footer names its sources, from the registry rather than from memory. */
+	const testers = allTracks.map((t) => t.tester);
 
 	let { children } = $props();
 	let palette: CommandPalette | undefined = $state();
@@ -29,7 +33,7 @@
 	<title>{journeyTitle}</title>
 	<meta
 		name="description"
-		content="A garden trail through building your own POSIX shell and your own Kafka broker: what to build at every stage, worked examples, the tests, the command to run, and live red/green from the byo database."
+		content="A garden trail through building your own shell, Kafka broker, WebAssembly runtime, TLS 1.3 server, ELF linker and distributed store: what to build at every stage, worked examples, the tests, the command to run, and live red/green from the byo database."
 	/>
 </svelte:head>
 
@@ -44,9 +48,9 @@
 <footer>
 	<div class="wrap spread">
 		<p class="tiny muted">
-			Grown from <code>shelltest</code> and <code>kafkatest</code> — every stage, hint and test on this
-			site is generated from the testers themselves, and your progress comes from
-			<code>byo</code>’s database.
+			Grown from <code>{testers[0]}</code>, <code>{testers[1]}</code> and {testers.length - 2} more —
+			every stage, hint and test on this site is generated from the testers themselves, and your
+			progress comes from <code>byo</code>’s database.
 		</p>
 		<p class="tiny muted">{journeyTitle} <span aria-hidden="true">🌷</span></p>
 	</div>

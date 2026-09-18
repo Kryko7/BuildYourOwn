@@ -1,7 +1,7 @@
 import { browser, dev } from '$app/environment';
 import { load, save, remove } from './persist';
 import { parseReport } from '../report';
-import { tracks, trackIds } from '../catalog';
+import { byTrack, tracks, trackIds } from '../tracks';
 import { journey } from './journey.svelte';
 import type { Report, TrackId } from '../types';
 
@@ -9,13 +9,13 @@ const KEY = 'byo:reports:v1';
 const POLL_MS = 2000;
 
 class ReportStore {
-	imported = $state<Record<TrackId, Report | null>>({ shell: null, kafka: null });
-	live = $state<Record<TrackId, Report | null>>({ shell: null, kafka: null });
+	imported = $state<Record<TrackId, Report | null>>(byTrack(() => null));
+	live = $state<Record<TrackId, Report | null>>(byTrack(() => null));
 	liveAvailable = $state(false);
 	lastLiveAt = $state<string | null>(null);
 
 	#timer: ReturnType<typeof setInterval> | null = null;
-	#signatures: Record<TrackId, string> = { shell: '', kafka: '' };
+	#signatures: Record<TrackId, string> = byTrack(() => '');
 
 	constructor() {
 		if (!browser) return;
@@ -45,7 +45,7 @@ class ReportStore {
 
 	clear(track?: TrackId) {
 		if (track) this.imported[track] = null;
-		else this.imported = { shell: null, kafka: null };
+		else this.imported = byTrack(() => null);
 		this.#persist();
 	}
 
@@ -100,7 +100,8 @@ class ReportStore {
 /** Back to the testers' on-disk shape so a re-import round-trips. */
 function toRaw(r: Report) {
 	return {
-		[r.track === 'kafka' ? 'target' : 'shell']: r.target,
+		// shelltest writes `shell`; every other tester writes `target` (PLAN.md §5.2).
+		[r.track === 'shell' ? 'shell' : 'target']: r.target,
 		validate: r.validate,
 		passed: r.passed,
 		failed: r.failed,

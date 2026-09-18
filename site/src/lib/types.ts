@@ -47,6 +47,8 @@ export interface StageSpec {
 	planDone: boolean;
 	/** True when the stage is in the tester's PLAN.md but not yet in its catalog.json. */
 	planned?: boolean;
+	/** The rung of the track's ladder this stage sits on (dist: primitives|node|cluster). */
+	ladder?: string;
 	hints: string[];
 	tests: TestSpec[];
 	/**
@@ -234,8 +236,21 @@ export interface ExampleEnv {
 	group: string | null;
 }
 
-/** `wire` has bytes; `text`, `closed` and `silence` describe what does *not* go on the wire. */
-export type ExampleKindTag = 'wire' | 'text' | 'closed' | 'silence' | 'other';
+/**
+ * `wire` and `module` have bytes; `text`, `closed` and `silence` describe what does *not*
+ * go on the wire. Anything a tester invents that this build has not heard of is `other`,
+ * which renders as an ordinary example rather than as an error.
+ */
+export type ExampleKindTag =
+	| 'wire'
+	| 'module'
+	| 'object'
+	| 'archive'
+	| 'error'
+	| 'text'
+	| 'closed'
+	| 'silence'
+	| 'other';
 
 /** One named run of bytes: a request, a response, a module, a handshake message, a header. */
 export interface ExampleBlock {

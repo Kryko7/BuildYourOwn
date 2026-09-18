@@ -6,7 +6,7 @@
  * `/api/runs/latest` is "no runs yet", not an error.
  */
 import type { Report, TrackId } from '../types';
-import { byTrack, isTrack, trackIds } from '../tracks';
+import { byTrack, isTrack } from '../tracks';
 import { parseReport } from '../report';
 
 export interface ApiProject {
@@ -214,10 +214,9 @@ export class ByoApi {
 				db: str(raw.db),
 				dataDir: str(raw.dataDir),
 				schemaVersion: num(raw.schemaVersion, 1),
-				tracks: {
-					shell: { project: tracksRaw.shell?.project ?? null },
-					kafka: { project: tracksRaw.kafka?.project ?? null }
-				}
+				// A track this byo has never heard of is simply "no project", not an error:
+				// the site can be newer than the binary serving it.
+				tracks: byTrack((track) => ({ project: tracksRaw[track]?.project ?? null }))
 			};
 		} catch {
 			return null;

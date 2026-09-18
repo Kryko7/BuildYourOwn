@@ -6,6 +6,7 @@
 	import Petals from '$lib/components/garden/Petals.svelte';
 	import ConnectionNote from '$lib/components/ConnectionNote.svelte';
 	import { badgeFor, tracks } from '$lib/catalog';
+	import { ladderOfSection } from '$lib/tracks';
 	import { progress } from '$lib/stores/progress.svelte';
 	import { reports, activeReport } from '$lib/stores/reports.svelte';
 	import { journey } from '$lib/stores/journey.svelte';
@@ -17,7 +18,7 @@
 	const track = $derived(data.track);
 	const catalog = $derived(data.catalog);
 	const meta = $derived(tracks[track]);
-	const accent = $derived(track === 'shell' ? 'var(--shell)' : 'var(--kafka)');
+	const accent = $derived(meta.accent);
 
 	let selected = $state<number | null>(null);
 	let burst = $state(0);
@@ -48,6 +49,22 @@
 	});
 
 	const plannedCount = $derived(catalog.stages.filter((s) => s.planned).length);
+
+	/**
+	 * Tracks with ladders (dist) are climbed a rung at a time, so the trail says so: each
+	 * ladder gets a rung with its own progress, and every camp below is labelled with the
+	 * one it belongs to. A track with no ladders renders none of this.
+	 */
+	const ladders = $derived(
+		(meta.ladders ?? []).map((l) => {
+			const stages = catalog.stages.filter((s) => l.sections.includes(s.section.toUpperCase()));
+			return {
+				...l,
+				stages,
+				done: stages.filter((s) => progress.isDone(track, s.number)).length
+			};
+		})
+	);
 
 	/**
 	 * `recentre` is for openings that did not come from the map itself (the camp lists, the
@@ -89,7 +106,14 @@
 			</div>
 		</div>
 		<div class="ringbox">
-			<ProgressRing value={done} total={catalog.totals.stages} {accent} size={96} label="stages" />
+			<ProgressRing
+				value={done}
+				total={catalog.totals.stages}
+				{accent}
+				size={96}
+				label={catalog.pending ? 'waypoints' : 'stages'}
+				unit={catalog.pending ? 'placeholder waypoints' : 'stages'}
+			/>
 			<button class="btn btn-primary" onclick={() => open(nextStage, true)}>Continue at {nextStage}</button>
 		</div>
 	</header>
@@ -98,9 +122,12 @@
 
 	{#if catalog.pending}
 		<p class="pending tiny">
-			This catalog is a placeholder generated from the plan — <code>kafkatest</code> has not published
-			<code>catalog.json</code> yet, so the per-stage test lists are still empty. Stage names, sections and
-			hints are already the real ones. Run <code>npm run sync</code> once the tester lands.
+			<strong>The stages here are still being written.</strong>
+			<code>{meta.tester}</code> has not published a <code>catalog.json</code> yet, so this trail is a
+			placeholder: one waypoint per section, with what that section will cover and no tests to run.
+			The sections themselves are real, and so is what you are building —
+			{meta.building}, checked against {meta.reference}. About {meta.plannedStages} stages are planned.
+			Run <code>npm run sync</code> once the tester lands and this page becomes the real trail.
 		</p>
 	{:else if plannedCount}
 		<p class="pending tiny">
@@ -112,6 +139,29 @@
 	{/if}
 
 	<JourneyMap bind:this={map} {track} {catalog} {report} {selected} celebrate={burst} onselect={open} />
+
+	{#if ladders.length}
+		<section class="ladders" aria-label="Ladders">
+			{#each ladders as l, li (l.id)}
+				<article class="rung card">
+					<div class="rhead">
+						<span class="rnum eyebrow">rung {li + 1}</span>
+						<h3>{l.title}</h3>
+						<span class="chip {l.done === l.stages.length && l.stages.length ? 'chip-ok' : ''}">
+							{l.done}/{l.stages.length}
+						</span>
+					</div>
+					<p class="tiny muted">{l.note}</p>
+					<div class="rbar" aria-hidden="true">
+						<i style="width:{l.stages.length ? (l.done / l.stages.length) * 100 : 0}%"></i>
+					</div>
+					<p class="tiny muted rsec">
+						sections {l.sections.join(', ')}
+					</p>
+				</article>
+			{/each}
+		</section>
+	{/if}
 
 	<section class="sections">
 		{#each catalog.sections as section (section.id)}
@@ -243,6 +293,51 @@
 		margin: 0;
 	}
 
+	.ladders {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+		gap: var(--s-4);
+	}
+	.rung {
+		padding: var(--s-4);
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+	}
+	.rhead {
+		display: flex;
+		align-items: baseline;
+		gap: var(--s-2);
+	}
+	.rhead h3 {
+		font-family: var(--font-display);
+		font-size: 1.05rem;
+		flex: 1;
+	}
+	.rnum {
+		color: var(--accent);
+	}
+	.rbar {
+		height: 7px;
+		background: var(--bg-3);
+		border-radius: var(--r-full);
+		overflow: hidden;
+		margin-top: 4px;
+	}
+	.rbar i {
+		display: block;
+		height: 100%;
+		background: var(--accent);
+		border-radius: inherit;
+		transition: width 700ms var(--ease);
+	}
+	.rsec {
+		margin: 0;
+		font-family: var(--font-mono);
+	}
+	.lad {
+		color: var(--accent);
+	}
 	.sections {
 		display: grid;
 		grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));

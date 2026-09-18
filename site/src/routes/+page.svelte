@@ -3,26 +3,52 @@
 	import ProgressRing from '$lib/components/ProgressRing.svelte';
 	import ConnectionNote from '$lib/components/ConnectionNote.svelte';
 	import Cat from '$lib/components/garden/Cat.svelte';
-	import Fox from '$lib/components/garden/Fox.svelte';
-	import Bunny from '$lib/components/garden/Bunny.svelte';
 	import Flutterers from '$lib/components/garden/Flutterers.svelte';
-	import { catalogs, tracks, trackIds } from '$lib/catalog';
+	import { mascots } from '$lib/components/garden/mascots';
+	import { catalogs, totalsAcrossTracks, tracks, trackIds } from '$lib/catalog';
 	import { progress, rankName } from '$lib/stores/progress.svelte';
 	import { journey } from '$lib/stores/journey.svelte';
 	import { activeReport } from '$lib/stores/reports.svelte';
 	import { stageOutcome, formatDuration } from '$lib/report';
 	import type { TrackId } from '$lib/types';
 
-	const accents: Record<string, string> = { shell: 'var(--shell)', kafka: 'var(--kafka)' };
+	const catalogTotals = totalsAcrossTracks();
 
 	const totals = $derived({
-		stages: trackIds.reduce((n, t) => n + catalogs[t].totals.stages, 0),
-		tests: trackIds.reduce((n, t) => n + catalogs[t].totals.tests, 0),
+		stages: catalogTotals.stages,
+		tests: catalogTotals.tests,
 		done: trackIds.reduce((n, t) => n + progress.doneCount(t), 0)
 	});
 
 	const level = $derived(progress.level);
 	const lastRun = $derived(journey.runs[0] ?? null);
+
+	/**
+	 * Beds, not a list. Six cards in a row of two and a row of four reads as a garden laid
+	 * out in plots; a plain grid of six reads as a table of contents. The rows are computed
+	 * rather than hard-coded so a seventh track does not break the picture: the first row
+	 * takes the two widest cards, the rest fill in behind them.
+	 */
+	const beds = $derived.by(() => {
+		const ids = [...trackIds];
+		if (ids.length <= 3) return [ids];
+		const front = ids.slice(0, 2);
+		const rest = ids.slice(2);
+		const rows = [front];
+		const perRow = rest.length <= 4 ? rest.length : Math.ceil(rest.length / 2);
+		for (let i = 0; i < rest.length; i += perRow) rows.push(rest.slice(i, i + perRow));
+		return rows;
+	});
+
+	/** Where the "continue" button goes: the trail you last looked at. */
+	const resume = $derived.by(() => {
+		const track = trackIds.reduce((best, id) =>
+			(progress.data.lastVisited[id] ?? 1) > 1 && progress.doneCount(id) >= progress.doneCount(best)
+				? id
+				: best
+		, trackIds[0]);
+		return { track, stage: progress.nextStage(track) };
+	});
 
 	function redStages(track: TrackId) {
 		const r = activeReport(track);
@@ -35,23 +61,26 @@
 </script>
 
 <svelte:head>
-	<title>{pageTitle()} — build your own shell and your own Kafka</title>
+	<title>{pageTitle()} — {trackIds.length} build-your-own trails</title>
 </svelte:head>
 
 <section class="hero">
 	<Flutterers count={6} seed={11} />
 	<div class="wrap heroin">
 		<div class="words">
-			<p class="eyebrow">two trails · {totals.stages} stages · {totals.tests} tests</p>
+			<p class="eyebrow">{trackIds.length} trails · {totals.stages} stages · {totals.tests} tests</p>
 			<h1>{journeyOwnerLabel} <span class="ink">Journey</span></h1>
 			<p class="lede">
-				A shell and a Kafka broker, grown from nothing, one flower at a time. Every stage tells you
-				what to build, shows you what to expect, lists the tests it has to satisfy and the exact
-				command to run — then blooms when your code earns it.
+				A shell, a Kafka broker, a WebAssembly runtime, a TLS server, a linker and a distributed
+				store — grown from nothing, one flower at a time. Every stage tells you what to build, shows
+				you what to expect, lists the tests it has to satisfy and the exact command to run — then
+				blooms when your code earns it.
 			</p>
 			<div class="cta row">
-				<a class="btn btn-primary" href="/shell" style="--accent:var(--shell)">Tend the shell →</a>
-				<a class="btn" href="/kafka">Tend Kafka →</a>
+				<a class="btn btn-primary" href="/{resume.track}/{resume.stage}" style="--accent:{tracks[resume.track].accent}">
+					Continue: {tracks[resume.track].short} {String(resume.stage).padStart(2, '0')} →
+				</a>
+				<a class="btn" href="#trails">All {trackIds.length} trails</a>
 				<a class="btn btn-ghost" href="/lab">Open the lab</a>
 			</div>
 		</div>
@@ -88,7 +117,7 @@
 		<div class="stat">
 			<span class="eyebrow">stages in bloom</span>
 			<strong>{totals.done}<span class="of">/{totals.stages}</span></strong>
-			<span class="tiny muted">across both trails</span>
+			<span class="tiny muted">across {trackIds.length} trails</span>
 		</div>
 		<div class="stat">
 			<span class="eyebrow">streak</span>
@@ -111,42 +140,59 @@
 		</div>
 	</section>
 
-	<section class="tracks">
-		{#each trackIds as id (id)}
-			{@const cat = catalogs[id]}
-			{@const meta = tracks[id]}
-			{@const done = progress.doneCount(id)}
-			{@const next = progress.nextStage(id)}
-			{@const red = redStages(id)}
-			<a class="track card" href="/{id}" style="--accent:{accents[id]}">
-				<div class="thead">
-					<span class="mascot" aria-hidden="true">
-						{#if id === 'shell'}<Fox size={62} />{:else}<Bunny size={62} />{/if}
-					</span>
-					<div>
-						<h2>{meta.title}</h2>
-						<p class="tiny muted">{meta.tagline}</p>
+	<div class="beds" id="trails">
+		<h2>The plots</h2>
+		{#each beds as row, ri (ri)}
+		<section class="tracks" class:front={ri === 0} style="--cols:{row.length}">
+			{#each row as id (id)}
+				{@const cat = catalogs[id]}
+				{@const meta = tracks[id]}
+				{@const Mascot = mascots[meta.mascot]}
+				{@const done = progress.doneCount(id)}
+				{@const next = progress.nextStage(id)}
+				{@const red = redStages(id)}
+				<a class="track card" href="/{id}" style="--accent:{meta.accent}">
+					<!-- A back-row card is half the width, so its header stacks instead of
+					     squeezing the title between the animal and the ring. -->
+					<div class="thead" class:stacked={ri > 0}>
+						<span class="mascot" aria-hidden="true">
+							<Mascot size={ri === 0 ? 62 : 54} />
+						</span>
+						<div class="words">
+							<h3>{meta.title}</h3>
+							<p class="tiny muted">{meta.tagline}</p>
+						</div>
+						<ProgressRing
+							value={done}
+							total={cat.totals.stages}
+							accent={meta.accent}
+							size={ri === 0 ? 72 : 54}
+							unit={cat.pending ? 'placeholder waypoints' : 'stages'}
+						/>
 					</div>
-					<ProgressRing value={done} total={cat.totals.stages} accent={accents[id]} size={72} />
-				</div>
-				<p class="blurb">{meta.blurb}</p>
-				<div class="tmeta tiny">
-					<span class="chip">{cat.totals.stages} stages</span>
-					<span class="chip">{cat.totals.tests || '—'} tests</span>
-					<span class="chip chip-ext">{cat.totals.ext} beyond the base track</span>
-					{#if cat.pending}<span class="chip">catalog pending</span>{/if}
-					{#if red}<span class="chip chip-bad">{red} wilting</span>{/if}
-				</div>
-				<div class="cont">
-					<span class="eyebrow">continue at</span>
-					<strong
-						>Stage {String(next).padStart(2, '0')} — {cat.stages.find((s) => s.number === next)
-							?.name}</strong
-					>
-				</div>
-			</a>
+					<p class="blurb">{meta.blurb}</p>
+					<div class="tmeta tiny">
+						{#if cat.pending}
+							<span class="chip chip-ext">≈{meta.plannedStages} stages planned</span>
+							<span class="chip">{meta.tester} still being written</span>
+						{:else}
+							<span class="chip">{cat.totals.stages} stages</span>
+							<span class="chip">{cat.totals.tests || '—'} tests</span>
+							<span class="chip chip-ext">{cat.totals.ext} beyond the base track</span>
+						{/if}
+						{#if red}<span class="chip chip-bad">{red} wilting</span>{/if}
+					</div>
+					<div class="cont">
+						<span class="eyebrow">{cat.pending ? 'first waypoint' : 'continue at'}</span>
+						<strong>
+							{String(next).padStart(2, '0')} — {cat.stages.find((s) => s.number === next)?.name}
+						</strong>
+					</div>
+				</a>
+			{/each}
+			</section>
 		{/each}
-	</section>
+	</div>
 
 	{#if progress.recent.length}
 		<section class="recent">
@@ -154,7 +200,7 @@
 			<ul>
 				{#each progress.recent as a, ai (ai)}
 					<li>
-						<span class="dot" style="--accent:{accents[a.track]}" aria-hidden="true"></span>
+						<span class="dot" style="--accent:{tracks[a.track].accent}" aria-hidden="true"></span>
 						<a href="/{a.track}/{a.stage}">
 							{tracks[a.track].tester} stage {String(a.stage).padStart(2, '0')}
 						</a>
@@ -227,7 +273,7 @@
 		font-style: italic;
 	}
 	.lede {
-		max-width: 58ch;
+		max-width: 60ch;
 		font-size: 1.06rem;
 		color: var(--ink-2);
 	}
@@ -301,21 +347,34 @@
 		transition: width 700ms var(--ease);
 	}
 
+	/* The beds. The first row is the two trails with real testers behind them, so it gets
+	   the bigger cards; the rest sit behind them like a second row of plots. */
+	.beds {
+		display: flex;
+		flex-direction: column;
+		gap: var(--s-4);
+		scroll-margin-top: 74px;
+	}
 	.tracks {
 		display: grid;
-		grid-template-columns: 1fr 1fr;
+		grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
 		gap: var(--s-4);
 	}
-	@media (max-width: 860px) {
+	@media (max-width: 1040px) {
 		.tracks {
-			grid-template-columns: 1fr;
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+	}
+	@media (max-width: 720px) {
+		.tracks {
+			grid-template-columns: minmax(0, 1fr);
 		}
 	}
 	.track {
 		display: flex;
 		flex-direction: column;
 		gap: var(--s-3);
-		padding: var(--s-5);
+		padding: var(--s-4);
 		text-decoration: none;
 		transition:
 			transform var(--dur) var(--ease),
@@ -323,6 +382,9 @@
 			border-color var(--dur) var(--ease);
 		position: relative;
 		overflow: hidden;
+	}
+	.front .track {
+		padding: var(--s-5);
 	}
 	.track::after {
 		content: '';
@@ -341,17 +403,37 @@
 		align-items: center;
 		gap: var(--s-3);
 	}
-	.thead > div {
+	.thead > .words {
 		flex: 1;
 		min-width: 0;
 	}
-	.thead h2 {
+	/* mascot and ring on one line, the words underneath them */
+	.thead.stacked {
+		display: grid;
+		grid-template-columns: auto 1fr auto;
+		grid-template-areas: 'mascot . ring' 'words words words';
+		row-gap: var(--s-2);
+		align-items: center;
+	}
+	.thead.stacked .mascot {
+		grid-area: mascot;
+	}
+	.thead.stacked .words {
+		grid-area: words;
+	}
+	.thead.stacked :global(.ring) {
+		grid-area: ring;
+	}
+	.thead h3 {
+		font-family: var(--font-display);
+		font-size: 1.1rem;
+		line-height: 1.25;
+	}
+	.front .thead h3 {
 		font-size: 1.32rem;
 	}
 	.mascot {
 		flex: none;
-		width: 62px;
-		height: 62px;
 		display: grid;
 		place-items: center;
 		transition: transform 260ms var(--bounce);
@@ -362,6 +444,9 @@
 	.blurb {
 		color: var(--ink-2);
 		margin: 0;
+		font-size: 0.88rem;
+	}
+	.front .blurb {
 		font-size: 0.92rem;
 	}
 	.tmeta {
@@ -379,7 +464,7 @@
 	}
 	.cont strong {
 		font-weight: 600;
-		font-size: 0.92rem;
+		font-size: 0.9rem;
 	}
 
 	.recent ul {

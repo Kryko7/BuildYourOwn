@@ -12,14 +12,28 @@
  * in `src/lib/components/garden/mascots.ts`.
  */
 
-export const trackIds = ['shell', 'kafka', 'wasm', 'tls', 'link'] as const;
+export const trackIds = ['shell', 'kafka', 'wasm', 'tls', 'link', 'dist'] as const;
 
 export type TrackId = (typeof trackIds)[number];
 
 /** Which example renderer a track's `examples[]` entries want. */
 export type ExampleKind = 'transcript' | 'bytes';
 
-export type MascotName = 'fox' | 'bunny' | 'owl' | 'hedgehog' | 'squirrel' | 'cat';
+export type MascotName = 'fox' | 'bunny' | 'owl' | 'hedgehog' | 'squirrel' | 'duckling' | 'cat';
+
+/**
+ * A track whose stages come in ladders (dist: `primitives` → `node` → `cluster`) declares
+ * them here; the track page draws a rung per ladder and every stage says which it is on.
+ * Tracks without ladders leave this out and nothing about them changes.
+ */
+export interface Ladder {
+	id: string;
+	title: string;
+	/** One line on what this rung is for. */
+	note: string;
+	/** The section letters that belong to it. */
+	sections: string[];
+}
 
 export interface SectionBadge {
 	/** The garden name of the meadow this section is. */
@@ -60,6 +74,8 @@ export interface TrackMeta {
 	/** Roughly how many stages the finished tester will have (PLAN.md §1.5, §5.3–5.5). */
 	plannedStages: number;
 	sectionBadges: Record<string, SectionBadge>;
+	/** Present only on a track whose sections are grouped into ladders. */
+	ladders?: Ladder[];
 }
 
 export const tracks: Record<TrackId, TrackMeta> = {
@@ -231,6 +247,62 @@ export const tracks: Record<TrackId, TrackMeta> = {
 			E: { badge: 'Archive Alley', icon: '📚' },
 			F: { badge: 'The Far Orchard', icon: '🌳' }
 		}
+	},
+	dist: {
+		id: 'dist',
+		title: 'Build your own distributed system',
+		short: 'Distributed',
+		tagline: 'From a Lamport clock to a linearizable cluster',
+		building: 'a replicated, linearizable key-value store',
+		blurb:
+			'A replicated, linearizable key-value store, climbed in three ladders: the primitives (clocks, quorums, CRDTs, failure detectors), then one durable node, then a real cluster that survives partitions — with the final rung checking your history against a linearizability model.',
+		glyph: '⁂',
+		accent: 'var(--dist)',
+		accentBright: 'var(--dist-bright)',
+		accentSoft: 'var(--dist-soft)',
+		mascot: 'duckling',
+		mascotLabel: 'a duckling',
+		dir: 'disttest',
+		tester: 'disttest',
+		binary: './target/release/disttest',
+		targetFlag: '--node',
+		targetExample: 'my_node',
+		targetFile: 'nodes.yaml',
+		reference: 'the suite’s own model checker',
+		reportPath: '/__reports/dist.json',
+		examples: 'bytes',
+		plannedStages: 45,
+		sectionBadges: {
+			A: { badge: 'Clock Clearing', icon: '🕰' },
+			B: { badge: 'The Allotments', icon: '🌾' },
+			C: { badge: 'Pollen Count', icon: '🐝' },
+			D: { badge: 'Converging Beds', icon: '🌻' },
+			E: { badge: 'Windbreak Row', icon: '🍃' },
+			F: { badge: 'The Root Cellar', icon: '🥕' },
+			G: { badge: 'The Rookery', icon: '🪺' },
+			H: { badge: 'Storm Hedge', icon: '⛈' },
+			I: { badge: 'The Far Orchard', icon: '🌳' }
+		},
+		ladders: [
+			{
+				id: 'primitives',
+				title: 'Primitives',
+				note: 'The pieces on their own: clocks and causality, partitioning and quorums, probabilistic structures, CRDTs, flow control and failure detection.',
+				sections: ['A', 'B', 'C', 'D', 'E']
+			},
+			{
+				id: 'node',
+				title: 'A durable node',
+				note: 'One process that keeps its promises: MVCC revisions, transactions, leases, watches, and coming back from a crash with everything intact.',
+				sections: ['F']
+			},
+			{
+				id: 'cluster',
+				title: 'A cluster',
+				note: 'Replication and consensus, then faults and partitions, then a randomized workload checked against a linearizability model.',
+				sections: ['G', 'H', 'I']
+			}
+		]
 	}
 };
 
@@ -250,6 +322,12 @@ export function byTrack<T>(make: (track: TrackId) => T): Record<TrackId, T> {
 	const out = {} as Record<TrackId, T>;
 	for (const id of trackIds) out[id] = make(id);
 	return out;
+}
+
+/** The ladder a section sits on, or null on a track with no ladders. */
+export function ladderOfSection(track: TrackId, sectionId: string): Ladder | null {
+	const id = sectionId.toUpperCase();
+	return tracks[track].ladders?.find((l) => l.sections.includes(id)) ?? null;
 }
 
 /** The garden name of one section of one track; unknown letters still get a name. */

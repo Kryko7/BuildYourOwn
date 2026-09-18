@@ -105,7 +105,31 @@ function normalizeFields(raw: unknown, byteLength: number): ExampleField[] {
 	return out.sort((a, b) => a.offset - b.offset || a.length - b.length);
 }
 
-const KINDS: ExampleKindTag[] = ['wire', 'text', 'closed', 'silence'];
+const KINDS: ExampleKindTag[] = [
+	'wire',
+	'module',
+	'object',
+	'archive',
+	'error',
+	'text',
+	'closed',
+	'silence'
+];
+
+/**
+ * What the two conventional block names mean on a track that is not a protocol exchange.
+ * wasmtest sends `kind: "module"` with the module in `request` and what it prints in
+ * `response`; linktest sends `object`, `archive` or `error` with the input on one side and
+ * what the linker must do on the other. Calling those "request" and "response" would be
+ * nonsense on the page. A tester can always override a label outright with `<name>_label`,
+ * and a kind this table has never heard of just keeps the neutral arrows.
+ */
+const KIND_LABELS: Record<string, Record<string, string>> = {
+	module: { request: 'the module', response: 'it prints' },
+	object: { request: 'the input object', response: 'what your linker must emit' },
+	archive: { request: 'the archive', response: 'what your linker must do' },
+	error: { request: 'the input', response: 'what must happen' }
+};
 
 function normalizeKind(raw: unknown, hasAnyBytes: boolean): ExampleKindTag {
 	if (typeof raw === 'string' && (KINDS as string[]).includes(raw)) return raw as ExampleKindTag;
@@ -143,17 +167,26 @@ function normalizeEnv(raw: unknown): ExampleEnv | null {
 }
 
 /** `client_hello` → `client hello`; `request`/`response` keep their direction arrows. */
-export function labelForBlock(key: string): string {
+export function labelForBlock(key: string, kind = ''): string {
+	const byKind = KIND_LABELS[kind]?.[key];
+	if (byKind) return byKind;
 	if (key === 'request') return 'request →';
 	if (key === 'response') return '← response';
 	return key.replace(/[_-]+/g, ' ').trim();
 }
 
-function block(key: string, label: unknown, summary: unknown, hex: unknown, fields: unknown): ExampleBlock {
+function block(
+	key: string,
+	label: unknown,
+	summary: unknown,
+	hex: unknown,
+	fields: unknown,
+	kind: string
+): ExampleBlock {
 	const bytes = readHex(hex);
 	return {
 		key,
-		label: text(label) || labelForBlock(key),
+		label: text(label) || labelForBlock(key, kind),
 		summary: text(summary),
 		bytes,
 		fields: normalizeFields(fields, bytes?.length ?? 0)
@@ -170,7 +203,7 @@ function snake(key: string): string {
  * `response` pinned to the front when they are there (a reader expects the request first,
  * whatever order the JSON happened to use).
  */
-function normalizeBlocks(o: Record<string, unknown>): ExampleBlock[] {
+function normalizeBlocks(o: Record<string, unknown>, kind: string): ExampleBlock[] {
 	const out: ExampleBlock[] = [];
 	const seen = new Set<string>();
 
@@ -182,18 +215,35 @@ function normalizeBlocks(o: Record<string, unknown>): ExampleBlock[] {
 			const key = snake(text(b.key ?? b.name ?? b.id) || `block${out.length + 1}`);
 			if (seen.has(key)) continue;
 			seen.add(key);
-			out.push(block(key, b.label ?? b.title, b.summary ?? b.text, b.hex ?? b.bytes, b.fields));
+			out.push(block(key, b.label ?? b.title, b.summary ?? b.text, b.hex ?? b.bytes, b.fields, kind));
 		}
 	}
 
-	// Otherwise (and additionally) every `<name>_hex` key is a block of its own.
-	for (const [rawKey, value] of Object.entries(o)) {
+	// Otherwise (and additionally) every `<name>_hex` or `<name>_fields` key is a block of
+	// its own, plus the two conventional names — a Kafka stage whose lesson is that nothing
+	// goes on the wire still has a `request` and a `response`, as prose.
+	const named = new Set<string>();
+	for (const rawKey of Object.keys(o)) {
 		const key = snake(rawKey);
-		if (!key.endsWith('_hex')) continue;
-		const name = key.slice(0, -4);
+		if (key.endsWith('_hex')) named.add(key.slice(0, -4));
+		else if (key.endsWith('_fields')) named.add(key.slice(0, -7));
+	}
+	for (const conventional of ['request', 'response']) {
+		if (typeof o[conventional] === 'string') named.add(conventional);
+	}
+	for (const name of named) {
 		if (!name || seen.has(name)) continue;
 		seen.add(name);
-		out.push(block(name, o[`${name}_label`], o[name], value, o[`${name}_fields`] ?? o[`${name}Fields`]));
+		out.push(
+			block(
+				name,
+				o[`${name}_label`],
+				o[name],
+				o[`${name}_hex`] ?? o[`${name}Hex`],
+				o[`${name}_fields`] ?? o[`${name}Fields`],
+				kind
+			)
+		);
 	}
 
 	const rank = (b: ExampleBlock) => (b.key === 'request' ? 0 : b.key === 'response' ? 1 : 2);
@@ -235,7 +285,7 @@ function normalizeTranscript(o: Record<string, unknown>): TranscriptLine[] {
 	pushLines(out, 'input', o.command ?? o.invoke ?? o.argv ?? o.run);
 	pushLines(out, 'stdout', o.stdout);
 	pushLines(out, 'stderr', o.stderr);
-	const status = o.exit_code ?? o.exitCode ?? o.status;
+	const status = o.exit_code ?? o.exitCode ?? o.exit_status ?? o.exitStatus ?? o.status;
 	if (typeof status === 'number') out.push({ kind: 'exit', text: String(status) });
 	return out;
 }
@@ -244,7 +294,7 @@ function normalizeTranscript(o: Record<string, unknown>): TranscriptLine[] {
 export function normalizeByteExample(raw: unknown, index = 0): ByteExample | null {
 	if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
 	const o = raw as Record<string, unknown>;
-	const blocks = normalizeBlocks(o);
+	const blocks = normalizeBlocks(o, text(o.kind));
 	const transcript = normalizeTranscript(o);
 	const anyBytes = blocks.some((b) => (b.bytes?.length ?? 0) > 0);
 	const anySummary = blocks.some((b) => b.summary !== '');

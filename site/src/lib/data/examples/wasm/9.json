@@ -1,0 +1,206 @@
+[
+	{
+		"title": "An i32.add that never runs",
+		"kind": "module",
+		"request": "a `() -> i32` whose body is `block (result i32) { i32.const 7; br 0; i32.add }` — the `br` jumps to the block's end and the `i32.add` behind it is unreachable  —  `run --invoke f mod.wasm`",
+		"request_hex": "0061736d010000000105016000017f03020100070501016600000a0c010a00027f41070c006a0b0b",
+		"response": "7",
+		"response_hex": "",
+		"note": "The `i32.add` still has to type-check, but against a polymorphic stack that supplies both operands out of thin air. A validator that insists on two real i32s here refuses a module every compiler emits.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "header.magic",
+				"value": "\\0asm"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.version",
+				"value": "1 (little-endian)"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "section[1].id",
+				"value": "type section"
+			},
+			{
+				"offset": 9,
+				"length": 1,
+				"field": "section[1].size",
+				"value": "5 bytes"
+			},
+			{
+				"offset": 11,
+				"length": 4,
+				"field": "type[0]",
+				"value": "() -> (i32)"
+			},
+			{
+				"offset": 15,
+				"length": 1,
+				"field": "section[3].id",
+				"value": "function section"
+			},
+			{
+				"offset": 16,
+				"length": 1,
+				"field": "section[3].size",
+				"value": "2 bytes"
+			},
+			{
+				"offset": 18,
+				"length": 1,
+				"field": "function[0]",
+				"value": "type 0 () -> (i32)"
+			},
+			{
+				"offset": 19,
+				"length": 1,
+				"field": "section[7].id",
+				"value": "export section"
+			},
+			{
+				"offset": 20,
+				"length": 1,
+				"field": "section[7].size",
+				"value": "5 bytes"
+			},
+			{
+				"offset": 22,
+				"length": 4,
+				"field": "export[0]",
+				"value": "'f' → func 0"
+			},
+			{
+				"offset": 26,
+				"length": 1,
+				"field": "section[10].id",
+				"value": "code section"
+			},
+			{
+				"offset": 27,
+				"length": 1,
+				"field": "section[10].size",
+				"value": "12 bytes"
+			},
+			{
+				"offset": 29,
+				"length": 1,
+				"field": "code[0].size",
+				"value": "10 bytes"
+			},
+			{
+				"offset": 30,
+				"length": 10,
+				"field": "code[0].body",
+				"value": "block (result i32) { i32.const 7, br 0, i32.add }"
+			}
+		],
+		"response_fields": []
+	},
+	{
+		"title": "Where the polymorphic stack stops",
+		"kind": "module",
+		"request": "the same idea one instruction further on: `block { unreachable } i32.add` in a `() -> i32`, with nothing on the stack  —  `run --invoke f mod.wasm`",
+		"request_hex": "0061736d010000000105016000017f03020100070501016600000a090107000240000b6a0b",
+		"response": "nothing on stdout, a message on stderr, and a non-zero exit status — the module never runs",
+		"response_hex": "",
+		"note": "The unreachable flag belongs to the block frame the `unreachable` was in, and the block's `end` pops that frame. After it the code is reachable again and the stack is empty, so the `i32.add` underflows.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "header.magic",
+				"value": "\\0asm"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.version",
+				"value": "1 (little-endian)"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "section[1].id",
+				"value": "type section"
+			},
+			{
+				"offset": 9,
+				"length": 1,
+				"field": "section[1].size",
+				"value": "5 bytes"
+			},
+			{
+				"offset": 11,
+				"length": 4,
+				"field": "type[0]",
+				"value": "() -> (i32)"
+			},
+			{
+				"offset": 15,
+				"length": 1,
+				"field": "section[3].id",
+				"value": "function section"
+			},
+			{
+				"offset": 16,
+				"length": 1,
+				"field": "section[3].size",
+				"value": "2 bytes"
+			},
+			{
+				"offset": 18,
+				"length": 1,
+				"field": "function[0]",
+				"value": "type 0 () -> (i32)"
+			},
+			{
+				"offset": 19,
+				"length": 1,
+				"field": "section[7].id",
+				"value": "export section"
+			},
+			{
+				"offset": 20,
+				"length": 1,
+				"field": "section[7].size",
+				"value": "5 bytes"
+			},
+			{
+				"offset": 22,
+				"length": 4,
+				"field": "export[0]",
+				"value": "'f' → func 0"
+			},
+			{
+				"offset": 26,
+				"length": 1,
+				"field": "section[10].id",
+				"value": "code section"
+			},
+			{
+				"offset": 27,
+				"length": 1,
+				"field": "section[10].size",
+				"value": "9 bytes"
+			},
+			{
+				"offset": 29,
+				"length": 1,
+				"field": "code[0].size",
+				"value": "7 bytes"
+			},
+			{
+				"offset": 30,
+				"length": 7,
+				"field": "code[0].body",
+				"value": "block { unreachable }, i32.add"
+			}
+		],
+		"response_fields": []
+	}
+]

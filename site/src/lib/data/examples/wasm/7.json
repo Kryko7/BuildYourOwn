@@ -1,0 +1,188 @@
+[
+	{
+		"title": "Six locals in three runs",
+		"kind": "module",
+		"request": "a `() -> i32` whose code entry declares `2 × i32, 1 × i64, 3 × f64` — six locals, indices 0 to 5 — and adds an i32, a wrapped i64 and a truncated f64 together  —  `run --invoke f mod.wasm`",
+		"request_hex": "0061736d010000000105016000017f03020100070501016600000a40013e03027f017e037c410121004102210142032102440000000000001240210344000000000000e03f210420032004a02105200020016a2002a76a2005aa6a0b",
+		"response": "11",
+		"response_hex": "",
+		"note": "Locals are declared as runs of a count and a type, and every local starts as the zero of its type. The count is a number of locals, not a number of bytes, and the local index space begins with the function's parameters.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "header.magic",
+				"value": "\\0asm"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.version",
+				"value": "1 (little-endian)"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "section[1].id",
+				"value": "type section"
+			},
+			{
+				"offset": 9,
+				"length": 1,
+				"field": "section[1].size",
+				"value": "5 bytes"
+			},
+			{
+				"offset": 11,
+				"length": 4,
+				"field": "type[0]",
+				"value": "() -> (i32)"
+			},
+			{
+				"offset": 15,
+				"length": 1,
+				"field": "section[3].id",
+				"value": "function section"
+			},
+			{
+				"offset": 16,
+				"length": 1,
+				"field": "section[3].size",
+				"value": "2 bytes"
+			},
+			{
+				"offset": 18,
+				"length": 1,
+				"field": "function[0]",
+				"value": "type 0 () -> (i32)"
+			},
+			{
+				"offset": 19,
+				"length": 1,
+				"field": "section[7].id",
+				"value": "export section"
+			},
+			{
+				"offset": 20,
+				"length": 1,
+				"field": "section[7].size",
+				"value": "5 bytes"
+			},
+			{
+				"offset": 22,
+				"length": 4,
+				"field": "export[0]",
+				"value": "'f' → func 0"
+			},
+			{
+				"offset": 26,
+				"length": 1,
+				"field": "section[10].id",
+				"value": "code section"
+			},
+			{
+				"offset": 27,
+				"length": 1,
+				"field": "section[10].size",
+				"value": "64 bytes"
+			},
+			{
+				"offset": 29,
+				"length": 1,
+				"field": "code[0].size",
+				"value": "62 bytes"
+			},
+			{
+				"offset": 30,
+				"length": 62,
+				"field": "code[0].body",
+				"value": "locals 2×i32, 1×i64, 3×f64; i32.const 1, local.set 0, i32.const 2, local.set 1, i64.const 3, local.set 2, f64.const 4.5, local.set 3, f64.const 0.5, local.set 4, local.get 3, local.get 4, f64.add, local.set 5, local.get 0, local.get 1, i32.add, local.get 2, i32.wrap_i64, i32.add, local.get 5, i32.trunc_f64_s, i32.add"
+			}
+		],
+		"response_fields": []
+	},
+	{
+		"title": "Two functions, one body",
+		"kind": "module",
+		"request": "a function section declaring two functions of type 0 and a code section holding a single body  —  `run --invoke f mod.wasm`",
+		"request_hex": "0061736d010000000105016000017f0303020000070501016600000a0601040041070b",
+		"response": "nothing on stdout, a message on stderr, and a non-zero exit status — the module never runs",
+		"response_hex": "",
+		"note": "The two sections are parallel vectors: entry i of the function section gives the type of the function whose body is entry i of the code section. Compare their lengths as you read them; zipping them without checking silently drops a function.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "header.magic",
+				"value": "\\0asm"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.version",
+				"value": "1 (little-endian)"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "section[1].id",
+				"value": "type section"
+			},
+			{
+				"offset": 9,
+				"length": 1,
+				"field": "section[1].size",
+				"value": "5 bytes"
+			},
+			{
+				"offset": 15,
+				"length": 1,
+				"field": "section[3].id",
+				"value": "function section"
+			},
+			{
+				"offset": 16,
+				"length": 1,
+				"field": "section[3].size",
+				"value": "3 bytes"
+			},
+			{
+				"offset": 17,
+				"length": 1,
+				"field": "function.count",
+				"value": "2 function(s) declared"
+			},
+			{
+				"offset": 20,
+				"length": 1,
+				"field": "section[7].id",
+				"value": "export section"
+			},
+			{
+				"offset": 21,
+				"length": 1,
+				"field": "section[7].size",
+				"value": "5 bytes"
+			},
+			{
+				"offset": 27,
+				"length": 1,
+				"field": "section[10].id",
+				"value": "code section"
+			},
+			{
+				"offset": 28,
+				"length": 1,
+				"field": "section[10].size",
+				"value": "6 bytes"
+			},
+			{
+				"offset": 29,
+				"length": 1,
+				"field": "code.count",
+				"value": "1 function body"
+			}
+		],
+		"response_fields": []
+	}
+]

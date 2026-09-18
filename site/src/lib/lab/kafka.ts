@@ -1,3 +1,5 @@
+import type { Field } from './field';
+
 /**
  * A tiny Kafka wire codec for the /lab inspector: enough to build four realistic
  * requests, decode them field by field with byte offsets, and explain the flexible
@@ -129,15 +131,8 @@ export class Writer {
 
 /* --------------------------------- decoding -------------------------------- */
 
-export interface Field {
-	name: string;
-	type: string;
-	start: number;
-	end: number;
-	value: string;
-	note?: string;
-	depth: number;
-}
+/** The annotated byte range every lab decoder emits; shared with the other inspectors. */
+export type { Field };
 
 class Reader {
 	constructor(

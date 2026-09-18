@@ -1,0 +1,617 @@
+[
+	{
+		"title": "Loading an address out of the GOT",
+		"kind": "object",
+		"command": "ld -o prog got.o",
+		"request": "got.o: `48 8b 35 00 00 00 00` — `mov rsi, [rip+disp32]` with an R_X86_64_GOTPCREL naming `gv' and addend -4, then a write(2) that uses rsi as the buffer",
+		"request_hex": "7f454c4602010100000000000000000001003e000100000000000000000000000000000000000000400100000000000000000000400000000000400007000600488b3500000000b801000000bf01000000ba0c0000000f05b83c000000bf000000000f057669612074686520474f540a03000000000000000900000004000000fcffffffffffffff000000000000000000000000000000000000000000000000000000000300010000000000000000000000000000000000000000000300020000000000000000000000000000000000010000001200010000000000000000000000000000000000080000001100020000000000000000000c00000000000000005f737461727400677600002e74657874002e726f64617461002e72656c612e74657874002e73796d746162002e737472746162002e73687374727461620000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100000001000000060000000000000000000000000000004000000000000000240000000000000000000000000000001000000000000000000000000000000007000000010000000200000000000000000000000000000064000000000000000c000000000000000000000000000000010000000000000000000000000000000f0000000400000040000000000000000000000000000000700000000000000018000000000000000400000001000000080000000000000018000000000000001a00000002000000000000000000000000000000000000008800000000000000780000000000000005000000030000000800000000000000180000000000000022000000030000000000000000000000000000000000000000010000000000000b000000000000000000000000000000010000000000000000000000000000002a00000003000000000000000000000000000000000000000b010000000000003400000000000000000000000000000001000000000000000000000000000000",
+		"response": "Either a GOT section with one eight-byte slot holding the address of `gv', with the displacement pointing at that slot; or the instruction rewritten as `lea rsi, [rip+gv]` or `mov rsi, $gv` with no GOT at all. Both print the string",
+		"response_hex": "",
+		"note": "The one thing that is never right is loading the *contents* of `gv`. A GOT slot holds a pointer, so the untouched instruction reads a pointer out of memory — which is exactly why the relaxed form is a `lea` and not a `mov` from memory.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "header.e_ident.magic",
+				"value": "7f 45 4c 46 — \\x7fELF"
+			},
+			{
+				"offset": 4,
+				"length": 1,
+				"field": "header.e_ident[EI_CLASS]",
+				"value": "2 (ELFCLASS64)"
+			},
+			{
+				"offset": 5,
+				"length": 1,
+				"field": "header.e_ident[EI_DATA]",
+				"value": "1 (little-endian)"
+			},
+			{
+				"offset": 6,
+				"length": 1,
+				"field": "header.e_ident[EI_VERSION]",
+				"value": "1"
+			},
+			{
+				"offset": 7,
+				"length": 1,
+				"field": "header.e_ident[EI_OSABI]",
+				"value": "0"
+			},
+			{
+				"offset": 8,
+				"length": 8,
+				"field": "header.e_ident.padding",
+				"value": "reserved, all zero"
+			},
+			{
+				"offset": 16,
+				"length": 2,
+				"field": "header.e_type",
+				"value": "1 (ET_REL, a relocatable object)"
+			},
+			{
+				"offset": 18,
+				"length": 2,
+				"field": "header.e_machine",
+				"value": "62 (EM_X86_64)"
+			},
+			{
+				"offset": 20,
+				"length": 4,
+				"field": "header.e_version",
+				"value": "1"
+			},
+			{
+				"offset": 24,
+				"length": 8,
+				"field": "header.e_entry",
+				"value": "0x0"
+			},
+			{
+				"offset": 32,
+				"length": 8,
+				"field": "header.e_phoff",
+				"value": "0"
+			},
+			{
+				"offset": 40,
+				"length": 8,
+				"field": "header.e_shoff",
+				"value": "320 (the section header table)"
+			},
+			{
+				"offset": 48,
+				"length": 4,
+				"field": "header.e_flags",
+				"value": "0x0"
+			},
+			{
+				"offset": 52,
+				"length": 2,
+				"field": "header.e_ehsize",
+				"value": "64"
+			},
+			{
+				"offset": 54,
+				"length": 2,
+				"field": "header.e_phentsize",
+				"value": "0"
+			},
+			{
+				"offset": 56,
+				"length": 2,
+				"field": "header.e_phnum",
+				"value": "0"
+			},
+			{
+				"offset": 58,
+				"length": 2,
+				"field": "header.e_shentsize",
+				"value": "64"
+			},
+			{
+				"offset": 60,
+				"length": 2,
+				"field": "header.e_shnum",
+				"value": "7 section headers"
+			},
+			{
+				"offset": 62,
+				"length": 2,
+				"field": "header.e_shstrndx",
+				"value": "6 (the section name string table)"
+			},
+			{
+				"offset": 64,
+				"length": 36,
+				"field": ".text.contents",
+				"value": "36 bytes of machine code"
+			},
+			{
+				"offset": 100,
+				"length": 12,
+				"field": ".rodata.contents",
+				"value": "12 bytes: \"via the GOT\\n\""
+			},
+			{
+				"offset": 112,
+				"length": 8,
+				"field": ".rela.text[0].r_offset",
+				"value": "0x3 — the field to patch, inside '.text'"
+			},
+			{
+				"offset": 120,
+				"length": 8,
+				"field": ".rela.text[0].r_info",
+				"value": "symbol 4 ('gv'), type R_X86_64_GOTPCREL"
+			},
+			{
+				"offset": 128,
+				"length": 8,
+				"field": ".rela.text[0].r_addend",
+				"value": "-4 (the A in S + A - P)"
+			},
+			{
+				"offset": 136,
+				"length": 4,
+				"field": "symtab[0].st_name",
+				"value": "(unnamed)"
+			},
+			{
+				"offset": 140,
+				"length": 1,
+				"field": "symtab[0].st_info",
+				"value": "STB_LOCAL STT_NOTYPE"
+			},
+			{
+				"offset": 141,
+				"length": 1,
+				"field": "symtab[0].st_other",
+				"value": "STV_DEFAULT"
+			},
+			{
+				"offset": 142,
+				"length": 2,
+				"field": "symtab[0].st_shndx",
+				"value": "SHN_UNDEF (a reference, not a definition)"
+			},
+			{
+				"offset": 144,
+				"length": 8,
+				"field": "symtab[0].st_value",
+				"value": "0x0"
+			},
+			{
+				"offset": 152,
+				"length": 8,
+				"field": "symtab[0].st_size",
+				"value": "0"
+			},
+			{
+				"offset": 160,
+				"length": 4,
+				"field": "symtab[1].st_name",
+				"value": "(unnamed)"
+			},
+			{
+				"offset": 164,
+				"length": 1,
+				"field": "symtab[1].st_info",
+				"value": "STB_LOCAL STT_SECTION"
+			},
+			{
+				"offset": 165,
+				"length": 1,
+				"field": "symtab[1].st_other",
+				"value": "STV_DEFAULT"
+			},
+			{
+				"offset": 166,
+				"length": 2,
+				"field": "symtab[1].st_shndx",
+				"value": "1 ('.text')"
+			},
+			{
+				"offset": 168,
+				"length": 8,
+				"field": "symtab[1].st_value",
+				"value": "0x0"
+			},
+			{
+				"offset": 176,
+				"length": 8,
+				"field": "symtab[1].st_size",
+				"value": "0"
+			},
+			{
+				"offset": 184,
+				"length": 4,
+				"field": "symtab[2].st_name",
+				"value": "(unnamed)"
+			},
+			{
+				"offset": 188,
+				"length": 1,
+				"field": "symtab[2].st_info",
+				"value": "STB_LOCAL STT_SECTION"
+			},
+			{
+				"offset": 189,
+				"length": 1,
+				"field": "symtab[2].st_other",
+				"value": "STV_DEFAULT"
+			},
+			{
+				"offset": 190,
+				"length": 2,
+				"field": "symtab[2].st_shndx",
+				"value": "2 ('.rodata')"
+			},
+			{
+				"offset": 192,
+				"length": 8,
+				"field": "symtab[2].st_value",
+				"value": "0x0"
+			},
+			{
+				"offset": 200,
+				"length": 8,
+				"field": "symtab[2].st_size",
+				"value": "0"
+			},
+			{
+				"offset": 208,
+				"length": 4,
+				"field": "symtab[3].st_name",
+				"value": "'_start'"
+			},
+			{
+				"offset": 212,
+				"length": 1,
+				"field": "symtab[3].st_info",
+				"value": "STB_GLOBAL STT_FUNC"
+			},
+			{
+				"offset": 213,
+				"length": 1,
+				"field": "symtab[3].st_other",
+				"value": "STV_DEFAULT"
+			},
+			{
+				"offset": 214,
+				"length": 2,
+				"field": "symtab[3].st_shndx",
+				"value": "1 ('.text')"
+			},
+			{
+				"offset": 216,
+				"length": 8,
+				"field": "symtab[3].st_value",
+				"value": "0x0"
+			},
+			{
+				"offset": 224,
+				"length": 8,
+				"field": "symtab[3].st_size",
+				"value": "0"
+			},
+			{
+				"offset": 232,
+				"length": 4,
+				"field": "symtab[4].st_name",
+				"value": "'gv'"
+			},
+			{
+				"offset": 236,
+				"length": 1,
+				"field": "symtab[4].st_info",
+				"value": "STB_GLOBAL STT_OBJECT"
+			},
+			{
+				"offset": 237,
+				"length": 1,
+				"field": "symtab[4].st_other",
+				"value": "STV_DEFAULT"
+			},
+			{
+				"offset": 238,
+				"length": 2,
+				"field": "symtab[4].st_shndx",
+				"value": "2 ('.rodata')"
+			},
+			{
+				"offset": 240,
+				"length": 8,
+				"field": "symtab[4].st_value",
+				"value": "0x0"
+			},
+			{
+				"offset": 248,
+				"length": 8,
+				"field": "symtab[4].st_size",
+				"value": "12"
+			},
+			{
+				"offset": 256,
+				"length": 11,
+				"field": ".strtab.contents",
+				"value": "11 bytes of NUL-terminated strings"
+			},
+			{
+				"offset": 267,
+				"length": 52,
+				"field": ".shstrtab.contents",
+				"value": "52 bytes of NUL-terminated strings"
+			},
+			{
+				"offset": 320,
+				"length": 4,
+				"field": "sections[0].sh_name",
+				"value": "'(the null section)'"
+			},
+			{
+				"offset": 324,
+				"length": 4,
+				"field": "sections[0].sh_type",
+				"value": "NULL"
+			},
+			{
+				"offset": 328,
+				"length": 8,
+				"field": "sections[0].sh_flags",
+				"value": "0x0"
+			},
+			{
+				"offset": 344,
+				"length": 8,
+				"field": "sections[0].sh_offset",
+				"value": "0 (where '(the null section)' starts in the file)"
+			},
+			{
+				"offset": 352,
+				"length": 8,
+				"field": "sections[0].sh_size",
+				"value": "0 bytes"
+			},
+			{
+				"offset": 368,
+				"length": 8,
+				"field": "sections[0].sh_addralign",
+				"value": "0"
+			},
+			{
+				"offset": 384,
+				"length": 4,
+				"field": "sections[1].sh_name",
+				"value": "'.text'"
+			},
+			{
+				"offset": 388,
+				"length": 4,
+				"field": "sections[1].sh_type",
+				"value": "PROGBITS"
+			},
+			{
+				"offset": 392,
+				"length": 8,
+				"field": "sections[1].sh_flags",
+				"value": "0x6 (SHF_ALLOC | SHF_EXECINSTR)"
+			},
+			{
+				"offset": 408,
+				"length": 8,
+				"field": "sections[1].sh_offset",
+				"value": "64 (where '.text' starts in the file)"
+			},
+			{
+				"offset": 416,
+				"length": 8,
+				"field": "sections[1].sh_size",
+				"value": "36 bytes"
+			},
+			{
+				"offset": 432,
+				"length": 8,
+				"field": "sections[1].sh_addralign",
+				"value": "16"
+			},
+			{
+				"offset": 448,
+				"length": 4,
+				"field": "sections[2].sh_name",
+				"value": "'.rodata'"
+			},
+			{
+				"offset": 452,
+				"length": 4,
+				"field": "sections[2].sh_type",
+				"value": "PROGBITS"
+			},
+			{
+				"offset": 456,
+				"length": 8,
+				"field": "sections[2].sh_flags",
+				"value": "0x2 (SHF_ALLOC)"
+			},
+			{
+				"offset": 472,
+				"length": 8,
+				"field": "sections[2].sh_offset",
+				"value": "100 (where '.rodata' starts in the file)"
+			},
+			{
+				"offset": 480,
+				"length": 8,
+				"field": "sections[2].sh_size",
+				"value": "12 bytes"
+			},
+			{
+				"offset": 496,
+				"length": 8,
+				"field": "sections[2].sh_addralign",
+				"value": "1"
+			},
+			{
+				"offset": 512,
+				"length": 4,
+				"field": "sections[3].sh_name",
+				"value": "'.rela.text'"
+			},
+			{
+				"offset": 516,
+				"length": 4,
+				"field": "sections[3].sh_type",
+				"value": "RELA"
+			},
+			{
+				"offset": 520,
+				"length": 8,
+				"field": "sections[3].sh_flags",
+				"value": "0x40 (SHF_INFO_LINK)"
+			},
+			{
+				"offset": 536,
+				"length": 8,
+				"field": "sections[3].sh_offset",
+				"value": "112 (where '.rela.text' starts in the file)"
+			},
+			{
+				"offset": 544,
+				"length": 8,
+				"field": "sections[3].sh_size",
+				"value": "24 bytes"
+			},
+			{
+				"offset": 560,
+				"length": 8,
+				"field": "sections[3].sh_addralign",
+				"value": "8"
+			},
+			{
+				"offset": 576,
+				"length": 4,
+				"field": "sections[4].sh_name",
+				"value": "'.symtab'"
+			},
+			{
+				"offset": 580,
+				"length": 4,
+				"field": "sections[4].sh_type",
+				"value": "SYMTAB"
+			},
+			{
+				"offset": 584,
+				"length": 8,
+				"field": "sections[4].sh_flags",
+				"value": "0x0"
+			},
+			{
+				"offset": 600,
+				"length": 8,
+				"field": "sections[4].sh_offset",
+				"value": "136 (where '.symtab' starts in the file)"
+			},
+			{
+				"offset": 608,
+				"length": 8,
+				"field": "sections[4].sh_size",
+				"value": "120 bytes"
+			},
+			{
+				"offset": 624,
+				"length": 8,
+				"field": "sections[4].sh_addralign",
+				"value": "8"
+			},
+			{
+				"offset": 640,
+				"length": 4,
+				"field": "sections[5].sh_name",
+				"value": "'.strtab'"
+			},
+			{
+				"offset": 644,
+				"length": 4,
+				"field": "sections[5].sh_type",
+				"value": "STRTAB"
+			},
+			{
+				"offset": 648,
+				"length": 8,
+				"field": "sections[5].sh_flags",
+				"value": "0x0"
+			},
+			{
+				"offset": 664,
+				"length": 8,
+				"field": "sections[5].sh_offset",
+				"value": "256 (where '.strtab' starts in the file)"
+			},
+			{
+				"offset": 672,
+				"length": 8,
+				"field": "sections[5].sh_size",
+				"value": "11 bytes"
+			},
+			{
+				"offset": 688,
+				"length": 8,
+				"field": "sections[5].sh_addralign",
+				"value": "1"
+			},
+			{
+				"offset": 704,
+				"length": 4,
+				"field": "sections[6].sh_name",
+				"value": "'.shstrtab'"
+			},
+			{
+				"offset": 708,
+				"length": 4,
+				"field": "sections[6].sh_type",
+				"value": "STRTAB"
+			},
+			{
+				"offset": 712,
+				"length": 8,
+				"field": "sections[6].sh_flags",
+				"value": "0x0"
+			},
+			{
+				"offset": 728,
+				"length": 8,
+				"field": "sections[6].sh_offset",
+				"value": "267 (where '.shstrtab' starts in the file)"
+			},
+			{
+				"offset": 736,
+				"length": 8,
+				"field": "sections[6].sh_size",
+				"value": "52 bytes"
+			},
+			{
+				"offset": 752,
+				"length": 8,
+				"field": "sections[6].sh_addralign",
+				"value": "1"
+			}
+		],
+		"response_fields": [],
+		"stdout": "via the GOT\n",
+		"exit_status": 0
+	},
+	{
+		"title": "Why a static link may skip the GOT",
+		"kind": "text",
+		"command": "ld -o prog gotx.o",
+		"request": "The same instruction under R_X86_64_REX_GOTPCRELX, the spelling an assembler uses to say the instruction may be rewritten",
+		"request_hex": "",
+		"response": "GNU ld 2.47 emits `48 c7 c6 <addr>` — `mov rsi, $gv` — and no .got section. The address is a link-time constant, so the indirection buys nothing",
+		"response_hex": "",
+		"note": "Start with a real GOT: it is a dozen lines and it is correct for every relocation kind in this family. Relaxation is an optimisation, and one that is only safe for the instruction encodings the X relocations name.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

@@ -400,6 +400,13 @@ impl Transcript {
         self.hash
     }
 
+    /// Record a checkpoint for the messages already in the transcript, which is what a
+    /// re-hash needs so the labels do not disappear.
+    pub fn mark(&mut self, label: impl Into<String>) {
+        let h = self.current();
+        self.checkpoints.push((label.into(), h));
+    }
+
     /// Append one complete handshake message (`msg_type` + `length` + body).
     pub fn push(&mut self, message: &[u8], label: impl Into<String>) {
         self.bytes.extend_from_slice(message);
