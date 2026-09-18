@@ -15,7 +15,7 @@ use std::collections::BTreeMap;
 use std::io::Write;
 use std::path::PathBuf;
 
-/// Build Your Own — five tracks, one command.
+/// Build Your Own — six tracks, one command.
 #[derive(Parser, Debug)]
 #[command(name = "byo", version, about, long_about = None)]
 struct Cli {
@@ -53,7 +53,7 @@ enum Cmd {
 
 #[derive(Args, Debug)]
 struct InitArgs {
-    /// Which track: shell, kafka, wasm, tls or link
+    /// Which track: shell, kafka, wasm, tls, link or dist
     track: String,
     /// Path to the program you are building, e.g. ./your_program.sh
     #[arg(long, value_name = "PATH")]
@@ -366,28 +366,42 @@ fn project_for(track: Option<Track>, user: &[String]) -> Result<Project> {
             Ok(p)
         }
         Err(e) => {
-            let track = track.unwrap_or(Track::SHELL);
-            let flag = track.target_flag();
-            let inline = user
-                .iter()
-                .position(|a| a == flag)
-                .and_then(|i| user.get(i + 1).cloned())
-                .or_else(|| {
-                    user.iter()
-                        .find_map(|a| a.strip_prefix(&format!("{flag}=")).map(str::to_string))
-                });
-            match inline {
-                Some(target) => Ok(Project {
+            // No byo.toml: the run is still possible when the flags name the target
+            // themselves. Which flag that is comes from the registry, so
+            // `byo test --runtime wasmtime --stage 1` works in a scratch directory
+            // exactly like `byo shell --shell bash --stage 1` does.
+            let candidates: Vec<(Track, String)> = match track {
+                Some(t) => inline_target(t, user)
+                    .map(|v| vec![(t, v)])
+                    .unwrap_or_default(),
+                None => Track::all()
+                    .filter_map(|t| inline_target(t, user).map(|v| (t, v)))
+                    .collect(),
+            };
+            match candidates.as_slice() {
+                [(track, target)] => Ok(Project {
                     root: cwd,
-                    track,
-                    target,
+                    track: *track,
+                    target: target.clone(),
                     target_kind: TargetKind::Registered,
                     extras: BTreeMap::new(),
                 }),
-                None => Err(e),
+                _ => Err(e),
             }
         }
     }
+}
+
+/// The value the user gave a track's target flag, as `--flag value` or `--flag=value`.
+fn inline_target(track: Track, user: &[String]) -> Option<String> {
+    let flag = track.target_flag();
+    user.iter()
+        .position(|a| a == flag)
+        .and_then(|i| user.get(i + 1).cloned())
+        .or_else(|| {
+            user.iter()
+                .find_map(|a| a.strip_prefix(&format!("{flag}=")).map(str::to_string))
+        })
 }
 
 fn test(paths: &Paths, track: Option<Track>, user: &[String]) -> Result<i32> {
@@ -703,6 +717,23 @@ mod tests {
         let e = init(&paths, root.clone(), init_args("redis")).unwrap_err();
         assert!(e.to_string().contains("unknown track 'redis'"), "{e}");
         assert!(!root.join(config::FILE).exists(), "nothing was written");
+    }
+
+    #[test]
+    fn an_inline_target_flag_picks_its_track() {
+        for t in Track::all() {
+            let args = vec![t.target_flag().to_string(), "reference".to_string()];
+            assert_eq!(inline_target(t, &args).as_deref(), Some("reference"));
+            let equals = vec![format!("{}=reference", t.target_flag())];
+            assert_eq!(inline_target(t, &equals).as_deref(), Some("reference"));
+            for other in Track::all().filter(|o| *o != t) {
+                assert_eq!(inline_target(other, &args), None, "{t} vs {other}");
+            }
+        }
+        assert_eq!(
+            inline_target(Track::SHELL, &["--verbose".to_string()]),
+            None
+        );
     }
 
     #[test]

@@ -8,6 +8,11 @@ taken — the actual URL is printed on startup):
 | `/api/*` | the JSON API below |
 | everything else | the prerendered site from `$BYO_HOME/site` |
 
+The API is **track-agnostic**: every `:track` path segment and `?track=` parameter takes any
+id from `GET /api/tracks`, and `/api/health` and `/api/progress` carry one entry per
+registered track. Nothing here has a fixed list of tracks baked in, and neither should the
+site.
+
 Same origin, so **no CORS headers are sent and none are needed**. Every response is
 `application/json; charset=utf-8` with `Cache-Control: no-store`. Errors are
 `{"error": "human readable sentence"}` with a non-2xx status.
@@ -22,7 +27,8 @@ Base URL in the examples: `http://127.0.0.1:4321`.
 
 ## `GET /api/health`
 
-Liveness plus what the CLI knows about the user's projects.
+Liveness, plus one entry per **registered track** — every track in `byo`'s registry is
+present here whether or not its tester exists on this machine.
 
 ```jsonc
 {
@@ -33,27 +39,73 @@ Liveness plus what the CLI knows about the user's projects.
   "schemaVersion": 1,
   "tracks": {
     "shell": {
+      "installed": true,           // the tester binary was found next to `byo` or on PATH
+      "catalog": true,             // $BYO_HOME/catalog.shell.json exists
       "project": {                 // null when `byo init shell` has never been run
         "id": 1,
         "track": "shell",
         "path": "/home/you/code/my-shell",
-        "command": "bash",         // the --shell / --broker value
+        "command": "bash",         // the --shell / --broker / --runtime / … value
         "targetKind": "registered", // "registered" (a name in shells.yaml) | "command" (a path)
         "createdAt": "2026-09-13T02:04:14Z"
       }
     },
-    "kafka": { "project": null }
+    "kafka": { "installed": true,  "catalog": true,  "project": null },
+    "wasm":  { "installed": false, "catalog": true,  "project": null },
+    "tls":   { "installed": false, "catalog": false, "project": null },
+    "link":  { "installed": false, "catalog": false, "project": null },
+    "dist":  { "installed": false, "catalog": false, "project": null }
   }
 }
 ```
+
+`installed` and `catalog` were **added**; `project` keeps the shape it always had. Do not
+assume the key set: iterate `tracks`, or better, `GET /api/tracks`.
 
 **Status:** always `200` when the server is up.
 
 ---
 
+## `GET /api/tracks`
+
+The track registry, so the site does not hard-code the list. An array, in the order the CLI
+displays tracks.
+
+```jsonc
+[
+  {
+    "id": "shell",                        // the id used everywhere else in this API
+    "title": "Build your own shell",
+    "blurb": "A POSIX shell: parsing, quoting, expansion, pipelines, redirection, job control.",
+    "accent": "#a78bfa",                  // CSS colour for this track's palette
+    "tester": "shelltest",                // the binary `byo test` runs
+    "targetFlag": "--shell",              // how the tester is pointed at your program
+    "targetKey": "shell",                 // how byo.toml names a registered target
+    "installed": true,                    // the tester binary exists on this machine
+    "testerVersion": "shelltest 0.1.0",   // null when `installed` is false
+    "catalog": true                       // GET /api/catalog/shell will answer 200
+  }
+]
+```
+
+Notes for the site:
+
+- **Every registered track appears**, installed or not; render the not-installed ones as
+  "coming soon" rather than dropping them.
+- `id`, `title`, `blurb`, `accent`, `tester`, `targetFlag` and `targetKey` are static registry
+  data (they change only when `byo` is rebuilt); `installed`, `testerVersion` and `catalog`
+  describe this machine right now.
+- Fields will only ever be **added** to these objects. Ignore ones you do not know.
+
+**Status:** always `200`.
+
+---
+
 ## `GET /api/progress`
 
-Everything the journey map needs to colour itself, for both tracks at once.
+Everything the journey map needs to colour itself, for **every registered track** at once.
+One key per track id (plus `streak`, `xp` and `level`) — take the track list from
+`/api/tracks` rather than assuming which keys are there.
 
 ```jsonc
 {
@@ -70,6 +122,10 @@ Everything the journey map needs to colour itself, for both tracks at once.
     }
   },
   "kafka": { "latestRunId": null, "stages": {} },
+  "wasm":  { "latestRunId": null, "stages": {} },
+  "tls":   { "latestRunId": null, "stages": {} },
+  "link":  { "latestRunId": null, "stages": {} },
+  "dist":  { "latestRunId": null, "stages": {} },
   "streak": 1,                     // consecutive days a stage went green (today or yesterday counts)
   "xp": 300,
   "level": 1
@@ -84,7 +140,7 @@ Notes for the site:
   said `byo done N` / posted `state: "done"`); `in_progress` = the latest run had both passes
   and failures; `failed` = the latest run had no passes; `todo` = never run, or explicitly
   un-done.
-- `xp` = 100 per `done` stage + 20 per `in_progress`/`failed` stage, across both tracks.
+- `xp` = 100 per `done` stage + 20 per `in_progress`/`failed` stage, across every track.
   `level` = `xp / 500 + 1`. `streak` counts distinct `doneAt` calendar days (UTC) backwards
   from today; a streak whose most recent day is yesterday still counts.
 
@@ -96,7 +152,7 @@ Run history, newest first. Both parameters are optional.
 
 | Parameter | Values | Default |
 |---|---|---|
-| `track` | `shell` \| `kafka` | both tracks |
+| `track` | any registered id (`shell`, `kafka`, `wasm`, `tls`, `link`, `dist`) | every track |
 | `limit` | 1–1000 | 20 |
 
 ```jsonc
@@ -168,7 +224,7 @@ of the API which is `camelCase`.
 ## `GET /api/runs/latest?track=`
 
 The newest run, in the same shape as `/api/runs/:id`. `track` is optional (without it you get
-the newest run of either track).
+the newest run of any track).
 
 **Status:** `200`; `404` (`{"error": "no runs recorded yet — run `byo test` first"}`) when the
 track has never been run; `400` for an unknown track.
@@ -177,7 +233,7 @@ track has never been run; `400` for an unknown track.
 
 ## `POST /api/stages/:track/:n`
 
-Mark a stage done/undone and/or set its note. `:track` is `shell` or `kafka`, `:n` is the
+Mark a stage done/undone and/or set its note. `:track` is any registered track id, `:n` is the
 stage number.
 
 Request body (`application/json`, both fields optional, an empty body is a plain read):
@@ -214,18 +270,17 @@ Response — the stage row after the write:
 ## `GET /api/catalog/:track`
 
 The stage catalog from the data directory, served verbatim so the site can run against newer
-testers than it was built with. `:track` is `shell` or `kafka`.
-
-- shell → `$BYO_HOME/catalog.shell.json` (copied from `site/src/lib/data/catalog.shell.json`
-  at install time)
-- kafka → `$BYO_HOME/catalog.kafka.json` (copied from `kafkatest/catalog.json`)
+testers than it was built with. `:track` is any registered track id, and the file is
+`$BYO_HOME/catalog.<track>.json` (copied there by `install.sh`, from the tester's committed
+`catalog.json` or — failing that — generated with `<tester> --list --json`).
 
 Shape: whatever the generators write — `{ track, generatedAt, sections: [{id, title,
-stages:[n]}], stages: [{number, slug, name, ext, file, hints, tests, …}] }`.
+stages:[n]}], stages: [{number, slug, name, ext, file, hints, tests, examples, …}] }`.
 
-**Status:** `200`; `404` when the file is absent (a warning `byo doctor` also prints) or the
-track is unknown. **Treat a 404 here as "use the catalog bundled into the build"** — it is not
-an error worth showing the user.
+**Status:** `200`; `404` when the file is absent (a warning `byo doctor` also prints, and what
+a track whose tester is not built yet answers) or the track id is unknown. **Treat a 404 here
+as "use the catalog bundled into the build"** — it is not an error worth showing the user;
+`/api/tracks` says up front which tracks have one (`catalog: true`).
 
 ---
 
@@ -251,6 +306,8 @@ the user to run `byo site --rebuild`, and the API keeps working.
 ## Quick recipe for the site
 
 ```ts
+type TrackId = string;                       // from /api/tracks — never hard-code the list
+
 const api = {
   async detect(): Promise<boolean> {
     try {
@@ -258,19 +315,20 @@ const api = {
       return r.ok && (await r.json()).ok === true;
     } catch { return false; }
   },
+  tracks: () => fetch('/api/tracks').then(r => r.json()),   // [{id, title, blurb, accent, installed, …}]
   progress: () => fetch('/api/progress').then(r => r.json()),
-  runs: (track?: 'shell' | 'kafka', limit = 20) =>
+  runs: (track?: TrackId, limit = 20) =>
     fetch(`/api/runs?${new URLSearchParams({ ...(track && { track }), limit: String(limit) })}`)
       .then(r => r.json()),
-  latest: (track: 'shell' | 'kafka') =>
+  latest: (track: TrackId) =>
     fetch(`/api/runs/latest?track=${track}`).then(r => (r.ok ? r.json() : null)),
-  setStage: (track: 'shell' | 'kafka', n: number, body: { state?: 'done' | 'todo'; note?: string }) =>
+  setStage: (track: TrackId, n: number, body: { state?: 'done' | 'todo'; note?: string }) =>
     fetch(`/api/stages/${track}/${n}`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(body),
     }).then(r => r.json()),
-  catalog: (track: 'shell' | 'kafka') =>
+  catalog: (track: TrackId) =>
     fetch(`/api/catalog/${track}`).then(r => (r.ok ? r.json() : null)),
 };
 ```

@@ -22,8 +22,8 @@ for arg in "$@"; do
 done
 
 # ---------------------------------------------------------------------------------------
-# The track registry. Keep this table in step with `byo/src/track.rs`: adding a sixth track
-# is one row here and one TrackDef there.
+# The track registry. Keep this table in step with `byo/src/track.rs`: adding a track is one
+# row here and one TrackDef there — no other code changes anywhere.
 #
 #   id | repo dir | tester binary | cargo build flags | data files (src:dest,…) | catalogs
 #
@@ -36,6 +36,7 @@ TRACKS=(
   "wasm|wasmtest|wasmtest|--bins|wasmtest/runtimes.yaml:runtimes.yaml|wasmtest/catalog.json,site/src/lib/data/catalog.wasm.json"
   "tls|tlstest|tlstest|--bins|tlstest/servers.yaml:servers.yaml|tlstest/catalog.json,site/src/lib/data/catalog.tls.json"
   "link|linktest|linktest|--bins|linktest/linkers.yaml:linkers.yaml|linktest/catalog.json,site/src/lib/data/catalog.link.json"
+  "dist|disttest|disttest|--bins|disttest/targets.yaml:targets.yaml|disttest/catalog.json,site/src/lib/data/catalog.dist.json"
 )
 field() { printf '%s' "$1" | cut -d'|' -f"$2"; }
 
@@ -231,6 +232,14 @@ case ":${PATH}:" in
     printf '    export PATH="%s:$PATH"\n' "$BYO_BIN_DIR"
     ;;
 esac
+
+# `byo` reads the owner from the environment (never from a copied file), so the name only
+# shows up in `byo status` once your shell exports it too.
+if [ -n "${PUBLIC_JOURNEY_OWNER:-}" ]; then
+  printf '\n%sFor "%s'"'"'s Journey" in `byo status`, export it in your shell rc file too:%s\n\n' \
+    "$DIM" "$PUBLIC_JOURNEY_OWNER" "$OFF"
+  printf '    export PUBLIC_JOURNEY_OWNER="%s"\n' "$PUBLIC_JOURNEY_OWNER"
+fi
 
 if [ "${#WARNINGS[@]}" -gt 0 ]; then
   printf '\n%sInstalled with %d warning(s):%s\n' "$YELLOW" "${#WARNINGS[@]}" "$OFF"

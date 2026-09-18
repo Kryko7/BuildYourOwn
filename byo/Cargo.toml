@@ -2,7 +2,7 @@
 name = "byo"
 version = "0.1.0"
 edition = "2021"
-description = "Build Your Own — one command for the shell and Kafka tracks: run the testers, keep progress in SQLite, serve the journey site"
+description = "Build Your Own — one command for every track: run the testers, keep progress in SQLite, serve the journey site"
 license = "MIT"
 
 [dependencies]

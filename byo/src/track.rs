@@ -1,7 +1,8 @@
 //! The track registry — the one place that knows a track exists.
 //!
 //! Every track in this repo (build your own shell, Kafka broker, WebAssembly runtime,
-//! TLS 1.3 server, ELF linker) is one [`TrackDef`] in [`TRACKS`]. Everything else in `byo`
+//! TLS 1.3 server, ELF linker, distributed key-value store) is one [`TrackDef`] in
+//! [`TRACKS`]. Everything else in `byo`
 //! — `byo init`, `byo test`, `byo status`, `byo doctor`, the JSON API and the database —
 //! reads that table instead of matching on a track name, so adding a sixth track is a data
 //! change here plus a row in `install.sh`, not new code in six modules.
@@ -245,6 +246,29 @@ pub static TRACKS: &[TrackDef] = &[
         accent: "#fcd34d",
         ansi: "1;33",
     },
+    TrackDef {
+        id: "dist",
+        title: "Build your own distributed system",
+        blurb: "A replicated, linearizable key-value store: clocks, quorums, consensus, CRDTs.",
+        dir: "disttest",
+        tester: "disttest",
+        target_flag: "--target",
+        target_key: "target",
+        default_command: "./your_program.sh",
+        data_files: &[DataFile {
+            flag: "--targets-file",
+            rel: "targets.yaml",
+            dir: false,
+        }],
+        extra_keys: &[],
+        requirement: Some(Requirement::Cached {
+            dir: "disttest",
+            bin: "etcd",
+            why: "`disttest --target etcd --validate` (etcd 3.7.1, downloaded on first use)",
+        }),
+        accent: "#fdba74",
+        ansi: "1;95",
+    },
 ];
 
 /// A handle into [`TRACKS`]: an index, so it stays `Copy` and cheap to pass around.
@@ -262,6 +286,8 @@ impl Track {
     pub const TLS: Track = Track(3);
     /// Build your own ELF linker, tested by `linktest`.
     pub const LINK: Track = Track(4);
+    /// Build your own distributed key-value store, tested by `disttest`.
+    pub const DIST: Track = Track(5);
 
     /// Every registered track, in registry order.
     pub fn all() -> impl ExactSizeIterator<Item = Track> + Clone {
@@ -399,6 +425,8 @@ mod tests {
         assert_eq!(Track::WASM.target_flag(), "--runtime");
         assert_eq!(Track::TLS.target_key(), "server");
         assert_eq!(Track::LINK.def().dir, "linktest");
+        assert_eq!(Track::DIST.target_flag(), "--target");
+        assert_eq!(Track::DIST.def().extra_keys.len(), 0);
     }
 
     #[test]

@@ -13,7 +13,7 @@ PURGE=0
 YES=0
 
 # Keep in step with install.sh's TRACKS table and byo/src/track.rs.
-BINARIES=(byo shelltest kafkatest wasmtest tlstest linktest)
+BINARIES=(byo shelltest kafkatest wasmtest tlstest linktest disttest)
 
 for arg in "$@"; do
   case "$arg" in
