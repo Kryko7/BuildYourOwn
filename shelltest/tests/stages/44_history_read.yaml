@@ -1,0 +1,56 @@
+stage: 44
+name: "history -r loads entries from a file"
+tests:
+  - name: "history -r appends the file's lines to the history"
+    fixtures:
+      files: { "h.txt": "echo x\necho y\n" }
+    skip_on: [zsh]
+    reason: "zsh's history builtin (fc -l) is not available in non-interactive mode"
+    input: ["echo a", "history -r h.txt", "history", "exit 0"]
+    expect:
+      stdout: "a\n    1  echo a\n    2  history -r h.txt\n    3  echo x\n    4  echo y\n    5  history"
+      exit_code: 0
+
+  - name: "history -r with an absolute path"
+    fixtures:
+      files: { "h.txt": "echo abs\n" }
+    skip_on: [zsh]
+    reason: "zsh's history builtin (fc -l) is not available in non-interactive mode"
+    input: ["history -r {TMP}/h.txt", "history", "exit 0"]
+    expect:
+      stdout: "    1  history -r {TMP}/h.txt\n    2  echo abs\n    3  history"
+
+  - name: "loaded entries count towards history N"
+    fixtures:
+      files: { "h.txt": "echo x\necho y\n" }
+    skip_on: [zsh]
+    reason: "zsh's history builtin (fc -l) is not available in non-interactive mode"
+    input: ["history -r h.txt", "history 2", "exit 0"]
+    expect:
+      stdout: "    3  echo y\n    4  history 2"
+
+  - name: "history -r twice loads the file twice"
+    fixtures:
+      files: { "h.txt": "echo x\n" }
+    skip_on: [zsh]
+    reason: "zsh's history builtin (fc -l) is not available in non-interactive mode"
+    input: ["history -r h.txt", "history -r h.txt", "history", "exit 0"]
+    expect:
+      stdout: "    1  history -r h.txt\n    2  echo x\n    3  history -r h.txt\n    4  echo x\n    5  history"
+
+  - name: "an empty file adds nothing"
+    fixtures:
+      files: { "empty.txt": "" }
+    skip_on: [zsh]
+    reason: "zsh's history builtin (fc -l) is not available in non-interactive mode"
+    input: ["history -r empty.txt", "history", "exit 0"]
+    expect:
+      stdout: "    1  history -r empty.txt\n    2  history"
+
+  - name: "history -r prints nothing itself and the shell continues (regression: stage 3)"
+    fixtures:
+      files: { "h.txt": "echo x\n" }
+    input: ["history -r h.txt", "echo done", "exit 0"]
+    expect:
+      stdout: "done"
+      exit_code: 0

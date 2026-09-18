@@ -1,0 +1,23 @@
+# Rust
+target/
+
+# Node / SvelteKit
+node_modules/
+.svelte-kit/
+site/build/
+
+# Tester output and per-project state
+report.json
+*.report.json
+byo.toml
+.byo/
+
+# Personal settings (see .env.example)
+.env
+.env.local
+
+# Editors / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store

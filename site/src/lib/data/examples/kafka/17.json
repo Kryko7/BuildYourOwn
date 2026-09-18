@@ -1,0 +1,435 @@
+[
+	{
+		"title": "Creating a fresh topic",
+		"kind": "wire",
+		"request": "CreateTopics v7, correlation id 171, one topic 'kafkatest-new' with num_partitions 2, replication_factor 1, no assignments and no configs, timeout_ms 5000, validate_only false",
+		"request_hex": "0000003200130007000000ab00096b61666b617465737400020e6b61666b61746573742d6e6577000000020001010100000013880000",
+		"response": "throttle_time_ms, then one topics entry: error_code 0 (NONE), the name echoed, a freshly minted topic_id (a different uuid every time), num_partitions 2, replication_factor 1, error_message null, and the effective configs the broker applied",
+		"response_hex": "0000045a000000ab0000000000020e6b61666b61746573742d6e6577beb529e9e26b48c8ab2c2c533a8486ec000000000000020001220f636c65616e75702e706f6c6963790764656c6574650005000017636f6d7072657373696f6e2e677a69702e6c6576656c032d310005000016636f6d7072657373696f6e2e6c7a342e6c6576656c02390005000011636f6d7072657373696f6e2e747970650970726f64756365720005000017636f6d7072657373696f6e2e7a7374642e6c6576656c0233000500001464656c6574652e726574656e74696f6e2e6d73093836343030303030000500001566696c652e64656c6574652e64656c61792e6d73063630303030000500000f666c7573682e6d6573736167657302310004000009666c7573682e6d7314393232333337323033363835343737353830370005000028666f6c6c6f7765722e7265706c69636174696f6e2e7468726f74746c65642e7265706c69636173010005000015696e6465782e696e74657276616c2e6279746573053430393600050000266c65616465722e7265706c69636174696f6e2e7468726f74746c65642e7265706c696361730100050000166c6f63616c2e726574656e74696f6e2e6279746573032d3200050000136c6f63616c2e726574656e74696f6e2e6d73032d3200050000166d61782e636f6d70616374696f6e2e6c61672e6d73143932323333373230333638353437373538303700050000126d61782e6d6573736167652e6279746573063635353336000400001f6d6573736167652e74696d657374616d702e61667465722e6d61782e6d73083336303030303000050000206d6573736167652e74696d657374616d702e6265666f72652e6d61782e6d73143932323333373230333638353437373538303700050000176d6573736167652e74696d657374616d702e747970650b43726561746554696d65000500001a6d696e2e636c65616e61626c652e64697274792e726174696f04302e3500050000166d696e2e636f6d70616374696f6e2e6c61672e6d73023000050000146d696e2e696e73796e632e7265706c696361730231000300000c707265616c6c6f636174650666616c7365000500001872656d6f74652e6c6f672e636f70792e64697361626c650666616c7365000500001d72656d6f74652e6c6f672e64656c6574652e6f6e2e64697361626c650666616c7365000500001672656d6f74652e73746f726167652e656e61626c650666616c73650005000010726574656e74696f6e2e6279746573032d31000500000d726574656e74696f6e2e6d730a363034383030303030000500000e7365676d656e742e62797465730b3130373337343138323400050000147365676d656e742e696e6465782e627974657309313034383537363000050000127365676d656e742e6a69747465722e6d730230000500000b7365676d656e742e6d730a363034383030303030000500001f756e636c65616e2e6c65616465722e656c656374696f6e2e656e61626c650666616c7365000500000000",
+		"note": "The controller writes a TopicRecord plus one PartitionRecord per partition before it answers, and the id in this response is the id every later Fetch, Metadata and Describe must use. Publication is asynchronous, so a Describe sent immediately afterwards may still answer error 3 for a moment.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "50 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 2,
+				"field": "header.api_key",
+				"value": "19 (CreateTopics)"
+			},
+			{
+				"offset": 6,
+				"length": 2,
+				"field": "header.api_version",
+				"value": "7"
+			},
+			{
+				"offset": 8,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "171"
+			},
+			{
+				"offset": 12,
+				"length": 11,
+				"field": "header.client_id",
+				"value": "'kafkatest'"
+			},
+			{
+				"offset": 23,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 24,
+				"length": 1,
+				"field": "body.topics.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 25,
+				"length": 14,
+				"field": "body.topics[0].name",
+				"value": "'kafkatest-new'"
+			},
+			{
+				"offset": 39,
+				"length": 4,
+				"field": "body.topics[0].num_partitions",
+				"value": "2"
+			},
+			{
+				"offset": 43,
+				"length": 2,
+				"field": "body.topics[0].replication_factor",
+				"value": "1"
+			},
+			{
+				"offset": 45,
+				"length": 1,
+				"field": "body.topics[0].assignments.length",
+				"value": "0 entries"
+			},
+			{
+				"offset": 46,
+				"length": 1,
+				"field": "body.topics[0].configs.length",
+				"value": "0 entries"
+			},
+			{
+				"offset": 47,
+				"length": 1,
+				"field": "body.topics[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 48,
+				"length": 4,
+				"field": "body.timeout_ms",
+				"value": "5000"
+			},
+			{
+				"offset": 52,
+				"length": 1,
+				"field": "body.validate_only",
+				"value": "false"
+			},
+			{
+				"offset": 53,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "1114 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "171"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 9,
+				"length": 4,
+				"field": "body.throttle_time_ms",
+				"value": "0"
+			},
+			{
+				"offset": 13,
+				"length": 1,
+				"field": "body.topics.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 14,
+				"length": 14,
+				"field": "body.topics[0].name",
+				"value": "'kafkatest-new'"
+			},
+			{
+				"offset": 28,
+				"length": 16,
+				"field": "body.topics[0].topic_id",
+				"value": "beb529e9-e26b-48c8-ab2c-2c533a8486ec",
+				"varies": true
+			},
+			{
+				"offset": 44,
+				"length": 2,
+				"field": "body.topics[0].error_code",
+				"value": "0 (NONE)"
+			},
+			{
+				"offset": 46,
+				"length": 1,
+				"field": "body.topics[0].error_message",
+				"value": "null"
+			},
+			{
+				"offset": 47,
+				"length": 4,
+				"field": "body.topics[0].num_partitions",
+				"value": "2"
+			},
+			{
+				"offset": 51,
+				"length": 2,
+				"field": "body.topics[0].replication_factor",
+				"value": "1"
+			},
+			{
+				"offset": 53,
+				"length": 1,
+				"field": "body.topics[0].configs.length",
+				"value": "33 entries"
+			},
+			{
+				"offset": 54,
+				"length": 15,
+				"field": "body.topics[0].configs[0].name",
+				"value": "'cleanup.policy'"
+			},
+			{
+				"offset": 69,
+				"length": 7,
+				"field": "body.topics[0].configs[0].value",
+				"value": "'delete'"
+			},
+			{
+				"offset": 76,
+				"length": 1,
+				"field": "body.topics[0].configs[0].read_only",
+				"value": "false"
+			},
+			{
+				"offset": 77,
+				"length": 1,
+				"field": "body.topics[0].configs[0].config_source",
+				"value": "5"
+			},
+			{
+				"offset": 78,
+				"length": 1,
+				"field": "body.topics[0].configs[0].is_sensitive",
+				"value": "false"
+			},
+			{
+				"offset": 79,
+				"length": 1,
+				"field": "body.topics[0].configs[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 1116,
+				"length": 1,
+				"field": "body.topics[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 1117,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		]
+	},
+	{
+		"title": "A name that is already taken",
+		"kind": "wire",
+		"request": "CreateTopics v7, correlation id 172, one topic whose name already exists, num_partitions 1, replication_factor 1, validate_only false",
+		"request_hex": "0000002d00130007000000ac00096b61666b617465737400020974312d6578313732000000010001010100000013880000",
+		"response": "One topics entry with error_code 36 (TOPIC_ALREADY_EXISTS), the name echoed, an error_message saying the topic already exists and an all-zero topic_id. The request itself succeeded: there is no request-level error field to set",
+		"response_hex": "0000004f000000ac0000000000020974312d657831373200000000000000000000000000000000002421546f706963202774312d65783137322720616c7265616479206578697374732effffffffffff010000",
+		"note": "Every topic in a CreateTopics request succeeds or fails on its own, so a duplicate in a two-topic request must not stop the other one. Check the name before you write anything, and leave the existing topic's id and partition count untouched.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "45 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 2,
+				"field": "header.api_key",
+				"value": "19 (CreateTopics)"
+			},
+			{
+				"offset": 6,
+				"length": 2,
+				"field": "header.api_version",
+				"value": "7"
+			},
+			{
+				"offset": 8,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "172"
+			},
+			{
+				"offset": 12,
+				"length": 11,
+				"field": "header.client_id",
+				"value": "'kafkatest'"
+			},
+			{
+				"offset": 23,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 24,
+				"length": 1,
+				"field": "body.topics.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 25,
+				"length": 9,
+				"field": "body.topics[0].name",
+				"value": "'t1-ex172'"
+			},
+			{
+				"offset": 34,
+				"length": 4,
+				"field": "body.topics[0].num_partitions",
+				"value": "1"
+			},
+			{
+				"offset": 38,
+				"length": 2,
+				"field": "body.topics[0].replication_factor",
+				"value": "1"
+			},
+			{
+				"offset": 40,
+				"length": 1,
+				"field": "body.topics[0].assignments.length",
+				"value": "0 entries"
+			},
+			{
+				"offset": 41,
+				"length": 1,
+				"field": "body.topics[0].configs.length",
+				"value": "0 entries"
+			},
+			{
+				"offset": 42,
+				"length": 1,
+				"field": "body.topics[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 43,
+				"length": 4,
+				"field": "body.timeout_ms",
+				"value": "5000"
+			},
+			{
+				"offset": 47,
+				"length": 1,
+				"field": "body.validate_only",
+				"value": "false"
+			},
+			{
+				"offset": 48,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "79 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "172"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 9,
+				"length": 4,
+				"field": "body.throttle_time_ms",
+				"value": "0"
+			},
+			{
+				"offset": 13,
+				"length": 1,
+				"field": "body.topics.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 14,
+				"length": 9,
+				"field": "body.topics[0].name",
+				"value": "'t1-ex172'"
+			},
+			{
+				"offset": 23,
+				"length": 16,
+				"field": "body.topics[0].topic_id",
+				"value": "00000000-0000-0000-0000-000000000000 (the all-zero id)"
+			},
+			{
+				"offset": 39,
+				"length": 2,
+				"field": "body.topics[0].error_code",
+				"value": "36 (TOPIC_ALREADY_EXISTS)"
+			},
+			{
+				"offset": 41,
+				"length": 33,
+				"field": "body.topics[0].error_message",
+				"value": "'Topic 't1-ex172' already exists.'"
+			},
+			{
+				"offset": 74,
+				"length": 4,
+				"field": "body.topics[0].num_partitions",
+				"value": "-1"
+			},
+			{
+				"offset": 78,
+				"length": 2,
+				"field": "body.topics[0].replication_factor",
+				"value": "-1"
+			},
+			{
+				"offset": 80,
+				"length": 1,
+				"field": "body.topics[0].configs.length",
+				"value": "0 entries"
+			},
+			{
+				"offset": 81,
+				"length": 1,
+				"field": "body.topics[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 82,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"env": {
+			"topics": {
+				"t1": {
+					"name": "t1-ex172",
+					"id": "3071c18c-f2e2-4d81-b09e-0872dbf76bb4",
+					"partitions": 1
+				}
+			},
+			"group": "kafkatest-group"
+		}
+	}
+]

@@ -1,0 +1,71 @@
+stage: 36
+name: "Pipeline of two external commands"
+tests:
+  - name: "cat | head passes the first lines through"
+    fixtures:
+      files: { "in.txt": "1\n2\n3\n4\n" }
+    input: ["cat in.txt | head -n 2", "exit 0"]
+    expect:
+      stdout: "1\n2"
+      exit_code: 0
+
+  - name: "a fixture producer feeds a fixture consumer"
+    fixtures:
+      path_isolated: true
+      executables:
+        producer: |
+          echo alpha
+          echo beta
+          echo gamma
+        counter: |
+          n=0
+          while read l; do n=$((n+1)); done
+          echo "$n lines"
+    input: ["producer | counter", "exit 0"]
+    expect:
+      stdout: "3 lines"
+
+  - name: "the right-hand command receives exactly what the left wrote"
+    fixtures:
+      path_isolated: true
+      executables:
+        producer: "printf 'x\\ny\\n'"
+        upper_first: |
+          while read l; do echo "<$l>"; done
+    input: ["producer | upper_first", "exit 0"]
+    expect:
+      stdout: "<x>\n<y>"
+
+  - name: "arguments work on both sides of the pipe"
+    fixtures:
+      path_isolated: true
+      executables:
+        emit: 'for a in "$@"; do echo "$a"; done'
+        filter: |
+          while read l; do case "$l" in *"$1"*) echo "$l";; esac; done
+    input: ["emit apple banana cherry | filter an", "exit 0"]
+    expect:
+      stdout: "banana"
+
+  - name: "stderr of the left command is not sent down the pipe"
+    fixtures:
+      path_isolated: true
+      executables:
+        noisy: |
+          echo data
+          echo warning >&2
+        counter: |
+          n=0
+          while read l; do n=$((n+1)); done
+          echo "$n"
+    input: ["noisy | counter", "exit 0"]
+    expect:
+      stdout: "1"
+      stderr: "warning"
+
+  - name: "the shell keeps working after a pipeline (regression: stage 5)"
+    fixtures:
+      files: { "in.txt": "a\n" }
+    input: ["cat in.txt | head -n 1", "echo after", "exit 0"]
+    expect:
+      stdout: "a\nafter"

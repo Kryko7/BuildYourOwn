@@ -1,0 +1,65 @@
+stage: 2
+name: "Invalid command reports an error and continues"
+tests:
+  - name: "unknown command prints '<cmd>: command not found' on stderr"
+    fixtures: { path_isolated: true }
+    skip_on: [zsh]
+    reason: "zsh words the message as 'command not found: <cmd>'"
+    input:
+      - "nope_cmd"
+      - "exit 0"
+    expect:
+      stderr: { contains: "nope_cmd: command not found" }
+      exit_code: 0
+
+  - name: "the message names the command, not its arguments"
+    fixtures: { path_isolated: true }
+    skip_on: [zsh]
+    reason: "zsh words the message as 'command not found: <cmd>'"
+    input:
+      - "invalid_cmd arg1 arg2"
+      - "exit 0"
+    expect:
+      stderr: { regex: "(?m)invalid_cmd: command not found$" }
+
+  - name: "nothing is written to stdout for an unknown command"
+    fixtures: { path_isolated: true }
+    input:
+      - "nope_cmd"
+      - "exit 0"
+    expect:
+      stdout: ""
+
+  - name: "the shell keeps running after an unknown command"
+    fixtures: { path_isolated: true }
+    skip_on: [zsh]
+    reason: "zsh words the message as 'command not found: <cmd>'"
+    input:
+      - "first_nope"
+      - "second_nope"
+      - "exit 0"
+    expect:
+      stderr: { regex: "(?s)first_nope: command not found.*second_nope: command not found" }
+      exit_code: 0
+
+  - name: "each unknown command gets its own error line"
+    fixtures: { path_isolated: true }
+    skip_on: [zsh]
+    reason: "zsh words the message as 'command not found: <cmd>'"
+    input:
+      - "aaa_nope"
+      - "bbb_nope"
+      - "ccc_nope"
+      - "exit 0"
+    expect:
+      stderr: { regex: "(?m)^.*aaa_nope: command not found\n.*bbb_nope: command not found\n.*ccc_nope: command not found$" }
+
+  - name: "a command with an odd name is still reported verbatim"
+    fixtures: { path_isolated: true }
+    skip_on: [zsh]
+    reason: "zsh words the message as 'command not found: <cmd>'"
+    input:
+      - "Weird-Name_123"
+      - "exit 0"
+    expect:
+      stderr: { contains: "Weird-Name_123: command not found" }

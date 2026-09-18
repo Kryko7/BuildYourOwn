@@ -1,0 +1,49 @@
+stage: 13
+name: "Single quotes"
+tests:
+  - name: "single quotes preserve inner spaces"
+    input: ["echo 'hello   world'", "exit 0"]
+    expect:
+      stdout: "hello   world"
+      exit_code: 0
+
+  - name: "multiple single-quoted arguments stay separate"
+    input: ["echo 'first arg' 'second arg'", "exit 0"]
+    expect:
+      stdout: "first arg second arg"
+
+  - name: "special characters are literal inside single quotes"
+    input: ["echo '$HOME > file | cmd & *'", "exit 0"]
+    expect:
+      stdout: "$HOME > file | cmd & *"
+
+  - name: "double quotes inside single quotes are literal"
+    input: ["echo 'say \"hi\"'", "exit 0"]
+    expect:
+      stdout: 'say "hi"'
+
+  - name: "empty single quotes produce an empty argument"
+    fixtures:
+      path_isolated: true
+      executables:
+        count_args: 'echo "$#"'
+    input: ["count_args '' ''", "exit 0"]
+    expect:
+      stdout: "2"
+
+  - name: "a quoted filename with spaces reaches cat intact"
+    fixtures:
+      files: { "my file.txt": "contents here\n" }
+    input: ["cat 'my file.txt'", "exit 0"]
+    expect:
+      stdout: "contents here"
+
+  - name: "quoted and unquoted words mix on one line"
+    input: ["echo start 'a   b' end", "exit 0"]
+    expect:
+      stdout: "start a   b end"
+
+  - name: "echo without quotes still collapses whitespace (regression: stage 5)"
+    input: ["echo hello   world", "exit 0"]
+    expect:
+      stdout: "hello world"

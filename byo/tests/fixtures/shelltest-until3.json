@@ -1,0 +1,448 @@
+{
+  "shell": "bash",
+  "validate": false,
+  "stages": [
+    {
+      "stage": 1,
+      "name": "Print the prompt and wait for input",
+      "file": "01_prompt.yaml",
+      "passed": 6,
+      "failed": 0,
+      "skipped": 0,
+      "tests": [
+        {
+          "name": "prints the prompt on startup",
+          "status": "pass",
+          "ext": false,
+          "duration_ms": 411,
+          "failures": [],
+          "skip_reason": null,
+          "actual": [
+            [
+              "terminal",
+              "$ "
+            ],
+            [
+              "exit code",
+              "(still running; stopped by harness)"
+            ]
+          ]
+        },
+        {
+          "name": "prompt is exactly '$ ' with nothing before it",
+          "status": "pass",
+          "ext": false,
+          "duration_ms": 408,
+          "failures": [],
+          "skip_reason": null,
+          "actual": [
+            [
+              "terminal",
+              "$ "
+            ],
+            [
+              "exit code",
+              "(still running; stopped by harness)"
+            ]
+          ]
+        },
+        {
+          "name": "waits for input instead of exiting or re-printing the prompt",
+          "status": "pass",
+          "ext": false,
+          "duration_ms": 708,
+          "failures": [],
+          "skip_reason": null,
+          "actual": [
+            [
+              "terminal",
+              "$ "
+            ],
+            [
+              "exit code",
+              "(still running; stopped by harness)"
+            ]
+          ]
+        },
+        {
+          "name": "an empty line produces a fresh prompt",
+          "status": "pass",
+          "ext": false,
+          "duration_ms": 409,
+          "failures": [],
+          "skip_reason": null,
+          "actual": [
+            [
+              "terminal",
+              "$ \n$ "
+            ],
+            [
+              "exit code",
+              "(still running; stopped by harness)"
+            ]
+          ]
+        },
+        {
+          "name": "prompt is printed again after a command",
+          "status": "pass",
+          "ext": false,
+          "duration_ms": 407,
+          "failures": [],
+          "skip_reason": null,
+          "actual": [
+            [
+              "terminal",
+              "$ echo hi\nhi\n$ "
+            ],
+            [
+              "exit code",
+              "(still running; stopped by harness)"
+            ]
+          ]
+        },
+        {
+          "name": "several empty lines produce several prompts",
+          "status": "pass",
+          "ext": false,
+          "duration_ms": 408,
+          "failures": [],
+          "skip_reason": null,
+          "actual": [
+            [
+              "terminal",
+              "$ \n$ \n$ \n$ "
+            ],
+            [
+              "exit code",
+              "(still running; stopped by harness)"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "stage": 2,
+      "name": "Invalid command reports an error and continues",
+      "file": "02_invalid_command.yaml",
+      "passed": 6,
+      "failed": 0,
+      "skipped": 0,
+      "tests": [
+        {
+          "name": "unknown command prints '<cmd>: command not found' on stderr",
+          "status": "pass",
+          "ext": false,
+          "duration_ms": 1,
+          "failures": [],
+          "skip_reason": null,
+          "actual": [
+            [
+              "stdout",
+              ""
+            ],
+            [
+              "stderr",
+              "bash: line 1: nope_cmd: command not found"
+            ],
+            [
+              "exit code",
+              "0"
+            ]
+          ]
+        },
+        {
+          "name": "the message names the command, not its arguments",
+          "status": "pass",
+          "ext": false,
+          "duration_ms": 21,
+          "failures": [],
+          "skip_reason": null,
+          "actual": [
+            [
+              "stdout",
+              ""
+            ],
+            [
+              "stderr",
+              "bash: line 1: invalid_cmd: command not found"
+            ],
+            [
+              "exit code",
+              "0"
+            ]
+          ]
+        },
+        {
+          "name": "nothing is written to stdout for an unknown command",
+          "status": "pass",
+          "ext": false,
+          "duration_ms": 21,
+          "failures": [],
+          "skip_reason": null,
+          "actual": [
+            [
+              "stdout",
+              ""
+            ],
+            [
+              "stderr",
+              "bash: line 1: nope_cmd: command not found"
+            ],
+            [
+              "exit code",
+              "0"
+            ]
+          ]
+        },
+        {
+          "name": "the shell keeps running after an unknown command",
+          "status": "pass",
+          "ext": false,
+          "duration_ms": 22,
+          "failures": [],
+          "skip_reason": null,
+          "actual": [
+            [
+              "stdout",
+              ""
+            ],
+            [
+              "stderr",
+              "bash: line 1: first_nope: command not found\nbash: line 2: second_nope: command not found"
+            ],
+            [
+              "exit code",
+              "0"
+            ]
+          ]
+        },
+        {
+          "name": "each unknown command gets its own error line",
+          "status": "pass",
+          "ext": false,
+          "duration_ms": 22,
+          "failures": [],
+          "skip_reason": null,
+          "actual": [
+            [
+              "stdout",
+              ""
+            ],
+            [
+              "stderr",
+              "bash: line 1: aaa_nope: command not found\nbash: line 2: bbb_nope: command not found\nbash: line 3: ccc_nope: command not found"
+            ],
+            [
+              "exit code",
+              "0"
+            ]
+          ]
+        },
+        {
+          "name": "a command with an odd name is still reported verbatim",
+          "status": "pass",
+          "ext": false,
+          "duration_ms": 1,
+          "failures": [],
+          "skip_reason": null,
+          "actual": [
+            [
+              "stdout",
+              ""
+            ],
+            [
+              "stderr",
+              "bash: line 1: Weird-Name_123: command not found"
+            ],
+            [
+              "exit code",
+              "0"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "stage": 3,
+      "name": "REPL: prompt after every command, EOF exits",
+      "file": "03_repl.yaml",
+      "passed": 8,
+      "failed": 0,
+      "skipped": 0,
+      "tests": [
+        {
+          "name": "prompt is shown after each of three commands",
+          "status": "pass",
+          "ext": false,
+          "duration_ms": 409,
+          "failures": [],
+          "skip_reason": null,
+          "actual": [
+            [
+              "terminal",
+              "$ echo one\none\n$ echo two\ntwo\n$ echo three\nthree\n$ "
+            ],
+            [
+              "exit code",
+              "(still running; stopped by harness)"
+            ]
+          ]
+        },
+        {
+          "name": "EOF on stdin exits with status 0",
+          "status": "pass",
+          "ext": false,
+          "duration_ms": 1,
+          "failures": [],
+          "skip_reason": null,
+          "actual": [
+            [
+              "stdout",
+              "hi"
+            ],
+            [
+              "stderr",
+              ""
+            ],
+            [
+              "exit code",
+              "0"
+            ]
+          ]
+        },
+        {
+          "name": "EOF with no commands at all exits with status 0",
+          "status": "pass",
+          "ext": false,
+          "duration_ms": 1,
+          "failures": [],
+          "skip_reason": null,
+          "actual": [
+            [
+              "stdout",
+              ""
+            ],
+            [
+              "stderr",
+              ""
+            ],
+            [
+              "exit code",
+              "0"
+            ]
+          ]
+        },
+        {
+          "name": "Ctrl-D at the prompt exits the shell with status 0",
+          "status": "pass",
+          "ext": false,
+          "duration_ms": 102,
+          "failures": [],
+          "skip_reason": null,
+          "actual": [
+            [
+              "terminal",
+              "$ echo before\nbefore\n$ exit"
+            ],
+            [
+              "exit code",
+              "0"
+            ]
+          ]
+        },
+        {
+          "name": "empty lines are ignored",
+          "status": "pass",
+          "ext": false,
+          "duration_ms": 1,
+          "failures": [],
+          "skip_reason": null,
+          "actual": [
+            [
+              "stdout",
+              "a\nb"
+            ],
+            [
+              "stderr",
+              ""
+            ],
+            [
+              "exit code",
+              "0"
+            ]
+          ]
+        },
+        {
+          "name": "whitespace-only lines are ignored",
+          "status": "pass",
+          "ext": false,
+          "duration_ms": 1,
+          "failures": [],
+          "skip_reason": null,
+          "actual": [
+            [
+              "stdout",
+              "ok"
+            ],
+            [
+              "stderr",
+              ""
+            ],
+            [
+              "exit code",
+              "0"
+            ]
+          ]
+        },
+        {
+          "name": "many commands run in order",
+          "status": "pass",
+          "ext": false,
+          "duration_ms": 21,
+          "failures": [],
+          "skip_reason": null,
+          "actual": [
+            [
+              "stdout",
+              "1\n2\n3\n4\n5\n6\n7\n8\n9\n10"
+            ],
+            [
+              "stderr",
+              ""
+            ],
+            [
+              "exit code",
+              "0"
+            ]
+          ]
+        },
+        {
+          "name": "unknown command does not end the session (regression: stage 2)",
+          "status": "pass",
+          "ext": false,
+          "duration_ms": 21,
+          "failures": [],
+          "skip_reason": null,
+          "actual": [
+            [
+              "stdout",
+              "still here"
+            ],
+            [
+              "stderr",
+              "bash: line 1: nope_cmd: command not found"
+            ],
+            [
+              "exit code",
+              "0"
+            ]
+          ]
+        }
+      ]
+    }
+  ],
+  "passed": 20,
+  "failed": 0,
+  "skipped": 0,
+  "elapsed_ms": 3408
+}

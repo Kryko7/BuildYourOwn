@@ -1,0 +1,340 @@
+[
+	{
+		"title": "One topic that does not exist",
+		"kind": "wire",
+		"request": "DescribeTopicPartitions v0, correlation id 111, topics ['kafkatest-missing'], response_partition_limit 100, cursor null",
+		"request_hex": "0000002e004b00000000006f00096b61666b61746573740002126b61666b61746573742d6d697373696e670000000064ff00",
+		"response": "throttle_time_ms, then one topics entry: error_code 3 (UNKNOWN_TOPIC_OR_PARTITION), the requested name echoed back, topic_id all zeroes, an empty partitions array (compact length 0x01), topic_authorized_operations, and finally next_cursor written as the null byte 0xff",
+		"response_hex": "000000370000006f0000000000020003126b61666b61746573742d6d697373696e6700000000000000000000000000000000000100000df800ff00",
+		"note": "A missing topic is an error inside its own entry, never an error for the request: the header, the throttle time and the connection are exactly as they would be for a topic that exists.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "46 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 2,
+				"field": "header.api_key",
+				"value": "75 (DescribeTopicPartitions)"
+			},
+			{
+				"offset": 6,
+				"length": 2,
+				"field": "header.api_version",
+				"value": "0"
+			},
+			{
+				"offset": 8,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "111"
+			},
+			{
+				"offset": 12,
+				"length": 11,
+				"field": "header.client_id",
+				"value": "'kafkatest'"
+			},
+			{
+				"offset": 23,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 24,
+				"length": 1,
+				"field": "body.topics.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 25,
+				"length": 18,
+				"field": "body.topics[0].name",
+				"value": "'kafkatest-missing'"
+			},
+			{
+				"offset": 43,
+				"length": 1,
+				"field": "body.topics[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 44,
+				"length": 4,
+				"field": "body.response_partition_limit",
+				"value": "100"
+			},
+			{
+				"offset": 48,
+				"length": 1,
+				"field": "body.cursor",
+				"value": "null (0xff)"
+			},
+			{
+				"offset": 49,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "55 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "111"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 9,
+				"length": 4,
+				"field": "body.throttle_time_ms",
+				"value": "0"
+			},
+			{
+				"offset": 13,
+				"length": 1,
+				"field": "body.topics.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 14,
+				"length": 2,
+				"field": "body.topics[0].error_code",
+				"value": "3 (UNKNOWN_TOPIC_OR_PARTITION)"
+			},
+			{
+				"offset": 16,
+				"length": 18,
+				"field": "body.topics[0].name",
+				"value": "'kafkatest-missing'"
+			},
+			{
+				"offset": 34,
+				"length": 16,
+				"field": "body.topics[0].topic_id",
+				"value": "00000000-0000-0000-0000-000000000000 (the all-zero id)"
+			},
+			{
+				"offset": 50,
+				"length": 1,
+				"field": "body.topics[0].is_internal",
+				"value": "false"
+			},
+			{
+				"offset": 51,
+				"length": 1,
+				"field": "body.topics[0].partitions.length",
+				"value": "0 entries"
+			},
+			{
+				"offset": 52,
+				"length": 4,
+				"field": "body.topics[0].topic_authorized_operations",
+				"value": "3576"
+			},
+			{
+				"offset": 56,
+				"length": 1,
+				"field": "body.topics[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 57,
+				"length": 1,
+				"field": "body.next_cursor",
+				"value": "null (0xff)"
+			},
+			{
+				"offset": 58,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		]
+	},
+	{
+		"title": "Two unknown topics in one request",
+		"kind": "wire",
+		"request": "DescribeTopicPartitions v0, correlation id 112, two topic names in one compact array (length byte 0x03), response_partition_limit 100",
+		"request_hex": "00000045004b00000000007000096b61666b61746573740003146b61666b61746573742d6d697373696e672d6100146b61666b61746573742d6d697373696e672d620000000064ff00",
+		"response": "Two topics entries, one per requested name and in name order, each with error_code 3, the name echoed, an all-zero topic_id and no partitions; next_cursor is still null",
+		"response_hex": "00000066000000700000000000030003146b61666b61746573742d6d697373696e672d6100000000000000000000000000000000000100000df8000003146b61666b61746573742d6d697373696e672d6200000000000000000000000000000000000100000df800ff00",
+		"note": "Answer one entry per requested name — never collapse the misses into a single error, and never drop them. The response array's compact length is count + 1, so two entries encode as 0x03.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "69 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 2,
+				"field": "header.api_key",
+				"value": "75 (DescribeTopicPartitions)"
+			},
+			{
+				"offset": 6,
+				"length": 2,
+				"field": "header.api_version",
+				"value": "0"
+			},
+			{
+				"offset": 8,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "112"
+			},
+			{
+				"offset": 12,
+				"length": 11,
+				"field": "header.client_id",
+				"value": "'kafkatest'"
+			},
+			{
+				"offset": 23,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 24,
+				"length": 1,
+				"field": "body.topics.length",
+				"value": "2 entries"
+			},
+			{
+				"offset": 25,
+				"length": 20,
+				"field": "body.topics[0].name",
+				"value": "'kafkatest-missing-a'"
+			},
+			{
+				"offset": 45,
+				"length": 1,
+				"field": "body.topics[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 67,
+				"length": 4,
+				"field": "body.response_partition_limit",
+				"value": "100"
+			},
+			{
+				"offset": 71,
+				"length": 1,
+				"field": "body.cursor",
+				"value": "null (0xff)"
+			},
+			{
+				"offset": 72,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "102 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "112"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 9,
+				"length": 4,
+				"field": "body.throttle_time_ms",
+				"value": "0"
+			},
+			{
+				"offset": 13,
+				"length": 1,
+				"field": "body.topics.length",
+				"value": "2 entries"
+			},
+			{
+				"offset": 14,
+				"length": 2,
+				"field": "body.topics[0].error_code",
+				"value": "3 (UNKNOWN_TOPIC_OR_PARTITION)"
+			},
+			{
+				"offset": 16,
+				"length": 20,
+				"field": "body.topics[0].name",
+				"value": "'kafkatest-missing-a'"
+			},
+			{
+				"offset": 36,
+				"length": 16,
+				"field": "body.topics[0].topic_id",
+				"value": "00000000-0000-0000-0000-000000000000 (the all-zero id)"
+			},
+			{
+				"offset": 52,
+				"length": 1,
+				"field": "body.topics[0].is_internal",
+				"value": "false"
+			},
+			{
+				"offset": 53,
+				"length": 1,
+				"field": "body.topics[0].partitions.length",
+				"value": "0 entries"
+			},
+			{
+				"offset": 54,
+				"length": 4,
+				"field": "body.topics[0].topic_authorized_operations",
+				"value": "3576"
+			},
+			{
+				"offset": 58,
+				"length": 1,
+				"field": "body.topics[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 104,
+				"length": 1,
+				"field": "body.next_cursor",
+				"value": "null (0xff)"
+			},
+			{
+				"offset": 105,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		]
+	}
+]

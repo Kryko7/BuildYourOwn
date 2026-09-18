@@ -1,0 +1,76 @@
+stage: 5
+name: "echo builtin"
+tests:
+  - name: "echo prints its arguments"
+    input:
+      - "echo hello world"
+      - "exit 0"
+    expect:
+      stdout: "hello world"
+      exit_code: 0
+
+  - name: "unquoted runs of whitespace collapse to one space"
+    input:
+      - "echo   spaced     out    words"
+      - "exit 0"
+    expect:
+      stdout: "spaced out words"
+
+  - name: "tabs between arguments also collapse"
+    input:
+      - "echo\ta\t\tb"
+      - "exit 0"
+    expect:
+      stdout: "a b"
+
+  - name: "echo with no arguments prints an empty line"
+    input:
+      - "echo"
+      - "echo after"
+      - "exit 0"
+    expect:
+      stdout: "\nafter"
+
+  - name: "echo -n suppresses the trailing newline"
+    input:
+      - "echo -n abc"
+      - "echo def"
+      - "exit 0"
+    expect:
+      stdout: "abcdef"
+
+  - name: "echo -n with no other arguments prints nothing"
+    input:
+      - "echo -n"
+      - "echo x"
+      - "exit 0"
+    expect:
+      stdout: "x"
+
+  - name: "echo handles many arguments and digits"
+    input:
+      - "echo 1 2 3 4 5 6 7 8 9 10 eleven"
+      - "exit 0"
+    expect:
+      stdout: "1 2 3 4 5 6 7 8 9 10 eleven"
+
+  - name: "echo output is line-buffered correctly across commands"
+    input:
+      - "echo first"
+      - "echo second"
+      - "echo third"
+      - "exit 0"
+    expect:
+      stdout: "first\nsecond\nthird"
+
+  - name: "unknown command → stderr, shell keeps running (regression: stage 2)"
+    fixtures: { path_isolated: true }
+    skip_on: [zsh]
+    reason: "zsh words the message as 'command not found: <cmd>'"
+    input:
+      - "nope_cmd"
+      - "echo still alive"
+      - "exit 0"
+    expect:
+      stderr: { contains: "nope_cmd: command not found" }
+      stdout: "still alive"

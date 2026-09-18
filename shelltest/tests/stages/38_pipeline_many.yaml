@@ -1,0 +1,95 @@
+stage: 38
+name: "Pipelines with three or more commands, run concurrently"
+tests:
+  - name: "three commands"
+    fixtures:
+      files: { "in.txt": "1\n2\n3\n4\n5\n" }
+      path_isolated: true
+      executables:
+        wrap: 'while read l; do echo "[$l]"; done'
+      env: { PATH: "{BIN}:/usr/bin:/bin" }
+    input: ["cat in.txt | head -n 3 | wrap", "exit 0"]
+    expect:
+      stdout: "[1]\n[2]\n[3]"
+      exit_code: 0
+
+  - name: "four commands"
+    fixtures:
+      path_isolated: true
+      executables:
+        emit: 'for a in "$@"; do echo "$a"; done'
+        wrap: 'while read l; do echo "[$l]"; done'
+        upper: 'while read l; do echo "$l!"; done'
+      env: { PATH: "{BIN}:/usr/bin:/bin" }
+    input: ["emit a b c | head -n 2 | wrap | upper", "exit 0"]
+    expect:
+      stdout: "[a]!\n[b]!"
+
+  - name: "stages run concurrently: each side waits for the other via flag files"
+    timeout_ms: 4000
+    fixtures:
+      path_isolated: true
+      executables:
+        left: |
+          : > "{TMP}/left_started"
+          while [ ! -f "{TMP}/right_started" ]; do sleep 0.05; done
+          echo from-left
+        right: |
+          : > "{TMP}/right_started"
+          while [ ! -f "{TMP}/left_started" ]; do sleep 0.05; done
+          while read l; do echo "right saw $l"; done
+      env: { PATH: "{BIN}:/usr/bin:/bin" }
+    input: ["left | right", "exit 0"]
+    expect:
+      stdout: "right saw from-left"
+
+  - name: "a producer larger than the pipe buffer does not deadlock"
+    timeout_ms: 8000
+    fixtures:
+      path_isolated: true
+      executables:
+        big_producer: |
+          i=0
+          while [ $i -lt 20000 ]; do echo "line $i padded to make it longer than sixty-four kilobytes total"; i=$((i+1)); done
+      env: { PATH: "{BIN}:/usr/bin:/bin" }
+    input: ["big_producer | head -n 1", "exit 0"]
+    expect:
+      stdout: "line 0 padded to make it longer than sixty-four kilobytes total"
+
+  - name: "three-stage pipeline with flag-file synchronisation across all stages"
+    timeout_ms: 4000
+    fixtures:
+      path_isolated: true
+      executables:
+        s1: |
+          : > "{TMP}/s1"
+          while [ ! -f "{TMP}/s3" ]; do sleep 0.05; done
+          echo go
+        s2: |
+          : > "{TMP}/s2"
+          while read l; do echo "s2 $l"; done
+        s3: |
+          : > "{TMP}/s3"
+          while [ ! -f "{TMP}/s1" ]; do sleep 0.05; done
+          while read l; do echo "s3 $l"; done
+      env: { PATH: "{BIN}:/usr/bin:/bin" }
+    input: ["s1 | s2 | s3", "exit 0"]
+    expect:
+      stdout: "s3 s2 go"
+
+  - name: "builtin in the middle of a long pipeline"
+    fixtures:
+      path_isolated: true
+      executables:
+        wrap: 'while read l; do echo "[$l]"; done'
+      env: { PATH: "{BIN}:/usr/bin:/bin" }
+    input: ["echo start | cat | wrap | cat", "exit 0"]
+    expect:
+      stdout: "[start]"
+
+  - name: "two-command pipeline still works (regression: stage 36)"
+    fixtures:
+      files: { "in.txt": "only\n" }
+    input: ["cat in.txt | cat", "exit 0"]
+    expect:
+      stdout: "only"

@@ -1,0 +1,60 @@
+{
+	"_comment": "A stand-in for the `examples` array kafkatest writes into catalog.json (PLAN.md §4.2). Written in the tester's own snake_case schema and checked byte-for-byte against the site's codec in src/lib/examples/examples.test.ts, so the renderer and the normalizer are exercised before the real data lands.",
+	"stage": 5,
+	"examples": [
+		{
+			"title": "ApiVersions v4 — the handshake every client starts with",
+			"request": "ApiVersions(18) v4, correlation_id 7, client_id \"kafka-cli\"",
+			"request_hex": "00 00 00 25 00 12 00 04 00 00 00 07 00 09 6b 61 66 6b 61 2d 63 6c 69 00 0a 6b 61 66 6b 61 2d 63 6c 69 06 34 2e 31 2e 32 00",
+			"response": "error_code 0, three api keys, throttle_time_ms 0",
+			"response_hex": "00 00 00 21 00 00 00 07 00 00 04 00 12 00 00 00 04 00 00 01 00 00 00 10 00 00 4b 00 00 00 00 00 00 00 00 00 00",
+			"note": "The ApiVersions *response* header is v0 — correlation id and nothing else, no tagged fields — even though the request header is flexible. Getting that wrong shifts every later field by one byte.",
+			"request_fields": [
+				{ "offset": 0, "length": 4, "field": "size", "value": "37" },
+				{ "offset": 4, "length": 2, "field": "api_key", "value": "18 (ApiVersions)" },
+				{ "offset": 6, "length": 2, "field": "api_version", "value": "4" },
+				{ "offset": 8, "length": 4, "field": "correlation_id", "value": "7" },
+				{ "offset": 12, "length": 2, "field": "client_id.length", "value": "9" },
+				{ "offset": 14, "length": 9, "field": "client_id", "value": "\"kafka-cli\"" },
+				{ "offset": 23, "length": 1, "field": "header.tagged_fields", "value": "0 (none)" },
+				{ "offset": 24, "length": 1, "field": "client_software_name.length", "value": "uvarint 10 → 9 bytes" },
+				{ "offset": 25, "length": 9, "field": "client_software_name", "value": "\"kafka-cli\"" },
+				{ "offset": 34, "length": 1, "field": "client_software_version.length", "value": "uvarint 6 → 5 bytes" },
+				{ "offset": 35, "length": 5, "field": "client_software_version", "value": "\"4.1.2\"" },
+				{ "offset": 40, "length": 1, "field": "body.tagged_fields", "value": "0 (none)" }
+			],
+			"response_fields": [
+				{ "offset": 0, "length": 4, "field": "size", "value": "33" },
+				{ "offset": 4, "length": 4, "field": "correlation_id", "value": "7 (echoed)" },
+				{ "offset": 8, "length": 2, "field": "error_code", "value": "0 (NONE)" },
+				{ "offset": 10, "length": 1, "field": "api_keys.length", "value": "uvarint 4 → 3 entries" },
+				{ "offset": 11, "length": 7, "field": "api_keys[0]", "value": "ApiVersions(18) v0..4" },
+				{ "offset": 18, "length": 7, "field": "api_keys[1]", "value": "Fetch(1) v0..16" },
+				{ "offset": 25, "length": 7, "field": "api_keys[2]", "value": "DescribeTopicPartitions(75) v0..0" },
+				{ "offset": 32, "length": 4, "field": "throttle_time_ms", "value": "0" },
+				{ "offset": 36, "length": 1, "field": "body.tagged_fields", "value": "0 (none)" }
+			]
+		},
+		{
+			"title": "A version the broker does not speak",
+			"request": "ApiVersions(18) v9 — beyond anything the broker advertises",
+			"request_hex": "00 00 00 0b 00 12 00 09 00 00 00 08 ff ff 00",
+			"response": "error_code 35 (UNSUPPORTED_VERSION), and the body is a v0 body",
+			"response_hex": "00 00 00 06 00 00 00 08 00 23",
+			"note": "The error path still answers with a valid frame: the correlation id is echoed and the body is encoded at a version the client is guaranteed to understand.",
+			"request_fields": [
+				{ "offset": 0, "length": 4, "field": "size", "value": "11" },
+				{ "offset": 4, "length": 2, "field": "api_key", "value": "18 (ApiVersions)" },
+				{ "offset": 6, "length": 2, "field": "api_version", "value": "9 (unsupported)" },
+				{ "offset": 8, "length": 4, "field": "correlation_id", "value": "8" },
+				{ "offset": 12, "length": 2, "field": "client_id.length", "value": "-1 (null)" },
+				{ "offset": 14, "length": 1, "field": "header.tagged_fields", "value": "0 (none)" }
+			],
+			"response_fields": [
+				{ "offset": 0, "length": 4, "field": "size", "value": "6" },
+				{ "offset": 4, "length": 4, "field": "correlation_id", "value": "8 (echoed)" },
+				{ "offset": 8, "length": 2, "field": "error_code", "value": "35 (UNSUPPORTED_VERSION)" }
+			]
+		}
+	]
+}

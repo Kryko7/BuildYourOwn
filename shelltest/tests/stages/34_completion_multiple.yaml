@@ -1,0 +1,80 @@
+stage: 34
+name: "Completion with multiple matches"
+tests:
+  - name: "first TAB rings the bell when several executables match"
+    mode: pty
+    fixtures:
+      path_isolated: true
+      executables:
+        xyz_foo: "echo foo"
+        xyz_qux: "echo qux"
+    keys: ["xyz_\t", "\x15", "exit\r"]
+    expect:
+      terminal: { contains: "xyz_\x07" }
+
+  - name: "second TAB lists the matches separated by two spaces"
+    mode: pty
+    fixtures:
+      path_isolated: true
+      executables:
+        xyz_foo: "echo foo"
+        xyz_qux: "echo qux"
+    keys: ["xyz_\t", "\t", "\x15", "exit\r"]
+    expect:
+      terminal: { contains: "\nxyz_foo  xyz_qux" }
+
+  - name: "matches are listed in sorted order"
+    mode: pty
+    fixtures:
+      path_isolated: true
+      executables:
+        xyz_qux: "echo qux"
+        xyz_baz: "echo baz"
+        xyz_foo: "echo foo"
+    keys: ["xyz_\t", "\t", "\x15", "exit\r"]
+    expect:
+      terminal: { contains: "\nxyz_baz  xyz_foo  xyz_qux" }
+
+  - name: "after the listing the prompt is reprinted with the partial input"
+    mode: pty
+    fixtures:
+      path_isolated: true
+      executables:
+        xyz_foo: "echo foo"
+        xyz_qux: "echo qux"
+    keys: ["xyz_\t", "\t", "\x15", "exit\r"]
+    expect:
+      terminal: { regex: "(?s)\nxyz_foo  xyz_qux\\s*\n\\$ xyz_" }
+
+  - name: "typing more after the listing disambiguates and runs"
+    mode: pty
+    fixtures:
+      path_isolated: true
+      executables:
+        xyz_foo: "echo foo ran"
+        xyz_qux: "echo qux ran"
+    keys: ["xyz_\t", "\t", "f\t", "\r", "exit\r"]
+    expect:
+      terminal: { contains: "$ xyz_foo \nfoo ran\n" }
+
+  - name: "the first TAB only rings the bell; the listing appears on the second"
+    mode: pty
+    fixtures:
+      path_isolated: true
+      executables:
+        xyz_foo: "echo foo"
+        xyz_qux: "echo qux"
+    keys: ["xyz_\t", "\t", "\x15", "exit\r"]
+    expect:
+      terminal: { regex: "(?s)^\\$ xyz_\x07[^\n]*\nxyz_foo  xyz_qux" }
+
+  - name: "a unique prefix still completes directly (regression: stage 33)"
+    mode: pty
+    fixtures:
+      path_isolated: true
+      executables:
+        xyz_foo: "echo foo ran"
+        xyz_qux: "echo qux ran"
+    keys: ["xyz_q\t", "\r", "exit\r"]
+    expect:
+      terminal: { contains: "$ xyz_qux \nqux ran\n" }

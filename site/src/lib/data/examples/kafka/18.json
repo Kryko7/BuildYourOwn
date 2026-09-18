@@ -1,0 +1,315 @@
+[
+	{
+		"title": "Deleting a topic by name",
+		"kind": "wire",
+		"request": "DeleteTopics v6, correlation id 181, one {name = the fixture topic, topic_id = all zeroes} entry, timeout_ms 5000",
+		"request_hex": "0000003800140006000000b500096b61666b617465737400020d646f6f6d65642d657831383100000000000000000000000000000000000000138800",
+		"response": "throttle_time_ms, then one responses entry: the name echoed, topic_id filled in with the topic's real id — the broker resolved the name before deleting — error_code 0 (NONE) and error_message null",
+		"response_hex": "0000002c000000b50000000000020d646f6f6d65642d657831383123baa3baf45e4753a3ad8f12488097ec0000000000",
+		"note": "Deletion is keyed by id: resolve the name, write a RemoveTopicRecord for that id, then answer. Once the record is published, DescribeTopicPartitions for the same name is error 3 again with an all-zero topic_id, and re-creating the name mints a brand new id.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "56 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 2,
+				"field": "header.api_key",
+				"value": "20 (DeleteTopics)"
+			},
+			{
+				"offset": 6,
+				"length": 2,
+				"field": "header.api_version",
+				"value": "6"
+			},
+			{
+				"offset": 8,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "181"
+			},
+			{
+				"offset": 12,
+				"length": 11,
+				"field": "header.client_id",
+				"value": "'kafkatest'"
+			},
+			{
+				"offset": 23,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 24,
+				"length": 1,
+				"field": "body.topics.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 25,
+				"length": 13,
+				"field": "body.topics[0].name",
+				"value": "'doomed-ex181'"
+			},
+			{
+				"offset": 38,
+				"length": 16,
+				"field": "body.topics[0].topic_id",
+				"value": "00000000-0000-0000-0000-000000000000 (the all-zero id)"
+			},
+			{
+				"offset": 54,
+				"length": 1,
+				"field": "body.topics[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 55,
+				"length": 4,
+				"field": "body.timeout_ms",
+				"value": "5000"
+			},
+			{
+				"offset": 59,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "44 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "181"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 9,
+				"length": 4,
+				"field": "body.throttle_time_ms",
+				"value": "0"
+			},
+			{
+				"offset": 13,
+				"length": 1,
+				"field": "body.responses.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 14,
+				"length": 13,
+				"field": "body.responses[0].name",
+				"value": "'doomed-ex181'"
+			},
+			{
+				"offset": 27,
+				"length": 16,
+				"field": "body.responses[0].topic_id",
+				"value": "23baa3ba-f45e-4753-a3ad-8f12488097ec",
+				"varies": true
+			},
+			{
+				"offset": 43,
+				"length": 2,
+				"field": "body.responses[0].error_code",
+				"value": "0 (NONE)"
+			},
+			{
+				"offset": 45,
+				"length": 1,
+				"field": "body.responses[0].error_message",
+				"value": "null"
+			},
+			{
+				"offset": 46,
+				"length": 1,
+				"field": "body.responses[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 47,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"env": {
+			"topics": {
+				"doomed": {
+					"name": "doomed-ex181",
+					"id": "23baa3ba-f45e-4753-a3ad-8f12488097ec",
+					"partitions": 2
+				}
+			},
+			"group": "kafkatest-group"
+		}
+	},
+	{
+		"title": "Deleting a name that does not exist",
+		"kind": "wire",
+		"request": "DeleteTopics v6, correlation id 182, one {name = 'kafkatest-never-existed', topic_id = all zeroes} entry",
+		"request_hex": "0000004300140006000000b600096b61666b61746573740002186b61666b61746573742d6e657665722d6578697374656400000000000000000000000000000000000000138800",
+		"response": "One responses entry with the name echoed, error_code 3 (UNKNOWN_TOPIC_OR_PARTITION) and an all-zero topic_id; the request as a whole still succeeds and the connection stays open",
+		"response_hex": "00000066000000b6000000000002186b61666b61746573742d6e657665722d6578697374656400000000000000000000000000000000000330546869732073657276657220646f6573206e6f7420686f7374207468697320746f7069632d706172746974696f6e2e0000",
+		"note": "Error 3 is what a name that cannot be resolved gets. Deleting by an id that no longer exists is error 100 (UNKNOWN_TOPIC_ID) instead, and there the id is echoed back unchanged, because the id is the thing that was looked up.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "67 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 2,
+				"field": "header.api_key",
+				"value": "20 (DeleteTopics)"
+			},
+			{
+				"offset": 6,
+				"length": 2,
+				"field": "header.api_version",
+				"value": "6"
+			},
+			{
+				"offset": 8,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "182"
+			},
+			{
+				"offset": 12,
+				"length": 11,
+				"field": "header.client_id",
+				"value": "'kafkatest'"
+			},
+			{
+				"offset": 23,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 24,
+				"length": 1,
+				"field": "body.topics.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 25,
+				"length": 24,
+				"field": "body.topics[0].name",
+				"value": "'kafkatest-never-existed'"
+			},
+			{
+				"offset": 49,
+				"length": 16,
+				"field": "body.topics[0].topic_id",
+				"value": "00000000-0000-0000-0000-000000000000 (the all-zero id)"
+			},
+			{
+				"offset": 65,
+				"length": 1,
+				"field": "body.topics[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 66,
+				"length": 4,
+				"field": "body.timeout_ms",
+				"value": "5000"
+			},
+			{
+				"offset": 70,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "102 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "182"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 9,
+				"length": 4,
+				"field": "body.throttle_time_ms",
+				"value": "0"
+			},
+			{
+				"offset": 13,
+				"length": 1,
+				"field": "body.responses.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 14,
+				"length": 24,
+				"field": "body.responses[0].name",
+				"value": "'kafkatest-never-existed'"
+			},
+			{
+				"offset": 38,
+				"length": 16,
+				"field": "body.responses[0].topic_id",
+				"value": "00000000-0000-0000-0000-000000000000 (the all-zero id)"
+			},
+			{
+				"offset": 54,
+				"length": 2,
+				"field": "body.responses[0].error_code",
+				"value": "3 (UNKNOWN_TOPIC_OR_PARTITION)"
+			},
+			{
+				"offset": 56,
+				"length": 48,
+				"field": "body.responses[0].error_message",
+				"value": "'This server does not host this topic-partition.'"
+			},
+			{
+				"offset": 104,
+				"length": 1,
+				"field": "body.responses[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 105,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		]
+	}
+]

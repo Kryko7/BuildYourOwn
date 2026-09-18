@@ -1,0 +1,44 @@
+[
+	{
+		"title": "A negative size prefix",
+		"kind": "closed",
+		"request": "Four bytes: ff ff ff ff — a size prefix of -1",
+		"request_hex": "ffffffff",
+		"response": "No response at all. Apache Kafka closes this connection and goes on serving every other one.",
+		"response_hex": "",
+		"note": "message_size is a *signed* int32. Validate it before you allocate: reject anything negative or absurd, close that one connection, and keep the accept loop alive. Reserving a buffer of the claimed size is how a broker dies here.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "-1 — but only 0 bytes follow"
+			}
+		],
+		"response_fields": []
+	},
+	{
+		"title": "A size prefix that promises more than it sends",
+		"kind": "silence",
+		"request": "A size prefix of 1000 followed by only 10 bytes, and then nothing",
+		"request_hex": "000003e800000000000000000000",
+		"response": "Nothing, and no disconnect either: the broker is still waiting for the other 990 bytes of a frame it has been promised.",
+		"response_hex": "",
+		"note": "A partial frame is normal — TCP splits wherever it likes. Buffer what arrived and wait for the rest; do not answer, and do not treat the short read as an error. The connection ends when the client gives up.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "1000 — but only 10 bytes follow"
+			},
+			{
+				"offset": 4,
+				"length": 10,
+				"field": "payload",
+				"value": "10 bytes, fewer than the size prefix promises"
+			}
+		],
+		"response_fields": []
+	}
+]

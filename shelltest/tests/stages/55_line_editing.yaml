@@ -1,0 +1,67 @@
+stage: 55
+name: "Line editing keys: Ctrl-A/E/U/W/L and arrows"
+tests:
+  - name: "Ctrl-A moves to the start of the line"
+    tags: [ext]
+    mode: pty
+    keys: ["world", "\x01", "echo hello \r", "exit\r"]
+    expect:
+      terminal: { contains: "\nhello world\n" }
+      exit_code: 0
+
+  - name: "Ctrl-E moves back to the end of the line"
+    tags: [ext]
+    mode: pty
+    keys: ["echo", "\x01", "\x05", " end\r", "exit\r"]
+    expect:
+      terminal: { contains: "\nend\n" }
+
+  - name: "Ctrl-U clears the line"
+    tags: [ext]
+    mode: pty
+    fixtures: { path_isolated: true }
+    keys: ["garbage_cmd", "\x15", "echo clean\r", "exit\r"]
+    expect:
+      terminal: { regex: "(?s)^\\$ garbage_cmd[^\n]*echo clean\nclean\n" }
+
+  - name: "Ctrl-W deletes the previous word"
+    tags: [ext]
+    mode: pty
+    keys: ["echo hello world", "\x17", "there\r", "exit\r"]
+    expect:
+      terminal: { contains: "\nhello there\n" }
+
+  - name: "Ctrl-L keeps the current line and runs it"
+    tags: [ext]
+    mode: pty
+    keys: ["echo x", "\x0c", "\r", "exit\r"]
+    expect:
+      terminal: { regex: "(?s)echo x.*\nx\n" }
+
+  - name: "Left arrow then typing inserts in the middle"
+    tags: [ext]
+    mode: pty
+    keys: ["echo ac", "\x1b[D", "b", "\r", "exit\r"]
+    expect:
+      terminal: { contains: "\nabc\n" }
+
+  - name: "Ctrl-K kills from the cursor to the end"
+    tags: [ext]
+    mode: pty
+    keys: ["echo keep drop", "\x1b[D", "\x1b[D", "\x1b[D", "\x1b[D", "\x1b[D", "\x0b", "\r", "exit\r"]
+    expect:
+      terminal: { contains: "\nkeep\n" }
+
+  - name: "Backspace deletes the previous character"
+    tags: [ext]
+    mode: pty
+    keys: ["echo abcd", "\x7f", "\r", "exit\r"]
+    expect:
+      terminal: { contains: "\nabc\n" }
+
+  - name: "Up arrow still recalls history after editing (regression: stage 43)"
+    tags: [ext]
+    mode: pty
+    keys: ["echo one\r", "\x1b[A", "\r", "exit\r"]
+    expect:
+      terminal: { regex: "(?s)one\n\\$ [^\n]*\none\n" }

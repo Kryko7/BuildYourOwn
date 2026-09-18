@@ -1,0 +1,39 @@
+stage: 9
+name: "pwd builtin"
+tests:
+  - name: "pwd prints the current directory"
+    input: ["pwd", "exit 0"]
+    expect:
+      stdout: "{TMP}"
+      exit_code: 0
+
+  - name: "pwd reflects the directory the shell was started in"
+    fixtures:
+      dirs: [workdir]
+      cwd: workdir
+    input: ["pwd", "exit 0"]
+    expect:
+      stdout: "{TMP}/workdir"
+
+  - name: "pwd in a nested start directory"
+    fixtures:
+      dirs: [a/b/c]
+      cwd: a/b/c
+    input: ["pwd", "exit 0"]
+    expect:
+      stdout: "{TMP}/a/b/c"
+
+  - name: "pwd prints exactly one line"
+    input: ["pwd", "exit 0"]
+    expect:
+      stdout: { regex: "^/[^\n]*$" }
+
+  - name: "pwd twice gives the same answer"
+    input: ["pwd", "pwd", "exit 0"]
+    expect:
+      stdout: "{TMP}\n{TMP}"
+
+  - name: "pwd is a builtin (regression: stage 6)"
+    input: ["type pwd", "pwd", "exit 0"]
+    expect:
+      stdout: "pwd is a shell builtin\n{TMP}"

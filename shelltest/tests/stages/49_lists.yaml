@@ -1,0 +1,63 @@
+stage: 49
+name: "Command lists: ; && || with short-circuit"
+tests:
+  - name: "; runs commands in sequence"
+    tags: [ext]
+    input: ["echo a; echo b; echo c", "exit 0"]
+    expect:
+      stdout: "a\nb\nc"
+      exit_code: 0
+
+  - name: "&& runs the right side only on success"
+    tags: [ext]
+    input: ["true && echo yes", "false && echo no", "echo after", "exit 0"]
+    expect:
+      stdout: "yes\nafter"
+
+  - name: "|| runs the right side only on failure"
+    tags: [ext]
+    input: ["false || echo fallback", "true || echo not-shown", "exit 0"]
+    expect:
+      stdout: "fallback"
+
+  - name: "&& and || chain left to right"
+    tags: [ext]
+    fixtures: { path_isolated: true }
+    input: ["nope_cmd && echo x || echo y", "exit 0"]
+    expect:
+      stdout: "y"
+
+  - name: "|| chain stops at the first success"
+    tags: [ext]
+    input: ["false || false || echo third; echo end", "exit 0"]
+    expect:
+      stdout: "third\nend"
+
+  - name: "; without spaces"
+    tags: [ext]
+    input: ["echo a;echo b", "exit 0"]
+    expect:
+      stdout: "a\nb"
+
+  - name: "a failing command in a ; list does not stop the rest"
+    tags: [ext]
+    fixtures: { path_isolated: true }
+    input: ["nope_cmd; echo continued", "exit 0"]
+    expect:
+      stdout: "continued"
+
+  - name: "$? after a list is the status of the last command run"
+    tags: [ext]
+    fixtures:
+      path_isolated: true
+      executables:
+        fail5: "exit 5"
+    input: ["true && fail5", "echo $?", "false || true", "echo $?", "exit 0"]
+    expect:
+      stdout: "5\n0"
+
+  - name: "quotes protect list operators (regression: stage 13)"
+    tags: [ext]
+    input: ["echo 'a && b; c || d'", "exit 0"]
+    expect:
+      stdout: "a && b; c || d"

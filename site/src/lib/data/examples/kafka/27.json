@@ -1,0 +1,768 @@
+[
+	{
+		"title": "A gzip batch comes back still compressed",
+		"kind": "wire",
+		"request": "Fetch v16, correlation id 271: partition 0 from offset 0 of a topic holding one gzip-compressed batch of two records, 'gzip-0' and 'gzip-1'",
+		"request_hex": "00000060000100100000010f00096b61666b617465737400000001f40000000100a000000000000000000000000213da53008c2c457b96fe62cf4373a3740200000000ffffffff0000000000000000ffffffffffffffffffffffff001000000000010100",
+		"response": "error_code 0, high_watermark 2, and the stored batch byte for byte: attributes 0x0001 — bits 0-2 carry the codec, 1 is gzip — last_offset_delta 1, a record count of 2, and a gzip stream where the plain records would otherwise be",
+		"response_hex": "000000ad0000010f000000000000007333e5b10213da53008c2c457b96fe62cf4373a3740200000000000000000000000000020000000000000002000000000000000000ffffffff66000000000000000000000059000000000295e3d4f8000100000001000001a097a51fd8000001a097a51fd8ffffffffffffffffffffffffffff000000021f8b08000000000000ff9360606060e449afca2cd035609060606082720c1900e754d9551a000000000000",
+		"note": "Serving this fetch needs no decompression at all: the batch header is plain, and the record count already says how many records are inside the blob. Decompressing and re-encoding would change the bytes and invalidate the CRC.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "96 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 2,
+				"field": "header.api_key",
+				"value": "1 (Fetch)"
+			},
+			{
+				"offset": 6,
+				"length": 2,
+				"field": "header.api_version",
+				"value": "16"
+			},
+			{
+				"offset": 8,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "271"
+			},
+			{
+				"offset": 12,
+				"length": 11,
+				"field": "header.client_id",
+				"value": "'kafkatest'"
+			},
+			{
+				"offset": 23,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 24,
+				"length": 4,
+				"field": "body.max_wait_ms",
+				"value": "500"
+			},
+			{
+				"offset": 28,
+				"length": 4,
+				"field": "body.min_bytes",
+				"value": "1"
+			},
+			{
+				"offset": 32,
+				"length": 4,
+				"field": "body.max_bytes",
+				"value": "10485760"
+			},
+			{
+				"offset": 36,
+				"length": 1,
+				"field": "body.isolation_level",
+				"value": "0"
+			},
+			{
+				"offset": 37,
+				"length": 4,
+				"field": "body.session_id",
+				"value": "0"
+			},
+			{
+				"offset": 41,
+				"length": 4,
+				"field": "body.session_epoch",
+				"value": "0"
+			},
+			{
+				"offset": 45,
+				"length": 1,
+				"field": "body.topics.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 46,
+				"length": 16,
+				"field": "body.topics[0].topic_id",
+				"value": "13da5300-8c2c-457b-96fe-62cf4373a374",
+				"varies": true
+			},
+			{
+				"offset": 62,
+				"length": 1,
+				"field": "body.topics[0].partitions.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 63,
+				"length": 4,
+				"field": "body.topics[0].partitions[0].partition",
+				"value": "0"
+			},
+			{
+				"offset": 67,
+				"length": 4,
+				"field": "body.topics[0].partitions[0].current_leader_epoch",
+				"value": "-1"
+			},
+			{
+				"offset": 71,
+				"length": 8,
+				"field": "body.topics[0].partitions[0].fetch_offset",
+				"value": "0"
+			},
+			{
+				"offset": 79,
+				"length": 4,
+				"field": "body.topics[0].partitions[0].last_fetched_epoch",
+				"value": "-1"
+			},
+			{
+				"offset": 83,
+				"length": 8,
+				"field": "body.topics[0].partitions[0].log_start_offset",
+				"value": "-1"
+			},
+			{
+				"offset": 91,
+				"length": 4,
+				"field": "body.topics[0].partitions[0].partition_max_bytes",
+				"value": "1048576"
+			},
+			{
+				"offset": 95,
+				"length": 1,
+				"field": "body.topics[0].partitions[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 96,
+				"length": 1,
+				"field": "body.topics[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 97,
+				"length": 1,
+				"field": "body.forgotten_topics_data.length",
+				"value": "0 entries"
+			},
+			{
+				"offset": 98,
+				"length": 1,
+				"field": "body.rack_id",
+				"value": "''"
+			},
+			{
+				"offset": 99,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "173 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "271"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 9,
+				"length": 4,
+				"field": "body.throttle_time_ms",
+				"value": "0"
+			},
+			{
+				"offset": 13,
+				"length": 2,
+				"field": "body.error_code",
+				"value": "0 (NONE)"
+			},
+			{
+				"offset": 15,
+				"length": 4,
+				"field": "body.session_id",
+				"value": "1932780977",
+				"varies": true
+			},
+			{
+				"offset": 19,
+				"length": 1,
+				"field": "body.responses.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 20,
+				"length": 16,
+				"field": "body.responses[0].topic_id",
+				"value": "13da5300-8c2c-457b-96fe-62cf4373a374",
+				"varies": true
+			},
+			{
+				"offset": 36,
+				"length": 1,
+				"field": "body.responses[0].partitions.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 37,
+				"length": 4,
+				"field": "body.responses[0].partitions[0].partition_index",
+				"value": "0"
+			},
+			{
+				"offset": 41,
+				"length": 2,
+				"field": "body.responses[0].partitions[0].error_code",
+				"value": "0 (NONE)"
+			},
+			{
+				"offset": 43,
+				"length": 8,
+				"field": "body.responses[0].partitions[0].high_watermark",
+				"value": "2"
+			},
+			{
+				"offset": 51,
+				"length": 8,
+				"field": "body.responses[0].partitions[0].last_stable_offset",
+				"value": "2"
+			},
+			{
+				"offset": 59,
+				"length": 8,
+				"field": "body.responses[0].partitions[0].log_start_offset",
+				"value": "0"
+			},
+			{
+				"offset": 67,
+				"length": 1,
+				"field": "body.responses[0].partitions[0].aborted_transactions.length",
+				"value": "null"
+			},
+			{
+				"offset": 68,
+				"length": 4,
+				"field": "body.responses[0].partitions[0].preferred_read_replica",
+				"value": "-1"
+			},
+			{
+				"offset": 72,
+				"length": 102,
+				"field": "body.responses[0].partitions[0].records",
+				"value": "101 bytes"
+			},
+			{
+				"offset": 73,
+				"length": 8,
+				"field": "body.responses[0].partitions[0].records.batch[0].base_offset",
+				"value": "0"
+			},
+			{
+				"offset": 81,
+				"length": 4,
+				"field": "body.responses[0].partitions[0].records.batch[0].batch_length",
+				"value": "89 (bytes after this field)"
+			},
+			{
+				"offset": 85,
+				"length": 4,
+				"field": "body.responses[0].partitions[0].records.batch[0].partition_leader_epoch",
+				"value": "0"
+			},
+			{
+				"offset": 89,
+				"length": 1,
+				"field": "body.responses[0].partitions[0].records.batch[0].magic",
+				"value": "2 (v2)"
+			},
+			{
+				"offset": 90,
+				"length": 4,
+				"field": "body.responses[0].partitions[0].records.batch[0].crc",
+				"value": "0x95e3d4f8 (CRC-32C of everything after this field)",
+				"varies": true
+			},
+			{
+				"offset": 94,
+				"length": 2,
+				"field": "body.responses[0].partitions[0].records.batch[0].attributes",
+				"value": "1 (compression gzip)"
+			},
+			{
+				"offset": 96,
+				"length": 4,
+				"field": "body.responses[0].partitions[0].records.batch[0].last_offset_delta",
+				"value": "1"
+			},
+			{
+				"offset": 100,
+				"length": 8,
+				"field": "body.responses[0].partitions[0].records.batch[0].base_timestamp",
+				"value": "1789250576344",
+				"varies": true
+			},
+			{
+				"offset": 108,
+				"length": 8,
+				"field": "body.responses[0].partitions[0].records.batch[0].max_timestamp",
+				"value": "1789250576344",
+				"varies": true
+			},
+			{
+				"offset": 116,
+				"length": 8,
+				"field": "body.responses[0].partitions[0].records.batch[0].producer_id",
+				"value": "-1"
+			},
+			{
+				"offset": 124,
+				"length": 2,
+				"field": "body.responses[0].partitions[0].records.batch[0].producer_epoch",
+				"value": "-1"
+			},
+			{
+				"offset": 126,
+				"length": 4,
+				"field": "body.responses[0].partitions[0].records.batch[0].base_sequence",
+				"value": "-1"
+			},
+			{
+				"offset": 130,
+				"length": 4,
+				"field": "body.responses[0].partitions[0].records.batch[0].record_count",
+				"value": "2"
+			},
+			{
+				"offset": 174,
+				"length": 1,
+				"field": "body.responses[0].partitions[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 175,
+				"length": 1,
+				"field": "body.responses[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 176,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"env": {
+			"topics": {
+				"t1": {
+					"name": "t1-ex271",
+					"id": "13da5300-8c2c-457b-96fe-62cf4373a374",
+					"partitions": 1
+				}
+			},
+			"group": "kafkatest-group"
+		}
+	},
+	{
+		"title": "Four codecs in one partition",
+		"kind": "wire",
+		"request": "The same request against a partition holding four two-record batches: gzip at offsets 0-1, snappy at 2-3, lz4 at 4-5, zstd at 6-7",
+		"request_hex": "00000060000100100000011000096b61666b617465737400000001f40000000100a000000000000000000000000236231fd60c324b0cb548cb845c4791330200000000ffffffff0000000000000000ffffffffffffffffffffffff001000000000010100",
+		"response": "error_code 0, high_watermark 8, and the four batches concatenated in offset order, each keeping its own attributes — 0x0001, 0x0002, 0x0003, 0x0004",
+		"response_hex": "000001eb00000110000000000000000d58184d0236231fd60c324b0cb548cb845c4791330200000000000000000000000000080000000000000008000000000000000000ffffffffa3030000000000000000000000590000000002cbb4007a000100000001000001a097a52064000001a097a52064ffffffffffffffffffffffffffff000000021f8b08000000000000ff9360606060e449afca2cd035609060606082720c1900e754d9551a00000000000000000000020000006500000000021501aa1d000200000001000001a097a52067000001a097a52067ffffffffffffffffffffffffffff0000000282534e41505059000000000100000001000000201e741c0000000110736e617070792d30001c0000020110736e617070792d31000000000000000004000000600000000002a73f226f000300000001000001a097a5207f000001a097a5207fffffffffffffffffffffffffffff0000000204224d187440bd1800008016000000010a6c7a342d300016000002010a6c7a342d3100f19f758100000000f19f75810000000000000006000000540000000002213ff068000400000001000001a097a52086000001a097a52086ffffffffffffffffffffffffffff0000000228b52ffd0058d1000018000000010c7a7374642d300018000002010c7a7374642d3100000000",
+		"note": "Compression is a property of a batch, not of a topic or a partition, so any mixture is legal. Kafka's framings are specific — snappy is xerial-framed, lz4 is the LZ4 frame format — but the fetch path never has to know which is which.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "96 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 2,
+				"field": "header.api_key",
+				"value": "1 (Fetch)"
+			},
+			{
+				"offset": 6,
+				"length": 2,
+				"field": "header.api_version",
+				"value": "16"
+			},
+			{
+				"offset": 8,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "272"
+			},
+			{
+				"offset": 12,
+				"length": 11,
+				"field": "header.client_id",
+				"value": "'kafkatest'"
+			},
+			{
+				"offset": 23,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 24,
+				"length": 4,
+				"field": "body.max_wait_ms",
+				"value": "500"
+			},
+			{
+				"offset": 28,
+				"length": 4,
+				"field": "body.min_bytes",
+				"value": "1"
+			},
+			{
+				"offset": 32,
+				"length": 4,
+				"field": "body.max_bytes",
+				"value": "10485760"
+			},
+			{
+				"offset": 36,
+				"length": 1,
+				"field": "body.isolation_level",
+				"value": "0"
+			},
+			{
+				"offset": 37,
+				"length": 4,
+				"field": "body.session_id",
+				"value": "0"
+			},
+			{
+				"offset": 41,
+				"length": 4,
+				"field": "body.session_epoch",
+				"value": "0"
+			},
+			{
+				"offset": 45,
+				"length": 1,
+				"field": "body.topics.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 46,
+				"length": 16,
+				"field": "body.topics[0].topic_id",
+				"value": "36231fd6-0c32-4b0c-b548-cb845c479133",
+				"varies": true
+			},
+			{
+				"offset": 62,
+				"length": 1,
+				"field": "body.topics[0].partitions.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 63,
+				"length": 4,
+				"field": "body.topics[0].partitions[0].partition",
+				"value": "0"
+			},
+			{
+				"offset": 67,
+				"length": 4,
+				"field": "body.topics[0].partitions[0].current_leader_epoch",
+				"value": "-1"
+			},
+			{
+				"offset": 71,
+				"length": 8,
+				"field": "body.topics[0].partitions[0].fetch_offset",
+				"value": "0"
+			},
+			{
+				"offset": 79,
+				"length": 4,
+				"field": "body.topics[0].partitions[0].last_fetched_epoch",
+				"value": "-1"
+			},
+			{
+				"offset": 83,
+				"length": 8,
+				"field": "body.topics[0].partitions[0].log_start_offset",
+				"value": "-1"
+			},
+			{
+				"offset": 91,
+				"length": 4,
+				"field": "body.topics[0].partitions[0].partition_max_bytes",
+				"value": "1048576"
+			},
+			{
+				"offset": 95,
+				"length": 1,
+				"field": "body.topics[0].partitions[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 96,
+				"length": 1,
+				"field": "body.topics[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 97,
+				"length": 1,
+				"field": "body.forgotten_topics_data.length",
+				"value": "0 entries"
+			},
+			{
+				"offset": 98,
+				"length": 1,
+				"field": "body.rack_id",
+				"value": "''"
+			},
+			{
+				"offset": 99,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "491 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "272"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 9,
+				"length": 4,
+				"field": "body.throttle_time_ms",
+				"value": "0"
+			},
+			{
+				"offset": 13,
+				"length": 2,
+				"field": "body.error_code",
+				"value": "0 (NONE)"
+			},
+			{
+				"offset": 15,
+				"length": 4,
+				"field": "body.session_id",
+				"value": "223877197",
+				"varies": true
+			},
+			{
+				"offset": 19,
+				"length": 1,
+				"field": "body.responses.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 20,
+				"length": 16,
+				"field": "body.responses[0].topic_id",
+				"value": "36231fd6-0c32-4b0c-b548-cb845c479133",
+				"varies": true
+			},
+			{
+				"offset": 36,
+				"length": 1,
+				"field": "body.responses[0].partitions.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 37,
+				"length": 4,
+				"field": "body.responses[0].partitions[0].partition_index",
+				"value": "0"
+			},
+			{
+				"offset": 41,
+				"length": 2,
+				"field": "body.responses[0].partitions[0].error_code",
+				"value": "0 (NONE)"
+			},
+			{
+				"offset": 43,
+				"length": 8,
+				"field": "body.responses[0].partitions[0].high_watermark",
+				"value": "8"
+			},
+			{
+				"offset": 51,
+				"length": 8,
+				"field": "body.responses[0].partitions[0].last_stable_offset",
+				"value": "8"
+			},
+			{
+				"offset": 59,
+				"length": 8,
+				"field": "body.responses[0].partitions[0].log_start_offset",
+				"value": "0"
+			},
+			{
+				"offset": 67,
+				"length": 1,
+				"field": "body.responses[0].partitions[0].aborted_transactions.length",
+				"value": "null"
+			},
+			{
+				"offset": 68,
+				"length": 4,
+				"field": "body.responses[0].partitions[0].preferred_read_replica",
+				"value": "-1"
+			},
+			{
+				"offset": 72,
+				"length": 420,
+				"field": "body.responses[0].partitions[0].records",
+				"value": "418 bytes"
+			},
+			{
+				"offset": 74,
+				"length": 8,
+				"field": "body.responses[0].partitions[0].records.batch[0].base_offset",
+				"value": "0"
+			},
+			{
+				"offset": 82,
+				"length": 4,
+				"field": "body.responses[0].partitions[0].records.batch[0].batch_length",
+				"value": "89 (bytes after this field)"
+			},
+			{
+				"offset": 86,
+				"length": 4,
+				"field": "body.responses[0].partitions[0].records.batch[0].partition_leader_epoch",
+				"value": "0"
+			},
+			{
+				"offset": 90,
+				"length": 1,
+				"field": "body.responses[0].partitions[0].records.batch[0].magic",
+				"value": "2 (v2)"
+			},
+			{
+				"offset": 91,
+				"length": 4,
+				"field": "body.responses[0].partitions[0].records.batch[0].crc",
+				"value": "0xcbb4007a (CRC-32C of everything after this field)",
+				"varies": true
+			},
+			{
+				"offset": 95,
+				"length": 2,
+				"field": "body.responses[0].partitions[0].records.batch[0].attributes",
+				"value": "1 (compression gzip)"
+			},
+			{
+				"offset": 97,
+				"length": 4,
+				"field": "body.responses[0].partitions[0].records.batch[0].last_offset_delta",
+				"value": "1"
+			},
+			{
+				"offset": 101,
+				"length": 8,
+				"field": "body.responses[0].partitions[0].records.batch[0].base_timestamp",
+				"value": "1789250576484",
+				"varies": true
+			},
+			{
+				"offset": 109,
+				"length": 8,
+				"field": "body.responses[0].partitions[0].records.batch[0].max_timestamp",
+				"value": "1789250576484",
+				"varies": true
+			},
+			{
+				"offset": 117,
+				"length": 8,
+				"field": "body.responses[0].partitions[0].records.batch[0].producer_id",
+				"value": "-1"
+			},
+			{
+				"offset": 125,
+				"length": 2,
+				"field": "body.responses[0].partitions[0].records.batch[0].producer_epoch",
+				"value": "-1"
+			},
+			{
+				"offset": 127,
+				"length": 4,
+				"field": "body.responses[0].partitions[0].records.batch[0].base_sequence",
+				"value": "-1"
+			},
+			{
+				"offset": 131,
+				"length": 4,
+				"field": "body.responses[0].partitions[0].records.batch[0].record_count",
+				"value": "2"
+			},
+			{
+				"offset": 492,
+				"length": 1,
+				"field": "body.responses[0].partitions[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 493,
+				"length": 1,
+				"field": "body.responses[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 494,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"env": {
+			"topics": {
+				"t1": {
+					"name": "t1-ex272",
+					"id": "36231fd6-0c32-4b0c-b548-cb845c479133",
+					"partitions": 1
+				}
+			},
+			"group": "kafkatest-group"
+		}
+	}
+]

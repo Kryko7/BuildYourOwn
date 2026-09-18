@@ -1,0 +1,87 @@
+stage: 23
+name: "Globbing"
+tests:
+  - name: "* matches files by suffix, sorted"
+    tags: [ext]
+    fixtures:
+      files: { "g/b.txt": "", "g/a.txt": "", "g/c.md": "" }
+      cwd: g
+    input: ["echo *.txt", "exit 0"]
+    expect:
+      stdout: "a.txt b.txt"
+      exit_code: 0
+
+  - name: "? matches exactly one character"
+    tags: [ext]
+    fixtures:
+      files: { "g/a.md": "", "g/ab.md": "", "g/c.md": "" }
+      cwd: g
+    input: ["echo ?.md", "exit 0"]
+    expect:
+      stdout: "a.md c.md"
+
+  - name: "[abc] bracket expressions"
+    tags: [ext]
+    fixtures:
+      files: { "g/a.txt": "", "g/b.txt": "", "g/c.txt": "", "g/d.txt": "" }
+      cwd: g
+    input: ["echo [abd].txt", "exit 0"]
+    expect:
+      stdout: "a.txt b.txt d.txt"
+
+  - name: "no match leaves the pattern literal"
+    tags: [ext]
+    fixtures:
+      files: { "g/a.txt": "" }
+      cwd: g
+    input: ["echo *.zip", "exit 0"]
+    expect:
+      stdout: "*.zip"
+
+  - name: "no globbing inside quotes"
+    tags: [ext]
+    fixtures:
+      files: { "g/a.txt": "", "g/b.txt": "" }
+      cwd: g
+    input: ["echo '*.txt' \"*.txt\"", "exit 0"]
+    expect:
+      stdout: "*.txt *.txt"
+
+  - name: "glob results are separate arguments"
+    tags: [ext]
+    fixtures:
+      files: { "g/a.txt": "", "g/b.txt": "", "g/c.txt": "" }
+      path_isolated: true
+      executables:
+        count_args: 'echo "$#"'
+      cwd: g
+    input: ["count_args *.txt", "exit 0"]
+    expect:
+      stdout: "3"
+
+  - name: "glob in a directory prefix"
+    tags: [ext]
+    fixtures:
+      files: { "g/sub/x.log": "", "g/sub/y.log": "" }
+      cwd: g
+    input: ["echo sub/*.log", "exit 0"]
+    expect:
+      stdout: "sub/x.log sub/y.log"
+
+  - name: "dotfiles are not matched by *"
+    tags: [ext]
+    fixtures:
+      files: { "g/.hidden": "", "g/shown": "" }
+      cwd: g
+    input: ["echo *", "exit 0"]
+    expect:
+      stdout: "shown"
+
+  - name: "cat reads globbed files (regression: stage 13)"
+    tags: [ext]
+    fixtures:
+      files: { "g/1.txt": "one\n", "g/2.txt": "two\n" }
+      cwd: g
+    input: ["cat *.txt", "exit 0"]
+    expect:
+      stdout: "one\ntwo"

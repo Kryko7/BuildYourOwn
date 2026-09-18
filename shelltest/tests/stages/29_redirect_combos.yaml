@@ -1,0 +1,109 @@
+stage: 29
+name: "2>&1, &>, redirection placement, truncation on failure"
+tests:
+  - name: "2>&1 sends stderr to the same file as stdout"
+    tags: [ext]
+    fixtures:
+      path_isolated: true
+      executables:
+        both: |
+          echo to-stdout
+          echo to-stderr >&2
+    input: ["both > all.txt 2>&1", "exit 0"]
+    expect:
+      stdout: ""
+      stderr: ""
+      files:
+        "{TMP}/all.txt": "to-stdout\nto-stderr\n"
+      exit_code: 0
+
+  - name: "&> redirects both streams"
+    tags: [ext]
+    fixtures:
+      path_isolated: true
+      executables:
+        both: |
+          echo to-stdout
+          echo to-stderr >&2
+    input: ["both &> all.txt", "exit 0"]
+    expect:
+      stdout: ""
+      stderr: ""
+      files:
+        "{TMP}/all.txt": "to-stdout\nto-stderr\n"
+
+  - name: "2>&1 on the terminal merges stderr into stdout"
+    tags: [ext]
+    fixtures:
+      path_isolated: true
+      executables:
+        err_only: "echo to-stderr >&2"
+    input: ["err_only 2>&1", "exit 0"]
+    expect:
+      stdout: "to-stderr"
+      stderr: ""
+
+  - name: "redirection in the middle of the arguments"
+    tags: [ext]
+    input: ["echo > out.txt hello world", "exit 0"]
+    expect:
+      stdout: ""
+      files:
+        "{TMP}/out.txt": "hello world\n"
+
+  - name: "redirection before the command"
+    tags: [ext]
+    input: ["> out.txt echo hi", "exit 0"]
+    expect:
+      files:
+        "{TMP}/out.txt": "hi\n"
+
+  - name: "> truncates even when the command is not found"
+    tags: [ext]
+    fixtures:
+      files: { "out.txt": "old content\n" }
+      path_isolated: true
+    input: ["nope_cmd > out.txt", "exit 0"]
+    expect:
+      files:
+        "{TMP}/out.txt": ""
+
+  - name: "> truncates even when the command fails"
+    tags: [ext]
+    fixtures:
+      files: { "out.txt": "old content\n" }
+      path_isolated: true
+      executables:
+        fail_silent: "exit 4"
+    input: ["fail_silent > out.txt", "echo $?", "exit 0"]
+    expect:
+      stdout: "4"
+      files:
+        "{TMP}/out.txt": ""
+
+  - name: "1> and 2> can target the same file via 2>&1 in either order of arguments"
+    tags: [ext]
+    fixtures:
+      path_isolated: true
+      executables:
+        both: |
+          echo to-stdout
+          echo to-stderr >&2
+    input: ["both 1> all.txt 2>&1", "exit 0"]
+    expect:
+      files:
+        "{TMP}/all.txt": "to-stdout\nto-stderr\n"
+
+  - name: "2> alone still separates the streams (regression: stage 25)"
+    tags: [ext]
+    fixtures:
+      path_isolated: true
+      executables:
+        both: |
+          echo to-stdout
+          echo to-stderr >&2
+    input: ["both 2> err.txt", "exit 0"]
+    expect:
+      stdout: "to-stdout"
+      files:
+        "{TMP}/err.txt": "to-stderr\n"

@@ -1,0 +1,35 @@
+[
+	{
+		"title": "kafka-topics.sh --describe",
+		"kind": "text",
+		"request": "bin/kafka-topics.sh --bootstrap-server <host>:<port> --describe --topic t1-<run id>, against a fixture topic with 2 partitions and replication factor 1 — the JVM tool sends ApiVersions, then Metadata(3) and DescribeTopicPartitions(75)",
+		"request_hex": "",
+		"response": "Exit status 0 and a header line 'Topic: t1-<run id>  TopicId: <the real uuid>  PartitionCount: 2  ReplicationFactor: 1  Configs: ...', then one indented line per partition: 'Topic: t1-<run id>  Partition: 0  Leader: <node id>  Replicas: <node id>  Isr: <node id>' (Kafka 4.x adds empty Elr and LastKnownElr columns). The stage asserts the topic name, the 'PartitionCount: 2' line, and exactly one 'Partition:' line per partition",
+		"response_hex": "",
+		"note": "The tool prints what it parsed, so every field here is a claim your broker made. A partition whose leader is -1, or a replicas/isr list that does not name a live broker, makes the tool print a partition it will then refuse to produce to — the most common way a hand-written Metadata response passes a unit test and fails a real client.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "kafka-console-producer.sh and kafka-console-consumer.sh",
+		"kind": "text",
+		"request": "bin/kafka-console-producer.sh --bootstrap-server <host>:<port> --topic t1-<run id> --producer-property acks=1 --producer-property enable.idempotence=false --producer-property max.block.ms=20000, fed 'cli-one', 'cli-two', 'cli-three' on stdin; then bin/kafka-console-consumer.sh --bootstrap-server <host>:<port> --topic t1-<run id> --from-beginning --max-messages 3 --timeout-ms 15000 --group kafkatest-<run id> on a fixture topic holding 'fix-a', 'fix-b', 'fix-c'",
+		"request_hex": "",
+		"response": "Both exit 0. The producer prints nothing; the suite then reads partition 0 with its own Fetch and finds exactly cli-one, cli-two, cli-three, in order. The consumer prints fix-a, fix-b and fix-c, one per line, and stops at --max-messages 3",
+		"response_hex": "",
+		"note": "acks=1 with enable.idempotence=false keeps the producer off InitProducerId(22), so this exercises ApiVersions, Metadata and Produce and nothing else. The consumer is the opposite: FindCoordinator(10), the whole JoinGroup/SyncGroup/Heartbeat dance, ListOffsets(2), Fetch(1) and OffsetCommit(8) in one command — it fails if any one of stages 38 to 42 is wrong.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "kafka-broker-api-versions.sh",
+		"kind": "text",
+		"request": "bin/kafka-broker-api-versions.sh --bootstrap-server <host>:<port>",
+		"request_hex": "",
+		"response": "Exit status 0 and one block per broker, '<host>:<port> (id: <node id> rack: null) -> (', then a line per api key the broker advertised — 'Produce(0): 0 to 11 [usable: 11]', 'ApiVersions(18): 0 to 4 [usable: 4]', and so on. Keys the tool knows and the broker did not send are printed as UNSUPPORTED. The stage asserts that ApiVersions(18) is among the supported lines and that every key printed there is also in our own ApiVersions response",
+		"response_hex": "",
+		"note": "This tool is a mirror: it prints your ApiVersions response and nothing else. An api key advertised here and not implemented is a lie a real client believes — it will pick the highest version you claim and hang or crash on the answer. Advertise only what you serve.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

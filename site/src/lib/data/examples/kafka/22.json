@@ -1,0 +1,606 @@
+[
+	{
+		"title": "Fetch an existing topic with an empty log",
+		"kind": "wire",
+		"request": "Fetch v16, correlation id 221: the fixture topic's id, partition 0, fetch_offset 0, max_wait_ms 200",
+		"request_hex": "0000006000010010000000dd00096b61666b617465737400000000c80000000100a000000000000000000000000242b5f0d94ef34527a253a6818323d2d80200000000ffffffff0000000000000000ffffffffffffffffffffffff001000000000010100",
+		"response": "Top-level error_code 0, one responses entry echoing the topic id, and one partition: partition_index 0, error_code 0 (NONE), high_watermark 0, log_start_offset 0 and an empty records field",
+		"response_hex": "00000048000000dd000000000000005ec19a2a0242b5f0d94ef34527a253a6818323d2d80200000000000000000000000000000000000000000000000000000000000000ffffffff01000000",
+		"note": "Empty is not an error: 0, not 3 (UNKNOWN_TOPIC_OR_PARTITION) and not 100 (UNKNOWN_TOPIC_ID). The segment file 00000000000000000000.log is zero bytes long, and zero bytes of records is a perfectly good answer.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "96 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 2,
+				"field": "header.api_key",
+				"value": "1 (Fetch)"
+			},
+			{
+				"offset": 6,
+				"length": 2,
+				"field": "header.api_version",
+				"value": "16"
+			},
+			{
+				"offset": 8,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "221"
+			},
+			{
+				"offset": 12,
+				"length": 11,
+				"field": "header.client_id",
+				"value": "'kafkatest'"
+			},
+			{
+				"offset": 23,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 24,
+				"length": 4,
+				"field": "body.max_wait_ms",
+				"value": "200"
+			},
+			{
+				"offset": 28,
+				"length": 4,
+				"field": "body.min_bytes",
+				"value": "1"
+			},
+			{
+				"offset": 32,
+				"length": 4,
+				"field": "body.max_bytes",
+				"value": "10485760"
+			},
+			{
+				"offset": 36,
+				"length": 1,
+				"field": "body.isolation_level",
+				"value": "0"
+			},
+			{
+				"offset": 37,
+				"length": 4,
+				"field": "body.session_id",
+				"value": "0"
+			},
+			{
+				"offset": 41,
+				"length": 4,
+				"field": "body.session_epoch",
+				"value": "0"
+			},
+			{
+				"offset": 45,
+				"length": 1,
+				"field": "body.topics.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 46,
+				"length": 16,
+				"field": "body.topics[0].topic_id",
+				"value": "42b5f0d9-4ef3-4527-a253-a6818323d2d8",
+				"varies": true
+			},
+			{
+				"offset": 62,
+				"length": 1,
+				"field": "body.topics[0].partitions.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 63,
+				"length": 4,
+				"field": "body.topics[0].partitions[0].partition",
+				"value": "0"
+			},
+			{
+				"offset": 67,
+				"length": 4,
+				"field": "body.topics[0].partitions[0].current_leader_epoch",
+				"value": "-1"
+			},
+			{
+				"offset": 71,
+				"length": 8,
+				"field": "body.topics[0].partitions[0].fetch_offset",
+				"value": "0"
+			},
+			{
+				"offset": 79,
+				"length": 4,
+				"field": "body.topics[0].partitions[0].last_fetched_epoch",
+				"value": "-1"
+			},
+			{
+				"offset": 83,
+				"length": 8,
+				"field": "body.topics[0].partitions[0].log_start_offset",
+				"value": "-1"
+			},
+			{
+				"offset": 91,
+				"length": 4,
+				"field": "body.topics[0].partitions[0].partition_max_bytes",
+				"value": "1048576"
+			},
+			{
+				"offset": 95,
+				"length": 1,
+				"field": "body.topics[0].partitions[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 96,
+				"length": 1,
+				"field": "body.topics[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 97,
+				"length": 1,
+				"field": "body.forgotten_topics_data.length",
+				"value": "0 entries"
+			},
+			{
+				"offset": 98,
+				"length": 1,
+				"field": "body.rack_id",
+				"value": "''"
+			},
+			{
+				"offset": 99,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "72 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "221"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 9,
+				"length": 4,
+				"field": "body.throttle_time_ms",
+				"value": "0"
+			},
+			{
+				"offset": 13,
+				"length": 2,
+				"field": "body.error_code",
+				"value": "0 (NONE)"
+			},
+			{
+				"offset": 15,
+				"length": 4,
+				"field": "body.session_id",
+				"value": "1589746218",
+				"varies": true
+			},
+			{
+				"offset": 19,
+				"length": 1,
+				"field": "body.responses.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 20,
+				"length": 16,
+				"field": "body.responses[0].topic_id",
+				"value": "42b5f0d9-4ef3-4527-a253-a6818323d2d8",
+				"varies": true
+			},
+			{
+				"offset": 36,
+				"length": 1,
+				"field": "body.responses[0].partitions.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 37,
+				"length": 4,
+				"field": "body.responses[0].partitions[0].partition_index",
+				"value": "0"
+			},
+			{
+				"offset": 41,
+				"length": 2,
+				"field": "body.responses[0].partitions[0].error_code",
+				"value": "0 (NONE)"
+			},
+			{
+				"offset": 43,
+				"length": 8,
+				"field": "body.responses[0].partitions[0].high_watermark",
+				"value": "0"
+			},
+			{
+				"offset": 51,
+				"length": 8,
+				"field": "body.responses[0].partitions[0].last_stable_offset",
+				"value": "0"
+			},
+			{
+				"offset": 59,
+				"length": 8,
+				"field": "body.responses[0].partitions[0].log_start_offset",
+				"value": "0"
+			},
+			{
+				"offset": 67,
+				"length": 1,
+				"field": "body.responses[0].partitions[0].aborted_transactions.length",
+				"value": "null"
+			},
+			{
+				"offset": 68,
+				"length": 4,
+				"field": "body.responses[0].partitions[0].preferred_read_replica",
+				"value": "-1"
+			},
+			{
+				"offset": 72,
+				"length": 1,
+				"field": "body.responses[0].partitions[0].records",
+				"value": "0 bytes"
+			},
+			{
+				"offset": 73,
+				"length": 1,
+				"field": "body.responses[0].partitions[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 74,
+				"length": 1,
+				"field": "body.responses[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 75,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"env": {
+			"topics": {
+				"t1": {
+					"name": "t1-ex221",
+					"id": "42b5f0d9-4ef3-4527-a253-a6818323d2d8",
+					"partitions": 1
+				}
+			},
+			"group": "kafkatest-group"
+		}
+	},
+	{
+		"title": "Both partitions of an empty topic",
+		"kind": "wire",
+		"request": "Fetch v16, correlation id 222: one topic entry carrying two partitions, 0 and 1, both from offset 0",
+		"request_hex": "0000008100010010000000de00096b61666b617465737400000000c80000000100a0000000000000000000000002cd28b5c3a33846128eba135d0ddaf83f0300000000ffffffff0000000000000000ffffffffffffffffffffffff001000000000000001ffffffff0000000000000000ffffffffffffffffffffffff001000000000010100",
+		"response": "One responses entry with two partition entries, in the order they were asked for, each with error_code 0, high_watermark 0, log_start_offset 0 and no records",
+		"response_hex": "0000006d000000de000000000000006cc5e48b02cd28b5c3a33846128eba135d0ddaf83f0300000000000000000000000000000000000000000000000000000000000000ffffffff010000000001000000000000000000000000000000000000000000000000000000ffffffff01000000",
+		"note": "Partitions of one topic share a single topic entry — the id is written once, the partitions array holds the rest. Every partition that was asked about gets an answer, even when there is nothing in it.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "129 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 2,
+				"field": "header.api_key",
+				"value": "1 (Fetch)"
+			},
+			{
+				"offset": 6,
+				"length": 2,
+				"field": "header.api_version",
+				"value": "16"
+			},
+			{
+				"offset": 8,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "222"
+			},
+			{
+				"offset": 12,
+				"length": 11,
+				"field": "header.client_id",
+				"value": "'kafkatest'"
+			},
+			{
+				"offset": 23,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 24,
+				"length": 4,
+				"field": "body.max_wait_ms",
+				"value": "200"
+			},
+			{
+				"offset": 28,
+				"length": 4,
+				"field": "body.min_bytes",
+				"value": "1"
+			},
+			{
+				"offset": 32,
+				"length": 4,
+				"field": "body.max_bytes",
+				"value": "10485760"
+			},
+			{
+				"offset": 36,
+				"length": 1,
+				"field": "body.isolation_level",
+				"value": "0"
+			},
+			{
+				"offset": 37,
+				"length": 4,
+				"field": "body.session_id",
+				"value": "0"
+			},
+			{
+				"offset": 41,
+				"length": 4,
+				"field": "body.session_epoch",
+				"value": "0"
+			},
+			{
+				"offset": 45,
+				"length": 1,
+				"field": "body.topics.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 46,
+				"length": 16,
+				"field": "body.topics[0].topic_id",
+				"value": "cd28b5c3-a338-4612-8eba-135d0ddaf83f",
+				"varies": true
+			},
+			{
+				"offset": 62,
+				"length": 1,
+				"field": "body.topics[0].partitions.length",
+				"value": "2 entries"
+			},
+			{
+				"offset": 63,
+				"length": 4,
+				"field": "body.topics[0].partitions[0].partition",
+				"value": "0"
+			},
+			{
+				"offset": 67,
+				"length": 4,
+				"field": "body.topics[0].partitions[0].current_leader_epoch",
+				"value": "-1"
+			},
+			{
+				"offset": 71,
+				"length": 8,
+				"field": "body.topics[0].partitions[0].fetch_offset",
+				"value": "0"
+			},
+			{
+				"offset": 79,
+				"length": 4,
+				"field": "body.topics[0].partitions[0].last_fetched_epoch",
+				"value": "-1"
+			},
+			{
+				"offset": 83,
+				"length": 8,
+				"field": "body.topics[0].partitions[0].log_start_offset",
+				"value": "-1"
+			},
+			{
+				"offset": 91,
+				"length": 4,
+				"field": "body.topics[0].partitions[0].partition_max_bytes",
+				"value": "1048576"
+			},
+			{
+				"offset": 95,
+				"length": 1,
+				"field": "body.topics[0].partitions[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 129,
+				"length": 1,
+				"field": "body.topics[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 130,
+				"length": 1,
+				"field": "body.forgotten_topics_data.length",
+				"value": "0 entries"
+			},
+			{
+				"offset": 131,
+				"length": 1,
+				"field": "body.rack_id",
+				"value": "''"
+			},
+			{
+				"offset": 132,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "109 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "222"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 9,
+				"length": 4,
+				"field": "body.throttle_time_ms",
+				"value": "0"
+			},
+			{
+				"offset": 13,
+				"length": 2,
+				"field": "body.error_code",
+				"value": "0 (NONE)"
+			},
+			{
+				"offset": 15,
+				"length": 4,
+				"field": "body.session_id",
+				"value": "1824908427",
+				"varies": true
+			},
+			{
+				"offset": 19,
+				"length": 1,
+				"field": "body.responses.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 20,
+				"length": 16,
+				"field": "body.responses[0].topic_id",
+				"value": "cd28b5c3-a338-4612-8eba-135d0ddaf83f",
+				"varies": true
+			},
+			{
+				"offset": 36,
+				"length": 1,
+				"field": "body.responses[0].partitions.length",
+				"value": "2 entries"
+			},
+			{
+				"offset": 37,
+				"length": 4,
+				"field": "body.responses[0].partitions[0].partition_index",
+				"value": "0"
+			},
+			{
+				"offset": 41,
+				"length": 2,
+				"field": "body.responses[0].partitions[0].error_code",
+				"value": "0 (NONE)"
+			},
+			{
+				"offset": 43,
+				"length": 8,
+				"field": "body.responses[0].partitions[0].high_watermark",
+				"value": "0"
+			},
+			{
+				"offset": 51,
+				"length": 8,
+				"field": "body.responses[0].partitions[0].last_stable_offset",
+				"value": "0"
+			},
+			{
+				"offset": 59,
+				"length": 8,
+				"field": "body.responses[0].partitions[0].log_start_offset",
+				"value": "0"
+			},
+			{
+				"offset": 67,
+				"length": 1,
+				"field": "body.responses[0].partitions[0].aborted_transactions.length",
+				"value": "null"
+			},
+			{
+				"offset": 68,
+				"length": 4,
+				"field": "body.responses[0].partitions[0].preferred_read_replica",
+				"value": "-1"
+			},
+			{
+				"offset": 72,
+				"length": 1,
+				"field": "body.responses[0].partitions[0].records",
+				"value": "0 bytes"
+			},
+			{
+				"offset": 73,
+				"length": 1,
+				"field": "body.responses[0].partitions[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 111,
+				"length": 1,
+				"field": "body.responses[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 112,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"env": {
+			"topics": {
+				"t1": {
+					"name": "t1-ex222",
+					"id": "cd28b5c3-a338-4612-8eba-135d0ddaf83f",
+					"partitions": 2
+				}
+			},
+			"group": "kafkatest-group"
+		}
+	}
+]

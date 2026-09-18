@@ -1,0 +1,54 @@
+stage: 14
+name: "Double quotes"
+tests:
+  - name: "double quotes preserve inner spaces"
+    input: ['echo "hello   world"', "exit 0"]
+    expect:
+      stdout: "hello   world"
+      exit_code: 0
+
+  - name: "multiple double-quoted arguments stay separate"
+    input: ['echo "first arg" "second arg"', "exit 0"]
+    expect:
+      stdout: "first arg second arg"
+
+  - name: 'backslash-escaped double quote inside double quotes'
+    input: ['echo "say \"hi\""', "exit 0"]
+    expect:
+      stdout: 'say "hi"'
+
+  - name: "backslash-backslash inside double quotes yields one backslash"
+    input: ['echo "back\\slash"', "exit 0"]
+    expect:
+      stdout: 'back\slash'
+
+  - name: "backslash-dollar inside double quotes prevents expansion"
+    input: ['echo "cost: \$HOME"', "exit 0"]
+    expect:
+      stdout: "cost: $HOME"
+
+  - name: "single quotes inside double quotes are literal"
+    input: ['echo "it''s fine"', "exit 0"]
+    expect:
+      stdout: "it's fine"
+
+  - name: "a double-quoted filename with spaces reaches cat intact"
+    fixtures:
+      files: { "my file.txt": "contents here\n" }
+    input: ['cat "my file.txt"', "exit 0"]
+    expect:
+      stdout: "contents here"
+
+  - name: "empty double quotes produce an empty argument"
+    fixtures:
+      path_isolated: true
+      executables:
+        count_args: 'echo "$#"'
+    input: ['count_args "" x ""', "exit 0"]
+    expect:
+      stdout: "3"
+
+  - name: "single-quoted text still literal (regression: stage 13)"
+    input: ["echo 'a  b' \"c  d\"", "exit 0"]
+    expect:
+      stdout: "a  b c  d"

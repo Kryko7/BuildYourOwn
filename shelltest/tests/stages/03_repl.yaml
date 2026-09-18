@@ -1,0 +1,62 @@
+stage: 3
+name: "REPL: prompt after every command, EOF exits"
+tests:
+  - name: "prompt is shown after each of three commands"
+    mode: pty
+    keys: ["echo one\r", "echo two\r", "echo three\r"]
+    expect:
+      terminal: { regex: "^\\$ echo one\none\n\\$ echo two\ntwo\n\\$ echo three\nthree\n\\$ $" }
+
+  - name: "EOF on stdin exits with status 0"
+    input:
+      - "echo hi"
+    expect:
+      stdout: "hi"
+      exit_code: 0
+
+  - name: "EOF with no commands at all exits with status 0"
+    input: []
+    expect:
+      stdout: ""
+      exit_code: 0
+
+  - name: "Ctrl-D at the prompt exits the shell with status 0"
+    mode: pty
+    keys: ["echo before\r", "\x04"]
+    expect:
+      terminal: { contains: "before" }
+      exit_code: 0
+
+  - name: "empty lines are ignored"
+    input:
+      - ""
+      - "echo a"
+      - ""
+      - ""
+      - "echo b"
+    expect:
+      stdout: "a\nb"
+      exit_code: 0
+
+  - name: "whitespace-only lines are ignored"
+    input:
+      - "    "
+      - "echo ok"
+      - "\t"
+    expect:
+      stdout: "ok"
+      exit_code: 0
+
+  - name: "many commands run in order"
+    input: ["echo 1", "echo 2", "echo 3", "echo 4", "echo 5", "echo 6", "echo 7", "echo 8", "echo 9", "echo 10"]
+    expect:
+      stdout: "1\n2\n3\n4\n5\n6\n7\n8\n9\n10"
+
+  - name: "unknown command does not end the session (regression: stage 2)"
+    fixtures: { path_isolated: true }
+    input:
+      - "nope_cmd"
+      - "echo still here"
+    expect:
+      stdout: "still here"
+      exit_code: 0

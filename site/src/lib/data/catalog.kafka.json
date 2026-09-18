@@ -1,0 +1,2010 @@
+{
+	"track": "kafka",
+	"generatedAt": "2026-09-18T15:14:44.642Z",
+	"sections": [
+		{
+			"id": "A",
+			"title": "Bootstrap & framing",
+			"stages": [
+				1,
+				2,
+				3,
+				4,
+				5,
+				6,
+				7,
+				8,
+				9
+			]
+		},
+		{
+			"id": "B",
+			"title": "Metadata & topics",
+			"stages": [
+				10,
+				11,
+				12,
+				13,
+				14,
+				15,
+				16,
+				17,
+				18
+			]
+		},
+		{
+			"id": "C",
+			"title": "Fetch",
+			"stages": [
+				19,
+				20,
+				21,
+				22,
+				23,
+				24,
+				25,
+				26,
+				27,
+				28
+			]
+		},
+		{
+			"id": "D",
+			"title": "Produce",
+			"stages": [
+				29,
+				30,
+				31,
+				32,
+				33,
+				34,
+				35,
+				36,
+				37
+			]
+		},
+		{
+			"id": "E",
+			"title": "Offsets & consumer groups",
+			"stages": [
+				38,
+				39,
+				40,
+				41,
+				42
+			]
+		},
+		{
+			"id": "F",
+			"title": "Interop, robustness, performance",
+			"stages": [
+				43,
+				44,
+				45
+			]
+		}
+	],
+	"stages": [
+		{
+			"number": 1,
+			"slug": "bind",
+			"name": "Bind to the broker port",
+			"ext": false,
+			"section": "A",
+			"file": "src/stages/s01_bind.rs",
+			"planDone": false,
+			"hints": [
+				"Create a TCP listener on 0.0.0.0:9092 and accept connections in a loop",
+				"Set SO_REUSEADDR so a restart does not hit 'address already in use'",
+				"Say nothing until a request arrives: a client speaks first",
+				"Accept the next connection even when the previous one is still open"
+			],
+			"tests": [
+				{
+					"name": "the broker accepts a TCP connection"
+				},
+				{
+					"name": "nothing is sent before a request arrives"
+				},
+				{
+					"name": "a second connection is accepted while the first is open"
+				},
+				{
+					"name": "a connection is accepted after an earlier one closed"
+				},
+				{
+					"name": "ten connections in a row are all accepted"
+				},
+				{
+					"name": "a client that disconnects without sending anything is survivable"
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 2,
+			"slug": "correlation_id",
+			"name": "Respond with the correlation id",
+			"ext": false,
+			"section": "A",
+			"file": "src/stages/s02_correlation_id.rs",
+			"planDone": false,
+			"hints": [
+				"Read the 4-byte big-endian message size, then that many bytes",
+				"The request header starts api_key(int16) api_version(int16) correlation_id(int32)",
+				"Write back size(int32) then the same correlation id, unchanged, big-endian",
+				"The correlation id is signed: do not clamp, mask or renumber it"
+			],
+			"tests": [
+				{
+					"name": "the correlation id comes back unchanged"
+				},
+				{
+					"name": "the response is at least a 4-byte header"
+				},
+				{
+					"name": "correlation id 0 is echoed"
+				},
+				{
+					"name": "the largest correlation id is echoed"
+				},
+				{
+					"name": "a negative correlation id is echoed"
+				},
+				{
+					"name": "seeded random correlation ids are echoed"
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 3,
+			"slug": "request_header",
+			"name": "Parse the request header",
+			"ext": false,
+			"section": "A",
+			"file": "src/stages/s03_request_header.rs",
+			"planDone": false,
+			"hints": [
+				"Header v2: api_key(int16) api_version(int16) correlation_id(int32) client_id(nullable string: int16 length, -1 = null) then tagged fields",
+				"client_id is a plain (non-compact) string even in flexible versions",
+				"Tagged fields are a uvarint count followed by (uvarint tag, uvarint length, bytes)",
+				"Skip tagged fields you do not know instead of rejecting the request"
+			],
+			"tests": [
+				{
+					"name": "a normal client id is accepted"
+				},
+				{
+					"name": "an empty client id is accepted"
+				},
+				{
+					"name": "a null client id is accepted"
+				},
+				{
+					"name": "a long client id is accepted",
+					"ext": true
+				},
+				{
+					"name": "unknown header tagged fields are ignored",
+					"ext": true
+				},
+				{
+					"name": "several requests with different client ids are answered"
+				},
+				{
+					"name": "the api version in the header selects the response"
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 4,
+			"slug": "unsupported_version",
+			"name": "UNSUPPORTED_VERSION (35) for a bad ApiVersions version",
+			"ext": false,
+			"section": "A",
+			"file": "src/stages/s04_unsupported_version.rs",
+			"planDone": false,
+			"hints": [
+				"Check api_version before decoding the body; ApiVersions is valid for v0-v4",
+				"Answer correlation_id(int32) then error_code(int16) = 35",
+				"The error response for ApiVersions always uses the v0 header (no tagged fields)",
+				"Keep the connection open afterwards: one bad request is not a fatal error"
+			],
+			"tests": [
+				{
+					"name": "version 5 returns error 35"
+				},
+				{
+					"name": "version 1234 returns error 35"
+				},
+				{
+					"name": "a negative version returns error 35"
+				},
+				{
+					"name": "the error response still echoes the correlation id"
+				},
+				{
+					"name": "the connection stays usable after an unsupported version"
+				},
+				{
+					"name": "a supported version does not return error 35"
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 5,
+			"slug": "api_versions_body",
+			"name": "ApiVersions v4 response body",
+			"ext": false,
+			"section": "A",
+			"file": "src/stages/s05_api_versions_body.rs",
+			"planDone": false,
+			"hints": [
+				"v4 body: error_code(int16), api_keys(COMPACT_ARRAY), throttle_time_ms(int32), tagged fields",
+				"A compact array is uvarint(count + 1) followed by the entries",
+				"Each entry is api_key(int16) min_version(int16) max_version(int16) + tagged fields",
+				"Advertise ApiVersions(18) itself with max_version >= 4"
+			],
+			"tests": [
+				{
+					"name": "the error code is zero"
+				},
+				{
+					"name": "ApiVersions(18) is advertised with min <= 4 <= max"
+				},
+				{
+					"name": "throttle_time_ms is present and not negative"
+				},
+				{
+					"name": "the body decodes with no trailing bytes"
+				},
+				{
+					"name": "every entry has min_version <= max_version"
+				},
+				{
+					"name": "the api key list has no duplicates"
+				},
+				{
+					"name": "ApiVersions v3 answers with a v3 body",
+					"ext": true
+				},
+				{
+					"name": "ApiVersions v0 answers with a v0 body",
+					"ext": true
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 6,
+			"slug": "sequential_requests",
+			"name": "Sequential requests on one connection",
+			"ext": false,
+			"section": "A",
+			"file": "src/stages/s06_sequential_requests.rs",
+			"planDone": false,
+			"hints": [
+				"Loop inside the connection handler instead of closing after one response",
+				"Read exactly message_size bytes each time; never assume one read = one request",
+				"Flush the response before reading the next request",
+				"Treat read() returning 0 as the client closing, not as an error"
+			],
+			"tests": [
+				{
+					"name": "five requests on one connection are all answered"
+				},
+				{
+					"name": "the correlation ids stay in order"
+				},
+				{
+					"name": "the connection survives twenty requests"
+				},
+				{
+					"name": "each response body still decodes"
+				},
+				{
+					"name": "two connections can be used alternately"
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 7,
+			"slug": "concurrent_connections",
+			"name": "Concurrent connections",
+			"ext": false,
+			"section": "A",
+			"file": "src/stages/s07_concurrent_connections.rs",
+			"planDone": false,
+			"hints": [
+				"Handle each accepted socket in its own thread, task or poll loop",
+				"Never let one slow client block the accept loop",
+				"Connection state (buffers, correlation ids) must be per connection, not global",
+				"Clean up when a client goes away so file descriptors are not leaked"
+			],
+			"tests": [
+				{
+					"name": "eight clients are served at once"
+				},
+				{
+					"name": "interleaved requests keep their own correlation ids"
+				},
+				{
+					"name": "a seeded random interleaving is answered correctly"
+				},
+				{
+					"name": "a client that hangs up does not disturb the others"
+				},
+				{
+					"name": "twenty connections can be open simultaneously"
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 8,
+			"slug": "pipelined_requests",
+			"name": "Pipelined requests",
+			"ext": true,
+			"section": "A",
+			"file": "src/stages/s08_pipelined_requests.rs",
+			"planDone": false,
+			"hints": [
+				"A client may write several frames before reading any response",
+				"Buffer incoming bytes: one read() can hold two requests, or half of one",
+				"Answer in the order the requests arrived — Kafka guarantees per-connection order",
+				"Do not start reading a new frame until message_size bytes of the current one are in"
+			],
+			"tests": [
+				{
+					"name": "ten pipelined requests come back in order",
+					"ext": true
+				},
+				{
+					"name": "two frames in a single write are both answered",
+					"ext": true
+				},
+				{
+					"name": "a frame split across two writes is answered",
+					"ext": true
+				},
+				{
+					"name": "a byte-at-a-time request is answered",
+					"ext": true
+				},
+				{
+					"name": "fifty pipelined requests keep their order",
+					"ext": true
+				}
+			],
+			"exampleCount": 1
+		},
+		{
+			"number": 9,
+			"slug": "framing_robustness",
+			"name": "Framing robustness",
+			"ext": true,
+			"section": "A",
+			"file": "src/stages/s09_framing_robustness.rs",
+			"planDone": false,
+			"hints": [
+				"Validate message_size before allocating: reject anything absurd instead of reserving gigabytes",
+				"A truncated frame is a closed connection, never a crashed process",
+				"One bad connection must not take down the accept loop or the other clients",
+				"A half-closed socket (client shut down its write side) is a normal end of stream"
+			],
+			"tests": [
+				{
+					"name": "a size prefix larger than the bytes sent does not crash the broker",
+					"ext": true
+				},
+				{
+					"name": "a zero-length frame does not crash the broker",
+					"ext": true
+				},
+				{
+					"name": "a negative size prefix does not crash the broker",
+					"ext": true
+				},
+				{
+					"name": "an enormous size prefix does not exhaust memory",
+					"ext": true
+				},
+				{
+					"name": "garbage bytes do not crash the broker",
+					"ext": true
+				},
+				{
+					"name": "a truncated header does not crash the broker",
+					"ext": true
+				},
+				{
+					"name": "a half-closed connection is handled cleanly",
+					"ext": true
+				},
+				{
+					"name": "other connections keep working while one is abused",
+					"ext": true
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 10,
+			"slug": "advertise_describe_topic_partitions",
+			"name": "ApiVersions advertises DescribeTopicPartitions(75)",
+			"ext": false,
+			"section": "B",
+			"file": "src/stages/s10_advertise_describe_topic_partitions.rs",
+			"planDone": false,
+			"hints": [
+				"Add an entry with api_key 75, min_version 0 and max_version 0 to the api_keys array",
+				"The array is compact: its length byte is count + 1, so two entries encode as 0x03",
+				"Every entry ends with its own empty tagged-field section (a single 0x00)"
+			],
+			"tests": [
+				{
+					"name": "DescribeTopicPartitions(75) is listed"
+				},
+				{
+					"name": "version 0 is inside the advertised range"
+				},
+				{
+					"name": "ApiVersions(18) is still advertised alongside it"
+				},
+				{
+					"name": "the response still decodes with no trailing bytes"
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 11,
+			"slug": "describe_unknown_topic",
+			"name": "DescribeTopicPartitions: unknown topic",
+			"ext": false,
+			"section": "B",
+			"file": "src/stages/s11_describe_unknown_topic.rs",
+			"planDone": false,
+			"hints": [
+				"Look the name up in the metadata you loaded; a miss is not an error for the connection, only for that topic entry",
+				"error_code 3 (UNKNOWN_TOPIC_OR_PARTITION), topic_id all-zero, partitions empty",
+				"The response topic name echoes the requested name, so the client can match entries",
+				"next_cursor is null (0xff) when there is nothing left to page through"
+			],
+			"tests": [
+				{
+					"name": "an unknown topic returns error 3"
+				},
+				{
+					"name": "the topic id of an unknown topic is all zeroes"
+				},
+				{
+					"name": "the partitions array of an unknown topic is empty"
+				},
+				{
+					"name": "the requested name is echoed back"
+				},
+				{
+					"name": "next_cursor is null"
+				},
+				{
+					"name": "two unknown topics both return error 3"
+				},
+				{
+					"name": "the response body decodes with no trailing bytes"
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 12,
+			"slug": "describe_single_partition",
+			"name": "DescribeTopicPartitions: a single-partition topic",
+			"ext": false,
+			"section": "B",
+			"file": "src/stages/s12_describe_single_partition.rs",
+			"planDone": false,
+			"hints": [
+				"Read __cluster_metadata-0/00000000000000000000.log at startup and index TopicRecord (type 2) and PartitionRecord (type 3) by name",
+				"The topic id comes from the TopicRecord, not from the topic name",
+				"Each partition entry carries error_code, partition_index, leader_id, leader_epoch, replica_nodes, isr_nodes and three more arrays",
+				"error_code is 0 for a topic that exists, even when the partition is empty"
+			],
+			"tests": [
+				{
+					"name": "the topic is found with error code 0"
+				},
+				{
+					"name": "the topic id matches the metadata log"
+				},
+				{
+					"name": "exactly one partition is returned"
+				},
+				{
+					"name": "the partition index is 0"
+				},
+				{
+					"name": "the partition has a leader"
+				},
+				{
+					"name": "replicas and ISR contain the leader"
+				},
+				{
+					"name": "next_cursor is null when everything fits"
+				},
+				{
+					"name": "an unknown topic asked alongside it still returns error 3"
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 13,
+			"slug": "describe_multiple_partitions",
+			"name": "DescribeTopicPartitions: multiple partitions",
+			"ext": false,
+			"section": "B",
+			"file": "src/stages/s13_describe_multiple_partitions.rs",
+			"planDone": false,
+			"hints": [
+				"One PartitionRecord per partition: collect them all before answering",
+				"Partitions come back sorted by partition_index, not in metadata-log order",
+				"replica_nodes, isr_nodes, eligible_leader_replicas, last_known_elr and offline_replicas are five separate compact arrays",
+				"A topic with N partitions still has exactly one topic entry in the response"
+			],
+			"tests": [
+				{
+					"name": "all three partitions are returned"
+				},
+				{
+					"name": "partitions are ordered by index"
+				},
+				{
+					"name": "every partition has error code 0"
+				},
+				{
+					"name": "every partition has a leader and an ISR"
+				},
+				{
+					"name": "the partition arrays decode with no trailing bytes"
+				},
+				{
+					"name": "two topics with different partition counts are both right"
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 14,
+			"slug": "describe_multiple_topics",
+			"name": "DescribeTopicPartitions: multiple topics",
+			"ext": false,
+			"section": "B",
+			"file": "src/stages/s14_describe_multiple_topics.rs",
+			"planDone": false,
+			"hints": [
+				"The request's topics array is a compact array of {name, tagged fields}",
+				"Answer one entry per requested topic, in order of topic name",
+				"Unknown names sit next to known ones: each entry carries its own error_code",
+				"Keep the per-topic tagged-field byte after topic_authorized_operations"
+			],
+			"tests": [
+				{
+					"name": "all three topics are described"
+				},
+				{
+					"name": "the response is ordered by topic name"
+				},
+				{
+					"name": "an unsorted request still comes back sorted",
+					"ext": true
+				},
+				{
+					"name": "each topic keeps its own partition count"
+				},
+				{
+					"name": "each topic keeps its own id"
+				},
+				{
+					"name": "known and unknown topics can be mixed"
+				},
+				{
+					"name": "the response decodes with no trailing bytes"
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 15,
+			"slug": "describe_pagination",
+			"name": "DescribeTopicPartitions: partition limit and cursor",
+			"ext": true,
+			"section": "B",
+			"file": "src/stages/s15_describe_pagination.rs",
+			"planDone": false,
+			"hints": [
+				"response_partition_limit counts partitions across the whole response, not per topic",
+				"When the budget runs out, next_cursor is {topic_name, partition_index} of the first partition that did not fit; otherwise it is a null (0xff) compact struct",
+				"A request carrying a cursor resumes at that topic and partition and skips every topic sorted before it",
+				"Walk topics in name order so paging is stable between requests"
+			],
+			"tests": [
+				{
+					"name": "a limit below the partition count returns a partial page",
+					"ext": true
+				},
+				{
+					"name": "following the cursor yields every partition exactly once",
+					"ext": true
+				},
+				{
+					"name": "a limit larger than the total returns a null cursor",
+					"ext": true
+				},
+				{
+					"name": "a limit equal to the partition count ends the walk",
+					"ext": true
+				},
+				{
+					"name": "a cursor in the middle of a topic resumes there",
+					"ext": true
+				},
+				{
+					"name": "pagination crosses topic boundaries in name order",
+					"ext": true
+				},
+				{
+					"name": "a paged response decodes with no trailing bytes",
+					"ext": true
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 16,
+			"slug": "metadata_v12",
+			"name": "Metadata (3) v12: brokers, controller and topic ids",
+			"ext": true,
+			"section": "B",
+			"file": "src/stages/s16_metadata_v12.rs",
+			"planDone": false,
+			"hints": [
+				"v12 is flexible: compact arrays and strings, a tagged-field byte after every struct, and a nullable cluster_id",
+				"brokers[] must advertise a host and port a client can really connect to, and controller_id must be one of those node ids",
+				"A null topics array means 'every topic'; an empty array means 'no topics'",
+				"An unknown topic is error 3 inside its own entry with a zero topic_id, and allow_auto_topic_creation=false must never create it"
+			],
+			"tests": [
+				{
+					"name": "the brokers array advertises a reachable listener",
+					"ext": true
+				},
+				{
+					"name": "controller_id names one of the brokers",
+					"ext": true
+				},
+				{
+					"name": "cluster_id is a non-empty string",
+					"ext": true
+				},
+				{
+					"name": "a known topic comes back with its id and partitions",
+					"ext": true
+				},
+				{
+					"name": "an unknown topic is error 3 in its own entry",
+					"ext": true
+				},
+				{
+					"name": "allow_auto_topic_creation=false creates nothing",
+					"ext": true
+				},
+				{
+					"name": "a null topics array lists every topic",
+					"ext": true
+				},
+				{
+					"name": "the v12 response decodes with no trailing bytes",
+					"ext": true
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 17,
+			"slug": "create_topics",
+			"name": "CreateTopics (19) v7",
+			"ext": true,
+			"section": "B",
+			"file": "src/stages/s17_create_topics.rs",
+			"planDone": false,
+			"hints": [
+				"Mint a fresh topic id, write a TopicRecord and one PartitionRecord per partition, then answer with that id, num_partitions and replication_factor",
+				"A duplicate name is error 36 TOPIC_ALREADY_EXISTS in that topic's entry only",
+				"An illegal name (empty, '.', '..', >249 chars, anything outside [a-zA-Z0-9._-]) is error 17, and num_partitions=0 is error 37 INVALID_PARTITIONS",
+				"validate_only=true runs every check and changes nothing"
+			],
+			"tests": [
+				{
+					"name": "ApiVersions advertises CreateTopics(19) v7",
+					"ext": true
+				},
+				{
+					"name": "a fresh topic is created and gets an id",
+					"ext": true
+				},
+				{
+					"name": "the created topic shows up in Metadata and Describe",
+					"ext": true
+				},
+				{
+					"name": "a duplicate name is error 36",
+					"ext": true
+				},
+				{
+					"name": "illegal names are error 17",
+					"ext": true
+				},
+				{
+					"name": "zero partitions is error 37",
+					"ext": true
+				},
+				{
+					"name": "validate_only=true creates nothing",
+					"ext": true
+				},
+				{
+					"name": "two topics can be created in one request",
+					"ext": true
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 18,
+			"slug": "delete_topics",
+			"name": "DeleteTopics (20) v6 and the describe that follows",
+			"ext": true,
+			"section": "B",
+			"file": "src/stages/s18_delete_topics.rs",
+			"planDone": false,
+			"hints": [
+				"v6 takes {name, topic_id} structs: resolve the name to an id, then write a RemoveTopicRecord keyed by that id",
+				"Deleting an unknown name is error 3, deleting an unknown id is error 100 — the request as a whole still succeeds",
+				"After the delete, DescribeTopicPartitions for the name must answer error 3 again and the partition directories must be gone",
+				"Re-creating the same name mints a NEW topic id; never reuse the old one"
+			],
+			"tests": [
+				{
+					"name": "ApiVersions advertises DeleteTopics(20) v6",
+					"ext": true
+				},
+				{
+					"name": "deleting by name makes the topic unknown again",
+					"ext": true
+				},
+				{
+					"name": "deleting by id makes the id unknown again",
+					"ext": true
+				},
+				{
+					"name": "deleting an unknown name is error 3",
+					"ext": true
+				},
+				{
+					"name": "deleting an unknown id is error 100",
+					"ext": true
+				},
+				{
+					"name": "one delete leaves the other topics alone",
+					"ext": true
+				},
+				{
+					"name": "re-creating a deleted name gets a new topic id",
+					"ext": true
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 19,
+			"slug": "advertise_fetch",
+			"name": "ApiVersions advertises Fetch(1) v16",
+			"ext": false,
+			"section": "C",
+			"file": "src/stages/s19_advertise_fetch.rs",
+			"planDone": false,
+			"hints": [
+				"Add {api_key: 1, min_version: 0, max_version: 16} to the api_keys array",
+				"Fetch v12 and later are flexible versions: the request and response use compact arrays and tagged fields",
+				"From v13 the request names topics by topic id, not by name"
+			],
+			"tests": [
+				{
+					"name": "Fetch(1) is listed"
+				},
+				{
+					"name": "version 16 is inside the advertised range"
+				},
+				{
+					"name": "the other api keys are still advertised"
+				},
+				{
+					"name": "the response decodes with no trailing bytes"
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 20,
+			"slug": "fetch_no_topics",
+			"name": "Fetch with no topics",
+			"ext": false,
+			"section": "C",
+			"file": "src/stages/s20_fetch_no_topics.rs",
+			"planDone": false,
+			"hints": [
+				"v16 response: throttle_time_ms(int32), error_code(int16), session_id(int32), responses(COMPACT_ARRAY), tagged fields",
+				"An empty compact array is the single byte 0x01 (count + 1)",
+				"Answer immediately when there is nothing to wait for, whatever max_wait_ms says"
+			],
+			"tests": [
+				{
+					"name": "the top-level error code is 0"
+				},
+				{
+					"name": "the responses array is empty"
+				},
+				{
+					"name": "throttle_time_ms is not negative"
+				},
+				{
+					"name": "the body decodes with no trailing bytes"
+				},
+				{
+					"name": "an empty fetch answers quickly"
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 21,
+			"slug": "fetch_unknown_topic_id",
+			"name": "Fetch an unknown topic id → UNKNOWN_TOPIC_ID (100)",
+			"ext": false,
+			"section": "C",
+			"file": "src/stages/s21_fetch_unknown_topic_id.rs",
+			"planDone": false,
+			"hints": [
+				"The top-level error_code stays 0: the failure belongs to the partition entry",
+				"Per partition: error_code 100, high_watermark 0, records null (0xff as a compact nullable bytes length)",
+				"Echo the topic id you were given; there is no name to fall back on in v13+"
+			],
+			"tests": [
+				{
+					"name": "the top-level error code is still 0"
+				},
+				{
+					"name": "the partition error code is 100"
+				},
+				{
+					"name": "the unknown topic id is echoed"
+				},
+				{
+					"name": "no records are returned"
+				},
+				{
+					"name": "the all-zero topic id is also unknown"
+				},
+				{
+					"name": "an unknown id next to a known one only fails its own entry"
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 22,
+			"slug": "fetch_empty_topic",
+			"name": "Fetch an empty topic",
+			"ext": false,
+			"section": "C",
+			"file": "src/stages/s22_fetch_empty_topic.rs",
+			"planDone": false,
+			"hints": [
+				"A topic that exists but holds nothing is error_code 0, not 3 or 100",
+				"high_watermark and log_start_offset are both 0 for an empty partition",
+				"records may be null or a zero-length compact bytes field; both mean 'nothing'",
+				"The partition file <topic>-<n>/00000000000000000000.log may be zero bytes long"
+			],
+			"tests": [
+				{
+					"name": "the partition error code is 0"
+				},
+				{
+					"name": "the high watermark is 0"
+				},
+				{
+					"name": "no records come back"
+				},
+				{
+					"name": "the log start offset is 0"
+				},
+				{
+					"name": "the topic id is echoed"
+				},
+				{
+					"name": "both partitions of an empty topic answer"
+				},
+				{
+					"name": "the body decodes with no trailing bytes"
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 23,
+			"slug": "fetch_single_record",
+			"name": "Fetch a single record from disk",
+			"ext": false,
+			"section": "C",
+			"file": "src/stages/s23_fetch_single_record.rs",
+			"planDone": false,
+			"hints": [
+				"Read <topic>-<partition>/00000000000000000000.log and send the batch bytes straight through: no re-encoding is needed",
+				"records is a compact nullable bytes field: uvarint(length + 1) then the bytes",
+				"high_watermark is the offset after the last record, so 1 for a single record",
+				"The batch header already carries baseOffset, lastOffsetDelta and the CRC-32C"
+			],
+			"tests": [
+				{
+					"name": "the fetch succeeds"
+				},
+				{
+					"name": "one record comes back"
+				},
+				{
+					"name": "the record value is intact"
+				},
+				{
+					"name": "the batch base offset is 0"
+				},
+				{
+					"name": "the high watermark is 1"
+				},
+				{
+					"name": "the batch CRC verifies"
+				},
+				{
+					"name": "the returned bytes match the log segment",
+					"ext": true
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 24,
+			"slug": "fetch_multiple_batches",
+			"name": "Fetch multiple batches and partitions",
+			"ext": false,
+			"section": "C",
+			"file": "src/stages/s24_fetch_multiple_batches.rs",
+			"planDone": false,
+			"hints": [
+				"A partition's records field holds every batch, concatenated, not one batch",
+				"Offsets continue across batches: batch 2's baseOffset is batch 1's baseOffset + count",
+				"high_watermark is the offset after the last record of the partition",
+				"Each requested partition gets its own entry, in the order it was asked for"
+			],
+			"tests": [
+				{
+					"name": "both batches of a partition come back"
+				},
+				{
+					"name": "offsets continue across batches"
+				},
+				{
+					"name": "the high watermark counts every record"
+				},
+				{
+					"name": "two partitions are answered independently"
+				},
+				{
+					"name": "record values arrive in order"
+				},
+				{
+					"name": "two topics in one fetch are both answered"
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 25,
+			"slug": "fetch_from_offset",
+			"name": "Fetch from the middle, and OFFSET_OUT_OF_RANGE (1)",
+			"ext": true,
+			"section": "C",
+			"file": "src/stages/s25_fetch_from_offset.rs",
+			"planDone": false,
+			"hints": [
+				"A fetch offset inside the log starts at the first batch whose last offset is >= it, so the response may begin before the offset that was asked for",
+				"Never split a batch: the client drops the records below its fetch offset",
+				"fetch_offset == high_watermark is not an error — answer with error 0, no records and the same high watermark",
+				"fetch_offset above the high watermark or below log_start_offset (a negative offset included) is error 1 OFFSET_OUT_OF_RANGE"
+			],
+			"tests": [
+				{
+					"name": "a fetch from a batch boundary starts there",
+					"ext": true
+				},
+				{
+					"name": "an offset inside a batch returns that whole batch",
+					"ext": true
+				},
+				{
+					"name": "a fetch of the last offset returns only the last batch",
+					"ext": true
+				},
+				{
+					"name": "fetching at the high watermark is empty, not an error",
+					"ext": true
+				},
+				{
+					"name": "an offset past the high watermark is error 1",
+					"ext": true
+				},
+				{
+					"name": "a negative fetch offset is error 1",
+					"ext": true
+				},
+				{
+					"name": "log_start_offset is reported alongside the records",
+					"ext": true
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 26,
+			"slug": "fetch_max_bytes",
+			"name": "max_bytes and partition_max_bytes truncation",
+			"ext": true,
+			"section": "C",
+			"file": "src/stages/s26_fetch_max_bytes.rs",
+			"planDone": false,
+			"hints": [
+				"Fill a partition with whole batches until the next one would pass partition_max_bytes, then stop — never send half a batch you chose to send",
+				"The first batch is exempt: a batch larger than the limit still goes out in full, or a consumer whose limit is too small never makes progress",
+				"The top-level max_bytes is the budget for the whole response; subtract what each partition used and give the rest to the next one",
+				"Only the very first partition of the response gets the 'at least one batch' exemption; once the budget is gone the others come back empty"
+			],
+			"tests": [
+				{
+					"name": "a limit below the first batch still returns it",
+					"ext": true
+				},
+				{
+					"name": "a limit of exactly one batch returns one batch",
+					"ext": true
+				},
+				{
+					"name": "a limit of exactly three batches returns three",
+					"ext": true
+				},
+				{
+					"name": "no batch beyond the limit is added",
+					"ext": true
+				},
+				{
+					"name": "a large limit returns every batch",
+					"ext": true
+				},
+				{
+					"name": "the top-level max_bytes caps the whole response",
+					"ext": true
+				},
+				{
+					"name": "each partition carries its own limit",
+					"ext": true
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 27,
+			"slug": "compressed_batches",
+			"name": "Compressed batches: gzip, snappy, lz4, zstd",
+			"ext": true,
+			"section": "C",
+			"file": "src/stages/s27_compressed_batches.rs",
+			"planDone": false,
+			"hints": [
+				"The codec lives in attribute bits 0-2 of the batch header: 1 gzip, 2 snappy, 3 lz4, 4 zstd — everything from recordCount onwards is the compressed blob",
+				"Never recompress or re-encode on the fetch path: copy the stored bytes out, attribute bits and all, and the CRC still verifies",
+				"The record count in the header counts the uncompressed records, so you do not have to decompress anything to serve a fetch",
+				"Kafka's framings are specific: snappy is xerial-framed, lz4 is the LZ4 frame format, gzip and zstd are plain streams"
+			],
+			"tests": [
+				{
+					"name": "a gzip batch keeps its codec bits",
+					"ext": true
+				},
+				{
+					"name": "a snappy batch keeps its codec bits",
+					"ext": true
+				},
+				{
+					"name": "an lz4 batch keeps its codec bits",
+					"ext": true
+				},
+				{
+					"name": "a zstd batch keeps its codec bits",
+					"ext": true
+				},
+				{
+					"name": "every compressed payload decompresses to what was written",
+					"ext": true
+				},
+				{
+					"name": "offsets and the watermark span the compressed batches",
+					"ext": true
+				},
+				{
+					"name": "the bytes are the stored ones, not re-encoded",
+					"ext": true
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 28,
+			"slug": "long_poll",
+			"name": "Long poll: max_wait_ms and min_bytes",
+			"ext": true,
+			"section": "C",
+			"file": "src/stages/s28_long_poll.rs",
+			"planDone": false,
+			"hints": [
+				"Park a fetch that cannot be satisfied instead of answering it: hold it until min_bytes of records exist or max_wait_ms has passed, then answer with what there is (possibly nothing) and error 0",
+				"An append must complete the parked fetch straight away — poll or notify, but do not make the consumer wait out the full max_wait_ms for data already there",
+				"max_wait_ms 0, or min_bytes 0, means answer now; a parked fetch must never block the other connections or the accept loop",
+				"The tests allow the answer to be up to 100 ms early and 1500 ms late, so a sleep-based implementation is fine, but busy-waiting a whole core is not"
+			],
+			"tests": [
+				{
+					"name": "an empty partition holds the fetch for max_wait_ms",
+					"ext": true
+				},
+				{
+					"name": "max_wait_ms 0 answers immediately",
+					"ext": true
+				},
+				{
+					"name": "min_bytes 0 answers immediately with nothing",
+					"ext": true
+				},
+				{
+					"name": "data already in the log answers immediately",
+					"ext": true
+				},
+				{
+					"name": "a produce during the wait ends the poll early",
+					"ext": true
+				},
+				{
+					"name": "min_bytes larger than the log waits for the timeout",
+					"ext": true
+				},
+				{
+					"name": "a parked fetch does not block another connection",
+					"ext": true
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 29,
+			"slug": "advertise_produce",
+			"name": "ApiVersions advertises Produce(0) v11",
+			"ext": false,
+			"section": "D",
+			"file": "src/stages/s29_advertise_produce.rs",
+			"planDone": false,
+			"hints": [
+				"Produce is api_key 0, which is easy to miss when you index the array by key",
+				"Add {api_key: 0, min_version: 0, max_version: 11}",
+				"Produce v9 and later are flexible; v11 still names topics by name, not id"
+			],
+			"tests": [
+				{
+					"name": "Produce(0) is listed"
+				},
+				{
+					"name": "version 11 is inside the advertised range"
+				},
+				{
+					"name": "the earlier api keys are still advertised"
+				},
+				{
+					"name": "the response decodes with no trailing bytes"
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 30,
+			"slug": "produce_unknown_topic",
+			"name": "Produce to an unknown topic → error 3",
+			"ext": false,
+			"section": "D",
+			"file": "src/stages/s30_produce_unknown_topic.rs",
+			"planDone": false,
+			"hints": [
+				"Check the topic exists before touching the log; do not create it implicitly",
+				"The error lives in the per-partition entry, not at the top level",
+				"Answer error_code 3, base_offset -1, log_append_time_ms -1, log_start_offset -1",
+				"Echo the topic name so the producer can match the entry"
+			],
+			"tests": [
+				{
+					"name": "an unknown topic returns error 3"
+				},
+				{
+					"name": "the base offset of a failed produce is -1"
+				},
+				{
+					"name": "the topic name is echoed"
+				},
+				{
+					"name": "an unknown partition of a known topic returns error 3"
+				},
+				{
+					"name": "a known and an unknown topic can be mixed"
+				},
+				{
+					"name": "the response decodes with no trailing bytes"
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 31,
+			"slug": "produce_one_record",
+			"name": "Produce one record",
+			"ext": false,
+			"section": "D",
+			"file": "src/stages/s31_produce_one_record.rs",
+			"planDone": false,
+			"hints": [
+				"Append the batch bytes to <topic>-<partition>/00000000000000000000.log as they are",
+				"Rewrite only baseOffset, to the current end of the log; the CRC covers the bytes after it, so it stays valid",
+				"Answer error_code 0, base_offset = the offset the first record landed on, log_append_time_ms -1 (the records keep their CreateTime)"
+			],
+			"tests": [
+				{
+					"name": "the produce succeeds"
+				},
+				{
+					"name": "the base offset of the first record is 0"
+				},
+				{
+					"name": "log_append_time_ms is -1"
+				},
+				{
+					"name": "the topic name is echoed"
+				},
+				{
+					"name": "a second produce continues at offset 1"
+				},
+				{
+					"name": "the record can be fetched back"
+				},
+				{
+					"name": "the response decodes with no trailing bytes"
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 32,
+			"slug": "produce_many",
+			"name": "Produce multiple records, partitions and topics",
+			"ext": false,
+			"section": "D",
+			"file": "src/stages/s32_produce_many.rs",
+			"planDone": false,
+			"hints": [
+				"One Produce request can carry several topics, each with several partitions",
+				"base_offset is the offset of the *first* record of the batch; the rest follow it",
+				"Every partition has its own log and its own offsets — never share a counter",
+				"Answer one entry per requested partition, in the order they were sent"
+			],
+			"tests": [
+				{
+					"name": "three records in one batch land at offsets 0..2"
+				},
+				{
+					"name": "two partitions keep separate offsets"
+				},
+				{
+					"name": "two topics in one request are both written"
+				},
+				{
+					"name": "records with keys survive the round trip"
+				},
+				{
+					"name": "every produced record can be fetched back in order"
+				},
+				{
+					"name": "the multi-topic response decodes with no trailing bytes"
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 33,
+			"slug": "produce_acks",
+			"name": "acks 0, 1 and -1",
+			"ext": true,
+			"section": "D",
+			"file": "src/stages/s33_produce_acks.rs",
+			"planDone": false,
+			"hints": [
+				"acks=0 means no response at all: append the records and write nothing back, but keep reading the connection — the next request still needs an answer",
+				"acks=1 answers once the leader's own log has the batch, acks=-1 once every in-sync replica does; with one broker both answer the same base_offset",
+				"Any other value (2, 3, -2, ...) is error 21 INVALID_REQUIRED_ACKS, one entry per partition, and the request is not appended",
+				"Check acks before you append, not after: an invalid request must not change the log"
+			],
+			"tests": [
+				{
+					"name": "acks=1 answers with the base offset",
+					"ext": true
+				},
+				{
+					"name": "acks=-1 answers with the base offset",
+					"ext": true
+				},
+				{
+					"name": "acks=0 sends no response at all",
+					"ext": true
+				},
+				{
+					"name": "the next request on an acks=0 connection is answered normally",
+					"ext": true
+				},
+				{
+					"name": "acks=0 still appends the records",
+					"ext": true
+				},
+				{
+					"name": "acks=2 is error 21 INVALID_REQUIRED_ACKS",
+					"ext": true
+				},
+				{
+					"name": "an invalid acks value appends nothing and the broker keeps serving",
+					"ext": true
+				}
+			],
+			"exampleCount": 3
+		},
+		{
+			"number": 34,
+			"slug": "produce_persisted",
+			"name": "Produced records are persisted on disk",
+			"ext": true,
+			"section": "D",
+			"file": "src/stages/s34_produce_persisted.rs",
+			"planDone": false,
+			"hints": [
+				"Append the batch to <log.dirs>/<topic>-<partition>/00000000000000000000.log byte for byte; only baseOffset is rewritten, and the CRC-32C does not cover it",
+				"A second Produce appends a second batch after the first — a segment is a concatenation of batches, never a rewrite",
+				"Create the empty 00000000000000000000.index and .timeindex next to the segment; real clients and kafka-dump-log.sh expect them to be there",
+				"kafka-dump-log.sh --deep-iteration over your segment is the ground truth"
+			],
+			"tests": [
+				{
+					"name": "the segment file grows when a record is produced",
+					"ext": true
+				},
+				{
+					"name": "the segment holds a v2 RecordBatch with a valid CRC-32C",
+					"ext": true
+				},
+				{
+					"name": "the batch on disk carries the base offset the response reported",
+					"ext": true
+				},
+				{
+					"name": "the record values on disk are the ones produced",
+					"ext": true
+				},
+				{
+					"name": "the record count in the header matches the records",
+					"ext": true
+				},
+				{
+					"name": "a second produce appends a second batch at the next offset",
+					"ext": true
+				},
+				{
+					"name": "the partition has an .index and a .timeindex file",
+					"ext": true
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 35,
+			"slug": "produce_fetch_restart",
+			"name": "Produce to fetch round trip across restarts",
+			"ext": true,
+			"section": "D",
+			"file": "src/stages/s35_produce_fetch_restart.rs",
+			"planDone": false,
+			"hints": [
+				"A Fetch must hand back what Produce was given: keys, values, headers and CreateTime timestamps, in offset order",
+				"At startup, read the last segment of every partition to recover its end offset; offsets continue from there, they never reset to 0",
+				"The high watermark comes back from the log too, and the log start offset stays 0 until something is deleted",
+				"Only baseOffset and partitionLeaderEpoch are the broker's to rewrite; the record bytes inside the batch belong to the producer"
+			],
+			"tests": [
+				{
+					"name": "keys, values, headers and timestamps come back unchanged",
+					"ext": true
+				},
+				{
+					"name": "a null key and a tombstone value survive",
+					"ext": true
+				},
+				{
+					"name": "the records are still there after a restart",
+					"ext": true
+				},
+				{
+					"name": "offsets continue from the persisted log after a restart",
+					"ext": true
+				},
+				{
+					"name": "a fetch from the middle of the log works after a restart",
+					"ext": true
+				},
+				{
+					"name": "the high watermark is restored and the broker serves again",
+					"ext": true
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 36,
+			"slug": "idempotent_producer",
+			"name": "Idempotent producer: InitProducerId (22) and sequences",
+			"ext": true,
+			"section": "D",
+			"file": "src/stages/s36_idempotent_producer.rs",
+			"planDone": false,
+			"hints": [
+				"InitProducerId with a null transactional_id hands out a fresh producer id (>= 0) and epoch (>= 0); the producer stamps both into every batch header",
+				"Keep the last sequence number per (producer id, partition): the next batch must start at last + 1, and its last sequence is baseSequence + lastOffsetDelta",
+				"A batch that repeats a sequence already appended is a retry — return the offset it got the first time (real Kafka) or error 46 DUPLICATE_SEQUENCE_NUMBER, and append nothing",
+				"A gap is error 45 OUT_OF_ORDER_SEQUENCE_NUMBER; an older epoch is error 47 INVALID_PRODUCER_EPOCH (45 is accepted too if you check the sequence first) — either way the log is left untouched"
+			],
+			"tests": [
+				{
+					"name": "ApiVersions advertises InitProducerId(22)",
+					"ext": true
+				},
+				{
+					"name": "InitProducerId hands out a producer id and an epoch",
+					"ext": true
+				},
+				{
+					"name": "a batch stamped with the producer id and sequence 0 is accepted",
+					"ext": true
+				},
+				{
+					"name": "re-sending the same batch is deduplicated",
+					"ext": true
+				},
+				{
+					"name": "a gap in the sequence is error 45 OUT_OF_ORDER_SEQUENCE_NUMBER",
+					"ext": true
+				},
+				{
+					"name": "an older producer epoch is rejected",
+					"ext": true
+				},
+				{
+					"name": "the broker keeps serving after the rejected batches",
+					"ext": true
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 37,
+			"slug": "record_validation",
+			"name": "Record validation: CORRUPT_MESSAGE (2) and MESSAGE_TOO_LARGE (10)",
+			"ext": true,
+			"section": "D",
+			"file": "src/stages/s37_record_validation.rs",
+			"planDone": false,
+			"hints": [
+				"Recompute the CRC-32C over everything after the crc field and compare: a mismatch is error 2 CORRUPT_MESSAGE and nothing is appended",
+				"A recordCount that does not match the records, or a magic other than 2, is rejected too: real Kafka answers 87 INVALID_RECORD there, and 2 CORRUPT_MESSAGE is accepted as well",
+				"A batch bigger than message.max.bytes from the properties file is error 10 MESSAGE_TOO_LARGE, per partition",
+				"Every one of these is a per-partition error_code in a normal response: never close the connection, never stop the accept loop"
+			],
+			"tests": [
+				{
+					"name": "a batch with a wrong CRC is error 2 CORRUPT_MESSAGE",
+					"ext": true
+				},
+				{
+					"name": "a wrong record count in the header is rejected",
+					"ext": true
+				},
+				{
+					"name": "a batch whose magic is not 2 is rejected",
+					"ext": true
+				},
+				{
+					"name": "a batch over message.max.bytes is error 10 MESSAGE_TOO_LARGE",
+					"ext": true
+				},
+				{
+					"name": "a batch just under message.max.bytes is accepted",
+					"ext": true
+				},
+				{
+					"name": "a good batch on the same connection still works after a bad one",
+					"ext": true
+				},
+				{
+					"name": "the broker survives every malformed batch",
+					"ext": true
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 38,
+			"slug": "list_offsets",
+			"name": "ListOffsets (2): earliest, latest, by timestamp",
+			"ext": true,
+			"section": "E",
+			"file": "src/stages/s38_list_offsets.rs",
+			"planDone": false,
+			"hints": [
+				"timestamp -2 means the log start offset, -1 means the high watermark; neither reads a record",
+				"Any other timestamp returns the first offset whose record timestamp is >= it, and that record's timestamp; past the end it is offset -1, timestamp -1",
+				"Answer per partition: error_code, timestamp, offset, leader_epoch — earliest and latest report timestamp -1",
+				"An unknown topic or partition is error 3 in that partition's entry, not a top-level failure"
+			],
+			"tests": [
+				{
+					"name": "the earliest offset of the log is 0",
+					"ext": true
+				},
+				{
+					"name": "the latest offset is the high watermark",
+					"ext": true
+				},
+				{
+					"name": "a timestamp finds the first record at or after it",
+					"ext": true
+				},
+				{
+					"name": "a timestamp between two batches rounds forward",
+					"ext": true
+				},
+				{
+					"name": "a timestamp after every record is offset -1",
+					"ext": true
+				},
+				{
+					"name": "an unknown topic is error 3",
+					"ext": true
+				},
+				{
+					"name": "read_committed sees the same latest offset",
+					"ext": true
+				},
+				{
+					"name": "each partition is answered on its own",
+					"ext": true
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 39,
+			"slug": "find_coordinator",
+			"name": "FindCoordinator (10) for a consumer group",
+			"ext": true,
+			"section": "E",
+			"file": "src/stages/s39_find_coordinator.rs",
+			"planDone": false,
+			"hints": [
+				"v4 takes coordinator_keys[] and answers coordinators[], one entry per key, each with its own error_code — the top-level error_code stays 0",
+				"The coordinator of a group is the broker leading __consumer_offsets-(hash(group) % partitions); with one broker that is always this broker, but node_id, host and port must be the ones Metadata advertises",
+				"Kafka creates __consumer_offsets lazily, so the first lookup may answer 15 COORDINATOR_NOT_AVAILABLE for a few hundred ms; a client retries",
+				"key_type 0 is a group, 1 is a transactional id; an unimplemented key type is an error code, never a dropped connection"
+			],
+			"tests": [
+				{
+					"name": "ApiVersions advertises FindCoordinator(10) v4",
+					"ext": true
+				},
+				{
+					"name": "a group key resolves to a coordinator",
+					"ext": true
+				},
+				{
+					"name": "the coordinator is the broker Metadata advertises",
+					"ext": true
+				},
+				{
+					"name": "the coordinator address answers ApiVersions",
+					"ext": true
+				},
+				{
+					"name": "two keys are answered in one response",
+					"ext": true
+				},
+				{
+					"name": "a group that was never used still resolves",
+					"ext": true
+				},
+				{
+					"name": "the v4 top-level error code stays 0",
+					"ext": true
+				},
+				{
+					"name": "a transactional key type is answered",
+					"ext": true
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 40,
+			"slug": "consumer_group",
+			"name": "JoinGroup, SyncGroup, Heartbeat, LeaveGroup",
+			"ext": true,
+			"section": "E",
+			"file": "src/stages/s40_consumer_group.rs",
+			"planDone": false,
+			"hints": [
+				"A join with an empty member_id gets 79 MEMBER_ID_REQUIRED plus a freshly minted member id (KIP-394); the client joins again with that id",
+				"The first member to join is the leader: its response carries members[] with every subscription, and only the leader sends assignments in SyncGroup",
+				"SyncGroup hands each member back the bytes the leader addressed to it, unchanged; the group is Stable only after the leader has synced",
+				"A second member makes the group rebalance: the existing member's Heartbeat turns into 27 REBALANCE_IN_PROGRESS and it must re-join to reach generation 2"
+			],
+			"tests": [
+				{
+					"name": "a join with an empty member id gets a member id",
+					"ext": true
+				},
+				{
+					"name": "the first member becomes the leader of generation 1",
+					"ext": true
+				},
+				{
+					"name": "the leader's join lists the member and its subscription",
+					"ext": true
+				},
+				{
+					"name": "SyncGroup echoes the leader's assignment back",
+					"ext": true
+				},
+				{
+					"name": "a heartbeat in a stable group is accepted",
+					"ext": true
+				},
+				{
+					"name": "LeaveGroup answers 0 for the member it removed",
+					"ext": true
+				},
+				{
+					"name": "a second member forces a rebalance",
+					"ext": true
+				},
+				{
+					"name": "generation 2 assigns both members",
+					"ext": true
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 41,
+			"slug": "offset_commit_fetch",
+			"name": "OffsetCommit (8) and OffsetFetch (9)",
+			"ext": true,
+			"section": "E",
+			"file": "src/stages/s41_offset_commit_fetch.rs",
+			"planDone": false,
+			"hints": [
+				"A commit with generation_id -1 and an empty member_id is a standalone commit: no group membership is needed, and the answer is error 0 per partition",
+				"Committed offsets live in __consumer_offsets keyed by (group, topic, partition); the metadata string is stored with the offset and comes back unchanged",
+				"OffsetFetch for a group or a partition that never committed is offset -1, metadata \"\" and error 0 — absence is not an error",
+				"A commit from a member with an out-of-date generation is 22 ILLEGAL_GENERATION; a commit for a topic that does not exist is 3"
+			],
+			"tests": [
+				{
+					"name": "a standalone commit is accepted",
+					"ext": true
+				},
+				{
+					"name": "the committed offset and metadata come back",
+					"ext": true
+				},
+				{
+					"name": "a partition that never committed is -1",
+					"ext": true
+				},
+				{
+					"name": "an unknown group fetches -1 without an error",
+					"ext": true
+				},
+				{
+					"name": "committing to an unknown topic is error 3",
+					"ext": true
+				},
+				{
+					"name": "a stale generation is error 22",
+					"ext": true
+				},
+				{
+					"name": "the last commit wins",
+					"ext": true
+				},
+				{
+					"name": "OffsetFetch with no topic list returns everything",
+					"ext": true
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 42,
+			"slug": "group_errors",
+			"name": "Group errors: UNKNOWN_MEMBER_ID, REBALANCE_IN_PROGRESS, ILLEGAL_GENERATION",
+			"ext": true,
+			"section": "E",
+			"file": "src/stages/s42_group_errors.rs",
+			"planDone": false,
+			"hints": [
+				"Check the member id first: one the group does not hold is 25 UNKNOWN_MEMBER_ID, for Heartbeat, SyncGroup, JoinGroup and LeaveGroup alike",
+				"Then check the generation: a known member sending a stale generation gets 22 ILLEGAL_GENERATION, never 25",
+				"While the group is rebalancing every Heartbeat is 27 REBALANCE_IN_PROGRESS — that is how a consumer learns it has to re-join",
+				"LeaveGroup reports per member: the top-level error stays 0 and the bad member carries its own 25"
+			],
+			"tests": [
+				{
+					"name": "a heartbeat from an unknown member is 25",
+					"ext": true
+				},
+				{
+					"name": "SyncGroup from an unknown member is 25",
+					"ext": true
+				},
+				{
+					"name": "SyncGroup with the wrong generation is 22",
+					"ext": true
+				},
+				{
+					"name": "a heartbeat with the wrong generation is 22",
+					"ext": true
+				},
+				{
+					"name": "a heartbeat during a rebalance is 27",
+					"ext": true
+				},
+				{
+					"name": "LeaveGroup of an unknown member is 25 for that member",
+					"ext": true
+				},
+				{
+					"name": "JoinGroup with a member id the group never issued is 25",
+					"ext": true
+				},
+				{
+					"name": "a heartbeat for a group that does not exist is refused",
+					"ext": true
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 43,
+			"slug": "cli_interop",
+			"name": "Interop with Kafka's own command line tools",
+			"ext": true,
+			"section": "F",
+			"file": "src/stages/s43_cli_interop.rs",
+			"planDone": false,
+			"hints": [
+				"kafka-topics.sh --describe exercises Metadata(3) and DescribeTopicPartitions(75) together; the tool needs every partition to name a live leader",
+				"kafka-console-producer.sh opens with ApiVersions and Metadata, then Produce; keep acks=1 and enable.idempotence=false working before you add InitProducerId(22)",
+				"kafka-console-consumer.sh needs FindCoordinator(10), the group protocol, ListOffsets(2) and Fetch(1) — the whole consumer path in one command",
+				"kafka-broker-api-versions.sh prints exactly what your ApiVersions response says, so a key advertised there and unimplemented here is a lie a real client believes"
+			],
+			"tests": [
+				{
+					"name": "kafka-topics.sh --describe reports the fixture topic and its partitions",
+					"ext": true,
+					"tags": [
+						"slow"
+					]
+				},
+				{
+					"name": "kafka-get-offsets.sh reports the end offset of the fixture partition",
+					"ext": true,
+					"tags": [
+						"slow"
+					]
+				},
+				{
+					"name": "kafka-console-producer.sh writes three records our Fetch can read",
+					"ext": true,
+					"tags": [
+						"slow"
+					]
+				},
+				{
+					"name": "kafka-console-consumer.sh prints the fixture records from the beginning",
+					"ext": true,
+					"tags": [
+						"slow"
+					]
+				},
+				{
+					"name": "kafka-broker-api-versions.sh agrees with our own ApiVersions response",
+					"ext": true,
+					"tags": [
+						"slow"
+					]
+				},
+				{
+					"name": "the broker still serves after the command line tools have talked to it",
+					"ext": true,
+					"tags": [
+						"slow"
+					]
+				}
+			],
+			"exampleCount": 3
+		},
+		{
+			"number": 44,
+			"slug": "fuzz",
+			"name": "Fuzz: 500 seeded mutated frames",
+			"ext": true,
+			"section": "F",
+			"file": "src/stages/s44_fuzz.rs",
+			"planDone": false,
+			"hints": [
+				"Bit flips, truncations, huge lengths and negative array sizes, all from --seed: validate every length against the bytes you actually have before you index",
+				"The broker must never crash, never hang and never leak memory — a bad frame is at worst a closed connection, and the accept loop keeps running",
+				"After the whole run it must still answer a clean ApiVersions request on a new connection within two seconds",
+				"Whatever you do send must be framed: a size prefix and then exactly that many bytes, never a prefix that promises more than you write"
+			],
+			"tests": [
+				{
+					"name": "bit flips never crash or unframe the broker",
+					"ext": true,
+					"tags": [
+						"slow"
+					]
+				},
+				{
+					"name": "truncated and padded frames never crash or unframe the broker",
+					"ext": true,
+					"tags": [
+						"slow"
+					]
+				},
+				{
+					"name": "a lying size prefix never crashes or unframes the broker",
+					"ext": true,
+					"tags": [
+						"slow"
+					]
+				},
+				{
+					"name": "negative and huge array lengths never crash or unframe the broker",
+					"ext": true,
+					"tags": [
+						"slow"
+					]
+				},
+				{
+					"name": "impossible header fields never crash or unframe the broker",
+					"ext": true,
+					"tags": [
+						"slow"
+					]
+				},
+				{
+					"name": "mutations combined at random never crash or unframe the broker",
+					"ext": true,
+					"tags": [
+						"slow"
+					]
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 45,
+			"slug": "soak",
+			"name": "Soak: 10 000 records and 1 000 connections",
+			"ext": true,
+			"section": "F",
+			"file": "src/stages/s45_soak.rs",
+			"planDone": false,
+			"hints": [
+				"Produce and fetch 10 000 records and compare them byte for byte; offsets inside a partition must be contiguous with no gap and no repeat",
+				"Open and close 1 000 connections without leaking file descriptors or threads — close the socket when the client goes away, not when the process exits",
+				"Fifty concurrent connections must not serialize behind one another, and per connection the responses still come back in request order",
+				"p50/p95/p99 latency is reported for information; the only hard limit is that each test finishes within 60 seconds"
+			],
+			"tests": [
+				{
+					"name": "10 000 records are produced and fetched back byte for byte",
+					"ext": true,
+					"tags": [
+						"slow"
+					]
+				},
+				{
+					"name": "offsets are contiguous across every partition",
+					"ext": true,
+					"tags": [
+						"slow"
+					]
+				},
+				{
+					"name": "1 000 connect/ApiVersions/close cycles all succeed",
+					"ext": true,
+					"tags": [
+						"slow"
+					]
+				},
+				{
+					"name": "50 concurrent connections each complete 100 requests",
+					"ext": true,
+					"tags": [
+						"slow"
+					]
+				},
+				{
+					"name": "request latency percentiles are reported",
+					"ext": true,
+					"tags": [
+						"slow"
+					]
+				},
+				{
+					"name": "the broker survives the soak and we leak no file descriptors",
+					"ext": true,
+					"tags": [
+						"slow"
+					]
+				}
+			],
+			"exampleCount": 2
+		}
+	],
+	"totals": {
+		"stages": 45,
+		"tests": 296,
+		"ext": 23
+	},
+	"source": "kafkatest/catalog.json"
+}

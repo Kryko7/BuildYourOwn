@@ -1,0 +1,220 @@
+[
+	{
+		"title": "ApiVersions v1234",
+		"kind": "wire",
+		"request": "ApiVersions with api_version 1234, correlation id 22",
+		"request_hex": "00000025001204d20000001600096b61666b6174657374000a6b61666b617465737406302e312e3000",
+		"response": "correlation_id 22, then error_code 35 (UNSUPPORTED_VERSION), then a one-entry api_keys array — ApiVersions(18), min_version 0, max_version 4 — so the client can retry with a version the broker speaks",
+		"response_hex": "0000001000000016002300000001001200000004",
+		"note": "Check api_version before you decode the body. The reply is written in the v0 shape — a v0 response header with no tagged fields — because the client has not yet been told what the broker supports.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "37 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 2,
+				"field": "header.api_key",
+				"value": "18 (ApiVersions)"
+			},
+			{
+				"offset": 6,
+				"length": 2,
+				"field": "header.api_version",
+				"value": "1234"
+			},
+			{
+				"offset": 8,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "22"
+			},
+			{
+				"offset": 12,
+				"length": 11,
+				"field": "header.client_id",
+				"value": "'kafkatest'"
+			},
+			{
+				"offset": 23,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 24,
+				"length": 10,
+				"field": "body.client_software_name",
+				"value": "'kafkatest'"
+			},
+			{
+				"offset": 34,
+				"length": 6,
+				"field": "body.client_software_version",
+				"value": "'0.1.0'"
+			},
+			{
+				"offset": 40,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "16 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "22"
+			},
+			{
+				"offset": 8,
+				"length": 2,
+				"field": "body.error_code",
+				"value": "35 (UNSUPPORTED_VERSION)"
+			},
+			{
+				"offset": 10,
+				"length": 4,
+				"field": "body.api_keys.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 14,
+				"length": 2,
+				"field": "body.api_keys[0].api_key",
+				"value": "18 (ApiVersions)"
+			},
+			{
+				"offset": 16,
+				"length": 2,
+				"field": "body.api_keys[0].min_version",
+				"value": "0"
+			},
+			{
+				"offset": 18,
+				"length": 2,
+				"field": "body.api_keys[0].max_version",
+				"value": "4"
+			}
+		]
+	},
+	{
+		"title": "ApiVersions v5, one past the maximum",
+		"kind": "wire",
+		"request": "ApiVersions with api_version 5, correlation id 21",
+		"request_hex": "00000025001200050000001500096b61666b6174657374000a6b61666b617465737406302e312e3000",
+		"response": "correlation_id 21, then error_code 35 (UNSUPPORTED_VERSION)",
+		"response_hex": "0000001000000015002300000001001200000004",
+		"note": "v4 is the highest ApiVersions this suite asks for, so 5 is the first bad one. The connection stays open afterwards: one unsupported version is not a fatal protocol error.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "37 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 2,
+				"field": "header.api_key",
+				"value": "18 (ApiVersions)"
+			},
+			{
+				"offset": 6,
+				"length": 2,
+				"field": "header.api_version",
+				"value": "5"
+			},
+			{
+				"offset": 8,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "21"
+			},
+			{
+				"offset": 12,
+				"length": 11,
+				"field": "header.client_id",
+				"value": "'kafkatest'"
+			},
+			{
+				"offset": 23,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 24,
+				"length": 10,
+				"field": "body.client_software_name",
+				"value": "'kafkatest'"
+			},
+			{
+				"offset": 34,
+				"length": 6,
+				"field": "body.client_software_version",
+				"value": "'0.1.0'"
+			},
+			{
+				"offset": 40,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "16 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "21"
+			},
+			{
+				"offset": 8,
+				"length": 2,
+				"field": "body.error_code",
+				"value": "35 (UNSUPPORTED_VERSION)"
+			},
+			{
+				"offset": 10,
+				"length": 4,
+				"field": "body.api_keys.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 14,
+				"length": 2,
+				"field": "body.api_keys[0].api_key",
+				"value": "18 (ApiVersions)"
+			},
+			{
+				"offset": 16,
+				"length": 2,
+				"field": "body.api_keys[0].min_version",
+				"value": "0"
+			},
+			{
+				"offset": 18,
+				"length": 2,
+				"field": "body.api_keys[0].max_version",
+				"value": "4"
+			}
+		]
+	}
+]

@@ -1,0 +1,24 @@
+[
+	{
+		"title": "10 000 records out and back",
+		"kind": "text",
+		"request": "100 Produce v11 requests of 100 records each, round-robin over the 4 partitions of the fixture topic, every value the fixed string soak-<n:06>-kafkatest; then Fetch v16 from offset 0 of each partition, request after request, until all 10 000 records have come back",
+		"request_hex": "",
+		"response": "Every record identical to what was produced, byte for byte and in order, and the offsets of each partition run 0..2500 with no gap and no repeat. Produce and fetch throughput and p50/p95/p99 batch latency are reported for information; the only hard limit is that the test finishes inside 60 s",
+		"response_hex": "",
+		"note": "Volume is what finds the bugs a three-record test cannot: an index that is right until a segment rolls, a batch whose base offset is recomputed on write, a fetch that returns the same record twice at a batch boundary. A fetch that comes back with no new records is failed immediately rather than retried, because that is an off-by-one and not a slow broker.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "1 000 connections, and the state left behind",
+		"kind": "text",
+		"request": "After 200 warm-up requests: 1 000 connect / ApiVersions v4 / close cycles, each socket closed explicitly; then 50 concurrent connections making 100 requests each; then 300 more cycles with this process's own file descriptors counted before and after, and one last Produce",
+		"request_hex": "",
+		"response": "Every cycle and all 5 000 concurrent requests succeed inside the 60 s budget, each connection's responses arrive in the order it asked for them, the file-descriptor count is unchanged apart from a handful, and the broker still accepts a connection and stores a record at the end — no leaked descriptors, no growing memory, no thread left holding a closed socket",
+		"response_hex": "",
+		"note": "Close the socket when the client goes away, not when the process exits: a broker that leaks a descriptor or a thread per connection passes every functional stage and dies somewhere in the first few hundred cycles here. The latency percentiles are informational — they are printed under a passing test so a regression is visible before it becomes a failure.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

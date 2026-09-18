@@ -1,0 +1,54 @@
+stage: 46
+name: "history -a appends only new entries"
+tests:
+  - name: "history -a on a new file writes all entries so far"
+    skip_on: [zsh]
+    reason: "zsh's history builtin (fc -l) is not available in non-interactive mode"
+    input: ["echo a", "history -a h.txt", "exit 0"]
+    expect:
+      files:
+        "{TMP}/h.txt": "echo a\nhistory -a h.txt\n"
+      exit_code: 0
+
+  - name: "a second -a appends only the entries since the first"
+    skip_on: [zsh]
+    reason: "zsh's history builtin (fc -l) is not available in non-interactive mode"
+    input: ["echo a", "history -a h.txt", "echo b", "history -a h.txt", "exit 0"]
+    expect:
+      files:
+        "{TMP}/h.txt": "echo a\nhistory -a h.txt\necho b\nhistory -a h.txt\n"
+
+  - name: "history -a keeps existing file content"
+    fixtures:
+      files: { "h.txt": "echo old\n" }
+    skip_on: [zsh]
+    reason: "zsh's history builtin (fc -l) is not available in non-interactive mode"
+    input: ["echo new", "history -a h.txt", "exit 0"]
+    expect:
+      files:
+        "{TMP}/h.txt": "echo old\necho new\nhistory -a h.txt\n"
+
+  - name: "-a immediately after -a appends just the second -a line"
+    skip_on: [zsh]
+    reason: "zsh's history builtin (fc -l) is not available in non-interactive mode"
+    input: ["echo a", "history -a h.txt", "history -a h.txt", "exit 0"]
+    expect:
+      files:
+        "{TMP}/h.txt": "echo a\nhistory -a h.txt\nhistory -a h.txt\n"
+
+  - name: "-a to a different file after -a still appends only new lines"
+    skip_on: [zsh]
+    reason: "zsh's history builtin (fc -l) is not available in non-interactive mode"
+    input: ["echo a", "history -a one.txt", "echo b", "history -a two.txt", "exit 0"]
+    expect:
+      files:
+        "{TMP}/one.txt": "echo a\nhistory -a one.txt\n"
+        "{TMP}/two.txt": "echo b\nhistory -a two.txt\n"
+
+  - name: "history -w after -a still writes everything (regression: stage 45)"
+    skip_on: [zsh]
+    reason: "zsh's history builtin (fc -l) is not available in non-interactive mode"
+    input: ["echo a", "history -a a.txt", "echo b", "history -w w.txt", "exit 0"]
+    expect:
+      files:
+        "{TMP}/w.txt": "echo a\nhistory -a a.txt\necho b\nhistory -w w.txt\n"

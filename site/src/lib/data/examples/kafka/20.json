@@ -1,0 +1,318 @@
+[
+	{
+		"title": "Fetch v16 with an empty topics array",
+		"kind": "wire",
+		"request": "Fetch v16, correlation id 201: max_wait_ms 500, min_bytes 1, max_bytes 10485760, session_id 0, session_epoch 0, replica_id -1, and a topics array of length zero",
+		"request_hex": "0000002d00010010000000c900096b61666b617465737400000001f40000000100a0000000000000000000000001010100",
+		"response": "A response header v1 — correlation_id then a tagged-field byte — and then throttle_time_ms 0, error_code 0 (NONE), the session_id, an empty responses compact array (the single byte 0x01) and the body's own tagged-field byte",
+		"response_hex": "00000011000000c90000000000000015847a5f0100",
+		"note": "Fetch v16 is flexible, so its response header carries a tagged-field byte that the ApiVersions response header does not. Forgetting that one byte shifts every field after it and the client decodes garbage.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "45 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 2,
+				"field": "header.api_key",
+				"value": "1 (Fetch)"
+			},
+			{
+				"offset": 6,
+				"length": 2,
+				"field": "header.api_version",
+				"value": "16"
+			},
+			{
+				"offset": 8,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "201"
+			},
+			{
+				"offset": 12,
+				"length": 11,
+				"field": "header.client_id",
+				"value": "'kafkatest'"
+			},
+			{
+				"offset": 23,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 24,
+				"length": 4,
+				"field": "body.max_wait_ms",
+				"value": "500"
+			},
+			{
+				"offset": 28,
+				"length": 4,
+				"field": "body.min_bytes",
+				"value": "1"
+			},
+			{
+				"offset": 32,
+				"length": 4,
+				"field": "body.max_bytes",
+				"value": "10485760"
+			},
+			{
+				"offset": 36,
+				"length": 1,
+				"field": "body.isolation_level",
+				"value": "0"
+			},
+			{
+				"offset": 37,
+				"length": 4,
+				"field": "body.session_id",
+				"value": "0"
+			},
+			{
+				"offset": 41,
+				"length": 4,
+				"field": "body.session_epoch",
+				"value": "0"
+			},
+			{
+				"offset": 45,
+				"length": 1,
+				"field": "body.topics.length",
+				"value": "0 entries"
+			},
+			{
+				"offset": 46,
+				"length": 1,
+				"field": "body.forgotten_topics_data.length",
+				"value": "0 entries"
+			},
+			{
+				"offset": 47,
+				"length": 1,
+				"field": "body.rack_id",
+				"value": "''"
+			},
+			{
+				"offset": 48,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "17 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "201"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 9,
+				"length": 4,
+				"field": "body.throttle_time_ms",
+				"value": "0"
+			},
+			{
+				"offset": 13,
+				"length": 2,
+				"field": "body.error_code",
+				"value": "0 (NONE)"
+			},
+			{
+				"offset": 15,
+				"length": 4,
+				"field": "body.session_id",
+				"value": "361003615",
+				"varies": true
+			},
+			{
+				"offset": 19,
+				"length": 1,
+				"field": "body.responses.length",
+				"value": "0 entries"
+			},
+			{
+				"offset": 20,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		]
+	},
+	{
+		"title": "An empty fetch that asks to wait five seconds",
+		"kind": "wire",
+		"request": "The same empty Fetch v16, correlation id 202, but with max_wait_ms 5000",
+		"request_hex": "0000002d00010010000000ca00096b61666b617465737400000013880000000100a0000000000000000000000001010100",
+		"response": "The same body — throttle_time_ms 0, error_code 0, empty responses — and it arrives in milliseconds, not in five seconds",
+		"response_hex": "00000011000000ca0000000000000027855afe0100",
+		"note": "max_wait_ms is how long the broker may hold the request waiting for records on the partitions it was asked about. With no partitions there is nothing to wait for, so answer at once; sleeping here is the classic first long-poll bug.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "45 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 2,
+				"field": "header.api_key",
+				"value": "1 (Fetch)"
+			},
+			{
+				"offset": 6,
+				"length": 2,
+				"field": "header.api_version",
+				"value": "16"
+			},
+			{
+				"offset": 8,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "202"
+			},
+			{
+				"offset": 12,
+				"length": 11,
+				"field": "header.client_id",
+				"value": "'kafkatest'"
+			},
+			{
+				"offset": 23,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 24,
+				"length": 4,
+				"field": "body.max_wait_ms",
+				"value": "5000"
+			},
+			{
+				"offset": 28,
+				"length": 4,
+				"field": "body.min_bytes",
+				"value": "1"
+			},
+			{
+				"offset": 32,
+				"length": 4,
+				"field": "body.max_bytes",
+				"value": "10485760"
+			},
+			{
+				"offset": 36,
+				"length": 1,
+				"field": "body.isolation_level",
+				"value": "0"
+			},
+			{
+				"offset": 37,
+				"length": 4,
+				"field": "body.session_id",
+				"value": "0"
+			},
+			{
+				"offset": 41,
+				"length": 4,
+				"field": "body.session_epoch",
+				"value": "0"
+			},
+			{
+				"offset": 45,
+				"length": 1,
+				"field": "body.topics.length",
+				"value": "0 entries"
+			},
+			{
+				"offset": 46,
+				"length": 1,
+				"field": "body.forgotten_topics_data.length",
+				"value": "0 entries"
+			},
+			{
+				"offset": 47,
+				"length": 1,
+				"field": "body.rack_id",
+				"value": "''"
+			},
+			{
+				"offset": 48,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "17 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "202"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 9,
+				"length": 4,
+				"field": "body.throttle_time_ms",
+				"value": "0"
+			},
+			{
+				"offset": 13,
+				"length": 2,
+				"field": "body.error_code",
+				"value": "0 (NONE)"
+			},
+			{
+				"offset": 15,
+				"length": 4,
+				"field": "body.session_id",
+				"value": "663051006",
+				"varies": true
+			},
+			{
+				"offset": 19,
+				"length": 1,
+				"field": "body.responses.length",
+				"value": "0 entries"
+			},
+			{
+				"offset": 20,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		]
+	}
+]

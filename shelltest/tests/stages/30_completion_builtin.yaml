@@ -1,0 +1,53 @@
+stage: 30
+name: "Tab completion of builtins"
+tests:
+  - name: "ech<TAB> completes to 'echo ' and the command runs"
+    mode: pty
+    fixtures: { path_isolated: true }
+    keys: ["ech\t", "hello\r", "exit\r"]
+    expect:
+      terminal: { regex: "(?s)\\$ echo hello\nhello\n" }
+      exit_code: 0
+
+  - name: "the completed builtin is followed by a single space"
+    mode: pty
+    fixtures: { path_isolated: true }
+    keys: ["ech\t", "x\r", "exit\r"]
+    expect:
+      terminal: { contains: "$ echo x\nx\n" }
+
+  - name: "exi<TAB> completes to exit and exits the shell"
+    mode: pty
+    fixtures: { path_isolated: true }
+    keys: ["exi\t", "\r"]
+    expect:
+      terminal: { contains: "$ exit" }
+      exit_code: 0
+
+  - name: "pw<TAB> completes to pwd"
+    mode: pty
+    fixtures: { path_isolated: true }
+    keys: ["pw\t", "\r", "exit\r"]
+    expect:
+      terminal: { contains: "$ pwd \n{TMP}\n" }
+
+  - name: "a shorter prefix ec<TAB> also completes echo"
+    mode: pty
+    fixtures: { path_isolated: true }
+    keys: ["ec\t", "ok\r", "exit\r"]
+    expect:
+      terminal: { contains: "$ echo ok\nok\n" }
+
+  - name: "typing the full name then TAB just adds the space"
+    mode: pty
+    fixtures: { path_isolated: true }
+    keys: ["echo\t", "done\r", "exit\r"]
+    expect:
+      terminal: { contains: "$ echo done\ndone\n" }
+
+  - name: "prompt is still shown after completion (regression: stage 1)"
+    mode: pty
+    fixtures: { path_isolated: true }
+    keys: ["ech\t", "a\r"]
+    expect:
+      terminal: { regex: "(?s)a\n\\$ $" }

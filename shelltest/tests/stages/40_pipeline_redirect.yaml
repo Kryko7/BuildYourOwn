@@ -1,0 +1,86 @@
+stage: 40
+name: "Pipelines combined with redirections"
+tests:
+  - name: "pipeline output redirected to a file"
+    tags: [ext]
+    fixtures:
+      path_isolated: true
+      executables:
+        wrap: 'while read l; do echo "[$l]"; done'
+    input: ["echo hi | wrap > out.txt", "exit 0"]
+    expect:
+      stdout: ""
+      files:
+        "{TMP}/out.txt": "[hi]\n"
+      exit_code: 0
+
+  - name: "pipeline output appended to a file"
+    tags: [ext]
+    fixtures:
+      files: { "out.txt": "first\n" }
+      path_isolated: true
+      executables:
+        wrap: 'while read l; do echo "[$l]"; done'
+    input: ["echo second | wrap >> out.txt", "exit 0"]
+    expect:
+      files:
+        "{TMP}/out.txt": "first\n[second]\n"
+
+  - name: "input redirection on the first command of a pipeline"
+    tags: [ext]
+    fixtures:
+      files: { "in.txt": "a\nb\nc\n" }
+    input: ["cat < in.txt | head -n 1", "exit 0"]
+    expect:
+      stdout: "a"
+
+  - name: "stderr of a pipeline stage redirected to a file"
+    tags: [ext]
+    fixtures:
+      path_isolated: true
+      executables:
+        noisy: |
+          echo data
+          echo warning >&2
+        wrap: 'while read l; do echo "[$l]"; done'
+    input: ["noisy 2> err.txt | wrap", "exit 0"]
+    expect:
+      stdout: "[data]"
+      stderr: ""
+      files:
+        "{TMP}/err.txt": "warning\n"
+
+  - name: "2>&1 inside a pipeline merges stderr into the pipe"
+    tags: [ext]
+    fixtures:
+      path_isolated: true
+      executables:
+        err_only: "echo oops >&2"
+        wrap: 'while read l; do echo "[$l]"; done'
+    input: ["err_only 2>&1 | wrap", "exit 0"]
+    expect:
+      stdout: "[oops]"
+
+  - name: "redirecting stdout of a middle stage starves the next stage"
+    tags: [ext]
+    fixtures:
+      path_isolated: true
+      executables:
+        counter: |
+          n=0
+          while read l; do n=$((n+1)); done
+          echo "$n"
+      env: { PATH: "{BIN}:/usr/bin:/bin" }
+    input: ["echo x | cat > out.txt | counter", "exit 0"]
+    expect:
+      stdout: "0"
+      files:
+        "{TMP}/out.txt": "x\n"
+
+  - name: "plain > still works after pipelines (regression: stage 24)"
+    tags: [ext]
+    input: ["echo a | cat", "echo b > out.txt", "exit 0"]
+    expect:
+      stdout: "a"
+      files:
+        "{TMP}/out.txt": "b\n"

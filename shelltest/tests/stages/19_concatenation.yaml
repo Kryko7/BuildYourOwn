@@ -1,0 +1,53 @@
+stage: 19
+name: "Adjacent quoted and unquoted segments concatenate"
+tests:
+  - name: "double, single and bare segments join into one word"
+    input: ["echo \"a\"'b'c", "exit 0"]
+    expect:
+      stdout: "abc"
+      exit_code: 0
+
+  - name: "single then double"
+    input: ["echo 'x'\"y\"", "exit 0"]
+    expect:
+      stdout: "xy"
+
+  - name: "bare text joined to a quoted segment containing a space"
+    input: ["echo a\"b c\"d", "exit 0"]
+    expect:
+      stdout: "ab cd"
+
+  - name: "quoted segments joined by an escaped space stay one word"
+    fixtures:
+      path_isolated: true
+      executables:
+        count_args: 'echo "$#"'
+    input: ["count_args 'a'\\ 'b'", "exit 0"]
+    expect:
+      stdout: "1"
+
+  - name: "concatenated segments produce one argument"
+    fixtures:
+      path_isolated: true
+      executables:
+        count_args: 'echo "$#"'
+    input: ["count_args \"a\"'b'c \"d\"", "exit 0"]
+    expect:
+      stdout: "2"
+
+  - name: "concatenation builds a filename for cat"
+    fixtures:
+      files: { "file.txt": "joined\n" }
+    input: ["cat 'f'\"ile\".txt", "exit 0"]
+    expect:
+      stdout: "joined"
+
+  - name: "empty quotes in the middle do not split the word"
+    input: ["echo a''b\"\"c", "exit 0"]
+    expect:
+      stdout: "abc"
+
+  - name: "escapes inside each segment follow that segment's rules (regression: stages 16-17)"
+    input: ["echo 'a\\b'\"c\\\"d\"", "exit 0"]
+    expect:
+      stdout: 'a\bc"d'

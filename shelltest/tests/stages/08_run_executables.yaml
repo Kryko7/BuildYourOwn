@@ -1,0 +1,92 @@
+stage: 8
+name: "Run external programs with arguments"
+tests:
+  - name: "arguments are passed through one per argv slot"
+    fixtures:
+      path_isolated: true
+      executables:
+        args_printer: |
+          for a in "$@"; do echo "[$a]"; done
+    input: ["args_printer a b c", "exit 0"]
+    expect:
+      stdout: "[a]\n[b]\n[c]"
+      exit_code: 0
+
+  - name: "argument count is correct"
+    fixtures:
+      path_isolated: true
+      executables:
+        count_args: 'echo "$#"'
+    input: ["count_args", "count_args one", "count_args one two three", "exit 0"]
+    expect:
+      stdout: "0\n1\n3"
+
+  - name: "the program sees its own name (argv[0] basename)"
+    fixtures:
+      path_isolated: true
+      executables:
+        whoami_prog: 'echo "${0##*/}"'
+    input: ["whoami_prog", "exit 0"]
+    expect:
+      stdout: "whoami_prog"
+
+  - name: "program stdout and stderr both pass through"
+    fixtures:
+      path_isolated: true
+      executables:
+        both: |
+          echo to-stdout
+          echo to-stderr >&2
+    input: ["both", "exit 0"]
+    expect:
+      stdout: "to-stdout"
+      stderr: "to-stderr"
+
+  - name: "exit status of an external program is visible in $?"
+    fixtures:
+      path_isolated: true
+      executables:
+        fail7: "exit 7"
+    input: ["fail7", "echo $?", "exit 0"]
+    expect:
+      stdout: "7"
+
+  - name: "a successful program resets $? to 0"
+    fixtures:
+      path_isolated: true
+      executables:
+        fail7: "exit 7"
+        ok: "exit 0"
+    input: ["fail7", "ok", "echo $?", "exit 0"]
+    expect:
+      stdout: "0"
+
+  - name: "a program can be run by absolute path"
+    fixtures:
+      path_isolated: true
+      executables:
+        args_printer: |
+          for a in "$@"; do echo "[$a]"; done
+    input: ["{BIN}/args_printer x", "exit 0"]
+    expect:
+      stdout: "[x]"
+
+  - name: "programs in a second PATH directory run too"
+    fixtures:
+      path_isolated: true
+      executables:
+        alt/greet: 'echo "hi $1"'
+      env: { PATH: "{BIN}:{TMP}/alt" }
+    input: ["greet bob", "exit 0"]
+    expect:
+      stdout: "hi bob"
+
+  - name: "the shell keeps running after a program fails (regression: stage 3)"
+    fixtures:
+      path_isolated: true
+      executables:
+        fail7: "exit 7"
+    input: ["fail7", "echo still running", "exit 0"]
+    expect:
+      stdout: "still running"
+      exit_code: 0

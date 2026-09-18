@@ -1,0 +1,2190 @@
+[
+	{
+		"id": "posix-shell-command-language",
+		"title": "Shell Command Language",
+		"url": "https://pubs.opengroup.org/onlinepubs/9799919799/utilities/V3_chap02.html",
+		"type": "spec",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			2,
+			3,
+			4,
+			5,
+			13,
+			14,
+			15,
+			16,
+			17,
+			18,
+			19,
+			20,
+			21,
+			22,
+			23,
+			24,
+			25,
+			26,
+			27,
+			28,
+			29,
+			36,
+			37,
+			38,
+			39,
+			40,
+			48,
+			49,
+			52,
+			53,
+			56
+		],
+		"concepts": [
+			"posix",
+			"tokenizing",
+			"quoting",
+			"word-expansion",
+			"redirection",
+			"pipelines",
+			"exit-status"
+		],
+		"why": "This is the document the tester was written against: token recognition rules, the exact order of the expansions, the redirection operator table and the exit-status rules. When bash and your shell disagree, read section 2 here before you change anything.",
+		"minutes": 240,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "posix-general-terminal-interface",
+		"title": "General Terminal Interface",
+		"url": "https://pubs.opengroup.org/onlinepubs/9799919799/basedefs/V1_chap11.html",
+		"type": "spec",
+		"level": "deep",
+		"track": "shell",
+		"stages": [
+			30,
+			31,
+			32,
+			33,
+			34,
+			35,
+			43,
+			50,
+			55
+		],
+		"concepts": [
+			"termios",
+			"canonical-mode",
+			"raw-mode",
+			"pty",
+			"signal-generating-characters"
+		],
+		"why": "The normative description of canonical vs non-canonical input, VMIN/VTIME, and which characters generate SIGINT. Read it once before stage 30 so raw mode is a deliberate set of flag choices rather than a copied snippet.",
+		"minutes": 60,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "posix-cd-utility",
+		"title": "cd",
+		"url": "https://pubs.opengroup.org/onlinepubs/9799919799/utilities/cd.html",
+		"type": "spec",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			10,
+			11,
+			12
+		],
+		"concepts": [
+			"builtins",
+			"cwd",
+			"home"
+		],
+		"why": "Spells out the operand handling for bare `cd`, `-`, CDPATH and the logical/physical distinction. Stages 10-12 only need the first half, but knowing the rest stops you from inventing behaviour later.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "posix-echo-utility",
+		"title": "echo",
+		"url": "https://pubs.opengroup.org/onlinepubs/9799919799/utilities/echo.html",
+		"type": "spec",
+		"level": "intro",
+		"track": "shell",
+		"stages": [
+			5
+		],
+		"concepts": [
+			"builtins",
+			"argument-joining"
+		],
+		"why": "Short and worth reading because echo is the one utility where POSIX, bash and the tester's expectations diverge; it tells you why `-n` is an extension and what the portable behaviour is.",
+		"minutes": 10,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "posix-exec-functions",
+		"title": "exec",
+		"url": "https://pubs.opengroup.org/onlinepubs/9799919799/functions/execve.html",
+		"type": "spec",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			8,
+			18
+		],
+		"concepts": [
+			"fork-exec",
+			"argv",
+			"path-search",
+			"environ"
+		],
+		"why": "Defines what argv and envp must look like and which of exec*'s variants do the PATH search for you. Relevant at stage 18 because quoting is invisible here: a file name with a space is just bytes.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "posix-tcsetattr",
+		"title": "tcsetattr",
+		"url": "https://pubs.opengroup.org/onlinepubs/9799919799/functions/tcsetattr.html",
+		"type": "spec",
+		"level": "deep",
+		"track": "shell",
+		"stages": [
+			30,
+			50,
+			55
+		],
+		"concepts": [
+			"termios",
+			"tcsetattr",
+			"raw-mode"
+		],
+		"why": "TCSANOW vs TCSADRAIN vs TCSAFLUSH matters when you toggle raw mode around every prompt: the wrong one eats keystrokes the user typed ahead. Also explains why you must restore the saved termios on exit.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "posix-dup-functions",
+		"title": "dup",
+		"url": "https://pubs.opengroup.org/onlinepubs/9799919799/functions/dup.html",
+		"type": "spec",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			24,
+			25,
+			26,
+			27,
+			28,
+			29,
+			40
+		],
+		"concepts": [
+			"dup2",
+			"file-descriptors",
+			"redirection"
+		],
+		"why": "The precise semantics of dup2 when newfd is already open, which is exactly the `2>&1` case in stage 29. Pairs with the bash redirection chapter for the ordering rules.",
+		"minutes": 10,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "posix-wait-functions",
+		"title": "wait",
+		"url": "https://pubs.opengroup.org/onlinepubs/9799919799/functions/waitpid.html",
+		"type": "spec",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			8,
+			38,
+			51,
+			57
+		],
+		"concepts": [
+			"waitpid",
+			"wnohang",
+			"exit-status",
+			"zombies"
+		],
+		"why": "The WIFEXITED / WIFSIGNALED macro family and the WNOHANG contract you need for the `jobs` sweep in stage 51 and the zombie test in stage 57.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "posix-pipe-function",
+		"title": "pipe",
+		"url": "https://pubs.opengroup.org/onlinepubs/9799919799/functions/pipe.html",
+		"type": "spec",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			36,
+			37,
+			38
+		],
+		"concepts": [
+			"pipe",
+			"file-descriptors",
+			"eof"
+		],
+		"why": "Two paragraphs that explain why a reader only sees EOF once every copy of the write end is closed - the single most common reason a first pipeline implementation hangs.",
+		"minutes": 10,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "bash-quoting",
+		"title": "Quoting (Bash Reference Manual)",
+		"url": "https://www.gnu.org/software/bash/manual/html_node/Quoting.html",
+		"type": "doc",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			13,
+			14,
+			15,
+			16,
+			17,
+			19
+		],
+		"concepts": [
+			"quoting",
+			"escaping",
+			"tokenizing"
+		],
+		"why": "The four-state model (unquoted / backslash / single / double) written out as prose. Section B of the tester is essentially a transcription of this page, including which characters keep their meaning inside double quotes.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "bash-word-splitting",
+		"title": "Word Splitting (Bash Reference Manual)",
+		"url": "https://www.gnu.org/software/bash/manual/html_node/Word-Splitting.html",
+		"type": "doc",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			15,
+			19,
+			20
+		],
+		"concepts": [
+			"word-splitting",
+			"ifs",
+			"tokenizing"
+		],
+		"why": "Clarifies that splitting happens after expansion and only on the results of unquoted expansions - the distinction that makes `echo \"$x\"` and `echo $x` differ. Keeps stage 19 concatenation honest.",
+		"minutes": 10,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "bash-quote-removal",
+		"title": "Quote Removal (Bash Reference Manual)",
+		"url": "https://www.gnu.org/software/bash/manual/html_node/Quote-Removal.html",
+		"type": "doc",
+		"level": "intro",
+		"track": "shell",
+		"stages": [
+			16,
+			17,
+			19
+		],
+		"concepts": [
+			"quote-removal",
+			"quoting"
+		],
+		"why": "Three sentences, but they pin down that quote removal is the last step, after globbing - which is why a quoted `*` must survive expansion and then lose its quotes.",
+		"minutes": 5,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "bash-shell-expansions",
+		"title": "Shell Expansions (Bash Reference Manual)",
+		"url": "https://www.gnu.org/software/bash/manual/html_node/Shell-Expansions.html",
+		"type": "doc",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			20,
+			21,
+			22,
+			23,
+			53
+		],
+		"concepts": [
+			"expansion-order",
+			"word-expansion",
+			"globbing"
+		],
+		"why": "The ordered list of expansions. Get the order wrong and stage 22 (tilde before glob) or stage 23 (glob after parameter expansion) fail in ways that are hard to debug from the diff alone.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "bash-parameter-expansion",
+		"title": "Shell Parameter Expansion (Bash Reference Manual)",
+		"url": "https://www.gnu.org/software/bash/manual/html_node/Shell-Parameter-Expansion.html",
+		"type": "doc",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			20,
+			21
+		],
+		"concepts": [
+			"variable-expansion",
+			"parameter-expansion"
+		],
+		"why": "Stage 20 only needs `$NAME`, `${NAME}` and `$?`, but this page shows where the grammar is going so your scanner has a place to grow into rather than needing a rewrite.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "bash-tilde-expansion",
+		"title": "Tilde Expansion (Bash Reference Manual)",
+		"url": "https://www.gnu.org/software/bash/manual/html_node/Tilde-Expansion.html",
+		"type": "doc",
+		"level": "intro",
+		"track": "shell",
+		"stages": [
+			12,
+			22
+		],
+		"concepts": [
+			"tilde-expansion",
+			"home"
+		],
+		"why": "Defines the tilde-prefix precisely: it must be unquoted, at the start of a word, and terminated by the first unquoted slash. That is the whole of stage 22.",
+		"minutes": 10,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "bash-filename-expansion",
+		"title": "Filename Expansion (Bash Reference Manual)",
+		"url": "https://www.gnu.org/software/bash/manual/html_node/Filename-Expansion.html",
+		"type": "doc",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			23
+		],
+		"concepts": [
+			"globbing",
+			"pattern-matching",
+			"dotfiles"
+		],
+		"why": "Covers the no-match rule (leave the word alone), the leading-dot rule, and sorting. Those three are exactly what stage 23 asserts.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "bash-redirections",
+		"title": "Redirections (Bash Reference Manual)",
+		"url": "https://www.gnu.org/software/bash/manual/html_node/Redirections.html",
+		"type": "doc",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			24,
+			25,
+			26,
+			27,
+			28,
+			29,
+			40
+		],
+		"concepts": [
+			"redirection",
+			"dup2",
+			"append",
+			"fd-duplication"
+		],
+		"why": "The operator table plus the crucial note that redirections are processed left to right, which is why `>file 2>&1` and `2>&1 >file` differ. Section C lives or dies on that paragraph.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "bash-pipelines",
+		"title": "Pipelines (Bash Reference Manual)",
+		"url": "https://www.gnu.org/software/bash/manual/html_node/Pipelines.html",
+		"type": "doc",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			36,
+			37,
+			38,
+			39
+		],
+		"concepts": [
+			"pipelines",
+			"subshell",
+			"exit-status",
+			"pipefail"
+		],
+		"why": "States that every stage runs in its own subshell and that the pipeline's status is the last command's - the two facts stages 37 and 39 test. Also where pipefail is defined if you want to go further.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "bash-lists",
+		"title": "Lists (Bash Reference Manual)",
+		"url": "https://www.gnu.org/software/bash/manual/html_node/Lists.html",
+		"type": "doc",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			49,
+			51
+		],
+		"concepts": [
+			"command-lists",
+			"short-circuit",
+			"background"
+		],
+		"why": "The `;`, `&&`, `||` and `&` operators with their precedence. Read it before stage 49 so you build a list of pipelines rather than special-casing two operators.",
+		"minutes": 10,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "bash-exit-status",
+		"title": "Exit Status (Bash Reference Manual)",
+		"url": "https://www.gnu.org/software/bash/manual/html_node/Exit-Status.html",
+		"type": "doc",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			39,
+			48
+		],
+		"concepts": [
+			"exit-status",
+			"exit-status-126-127",
+			"signal-status"
+		],
+		"why": "Where 126, 127 and 128+N come from. Stage 48 checks all three, and stage 50 checks 130 for an interrupted child.",
+		"minutes": 10,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "bash-command-search-and-execution",
+		"title": "Command Search and Execution (Bash Reference Manual)",
+		"url": "https://www.gnu.org/software/bash/manual/html_node/Command-Search-and-Execution.html",
+		"type": "doc",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			6,
+			7,
+			8,
+			18,
+			48
+		],
+		"concepts": [
+			"path-search",
+			"builtins",
+			"fork-exec",
+			"shebang"
+		],
+		"why": "The lookup order - function, builtin, PATH - and what happens when the file exists but is not executable. That ordering is what `type` reports in stages 6-7 and what produces 126 vs 127 in stage 48.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "bash-shell-builtin-commands",
+		"title": "Shell Builtin Commands (Bash Reference Manual)",
+		"url": "https://www.gnu.org/software/bash/manual/html_node/Shell-Builtin-Commands.html",
+		"type": "doc",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			4,
+			5,
+			6,
+			9,
+			10,
+			11,
+			12,
+			41,
+			42,
+			44,
+			45,
+			46,
+			54
+		],
+		"concepts": [
+			"builtins",
+			"exit",
+			"type",
+			"history",
+			"alias"
+		],
+		"why": "One page with the reference behaviour of every builtin the tester exercises, including `history -r/-w/-a` and `type`'s output wording. Use it as the spec for your output strings.",
+		"minutes": 45,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "bash-aliases",
+		"title": "Aliases (Bash Reference Manual)",
+		"url": "https://www.gnu.org/software/bash/manual/html_node/Aliases.html",
+		"type": "doc",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			54
+		],
+		"concepts": [
+			"alias",
+			"re-tokenizing"
+		],
+		"why": "Explains that aliases are expanded on the first word only, that a trailing space makes the next word eligible too, and that recursion is broken deliberately. Stage 54 leans on the first-word rule.",
+		"minutes": 10,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "bash-comments",
+		"title": "Comments (Bash Reference Manual)",
+		"url": "https://www.gnu.org/software/bash/manual/html_node/Comments.html",
+		"type": "doc",
+		"level": "intro",
+		"track": "shell",
+		"stages": [
+			52
+		],
+		"concepts": [
+			"comments",
+			"tokenizing"
+		],
+		"why": "A `#` only starts a comment at the beginning of a word; `echo a#b` prints `a#b`. That one clause is the trap in stage 52.",
+		"minutes": 5,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "bash-command-substitution",
+		"title": "Command Substitution (Bash Reference Manual)",
+		"url": "https://www.gnu.org/software/bash/manual/html_node/Command-Substitution.html",
+		"type": "doc",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			53
+		],
+		"concepts": [
+			"command-substitution",
+			"subshell",
+			"pipe"
+		],
+		"why": "Confirms the trailing-newline stripping and that the inside runs in a subshell with stdout on a pipe. Stage 53 checks both halves.",
+		"minutes": 10,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "bash-command-grouping",
+		"title": "Command Grouping (Bash Reference Manual)",
+		"url": "https://www.gnu.org/software/bash/manual/html_node/Command-Grouping.html",
+		"type": "doc",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			53
+		],
+		"concepts": [
+			"subshell",
+			"command-grouping"
+		],
+		"why": "The difference between `( )` and `{ }` - a fork versus the current shell. Stage 53 asserts that a `cd` inside parentheses does not move the parent.",
+		"minutes": 5,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "bash-job-control",
+		"title": "Job Control (Bash Reference Manual)",
+		"url": "https://www.gnu.org/software/bash/manual/html_node/Job-Control.html",
+		"type": "doc",
+		"level": "deep",
+		"track": "shell",
+		"stages": [
+			50,
+			51
+		],
+		"concepts": [
+			"job-control",
+			"process-groups",
+			"jobs",
+			"wait"
+		],
+		"why": "The user-facing model - job ids, `jobs` output format, `wait` - that stage 51 checks, plus the vocabulary you need before reading the glibc job-control chapter for the implementation.",
+		"minutes": 25,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "bash-signals",
+		"title": "Signals (Bash Reference Manual)",
+		"url": "https://www.gnu.org/software/bash/manual/html_node/Signals.html",
+		"type": "doc",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			50,
+			51,
+			57
+		],
+		"concepts": [
+			"signals",
+			"sigint",
+			"sigchld",
+			"job-control"
+		],
+		"why": "What an interactive shell does with SIGINT and SIGTERM and what it resets in children before exec. Stage 50 is failing for you until this page's rules about resetting handlers in the child are followed.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "bash-history-facilities",
+		"title": "Bash History Facilities (Bash Reference Manual)",
+		"url": "https://www.gnu.org/software/bash/manual/html_node/Bash-History-Facilities.html",
+		"type": "doc",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			41,
+			42,
+			44,
+			45,
+			46,
+			47
+		],
+		"concepts": [
+			"history",
+			"histfile",
+			"history-append"
+		],
+		"why": "Describes HISTFILE loading at start-up and writing at exit, and the `-a`/`-r`/`-w` split that section F is built on. Read it once and stages 44-47 become bookkeeping.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "bash-history-interaction",
+		"title": "History Interaction (Bash Reference Manual)",
+		"url": "https://www.gnu.org/software/bash/manual/html_node/History-Interaction.html",
+		"type": "doc",
+		"level": "deep",
+		"track": "shell",
+		"stages": [
+			41,
+			42,
+			43
+		],
+		"concepts": [
+			"history",
+			"history-expansion"
+		],
+		"why": "Beyond what the tester asks: the `!!` / `!n` expansion layer. Useful context for why history entries are numbered from 1 and never renumbered, which stage 42 assumes.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "bash-command-line-editing",
+		"title": "Command Line Editing (Bash Reference Manual)",
+		"url": "https://www.gnu.org/software/bash/manual/html_node/Command-Line-Editing.html",
+		"type": "doc",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			43,
+			55
+		],
+		"concepts": [
+			"line-editing",
+			"readline",
+			"key-bindings"
+		],
+		"why": "The canonical list of what Ctrl-A/E/U/W/K and the arrow keys are supposed to do, with the emacs-mode names. Stage 55 is graded against these defaults.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "bash-readline-interaction",
+		"title": "Readline Interaction (Bash Reference Manual)",
+		"url": "https://www.gnu.org/software/bash/manual/html_node/Readline-Interaction.html",
+		"type": "doc",
+		"level": "intro",
+		"track": "shell",
+		"stages": [
+			43,
+			55
+		],
+		"concepts": [
+			"line-editing",
+			"readline",
+			"kill-ring"
+		],
+		"why": "The short user-level version of the editing model - point, mark, killing and yanking. Enough to decide how much of it you want to implement in stage 55.",
+		"minutes": 10,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "bash-programmable-completion",
+		"title": "Programmable Completion (Bash Reference Manual)",
+		"url": "https://www.gnu.org/software/bash/manual/html_node/Programmable-Completion.html",
+		"type": "doc",
+		"level": "deep",
+		"track": "shell",
+		"stages": [
+			30,
+			31,
+			32,
+			33,
+			34,
+			35
+		],
+		"concepts": [
+			"completion",
+			"readline",
+			"candidate-generation"
+		],
+		"why": "Shows how bash separates candidate generation from the display and insertion rules. Section D only needs builtins plus PATH, but the split is the right shape to copy.",
+		"minutes": 25,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "bash-environment",
+		"title": "Environment (Bash Reference Manual)",
+		"url": "https://www.gnu.org/software/bash/manual/html_node/Environment.html",
+		"type": "doc",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			21
+		],
+		"concepts": [
+			"environ",
+			"export",
+			"prefix-assignments"
+		],
+		"why": "The distinction between shell variables and the environment handed to execve, and why `FOO=bar cmd` affects one child only. That is stage 21 in a nutshell.",
+		"minutes": 10,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "bash-variables",
+		"title": "Bash Variables (Bash Reference Manual)",
+		"url": "https://www.gnu.org/software/bash/manual/html_node/Bash-Variables.html",
+		"type": "doc",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			20,
+			47
+		],
+		"concepts": [
+			"histfile",
+			"shell-variables",
+			"environ"
+		],
+		"why": "Reference semantics for HISTFILE, HISTSIZE, PWD, OLDPWD and friends. Stage 47 checks HISTFILE specifically, and the rest are cheap wins once your variable table exists.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "bash-invoking-bash",
+		"title": "Invoking Bash (Bash Reference Manual)",
+		"url": "https://www.gnu.org/software/bash/manual/html_node/Invoking-Bash.html",
+		"type": "doc",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			56
+		],
+		"concepts": [
+			"script-mode",
+			"argv",
+			"positional-parameters"
+		],
+		"why": "How `-c STRING`, a script path and the positional parameters interact - including that `$0` is the script and `$1` starts after it. Stage 56 tests exactly that layout.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "bash-interactive-shells",
+		"title": "Interactive Shells (Bash Reference Manual)",
+		"url": "https://www.gnu.org/software/bash/manual/html_node/Interactive-Shells.html",
+		"type": "doc",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			1,
+			3,
+			56
+		],
+		"concepts": [
+			"repl",
+			"prompt",
+			"isatty"
+		],
+		"why": "Defines what 'interactive' means and the behaviour differences that follow: prompts, job control, ignoring signals. Stage 56 requires no prompt when stdin is not a terminal.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "bash-startup-files",
+		"title": "Bash Startup Files (Bash Reference Manual)",
+		"url": "https://www.gnu.org/software/bash/manual/html_node/Bash-Startup-Files.html",
+		"type": "doc",
+		"level": "intro",
+		"track": "shell",
+		"stages": [
+			56
+		],
+		"concepts": [
+			"script-mode",
+			"startup",
+			"shebang"
+		],
+		"why": "Which files are read for which invocation mode. Useful once stage 56 has you branching on interactive vs script, so you know what a real shell would do next.",
+		"minutes": 10,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "man-fork",
+		"title": "fork(2) - Linux manual page",
+		"url": "https://man7.org/linux/man-pages/man2/fork.2.html",
+		"type": "doc",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			8,
+			36,
+			37,
+			38,
+			51,
+			53
+		],
+		"concepts": [
+			"fork-exec",
+			"process-creation",
+			"inheritance"
+		],
+		"why": "The inheritance list matters more than the call: open file descriptors, signal dispositions, cwd. Every pipeline and redirection bug is somewhere in that list.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "man-execve",
+		"title": "execve(2) - Linux manual page",
+		"url": "https://man7.org/linux/man-pages/man2/execve.2.html",
+		"type": "doc",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			8,
+			18,
+			56
+		],
+		"concepts": [
+			"fork-exec",
+			"argv",
+			"shebang",
+			"environ"
+		],
+		"why": "Includes the interpreter-script (`#!`) handling and the exact errno values - ENOENT vs EACCES vs ENOEXEC - that you map to 127 and 126 in stage 48.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "man-exec-3",
+		"title": "exec(3) - Linux manual page",
+		"url": "https://man7.org/linux/man-pages/man3/exec.3.html",
+		"type": "doc",
+		"level": "intro",
+		"track": "shell",
+		"stages": [
+			8,
+			18
+		],
+		"concepts": [
+			"fork-exec",
+			"path-search"
+		],
+		"why": "The l/v/p/e naming scheme decoded, so you can pick execvp when you want libc to walk PATH and execv when you have already resolved the path yourself in stage 7.",
+		"minutes": 10,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "man-wait",
+		"title": "wait(2) - Linux manual page",
+		"url": "https://man7.org/linux/man-pages/man2/wait.2.html",
+		"type": "doc",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			8,
+			38,
+			48,
+			51,
+			57
+		],
+		"concepts": [
+			"waitpid",
+			"wnohang",
+			"zombies",
+			"exit-status"
+		],
+		"why": "Has the worked examples for WNOHANG polling and the status macros. Stage 57's zombie check is a direct test of whether you reap everything you fork.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "man-pipe",
+		"title": "pipe(2) - Linux manual page",
+		"url": "https://man7.org/linux/man-pages/man2/pipe.2.html",
+		"type": "doc",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			36,
+			37,
+			38,
+			40
+		],
+		"concepts": [
+			"pipe",
+			"eof",
+			"sigpipe",
+			"file-descriptors"
+		],
+		"why": "Pipe capacity, SIGPIPE and the EOF rule, with a complete example program. Stage 38's 'never run a stage to completion first' requirement is really about the 64 KiB buffer described here.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "man-dup",
+		"title": "dup(2) - Linux manual page",
+		"url": "https://man7.org/linux/man-pages/man2/dup.2.html",
+		"type": "doc",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			24,
+			25,
+			26,
+			27,
+			28,
+			29,
+			40
+		],
+		"concepts": [
+			"dup2",
+			"file-descriptors",
+			"redirection",
+			"cloexec"
+		],
+		"why": "dup2's atomic close-then-duplicate, and the note that the duplicate shares the file offset. The shared offset is why `cmd >f 2>&1` interleaves correctly and `cmd >f 2>f` does not.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "man-open",
+		"title": "open(2) - Linux manual page",
+		"url": "https://man7.org/linux/man-pages/man2/open.2.html",
+		"type": "doc",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			24,
+			25,
+			26,
+			27,
+			28,
+			29
+		],
+		"concepts": [
+			"open-flags",
+			"o-append",
+			"o-trunc",
+			"redirection"
+		],
+		"why": "O_CREAT|O_TRUNC vs O_APPEND and the mode argument. Stage 29 also needs the fact that the file is truncated at open time, before you discover the command does not exist.",
+		"minutes": 25,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "man-termios",
+		"title": "termios(3) - Linux manual page",
+		"url": "https://man7.org/linux/man-pages/man3/termios.3.html",
+		"type": "doc",
+		"level": "deep",
+		"track": "shell",
+		"stages": [
+			30,
+			31,
+			32,
+			33,
+			34,
+			35,
+			43,
+			55
+		],
+		"concepts": [
+			"termios",
+			"raw-mode",
+			"icanon",
+			"echo",
+			"vmin-vtime"
+		],
+		"why": "Every flag in the struct, in one page. This is the reference you keep open for all of section D; cfmakeraw at the bottom shows which bits a 'raw' shell actually clears.",
+		"minutes": 45,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "man-tcsetattr",
+		"title": "tcsetattr(3) - Linux manual page",
+		"url": "https://man7.org/linux/man-pages/man3/tcsetattr.3.html",
+		"type": "doc",
+		"level": "deep",
+		"track": "shell",
+		"stages": [
+			30,
+			55
+		],
+		"concepts": [
+			"termios",
+			"tcsetattr",
+			"raw-mode"
+		],
+		"why": "The Linux specifics of applying a termios struct, including the gotcha that tcsetattr reports success if *any* change was applied - so verify by reading back.",
+		"minutes": 10,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "man-openpty",
+		"title": "openpty(3) - Linux manual page",
+		"url": "https://man7.org/linux/man-pages/man3/openpty.3.html",
+		"type": "doc",
+		"level": "deep",
+		"track": "shell",
+		"stages": [
+			30,
+			43,
+			55
+		],
+		"concepts": [
+			"pty",
+			"openpty",
+			"forkpty"
+		],
+		"why": "The tester drives stages 30-35, 43 and 55 through a pty; reading this tells you what is on the other side of your terminal and how to build the same harness yourself for manual debugging.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "man-pty-7",
+		"title": "pty(7) - Linux manual page",
+		"url": "https://man7.org/linux/man-pages/man7/pty.7.html",
+		"type": "doc",
+		"level": "deep",
+		"track": "shell",
+		"stages": [
+			30,
+			43
+		],
+		"concepts": [
+			"pty",
+			"line-discipline",
+			"controlling-terminal"
+		],
+		"why": "Explains the master/slave pair and the line discipline sitting between them - the piece that turns your raw bytes into what the tester actually observes.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "man-ioctl-tty",
+		"title": "ioctl_tty(2) - Linux manual page",
+		"url": "https://man7.org/linux/man-pages/man4/tty_ioctl.4.html",
+		"type": "doc",
+		"level": "deep",
+		"track": "shell",
+		"stages": [
+			30,
+			55,
+			57
+		],
+		"concepts": [
+			"termios",
+			"winsize",
+			"controlling-terminal",
+			"tcgetpgrp"
+		],
+		"why": "Where TIOCGWINSZ and the foreground-process-group ioctls live. You need the window size once stage 55's redraw has to wrap a long line, and tcsetpgrp once you do real job control.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "man-signal-7",
+		"title": "signal(7) - Linux manual page",
+		"url": "https://man7.org/linux/man-pages/man7/signal.7.html",
+		"type": "doc",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			50,
+			51,
+			57
+		],
+		"concepts": [
+			"signals",
+			"sigint",
+			"async-signal-safe",
+			"eintr"
+		],
+		"why": "The disposition table, the async-signal-safe function list, and EINTR semantics. Your read() will return EINTR after Ctrl-C in stage 50 and you need to handle that rather than treat it as EOF.",
+		"minutes": 35,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "man-sigaction",
+		"title": "sigaction(2) - Linux manual page",
+		"url": "https://man7.org/linux/man-pages/man2/sigaction.2.html",
+		"type": "doc",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			50
+		],
+		"concepts": [
+			"signals",
+			"sigaction",
+			"sa-restart"
+		],
+		"why": "Use sigaction, not signal, and decide SA_RESTART deliberately: with it your read is resumed silently, without it you get EINTR and can redraw the prompt. Stage 50 wants the second behaviour.",
+		"minutes": 25,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "man-setpgid",
+		"title": "setpgid(2) - Linux manual page",
+		"url": "https://man7.org/linux/man-pages/man2/setpgid.2.html",
+		"type": "doc",
+		"level": "deep",
+		"track": "shell",
+		"stages": [
+			50,
+			51
+		],
+		"concepts": [
+			"process-groups",
+			"job-control",
+			"setpgid"
+		],
+		"why": "Putting the foreground job in its own process group is how Ctrl-C reaches the child and not your shell. Note the race the man page describes: call setpgid in both parent and child.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "man-credentials-7",
+		"title": "credentials(7) - Linux manual page",
+		"url": "https://man7.org/linux/man-pages/man7/credentials.7.html",
+		"type": "doc",
+		"level": "deep",
+		"track": "shell",
+		"stages": [
+			50,
+			51
+		],
+		"concepts": [
+			"process-groups",
+			"sessions",
+			"job-control"
+		],
+		"why": "The clearest short description of process, process-group and session ids and how they relate to the controlling terminal. Read it before the job-control code, not during.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "man-glob-7",
+		"title": "glob(7) - Linux manual page",
+		"url": "https://man7.org/linux/man-pages/man7/glob.7.html",
+		"type": "doc",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			23
+		],
+		"concepts": [
+			"globbing",
+			"pattern-matching",
+			"character-classes"
+		],
+		"why": "The pattern language itself - `*`, `?`, `[...]`, ranges and negation - separate from the shell's use of it. Stage 23's bracket tests come straight from here.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "man-glob-3",
+		"title": "glob(3) - Linux manual page",
+		"url": "https://man7.org/linux/man-pages/man3/glob.3.html",
+		"type": "doc",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			23
+		],
+		"concepts": [
+			"globbing",
+			"glob-api",
+			"sorting"
+		],
+		"why": "If you would rather call libc than write the matcher, this is the API, including GLOB_NOCHECK which gives you the 'no matches, keep the literal word' rule for free.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "man-chdir",
+		"title": "chdir(2) - Linux manual page",
+		"url": "https://man7.org/linux/man-pages/man2/chdir.2.html",
+		"type": "doc",
+		"level": "intro",
+		"track": "shell",
+		"stages": [
+			10,
+			11,
+			12
+		],
+		"concepts": [
+			"cwd",
+			"chdir",
+			"errno"
+		],
+		"why": "Short, and the errno list is what you turn into `cd: <path>: No such file or directory`. Note that chdir already resolves `.` and `..` so you should not do path arithmetic yourself.",
+		"minutes": 10,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "man-getcwd",
+		"title": "getcwd(3) - Linux manual page",
+		"url": "https://man7.org/linux/man-pages/man3/getcwd.3.html",
+		"type": "doc",
+		"level": "intro",
+		"track": "shell",
+		"stages": [
+			9,
+			11
+		],
+		"concepts": [
+			"cwd",
+			"getcwd",
+			"canonical-path"
+		],
+		"why": "Returns the canonical, symlink-resolved path, which is why `pwd` after `cd ..` prints what stage 11 expects rather than the string you typed.",
+		"minutes": 10,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "man-getdents",
+		"title": "getdents(2) - Linux manual page",
+		"url": "https://man7.org/linux/man-pages/man2/getdents.2.html",
+		"type": "doc",
+		"level": "deep",
+		"track": "shell",
+		"stages": [
+			23,
+			33,
+			34,
+			35
+		],
+		"concepts": [
+			"directory-iteration",
+			"completion",
+			"globbing"
+		],
+		"why": "What readdir is built on. Relevant when scanning every PATH directory for completion candidates in stage 33 and you start caring about cost and about d_type being unreliable.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "tlpi-book",
+		"title": "The Linux Programming Interface",
+		"url": "https://man7.org/tlpi/index.html",
+		"type": "book",
+		"level": "deep",
+		"track": "shell",
+		"stages": [
+			8,
+			24,
+			30,
+			36,
+			38,
+			50,
+			51,
+			57
+		],
+		"concepts": [
+			"fork-exec",
+			"signals",
+			"job-control",
+			"termios",
+			"pipes"
+		],
+		"why": "The single best desk reference for this track. Chapters 24-28 (process creation and program execution), 20-22 (signals), 34 (process groups and job control), 44 (pipes) and 62 (terminals) map almost stage for stage.",
+		"minutes": 900,
+		"free": false,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "apue-book",
+		"title": "Advanced Programming in the UNIX Environment, 3rd Edition",
+		"url": "https://www.informit.com/store/advanced-programming-in-the-unix-environment-9780321637734",
+		"type": "book",
+		"level": "deep",
+		"track": "shell",
+		"stages": [
+			8,
+			24,
+			29,
+			30,
+			36,
+			50,
+			51,
+			55
+		],
+		"concepts": [
+			"fork-exec",
+			"redirection",
+			"termios",
+			"job-control",
+			"pty"
+		],
+		"why": "Chapter 8 (process control), 9 (process relationships and job control), 15 (pipes), 18 (terminal I/O) and 19 (pseudo terminals) are the classic treatment. Chapter 19 in particular is worth it before section D.",
+		"minutes": 900,
+		"free": false,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "brennan-write-a-shell-in-c",
+		"title": "Tutorial - Write a Shell in C",
+		"url": "https://brennan.io/2015/01/16/write-a-shell-in-c/",
+		"type": "article",
+		"level": "intro",
+		"track": "shell",
+		"stages": [
+			1,
+			2,
+			3,
+			4,
+			8,
+			9,
+			10,
+			36
+		],
+		"concepts": [
+			"repl",
+			"fork-exec",
+			"tokenizing",
+			"builtins"
+		],
+		"why": "The 200-line shell that gets the read-parse-execute loop and fork/exec/wait shape into your head in one sitting. Start here if stage 8 feels vague; stop before you copy its tokenizer, which is too simple for section B.",
+		"minutes": 45,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "tty-demystified",
+		"title": "The TTY demystified",
+		"url": "https://www.linusakesson.net/programming/tty/",
+		"type": "article",
+		"level": "deep",
+		"track": "shell",
+		"stages": [
+			30,
+			43,
+			50,
+			51,
+			55
+		],
+		"concepts": [
+			"pty",
+			"line-discipline",
+			"job-control",
+			"sigint",
+			"controlling-terminal"
+		],
+		"why": "The article that makes the whole terminal stack click: line discipline, session leaders, foreground process groups, and why Ctrl-C goes where it goes. Read it before stage 30 and again before stage 50.",
+		"minutes": 40,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kilo-entering-raw-mode",
+		"title": "2. Entering raw mode | Build Your Own Text Editor",
+		"url": "https://viewsourcecode.org/snaptoken/kilo/02.enteringRawMode.html",
+		"type": "article",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			30,
+			31,
+			32,
+			43,
+			55
+		],
+		"concepts": [
+			"termios",
+			"raw-mode",
+			"echo",
+			"vmin-vtime"
+		],
+		"why": "Flag-by-flag, with a reason for clearing each one and a working restore-on-exit. The most practical on-ramp to termios there is, and it is the same code shape stage 30 needs.",
+		"minutes": 45,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "glibc-implementing-a-shell",
+		"title": "Implementing a Shell (The GNU C Library)",
+		"url": "https://sourceware.org/glibc/manual/latest/html_node/Implementing-a-Shell.html",
+		"type": "doc",
+		"level": "deep",
+		"track": "shell",
+		"stages": [
+			36,
+			37,
+			38,
+			50,
+			51
+		],
+		"concepts": [
+			"job-control",
+			"process-groups",
+			"pipelines",
+			"fork-exec"
+		],
+		"why": "A complete, correct job-control shell in the manual, with the initialisation dance (ignore SIGTTOU, take the terminal, become a process group leader) written out. The reference implementation for stages 50-51.",
+		"minutes": 60,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "glibc-launching-jobs",
+		"title": "Launching Jobs (The GNU C Library)",
+		"url": "https://sourceware.org/glibc/manual/latest/html_node/Launching-Jobs.html",
+		"type": "doc",
+		"level": "deep",
+		"track": "shell",
+		"stages": [
+			36,
+			38,
+			40,
+			50,
+			51
+		],
+		"concepts": [
+			"process-groups",
+			"pipelines",
+			"redirection",
+			"job-control"
+		],
+		"why": "The launch_process / launch_job pair showing where to put setpgid, dup2 and the signal resets relative to fork and exec. Stage 40's per-stage redirections go exactly where this code puts them.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "glibc-noncanonical-input",
+		"title": "Noncanonical Input (The GNU C Library)",
+		"url": "https://sourceware.org/glibc/manual/latest/html_node/Noncanonical-Input.html",
+		"type": "doc",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			30,
+			31,
+			32
+		],
+		"concepts": [
+			"termios",
+			"vmin-vtime",
+			"raw-mode"
+		],
+		"why": "The four MIN/TIME combinations explained as a table. Pick the blocking-read-of-one-byte case for a shell and stage 30's key-by-key loop stops being flaky.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "glibc-terminal-modes",
+		"title": "Terminal Modes (The GNU C Library)",
+		"url": "https://sourceware.org/glibc/manual/latest/html_node/Terminal-Modes.html",
+		"type": "doc",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			30,
+			55
+		],
+		"concepts": [
+			"termios",
+			"raw-mode",
+			"echo"
+		],
+		"why": "Groups the termios flags by what they actually do rather than by struct field, which is the view you want when deciding the minimum set to clear for a line editor.",
+		"minutes": 25,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "gnu-readline-manual",
+		"title": "GNU Readline Library",
+		"url": "https://tiswww.case.edu/php/chet/readline/readline.html",
+		"type": "doc",
+		"level": "deep",
+		"track": "shell",
+		"stages": [
+			33,
+			34,
+			35,
+			43,
+			55
+		],
+		"concepts": [
+			"readline",
+			"line-editing",
+			"completion",
+			"key-bindings"
+		],
+		"why": "Chet Ramey's own manual. The completion section documents the exact 'bell, then list on the second tab' behaviour and longest-common-prefix insertion that stages 34 and 35 assert.",
+		"minutes": 60,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "gnu-readline-home",
+		"title": "The GNU Readline Library",
+		"url": "https://tiswww.case.edu/php/chet/readline/rltop.html",
+		"type": "doc",
+		"level": "intro",
+		"track": "shell",
+		"stages": [
+			43,
+			55
+		],
+		"concepts": [
+			"readline",
+			"line-editing"
+		],
+		"why": "The project page, mostly useful for the source tarball: reading readline's own display.c is the fastest way to understand redraw-after-recall in stage 43.",
+		"minutes": 10,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "linenoise-repo",
+		"title": "antirez/linenoise: A small self-contained alternative to readline and libedit",
+		"url": "https://github.com/antirez/linenoise",
+		"type": "repo",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			30,
+			31,
+			34,
+			35,
+			43,
+			55
+		],
+		"concepts": [
+			"line-editing",
+			"raw-mode",
+			"completion",
+			"history"
+		],
+		"why": "About 1100 lines that do raw mode, history, completion and redraw. Small enough to read end to end in an evening and it solves every problem section D and stage 55 put in front of you.",
+		"minutes": 90,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "ansi-escape-code",
+		"title": "ANSI escape code - Wikipedia",
+		"url": "https://en.wikipedia.org/wiki/ANSI_escape_code",
+		"type": "article",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			43,
+			55
+		],
+		"concepts": [
+			"ansi-escapes",
+			"csi",
+			"cursor-movement",
+			"line-editing"
+		],
+		"why": "The lookup table for the sequences you both parse (ESC [ A/B/C/D from the arrow keys) and emit (erase line, move cursor to column). Stages 43 and 55 are mostly this table applied carefully.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "biriukov-fd-and-open-file-description",
+		"title": "File descriptor and open file description | Viacheslav Biriukov",
+		"url": "https://biriukov.dev/docs/fd-pipe-session-terminal/1-file-descriptor-and-open-file-description/",
+		"type": "article",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			24,
+			28,
+			29,
+			36,
+			40,
+			57
+		],
+		"concepts": [
+			"file-descriptors",
+			"open-file-description",
+			"dup2",
+			"pipe"
+		],
+		"why": "First part of a series that walks from file descriptors through pipes to sessions and terminals. The fd-table vs open-file-description distinction is the mental model that makes `2>&1` obvious.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "igupta-writing-a-unix-shell",
+		"title": "Writing a Unix Shell - Part I",
+		"url": "https://igupta.in/blog/writing-a-unix-shell-part-1/",
+		"type": "article",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			8,
+			36,
+			38,
+			50,
+			51
+		],
+		"concepts": [
+			"fork-exec",
+			"pipelines",
+			"job-control",
+			"signals"
+		],
+		"why": "A three-part write-up that goes further than most: process groups, background jobs and signal handling, not just fork/exec. Good second read after Brennan, before stages 50-51.",
+		"minutes": 40,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "wooledge-quotes",
+		"title": "Quotes - Greg's Wiki",
+		"url": "https://mywiki.wooledge.org/Quotes",
+		"type": "article",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			13,
+			14,
+			15,
+			16,
+			17,
+			19
+		],
+		"concepts": [
+			"quoting",
+			"word-splitting",
+			"escaping"
+		],
+		"why": "Worked examples of every quoting combination with what the shell actually passes to the command. Faster to check a stage-B expectation against this than against the standard.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "wooledge-glob",
+		"title": "glob - Greg's Wiki",
+		"url": "https://mywiki.wooledge.org/glob",
+		"type": "article",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			23
+		],
+		"concepts": [
+			"globbing",
+			"pattern-matching",
+			"dotfiles"
+		],
+		"why": "Practical notes on globbing including the dotfile rule and why an unmatched pattern stays literal by default. Complements glob(7) with the shell's point of view.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "wooledge-process-management",
+		"title": "ProcessManagement - Greg's Wiki",
+		"url": "https://mywiki.wooledge.org/ProcessManagement",
+		"type": "article",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			36,
+			37,
+			38,
+			39,
+			51
+		],
+		"concepts": [
+			"pipelines",
+			"subshell",
+			"job-control",
+			"wait"
+		],
+		"why": "Explains which parts of a pipeline run in subshells and what that means for variables set inside them - the behaviour stage 37 checks when a builtin is a pipeline stage.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "wooledge-signaltrap",
+		"title": "SignalTrap - Greg's Wiki",
+		"url": "https://mywiki.wooledge.org/SignalTrap",
+		"type": "article",
+		"level": "deep",
+		"track": "shell",
+		"stages": [
+			50,
+			57
+		],
+		"concepts": [
+			"signals",
+			"sigint",
+			"eintr",
+			"traps"
+		],
+		"why": "Covers what a shell does with signals while waiting for a child and why interrupted builtins behave oddly. Useful when stage 50's status of 130 is not what you are seeing.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "wooledge-bashpitfalls",
+		"title": "BashPitfalls - Greg's Wiki",
+		"url": "https://mywiki.wooledge.org/BashPitfalls",
+		"type": "article",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			15,
+			19,
+			23,
+			29,
+			52,
+			57
+		],
+		"concepts": [
+			"quoting",
+			"word-splitting",
+			"globbing",
+			"edge-cases"
+		],
+		"why": "Sixty ways real shells surprise people. Read it as a list of edge cases your implementation should survive - several of the stage 57 robustness tests are recognisably from this family.",
+		"minutes": 60,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "wooledge-bashguide",
+		"title": "BashGuide - Greg's Wiki",
+		"url": "https://mywiki.wooledge.org/BashGuide",
+		"type": "article",
+		"level": "intro",
+		"track": "shell",
+		"stages": [
+			5,
+			13,
+			20,
+			21,
+			24,
+			36,
+			49,
+			52
+		],
+		"concepts": [
+			"shell-basics",
+			"quoting",
+			"redirection",
+			"command-lists"
+		],
+		"why": "A correct, opinionated tour of shell semantics from the user's side. Handy for sanity-checking what a feature is supposed to feel like before you implement it.",
+		"minutes": 120,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "nix-crate",
+		"title": "nix - Rust",
+		"url": "https://docs.rs/nix/latest/nix/",
+		"type": "doc",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			8,
+			24,
+			30,
+			36,
+			50,
+			51
+		],
+		"concepts": [
+			"rust",
+			"syscalls",
+			"fork-exec",
+			"termios"
+		],
+		"why": "The crate that gives you fork, execvp, dup2, pipe, waitpid, termios and pty with real Rust types instead of raw libc. This is the dependency the rest of the Rust pointers here assume.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "nix-unistd-fork",
+		"title": "fork in nix::unistd - Rust",
+		"url": "https://docs.rs/nix/latest/nix/unistd/fn.fork.html",
+		"type": "doc",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			8,
+			36,
+			37,
+			38,
+			53
+		],
+		"concepts": [
+			"rust",
+			"fork-exec",
+			"unsafe"
+		],
+		"why": "Read the safety section: after fork in a multi-threaded Rust process you may only call async-signal-safe functions before exec. It explains why you set up redirections with raw syscalls, not with allocating code.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "nix-sys-termios",
+		"title": "nix::sys::termios - Rust",
+		"url": "https://docs.rs/nix/latest/nix/sys/termios/index.html",
+		"type": "doc",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			30,
+			31,
+			32,
+			55
+		],
+		"concepts": [
+			"rust",
+			"termios",
+			"raw-mode"
+		],
+		"why": "Typed flag sets for the termios bits plus cfmakeraw and tcsetattr. Turns the C man page into something you can get wrong at compile time instead of at runtime.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "nix-pty",
+		"title": "nix::pty - Rust",
+		"url": "https://docs.rs/nix/latest/nix/pty/index.html",
+		"type": "doc",
+		"level": "deep",
+		"track": "shell",
+		"stages": [
+			30,
+			43
+		],
+		"concepts": [
+			"rust",
+			"pty",
+			"openpty"
+		],
+		"why": "openpty/forkpty in Rust, which is how you reproduce the tester's pty harness locally when a completion test fails and you want to poke at it by hand.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "nix-sys-signal",
+		"title": "nix::sys::signal - Rust",
+		"url": "https://docs.rs/nix/latest/nix/sys/signal/index.html",
+		"type": "doc",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			50,
+			51
+		],
+		"concepts": [
+			"rust",
+			"signals",
+			"sigaction"
+		],
+		"why": "SigAction, SaFlags and the signal constants. Stage 50 needs a handler installed without SA_RESTART plus a reset to SIG_DFL in the child before exec; both are here.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "rust-std-process",
+		"title": "std::process - Rust",
+		"url": "https://doc.rust-lang.org/std/process/index.html",
+		"type": "doc",
+		"level": "intro",
+		"track": "shell",
+		"stages": [
+			8,
+			18,
+			36
+		],
+		"concepts": [
+			"rust",
+			"process-spawn",
+			"stdio"
+		],
+		"why": "The safe, portable route for stages 8-18: Command handles the PATH search and status for you. You will outgrow it around stage 50, which is a fine reason to start here and learn where it stops.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "rust-std-command",
+		"title": "Command in std::process - Rust",
+		"url": "https://doc.rust-lang.org/std/process/struct.Command.html",
+		"type": "doc",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			8,
+			21,
+			24,
+			28,
+			36,
+			40
+		],
+		"concepts": [
+			"rust",
+			"process-spawn",
+			"stdio",
+			"environ"
+		],
+		"why": "env/envs for stage 21's prefix assignments, stdin/stdout/stderr with Stdio::from(File) for section C, and Stdio::piped for pipelines. Most of the plumbing you need without touching dup2.",
+		"minutes": 25,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "rust-std-command-ext",
+		"title": "CommandExt in std::os::unix::process - Rust",
+		"url": "https://doc.rust-lang.org/std/os/unix/process/trait.CommandExt.html",
+		"type": "doc",
+		"level": "deep",
+		"track": "shell",
+		"stages": [
+			8,
+			40,
+			50,
+			51
+		],
+		"concepts": [
+			"rust",
+			"pre-exec",
+			"process-groups",
+			"fork-exec"
+		],
+		"why": "pre_exec and process_group are the escape hatches that let you keep using Command while still doing setpgid and custom dup2 in the child. Read the unsafety notes on pre_exec carefully.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "rust-glob-crate",
+		"title": "glob - Rust",
+		"url": "https://docs.rs/glob/latest/glob/",
+		"type": "doc",
+		"level": "intro",
+		"track": "shell",
+		"stages": [
+			23
+		],
+		"concepts": [
+			"rust",
+			"globbing",
+			"pattern-matching"
+		],
+		"why": "Pattern matching and directory walking with MatchOptions for the dotfile rule. A reasonable shortcut for stage 23 if you would rather spend your time on the expansion ordering.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "rust-shell-words-crate",
+		"title": "shell_words - Rust",
+		"url": "https://docs.rs/shell-words/latest/shell_words/",
+		"type": "doc",
+		"level": "intro",
+		"track": "shell",
+		"stages": [
+			13,
+			14,
+			15,
+			19
+		],
+		"concepts": [
+			"rust",
+			"tokenizing",
+			"quoting"
+		],
+		"why": "A tiny POSIX-ish word splitter. Not to depend on - you are writing the tokenizer - but its source is a 150-line reference implementation of exactly the state machine stages 13-19 want.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "rustyline-crate",
+		"title": "rustyline - Rust",
+		"url": "https://docs.rs/rustyline/latest/rustyline/",
+		"type": "doc",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			34,
+			35,
+			43,
+			55
+		],
+		"concepts": [
+			"rust",
+			"line-editing",
+			"completion",
+			"history"
+		],
+		"why": "A readline clone in Rust. Even if you hand-roll section D, its Completer and History traits show a clean separation between key handling, candidate generation and redraw.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "missing-semester-shell",
+		"title": "Course Overview + The Shell - Missing Semester",
+		"url": "https://missing.csail.mit.edu/2020/course-shell/",
+		"type": "course",
+		"level": "intro",
+		"track": "shell",
+		"stages": [
+			1,
+			5,
+			24,
+			36,
+			49
+		],
+		"concepts": [
+			"shell-basics",
+			"redirection",
+			"pipelines"
+		],
+		"why": "MIT's one-hour orientation to what a shell is from the user's side. Worth skimming first if you want a clear picture of the behaviour you are about to reimplement.",
+		"minutes": 60,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "build-your-own-shell-repo",
+		"title": "tokenrove/build-your-own-shell: Guidance for mollusks (WIP)",
+		"url": "https://github.com/tokenrove/build-your-own-shell",
+		"type": "repo",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			1,
+			8,
+			24,
+			29,
+			36,
+			49,
+			50,
+			51,
+			53,
+			56
+		],
+		"concepts": [
+			"shell-design",
+			"job-control",
+			"redirection",
+			"parsing"
+		],
+		"why": "A staged guide with tests and a lot of hard-won notes about the order to build things in. Its later stages (job control, subshells, scripts) line up with section G here.",
+		"minutes": 60,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	}
+]

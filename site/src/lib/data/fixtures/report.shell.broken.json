@@ -1,0 +1,858 @@
+{
+  "shell": "broken_shell",
+  "validate": false,
+  "stages": [
+    {
+      "stage": 1,
+      "name": "Print the prompt and wait for input",
+      "file": "01_prompt.yaml",
+      "passed": 6,
+      "failed": 0,
+      "skipped": 0,
+      "tests": [
+        {
+          "name": "prints the prompt on startup",
+          "status": "pass",
+          "ext": false,
+          "duration_ms": 409,
+          "failures": [],
+          "skip_reason": null,
+          "actual": [
+            [
+              "terminal",
+              "$ "
+            ],
+            [
+              "exit code",
+              "(still running; stopped by harness)"
+            ]
+          ]
+        },
+        {
+          "name": "prompt is exactly '$ ' with nothing before it",
+          "status": "pass",
+          "ext": false,
+          "duration_ms": 410,
+          "failures": [],
+          "skip_reason": null,
+          "actual": [
+            [
+              "terminal",
+              "$ "
+            ],
+            [
+              "exit code",
+              "(still running; stopped by harness)"
+            ]
+          ]
+        },
+        {
+          "name": "waits for input instead of exiting or re-printing the prompt",
+          "status": "pass",
+          "ext": false,
+          "duration_ms": 710,
+          "failures": [],
+          "skip_reason": null,
+          "actual": [
+            [
+              "terminal",
+              "$ "
+            ],
+            [
+              "exit code",
+              "(still running; stopped by harness)"
+            ]
+          ]
+        },
+        {
+          "name": "an empty line produces a fresh prompt",
+          "status": "pass",
+          "ext": false,
+          "duration_ms": 410,
+          "failures": [],
+          "skip_reason": null,
+          "actual": [
+            [
+              "terminal",
+              "$ \n$ "
+            ],
+            [
+              "exit code",
+              "(still running; stopped by harness)"
+            ]
+          ]
+        },
+        {
+          "name": "prompt is printed again after a command",
+          "status": "pass",
+          "ext": false,
+          "duration_ms": 411,
+          "failures": [],
+          "skip_reason": null,
+          "actual": [
+            [
+              "terminal",
+              "$ echo hi\nhi\n$ "
+            ],
+            [
+              "exit code",
+              "(still running; stopped by harness)"
+            ]
+          ]
+        },
+        {
+          "name": "several empty lines produce several prompts",
+          "status": "pass",
+          "ext": false,
+          "duration_ms": 410,
+          "failures": [],
+          "skip_reason": null,
+          "actual": [
+            [
+              "terminal",
+              "$ \n$ \n$ \n$ "
+            ],
+            [
+              "exit code",
+              "(still running; stopped by harness)"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "stage": 2,
+      "name": "Invalid command reports an error and continues",
+      "file": "02_invalid_command.yaml",
+      "passed": 0,
+      "failed": 6,
+      "skipped": 0,
+      "tests": [
+        {
+          "name": "unknown command prints '<cmd>: command not found' on stderr",
+          "status": "fail",
+          "ext": false,
+          "duration_ms": 21,
+          "failures": [
+            "stderr: expected substring \"nope_cmd: command not found\" not found"
+          ],
+          "skip_reason": null,
+          "actual": [
+            [
+              "stdout",
+              "nope_cmd: not found"
+            ],
+            [
+              "stderr",
+              ""
+            ],
+            [
+              "exit code",
+              "0"
+            ]
+          ]
+        },
+        {
+          "name": "the message names the command, not its arguments",
+          "status": "fail",
+          "ext": false,
+          "duration_ms": 1,
+          "failures": [
+            "stderr: regex \"(?m)invalid_cmd: command not found$\" did not match"
+          ],
+          "skip_reason": null,
+          "actual": [
+            [
+              "stdout",
+              "invalid_cmd: not found"
+            ],
+            [
+              "stderr",
+              ""
+            ],
+            [
+              "exit code",
+              "0"
+            ]
+          ]
+        },
+        {
+          "name": "nothing is written to stdout for an unknown command",
+          "status": "fail",
+          "ext": false,
+          "duration_ms": 21,
+          "failures": [
+            "stdout: output differs"
+          ],
+          "skip_reason": null,
+          "actual": [
+            [
+              "stdout",
+              "nope_cmd: not found"
+            ],
+            [
+              "stderr",
+              ""
+            ],
+            [
+              "exit code",
+              "0"
+            ]
+          ]
+        },
+        {
+          "name": "the shell keeps running after an unknown command",
+          "status": "fail",
+          "ext": false,
+          "duration_ms": 2,
+          "failures": [
+            "stderr: regex \"(?s)first_nope: command not found.*second_nope: command not found\" did not match"
+          ],
+          "skip_reason": null,
+          "actual": [
+            [
+              "stdout",
+              "first_nope: not found\nsecond_nope: not found"
+            ],
+            [
+              "stderr",
+              ""
+            ],
+            [
+              "exit code",
+              "0"
+            ]
+          ]
+        },
+        {
+          "name": "each unknown command gets its own error line",
+          "status": "fail",
+          "ext": false,
+          "duration_ms": 22,
+          "failures": [
+            "stderr: regex \"(?m)^.*aaa_nope: command not found\\n.*bbb_nope: command not found\\n.*ccc_nope: command not found$\" did not match"
+          ],
+          "skip_reason": null,
+          "actual": [
+            [
+              "stdout",
+              "aaa_nope: not found\nbbb_nope: not found\nccc_nope: not found"
+            ],
+            [
+              "stderr",
+              ""
+            ],
+            [
+              "exit code",
+              "0"
+            ]
+          ]
+        },
+        {
+          "name": "a command with an odd name is still reported verbatim",
+          "status": "fail",
+          "ext": false,
+          "duration_ms": 1,
+          "failures": [
+            "stderr: expected substring \"Weird-Name_123: command not found\" not found"
+          ],
+          "skip_reason": null,
+          "actual": [
+            [
+              "stdout",
+              "Weird-Name_123: not found"
+            ],
+            [
+              "stderr",
+              ""
+            ],
+            [
+              "exit code",
+              "0"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "stage": 3,
+      "name": "REPL: prompt after every command, EOF exits",
+      "file": "03_repl.yaml",
+      "passed": 7,
+      "failed": 1,
+      "skipped": 0,
+      "tests": [
+        {
+          "name": "prompt is shown after each of three commands",
+          "status": "pass",
+          "ext": false,
+          "duration_ms": 410,
+          "failures": [],
+          "skip_reason": null,
+          "actual": [
+            [
+              "terminal",
+              "$ echo one\none\n$ echo two\ntwo\n$ echo three\nthree\n$ "
+            ],
+            [
+              "exit code",
+              "(still running; stopped by harness)"
+            ]
+          ]
+        },
+        {
+          "name": "EOF on stdin exits with status 0",
+          "status": "pass",
+          "ext": false,
+          "duration_ms": 21,
+          "failures": [],
+          "skip_reason": null,
+          "actual": [
+            [
+              "stdout",
+              "hi"
+            ],
+            [
+              "stderr",
+              ""
+            ],
+            [
+              "exit code",
+              "0"
+            ]
+          ]
+        },
+        {
+          "name": "EOF with no commands at all exits with status 0",
+          "status": "pass",
+          "ext": false,
+          "duration_ms": 1,
+          "failures": [],
+          "skip_reason": null,
+          "actual": [
+            [
+              "stdout",
+              ""
+            ],
+            [
+              "stderr",
+              ""
+            ],
+            [
+              "exit code",
+              "0"
+            ]
+          ]
+        },
+        {
+          "name": "Ctrl-D at the prompt exits the shell with status 0",
+          "status": "pass",
+          "ext": false,
+          "duration_ms": 101,
+          "failures": [],
+          "skip_reason": null,
+          "actual": [
+            [
+              "terminal",
+              "$ echo before\nbefore\n$ "
+            ],
+            [
+              "exit code",
+              "0"
+            ]
+          ]
+        },
+        {
+          "name": "empty lines are ignored",
+          "status": "pass",
+          "ext": false,
+          "duration_ms": 1,
+          "failures": [],
+          "skip_reason": null,
+          "actual": [
+            [
+              "stdout",
+              "a\nb"
+            ],
+            [
+              "stderr",
+              ""
+            ],
+            [
+              "exit code",
+              "0"
+            ]
+          ]
+        },
+        {
+          "name": "whitespace-only lines are ignored",
+          "status": "pass",
+          "ext": false,
+          "duration_ms": 21,
+          "failures": [],
+          "skip_reason": null,
+          "actual": [
+            [
+              "stdout",
+              "ok"
+            ],
+            [
+              "stderr",
+              ""
+            ],
+            [
+              "exit code",
+              "0"
+            ]
+          ]
+        },
+        {
+          "name": "many commands run in order",
+          "status": "pass",
+          "ext": false,
+          "duration_ms": 4,
+          "failures": [],
+          "skip_reason": null,
+          "actual": [
+            [
+              "stdout",
+              "1\n2\n3\n4\n5\n6\n7\n8\n9\n10"
+            ],
+            [
+              "stderr",
+              ""
+            ],
+            [
+              "exit code",
+              "0"
+            ]
+          ]
+        },
+        {
+          "name": "unknown command does not end the session (regression: stage 2)",
+          "status": "fail",
+          "ext": false,
+          "duration_ms": 3,
+          "failures": [
+            "stdout: output differs"
+          ],
+          "skip_reason": null,
+          "actual": [
+            [
+              "stdout",
+              "nope_cmd: not found\nstill"
+            ],
+            [
+              "stderr",
+              ""
+            ],
+            [
+              "exit code",
+              "0"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "stage": 4,
+      "name": "exit builtin",
+      "file": "04_exit.yaml",
+      "passed": 3,
+      "failed": 4,
+      "skipped": 0,
+      "tests": [
+        {
+          "name": "exit 0",
+          "status": "pass",
+          "ext": false,
+          "duration_ms": 22,
+          "failures": [],
+          "skip_reason": null,
+          "actual": [
+            [
+              "stdout",
+              ""
+            ],
+            [
+              "stderr",
+              ""
+            ],
+            [
+              "exit code",
+              "0"
+            ]
+          ]
+        },
+        {
+          "name": "exit 3 sets the exit status",
+          "status": "fail",
+          "ext": false,
+          "duration_ms": 3,
+          "failures": [
+            "exit code: expected 3, got 0"
+          ],
+          "skip_reason": null,
+          "actual": [
+            [
+              "stdout",
+              ""
+            ],
+            [
+              "stderr",
+              ""
+            ],
+            [
+              "exit code",
+              "0"
+            ]
+          ]
+        },
+        {
+          "name": "exit 255",
+          "status": "fail",
+          "ext": false,
+          "duration_ms": 2,
+          "failures": [
+            "exit code: expected 255, got 0"
+          ],
+          "skip_reason": null,
+          "actual": [
+            [
+              "stdout",
+              ""
+            ],
+            [
+              "stderr",
+              ""
+            ],
+            [
+              "exit code",
+              "0"
+            ]
+          ]
+        },
+        {
+          "name": "bare exit after successful commands exits with 0",
+          "status": "pass",
+          "ext": false,
+          "duration_ms": 2,
+          "failures": [],
+          "skip_reason": null,
+          "actual": [
+            [
+              "stdout",
+              "a"
+            ],
+            [
+              "stderr",
+              ""
+            ],
+            [
+              "exit code",
+              "0"
+            ]
+          ]
+        },
+        {
+          "name": "commands after exit are never run",
+          "status": "fail",
+          "ext": false,
+          "duration_ms": 2,
+          "failures": [
+            "exit code: expected 5, got 0"
+          ],
+          "skip_reason": null,
+          "actual": [
+            [
+              "stdout",
+              "before"
+            ],
+            [
+              "stderr",
+              ""
+            ],
+            [
+              "exit code",
+              "0"
+            ]
+          ]
+        },
+        {
+          "name": "exit works after an unknown command (regression: stage 2)",
+          "status": "fail",
+          "ext": false,
+          "duration_ms": 2,
+          "failures": [
+            "stdout: output differs",
+            "exit code: expected 1, got 0"
+          ],
+          "skip_reason": null,
+          "actual": [
+            [
+              "stdout",
+              "nope_cmd: not found"
+            ],
+            [
+              "stderr",
+              ""
+            ],
+            [
+              "exit code",
+              "0"
+            ]
+          ]
+        },
+        {
+          "name": "exit 0 after output leaves stdout intact",
+          "status": "pass",
+          "ext": false,
+          "duration_ms": 2,
+          "failures": [],
+          "skip_reason": null,
+          "actual": [
+            [
+              "stdout",
+              "one\ntwo"
+            ],
+            [
+              "stderr",
+              ""
+            ],
+            [
+              "exit code",
+              "0"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "stage": 5,
+      "name": "echo builtin",
+      "file": "05_echo.yaml",
+      "passed": 2,
+      "failed": 7,
+      "skipped": 0,
+      "tests": [
+        {
+          "name": "echo prints its arguments",
+          "status": "fail",
+          "ext": false,
+          "duration_ms": 2,
+          "failures": [
+            "stdout: output differs"
+          ],
+          "skip_reason": null,
+          "actual": [
+            [
+              "stdout",
+              "hello"
+            ],
+            [
+              "stderr",
+              ""
+            ],
+            [
+              "exit code",
+              "0"
+            ]
+          ]
+        },
+        {
+          "name": "unquoted runs of whitespace collapse to one space",
+          "status": "fail",
+          "ext": false,
+          "duration_ms": 22,
+          "failures": [
+            "stdout: output differs"
+          ],
+          "skip_reason": null,
+          "actual": [
+            [
+              "stdout",
+              "spaced out"
+            ],
+            [
+              "stderr",
+              ""
+            ],
+            [
+              "exit code",
+              "0"
+            ]
+          ]
+        },
+        {
+          "name": "tabs between arguments also collapse",
+          "status": "fail",
+          "ext": false,
+          "duration_ms": 23,
+          "failures": [
+            "stdout: output differs"
+          ],
+          "skip_reason": null,
+          "actual": [
+            [
+              "stdout",
+              "a"
+            ],
+            [
+              "stderr",
+              ""
+            ],
+            [
+              "exit code",
+              "0"
+            ]
+          ]
+        },
+        {
+          "name": "echo with no arguments prints an empty line",
+          "status": "pass",
+          "ext": false,
+          "duration_ms": 23,
+          "failures": [],
+          "skip_reason": null,
+          "actual": [
+            [
+              "stdout",
+              "\nafter"
+            ],
+            [
+              "stderr",
+              ""
+            ],
+            [
+              "exit code",
+              "0"
+            ]
+          ]
+        },
+        {
+          "name": "echo -n suppresses the trailing newline",
+          "status": "fail",
+          "ext": false,
+          "duration_ms": 23,
+          "failures": [
+            "stdout: output differs"
+          ],
+          "skip_reason": null,
+          "actual": [
+            [
+              "stdout",
+              "-n\ndef"
+            ],
+            [
+              "stderr",
+              ""
+            ],
+            [
+              "exit code",
+              "0"
+            ]
+          ]
+        },
+        {
+          "name": "echo -n with no other arguments prints nothing",
+          "status": "fail",
+          "ext": false,
+          "duration_ms": 3,
+          "failures": [
+            "stdout: output differs"
+          ],
+          "skip_reason": null,
+          "actual": [
+            [
+              "stdout",
+              "-n\nx"
+            ],
+            [
+              "stderr",
+              ""
+            ],
+            [
+              "exit code",
+              "0"
+            ]
+          ]
+        },
+        {
+          "name": "echo handles many arguments and digits",
+          "status": "fail",
+          "ext": false,
+          "duration_ms": 3,
+          "failures": [
+            "stdout: output differs"
+          ],
+          "skip_reason": null,
+          "actual": [
+            [
+              "stdout",
+              "1 2 3 4 5 6 7 8 9 10"
+            ],
+            [
+              "stderr",
+              ""
+            ],
+            [
+              "exit code",
+              "0"
+            ]
+          ]
+        },
+        {
+          "name": "echo output is line-buffered correctly across commands",
+          "status": "pass",
+          "ext": false,
+          "duration_ms": 2,
+          "failures": [],
+          "skip_reason": null,
+          "actual": [
+            [
+              "stdout",
+              "first\nsecond\nthird"
+            ],
+            [
+              "stderr",
+              ""
+            ],
+            [
+              "exit code",
+              "0"
+            ]
+          ]
+        },
+        {
+          "name": "unknown command → stderr, shell keeps running (regression: stage 2)",
+          "status": "fail",
+          "ext": false,
+          "duration_ms": 22,
+          "failures": [
+            "stdout: output differs",
+            "stderr: expected substring \"nope_cmd: command not found\" not found"
+          ],
+          "skip_reason": null,
+          "actual": [
+            [
+              "stdout",
+              "nope_cmd: not found\nstill"
+            ],
+            [
+              "stderr",
+              ""
+            ],
+            [
+              "exit code",
+              "0"
+            ]
+          ]
+        }
+      ]
+    }
+  ],
+  "passed": 18,
+  "failed": 18,
+  "skipped": 0,
+  "elapsed_ms": 3565
+}

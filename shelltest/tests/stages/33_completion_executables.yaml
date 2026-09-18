@@ -1,0 +1,63 @@
+stage: 33
+name: "Tab completion of executables in PATH"
+tests:
+  - name: "a unique executable prefix completes and runs"
+    mode: pty
+    fixtures:
+      path_isolated: true
+      executables:
+        xyz_foo: "echo foo ran"
+    keys: ["xyz_\t", "\r", "exit\r"]
+    expect:
+      terminal: { contains: "$ xyz_foo \nfoo ran\n" }
+      exit_code: 0
+
+  - name: "arguments after a completed executable are passed through"
+    mode: pty
+    fixtures:
+      path_isolated: true
+      executables:
+        xyz_foo: 'echo "got $1"'
+    keys: ["xyz_\t", "arg\r", "exit\r"]
+    expect:
+      terminal: { contains: "\ngot arg\n" }
+
+  - name: "executables in a second PATH directory complete too"
+    mode: pty
+    fixtures:
+      path_isolated: true
+      executables:
+        alt/qqq_prog: "echo from alt"
+      env: { PATH: "{BIN}:{TMP}/alt" }
+    keys: ["qqq_\t", "\r", "exit\r"]
+    expect:
+      terminal: { contains: "$ qqq_prog \nfrom alt\n" }
+
+  - name: "a non-executable file in PATH does not complete"
+    mode: pty
+    fixtures:
+      path_isolated: true
+      files: { "bin/qqq_plain": "not a program" }
+    keys: ["qqq_\t", "\x15", "echo ok\r", "exit\r"]
+    expect:
+      terminal: { regex: "(?s)qqq_\x07.*\nok\n" }
+
+  - name: "a longer typed prefix still completes the rest"
+    mode: pty
+    fixtures:
+      path_isolated: true
+      executables:
+        xyz_foo_bar: "echo bar ran"
+    keys: ["xyz_foo_b\t", "\r", "exit\r"]
+    expect:
+      terminal: { contains: "$ xyz_foo_bar \nbar ran\n" }
+
+  - name: "builtins still complete when executables exist (regression: stage 30)"
+    mode: pty
+    fixtures:
+      path_isolated: true
+      executables:
+        xyz_foo: "echo foo"
+    keys: ["ech\t", "hi\r", "exit\r"]
+    expect:
+      terminal: { contains: "$ echo hi\nhi\n" }

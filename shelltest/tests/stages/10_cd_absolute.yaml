@@ -1,0 +1,47 @@
+stage: 10
+name: "cd with absolute paths"
+tests:
+  - name: "cd to an absolute path changes pwd"
+    fixtures: { dirs: [dir1] }
+    input: ["cd {TMP}/dir1", "pwd", "exit 0"]
+    expect:
+      stdout: "{TMP}/dir1"
+      exit_code: 0
+
+  - name: "cd to a nested absolute path"
+    fixtures: { dirs: [a/b/c] }
+    input: ["cd {TMP}/a/b/c", "pwd", "exit 0"]
+    expect:
+      stdout: "{TMP}/a/b/c"
+
+  - name: "cd to a missing directory reports an error"
+    skip_on: [zsh]
+    reason: "zsh words the message as 'cd: no such file or directory: <path>'"
+    input: ["cd /nonexistent/dir", "exit 0"]
+    expect:
+      stderr: { contains: "cd: /nonexistent/dir: No such file or directory" }
+      stdout: ""
+
+  - name: "a failed cd leaves the current directory unchanged"
+    input: ["cd /nonexistent/dir", "pwd", "exit 0"]
+    expect:
+      stdout: "{TMP}"
+
+  - name: "cd twice ends up in the last directory"
+    fixtures: { dirs: [one, two] }
+    input: ["cd {TMP}/one", "cd {TMP}/two", "pwd", "exit 0"]
+    expect:
+      stdout: "{TMP}/two"
+
+  - name: "cd prints nothing on success"
+    fixtures: { dirs: [dir1] }
+    input: ["cd {TMP}/dir1", "exit 0"]
+    expect:
+      stdout: ""
+      stderr: ""
+
+  - name: "the shell keeps running after a failed cd (regression: stage 5)"
+    input: ["cd /nonexistent/dir", "echo still here", "exit 0"]
+    expect:
+      stdout: "still here"
+      exit_code: 0

@@ -1,0 +1,49 @@
+stage: 52
+name: "Comments and blank lines"
+tests:
+  - name: "a line starting with # is ignored"
+    tags: [ext]
+    input: ["# this is a comment", "echo after", "exit 0"]
+    expect:
+      stdout: "after"
+      exit_code: 0
+
+  - name: "a trailing comment is stripped"
+    tags: [ext]
+    input: ["echo visible # hidden", "exit 0"]
+    expect:
+      stdout: "visible"
+
+  - name: "# inside quotes is not a comment"
+    tags: [ext]
+    input: ["echo 'a # b' \"c # d\"", "exit 0"]
+    expect:
+      stdout: "a # b c # d"
+
+  - name: "# in the middle of a word is literal"
+    tags: [ext]
+    input: ["echo a#b", "exit 0"]
+    expect:
+      stdout: "a#b"
+
+  - name: "indented comment lines are ignored"
+    tags: [ext]
+    input: ["    # indented", "\t# tabbed", "echo ok", "exit 0"]
+    expect:
+      stdout: "ok"
+
+  - name: "blank lines between commands are ignored"
+    tags: [ext]
+    input: ["echo a", "", "   ", "", "echo b", "exit 0"]
+    expect:
+      stdout: "a\nb"
+
+  - name: "comments are not counted as commands for $? (regression: stage 48)"
+    tags: [ext]
+    fixtures:
+      path_isolated: true
+      executables:
+        fail3: "exit 3"
+    input: ["fail3", "# a comment", "echo $?", "exit 0"]
+    expect:
+      stdout: "3"

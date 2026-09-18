@@ -1,0 +1,66 @@
+stage: 54
+name: "alias and unalias"
+tests:
+  - name: "an alias runs its replacement"
+    tags: [ext]
+    input: ["alias hi='echo hello'", "hi", "exit 0"]
+    expect:
+      stdout: "hello"
+      exit_code: 0
+
+  - name: "arguments are appended after the alias body"
+    tags: [ext]
+    input: ["alias hi='echo hello'", "hi world", "exit 0"]
+    expect:
+      stdout: "hello world"
+
+  - name: "alias with no arguments lists definitions"
+    tags: [ext]
+    input: ["alias hi='echo hello'", "alias", "exit 0"]
+    expect:
+      stdout: { contains: "hi='echo hello'" }
+
+  - name: "alias NAME prints that definition"
+    tags: [ext]
+    input: ["alias hi='echo hello'", "alias hi", "exit 0"]
+    expect:
+      stdout: { contains: "hi='echo hello'" }
+
+  - name: "unalias removes the alias"
+    tags: [ext]
+    fixtures: { path_isolated: true }
+    input: ["alias hi='echo hello'", "unalias hi", "hi", "echo $?", "exit 0"]
+    expect:
+      stdout: "127"
+
+  - name: "an alias can wrap an external program"
+    tags: [ext]
+    fixtures:
+      path_isolated: true
+      executables:
+        greet: 'echo "hi $1"'
+    input: ["alias g='greet'", "g bob", "exit 0"]
+    expect:
+      stdout: "hi bob"
+
+  - name: "redefining an alias replaces it"
+    tags: [ext]
+    input: ["alias hi='echo one'", "alias hi='echo two'", "hi", "exit 0"]
+    expect:
+      stdout: "two"
+
+  - name: "a quoted command name is not alias-expanded"
+    tags: [ext]
+    fixtures:
+      path_isolated: true
+      executables:
+        echo_real: "echo real"
+    input: ["alias echo_real='echo aliased'", "'echo_real'", "exit 0"]
+    expect:
+      stdout: "real"
+
+  - name: "aliases do not break builtins (regression: stage 6)"
+    tags: [ext]
+    input: ["alias hi='echo hello'", "type echo", "exit 0"]
+    expect:
+      stdout: "echo is a shell builtin"

@@ -1,0 +1,78 @@
+stage: 18
+name: "Executables with spaces or quotes in their names"
+tests:
+  - name: "single-quoted executable name with a space"
+    fixtures:
+      path_isolated: true
+      executables:
+        "my exe": 'echo "ran with $#: $*"'
+    input: ["'my exe' a b", "exit 0"]
+    expect:
+      stdout: "ran with 2: a b"
+      exit_code: 0
+
+  - name: "double-quoted executable name with a space"
+    fixtures:
+      path_isolated: true
+      executables:
+        "my exe": 'echo "ran with $#: $*"'
+    input: ['"my exe" x', "exit 0"]
+    expect:
+      stdout: "ran with 1: x"
+
+  - name: "backslash-escaped executable name with a space"
+    fixtures:
+      path_isolated: true
+      executables:
+        "my exe": 'echo "ran"'
+    input: ['my\ exe', "exit 0"]
+    expect:
+      stdout: "ran"
+
+  - name: "unquoted name with a space is two words, not one command"
+    fixtures:
+      path_isolated: true
+      executables:
+        "my exe": 'echo "ran"'
+    skip_on: [zsh]
+    reason: "zsh words the message as 'command not found: <cmd>'"
+    input: ["my exe", "exit 0"]
+    expect:
+      stdout: ""
+      stderr: { contains: "my: command not found" }
+
+  - name: "quoted executable with a quoted argument containing spaces"
+    fixtures:
+      path_isolated: true
+      executables:
+        "my exe": 'echo "[$1]"'
+    input: ["'my exe' 'hello   there'", "exit 0"]
+    expect:
+      stdout: "[hello   there]"
+
+  - name: "executable with a single quote in its name"
+    fixtures:
+      path_isolated: true
+      executables:
+        "it's": 'echo "apostrophe ok"'
+    input: ["\"it's\"", "exit 0"]
+    expect:
+      stdout: "apostrophe ok"
+
+  - name: "quoted executable via absolute path with spaces in the directory"
+    fixtures:
+      path_isolated: true
+      executables:
+        "spaced dir/prog": 'echo "deep"'
+    input: ["'{TMP}/spaced dir/prog'", "exit 0"]
+    expect:
+      stdout: "deep"
+
+  - name: "quoting rules still apply to arguments (regression: stage 14)"
+    fixtures:
+      path_isolated: true
+      executables:
+        "my exe": 'echo "[$1]"'
+    input: ['"my exe" "a \"b\" c"', "exit 0"]
+    expect:
+      stdout: '[a "b" c]'

@@ -1,0 +1,54 @@
+stage: 15
+name: "Backslash outside quotes"
+tests:
+  - name: "backslash-space keeps words together"
+    input: ['echo hello\ world', "exit 0"]
+    expect:
+      stdout: "hello world"
+      exit_code: 0
+
+  - name: "several escaped spaces are all preserved"
+    input: ['echo three\ \ \ spaces', "exit 0"]
+    expect:
+      stdout: "three   spaces"
+
+  - name: "double backslash yields a single backslash"
+    input: ['echo a\\b', "exit 0"]
+    expect:
+      stdout: 'a\b'
+
+  - name: "escaped single quotes are literal quotes"
+    input: ["echo \\'quoted\\'", "exit 0"]
+    expect:
+      stdout: "'quoted'"
+
+  - name: "escaped double quotes are literal quotes"
+    input: ['echo \"quoted\"', "exit 0"]
+    expect:
+      stdout: '"quoted"'
+
+  - name: "escaped dollar sign is literal"
+    input: ['echo \$HOME', "exit 0"]
+    expect:
+      stdout: "$HOME"
+
+  - name: "backslash before an ordinary letter is dropped"
+    input: ['echo he\llo', "exit 0"]
+    expect:
+      stdout: "hello"
+
+  - name: "escaped space makes one argument"
+    fixtures:
+      path_isolated: true
+      executables:
+        count_args: 'echo "$#"'
+    input: ['count_args one\ arg two', "exit 0"]
+    expect:
+      stdout: "2"
+
+  - name: "escaped filename with spaces reaches cat (regression: stage 13)"
+    fixtures:
+      files: { "my file.txt": "contents\n" }
+    input: ['cat my\ file.txt', "exit 0"]
+    expect:
+      stdout: "contents"

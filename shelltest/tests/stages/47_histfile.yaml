@@ -1,0 +1,67 @@
+stage: 47
+name: "HISTFILE is loaded on startup and written on exit"
+tests:
+  - name: "entries from HISTFILE are present at startup"
+    fixtures:
+      histfile: "echo old1\necho old2\n"
+    skip_on: [zsh]
+    reason: "zsh's history builtin (fc -l) is not available in non-interactive mode"
+    input: ["history", "exit 0"]
+    expect:
+      stdout: "    1  echo old1\n    2  echo old2\n    3  history"
+      exit_code: 0
+
+  - name: "new commands are appended to HISTFILE on exit"
+    fixtures:
+      histfile: "echo old1\n"
+    skip_on: [zsh]
+    reason: "zsh does not write HISTFILE in non-interactive mode"
+    input: ["echo new", "exit"]
+    expect:
+      files:
+        "{HISTFILE}": "echo old1\necho new\nexit\n"
+
+  - name: "HISTFILE is created on exit when it did not exist"
+    skip_on: [zsh]
+    reason: "zsh does not write HISTFILE in non-interactive mode"
+    input: ["echo first", "exit"]
+    expect:
+      files:
+        "{HISTFILE}": "echo first\nexit\n"
+
+  - name: "history N counts loaded entries"
+    fixtures:
+      histfile: "echo old1\necho old2\necho old3\n"
+    skip_on: [zsh]
+    reason: "zsh's history builtin (fc -l) is not available in non-interactive mode"
+    input: ["history 2", "exit 0"]
+    expect:
+      stdout: "    3  echo old3\n    4  history 2"
+
+  - name: "an unset HISTFILE means nothing is loaded"
+    fixtures:
+      histfile: "echo old1\n"
+      env: { HISTFILE: "" }
+    skip_on: [zsh]
+    reason: "zsh's history builtin (fc -l) is not available in non-interactive mode"
+    input: ["history", "exit 0"]
+    expect:
+      stdout: "    1  history"
+
+  - name: "interactive session loads and writes HISTFILE too"
+    mode: pty
+    fixtures:
+      histfile: "echo old1\n"
+    keys: ["echo new\r", "history\r", "exit\r"]
+    expect:
+      terminal: { regex: "(?s)    1  echo old1\n    2  echo new\n    3  history" }
+      files:
+        "{HISTFILE}": "echo old1\necho new\nhistory\nexit\n"
+
+  - name: "Up arrow recalls a command loaded from HISTFILE (regression: stage 43)"
+    mode: pty
+    fixtures:
+      histfile: "echo from-file\n"
+    keys: ["\x1b[A", "\r", "exit\r"]
+    expect:
+      terminal: { regex: "(?s)^\\$ [^\n]*echo from-file\nfrom-file\n" }

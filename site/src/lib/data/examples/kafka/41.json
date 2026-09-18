@@ -1,0 +1,450 @@
+[
+	{
+		"title": "Fetching an offset that was never committed",
+		"kind": "wire",
+		"request": "OffsetFetch v8 asking one group, 'kafkatest-group', for partition 0 of the fixture topic; nothing has ever committed an offset for that pair",
+		"request_hex": "00000038000900080000019b00096b61666b61746573740002106b61666b61746573742d67726f7570020974312d6578343131020000000000000000",
+		"response": "groups[0].error_code 0 and one partition entry with committed_offset -1, committed_leader_epoch -1, metadata \"\" and error_code 0: absence is reported as -1, not as an error",
+		"response_hex": "0000003e0000019b000000000002106b61666b61746573742d67726f7570020974312d65783431310200000000ffffffffffffffffffffffff010000000000000000",
+		"note": "-1 is what tells a consumer there is no stored position, so it falls back to auto.offset.reset and asks ListOffsets for the earliest or latest offset instead. A broker that answers 0 here silently makes every new consumer re-read the log from the start, and one that answers an error makes it refuse to start at all.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "56 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 2,
+				"field": "header.api_key",
+				"value": "9 (OffsetFetch)"
+			},
+			{
+				"offset": 6,
+				"length": 2,
+				"field": "header.api_version",
+				"value": "8"
+			},
+			{
+				"offset": 8,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "411"
+			},
+			{
+				"offset": 12,
+				"length": 11,
+				"field": "header.client_id",
+				"value": "'kafkatest'"
+			},
+			{
+				"offset": 23,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 24,
+				"length": 1,
+				"field": "body.groups.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 25,
+				"length": 16,
+				"field": "body.groups[0].group_id",
+				"value": "'kafkatest-group'"
+			},
+			{
+				"offset": 41,
+				"length": 1,
+				"field": "body.groups[0].topics.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 42,
+				"length": 9,
+				"field": "body.groups[0].topics[0].name",
+				"value": "'t1-ex411'"
+			},
+			{
+				"offset": 51,
+				"length": 1,
+				"field": "body.groups[0].topics[0].partition_indexes.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 52,
+				"length": 4,
+				"field": "body.groups[0].topics[0].partition_indexes[0]",
+				"value": "0"
+			},
+			{
+				"offset": 56,
+				"length": 1,
+				"field": "body.groups[0].topics[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 57,
+				"length": 1,
+				"field": "body.groups[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 58,
+				"length": 1,
+				"field": "body.require_stable",
+				"value": "false"
+			},
+			{
+				"offset": 59,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "62 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "411"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 9,
+				"length": 4,
+				"field": "body.throttle_time_ms",
+				"value": "0"
+			},
+			{
+				"offset": 13,
+				"length": 1,
+				"field": "body.groups.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 14,
+				"length": 16,
+				"field": "body.groups[0].group_id",
+				"value": "'kafkatest-group'"
+			},
+			{
+				"offset": 30,
+				"length": 1,
+				"field": "body.groups[0].topics.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 31,
+				"length": 9,
+				"field": "body.groups[0].topics[0].name",
+				"value": "'t1-ex411'"
+			},
+			{
+				"offset": 40,
+				"length": 1,
+				"field": "body.groups[0].topics[0].partitions.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 41,
+				"length": 4,
+				"field": "body.groups[0].topics[0].partitions[0].partition_index",
+				"value": "0"
+			},
+			{
+				"offset": 45,
+				"length": 8,
+				"field": "body.groups[0].topics[0].partitions[0].committed_offset",
+				"value": "-1"
+			},
+			{
+				"offset": 53,
+				"length": 4,
+				"field": "body.groups[0].topics[0].partitions[0].committed_leader_epoch",
+				"value": "-1"
+			},
+			{
+				"offset": 57,
+				"length": 1,
+				"field": "body.groups[0].topics[0].partitions[0].metadata",
+				"value": "''"
+			},
+			{
+				"offset": 58,
+				"length": 2,
+				"field": "body.groups[0].topics[0].partitions[0].error_code",
+				"value": "0 (NONE)"
+			},
+			{
+				"offset": 60,
+				"length": 1,
+				"field": "body.groups[0].topics[0].partitions[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 61,
+				"length": 1,
+				"field": "body.groups[0].topics[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 62,
+				"length": 2,
+				"field": "body.groups[0].error_code",
+				"value": "0 (NONE)"
+			},
+			{
+				"offset": 64,
+				"length": 1,
+				"field": "body.groups[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 65,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"env": {
+			"topics": {
+				"t1": {
+					"name": "t1-ex411",
+					"id": "a6548499-b42e-4fc6-9135-29da2afa1838",
+					"partitions": 2
+				}
+			},
+			"group": "kafkatest-group"
+		}
+	},
+	{
+		"title": "A commit from a member the coordinator does not know",
+		"kind": "wire",
+		"request": "OffsetCommit v8 for 'kafkatest-group' claiming generation 5 as the member 'kafkatest-ghost-member', committing offset 5 with metadata 'kafkatest-position' on partition 0 of the fixture topic",
+		"request_hex": "00000071000800080000019c00096b61666b617465737400106b61666b61746573742d67726f757000000005176b61666b61746573742d67686f73742d6d656d62657200020974312d657834313202000000000000000000000005ffffffff136b61666b61746573742d706f736974696f6e000000",
+		"response": "The coordinator refuses: the partition entry carries an error code instead of 0 — 25 UNKNOWN_MEMBER_ID when the group exists and holds no such member, 22 ILLEGAL_GENERATION when there is no such group at all — and nothing is written to __consumer_offsets either way",
+		"response_hex": "0000001d0000019c0000000000020974312d657834313202000000000019000000",
+		"note": "Only one shape of commit needs no membership: generation_id -1 with an empty member_id, the standalone commit an admin tool or an assign()-based consumer sends. As soon as a generation or a member id is supplied it has to match the group, or a consumer that was fenced out during a rebalance would keep writing positions over the member that replaced it.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "113 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 2,
+				"field": "header.api_key",
+				"value": "8 (OffsetCommit)"
+			},
+			{
+				"offset": 6,
+				"length": 2,
+				"field": "header.api_version",
+				"value": "8"
+			},
+			{
+				"offset": 8,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "412"
+			},
+			{
+				"offset": 12,
+				"length": 11,
+				"field": "header.client_id",
+				"value": "'kafkatest'"
+			},
+			{
+				"offset": 23,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 24,
+				"length": 16,
+				"field": "body.group_id",
+				"value": "'kafkatest-group'"
+			},
+			{
+				"offset": 40,
+				"length": 4,
+				"field": "body.generation_id_or_member_epoch",
+				"value": "5"
+			},
+			{
+				"offset": 44,
+				"length": 23,
+				"field": "body.member_id",
+				"value": "'kafkatest-ghost-member'"
+			},
+			{
+				"offset": 67,
+				"length": 1,
+				"field": "body.group_instance_id",
+				"value": "null"
+			},
+			{
+				"offset": 68,
+				"length": 1,
+				"field": "body.topics.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 69,
+				"length": 9,
+				"field": "body.topics[0].name",
+				"value": "'t1-ex412'"
+			},
+			{
+				"offset": 78,
+				"length": 1,
+				"field": "body.topics[0].partitions.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 79,
+				"length": 4,
+				"field": "body.topics[0].partitions[0].partition_index",
+				"value": "0"
+			},
+			{
+				"offset": 83,
+				"length": 8,
+				"field": "body.topics[0].partitions[0].committed_offset",
+				"value": "5"
+			},
+			{
+				"offset": 91,
+				"length": 4,
+				"field": "body.topics[0].partitions[0].committed_leader_epoch",
+				"value": "-1"
+			},
+			{
+				"offset": 95,
+				"length": 19,
+				"field": "body.topics[0].partitions[0].committed_metadata",
+				"value": "'kafkatest-position'"
+			},
+			{
+				"offset": 114,
+				"length": 1,
+				"field": "body.topics[0].partitions[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 115,
+				"length": 1,
+				"field": "body.topics[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 116,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "29 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "412"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 9,
+				"length": 4,
+				"field": "body.throttle_time_ms",
+				"value": "0"
+			},
+			{
+				"offset": 13,
+				"length": 1,
+				"field": "body.topics.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 14,
+				"length": 9,
+				"field": "body.topics[0].name",
+				"value": "'t1-ex412'"
+			},
+			{
+				"offset": 23,
+				"length": 1,
+				"field": "body.topics[0].partitions.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 24,
+				"length": 4,
+				"field": "body.topics[0].partitions[0].partition_index",
+				"value": "0"
+			},
+			{
+				"offset": 28,
+				"length": 2,
+				"field": "body.topics[0].partitions[0].error_code",
+				"value": "25 (UNKNOWN_MEMBER_ID)"
+			},
+			{
+				"offset": 30,
+				"length": 1,
+				"field": "body.topics[0].partitions[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 31,
+				"length": 1,
+				"field": "body.topics[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 32,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"env": {
+			"topics": {
+				"t1": {
+					"name": "t1-ex412",
+					"id": "0a9775fe-3f95-4efd-8e4b-cd7ddd56fb80",
+					"partitions": 2
+				}
+			},
+			"group": "kafkatest-group"
+		}
+	}
+]

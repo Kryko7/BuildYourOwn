@@ -1,0 +1,56 @@
+stage: 22
+name: "Tilde expansion in arguments"
+tests:
+  - name: "bare ~ expands to HOME"
+    tags: [ext]
+    input: ["echo ~", "exit 0"]
+    expect:
+      stdout: "{HOME}"
+      exit_code: 0
+
+  - name: "~/path expands"
+    tags: [ext]
+    input: ["echo ~/docs", "exit 0"]
+    expect:
+      stdout: "{HOME}/docs"
+
+  - name: "cd ~/sub uses the expansion"
+    tags: [ext]
+    fixtures: { dirs: ["{HOME}/sub"] }
+    input: ["cd ~/sub", "pwd", "exit 0"]
+    expect:
+      stdout: "{HOME}/sub"
+
+  - name: "quoted tilde is literal"
+    tags: [ext]
+    input: ["echo \"~\" '~/x'", "exit 0"]
+    expect:
+      stdout: "~ ~/x"
+
+  - name: "tilde in the middle of a word is literal"
+    tags: [ext]
+    input: ["echo a~b", "exit 0"]
+    expect:
+      stdout: "a~b"
+
+  - name: "~unknownuser is left alone"
+    tags: [ext]
+    input: ["echo ~nosuchuser_zz", "exit 0"]
+    expect:
+      stdout: "~nosuchuser_zz"
+
+  - name: "tilde as a program argument"
+    tags: [ext]
+    fixtures:
+      path_isolated: true
+      executables:
+        show1: 'echo "[$1]"'
+    input: ["show1 ~", "exit 0"]
+    expect:
+      stdout: "[{HOME}]"
+
+  - name: "bare cd still goes home (regression: stage 12)"
+    tags: [ext]
+    input: ["cd", "pwd", "exit 0"]
+    expect:
+      stdout: "{HOME}"

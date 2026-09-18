@@ -1,0 +1,42 @@
+stage: 1
+name: "Print the prompt and wait for input"
+tests:
+  - name: "prints the prompt on startup"
+    mode: pty
+    steps:
+      - wait: "$ "
+    expect:
+      terminal: { contains: "$ " }
+
+  - name: "prompt is exactly '$ ' with nothing before it"
+    mode: pty
+    steps:
+      - wait: "$ "
+    expect:
+      terminal: "$ "
+
+  - name: "waits for input instead of exiting or re-printing the prompt"
+    mode: pty
+    steps:
+      - wait: "$ "
+      - sleep_ms: 300
+    expect:
+      terminal: { regex: "^\\$ $" }
+
+  - name: "an empty line produces a fresh prompt"
+    mode: pty
+    keys: ["\r"]
+    expect:
+      terminal: { regex: "^\\$ \n\\$ $" }
+
+  - name: "prompt is printed again after a command"
+    mode: pty
+    keys: ["echo hi\r"]
+    expect:
+      terminal: { regex: "(?s)^\\$ .*hi\n\\$ $" }
+
+  - name: "several empty lines produce several prompts"
+    mode: pty
+    keys: ["\r", "\r", "\r"]
+    expect:
+      terminal: { regex: "^\\$ \n\\$ \n\\$ \n\\$ $" }

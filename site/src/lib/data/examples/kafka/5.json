@@ -1,0 +1,214 @@
+[
+	{
+		"title": "ApiVersions v4, the whole exchange",
+		"kind": "wire",
+		"request": "ApiVersions v4, correlation id 7, client id 'kafkatest', body client_software_name 'kafkatest' / client_software_version '0.1.0'",
+		"request_hex": "00000025001200040000000700096b61666b6174657374000a6b61666b617465737406302e312e3000",
+		"response": "error_code 0 (NONE), then a compact array of api_keys — one {api_key, min_version, max_version} per API the broker serves, ApiVersions(18) among them with max_version >= 4 — then throttle_time_ms 0 and the tagged fields",
+		"response_hex": "000003120000000700004a00000000000d000001000400120000020001000a0000030000000d000008000200090000090001000900000a0000000600000b0000000900000c0000000400000d0000000500000e0000000500000f000000060000100000000500001100000001000012000000040000130002000700001400010006000015000000020000160000000500001700020004000018000000050000190000000400001a0000000500001b0001000100001c0000000500001d0001000300001e0001000300001f000100030000200001000400002100000002000022000100020000230001000400002400000002000025000000030000260001000300002700010002000028000100020000290001000300002a0000000200002b0000000200002c0000000100002d0000000100002e0000000000002f0000000000003000000001000031000000010000320000000000003300000000000037000000020000390000000200003c0000000200003d00000000000040000000000000410000000000004200000002000044000000010000450000000100004a0000000100004b0000000000004c0001000100004d0001000100004e0001000100004f000100010000500000000000005100000000000053000000000000540000000000005500000000000056000000000000570000000000005a0000000000005b0000000000005c00000000000000000003008f01070e67726f75702e76657273696f6e00000001000e6b726166742e76657273696f6e0000000100116d657461646174612e76657273696f6e0007001b000e73686172652e76657273696f6e0000000100147472616e73616374696f6e2e76657273696f6e000000020021656c696769626c652e6c65616465722e7265706c696361732e76657273696f6e0000000100010800000000000000100269050e67726f75702e76657273696f6e0001000100147472616e73616374696f6e2e76657273696f6e000200020021656c696769626c652e6c65616465722e7265706c696361732e76657273696f6e0001000100116d657461646174612e76657273696f6e001b001b00",
+		"note": "The response header of ApiVersions is v0 (no tagged fields) at every version, because a client must parse this answer before it knows what the broker supports. Every other flexible API uses response header v1.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "37 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 2,
+				"field": "header.api_key",
+				"value": "18 (ApiVersions)"
+			},
+			{
+				"offset": 6,
+				"length": 2,
+				"field": "header.api_version",
+				"value": "4"
+			},
+			{
+				"offset": 8,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "7"
+			},
+			{
+				"offset": 12,
+				"length": 11,
+				"field": "header.client_id",
+				"value": "'kafkatest'"
+			},
+			{
+				"offset": 23,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 24,
+				"length": 10,
+				"field": "body.client_software_name",
+				"value": "'kafkatest'"
+			},
+			{
+				"offset": 34,
+				"length": 6,
+				"field": "body.client_software_version",
+				"value": "'0.1.0'"
+			},
+			{
+				"offset": 40,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "786 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "7"
+			},
+			{
+				"offset": 8,
+				"length": 2,
+				"field": "body.error_code",
+				"value": "0 (NONE)"
+			},
+			{
+				"offset": 10,
+				"length": 1,
+				"field": "body.api_keys.length",
+				"value": "73 entries"
+			},
+			{
+				"offset": 11,
+				"length": 2,
+				"field": "body.api_keys[0].api_key",
+				"value": "0 (Produce)"
+			},
+			{
+				"offset": 13,
+				"length": 2,
+				"field": "body.api_keys[0].min_version",
+				"value": "0"
+			},
+			{
+				"offset": 15,
+				"length": 2,
+				"field": "body.api_keys[0].max_version",
+				"value": "13"
+			},
+			{
+				"offset": 17,
+				"length": 1,
+				"field": "body.api_keys[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 522,
+				"length": 4,
+				"field": "body.throttle_time_ms",
+				"value": "0"
+			},
+			{
+				"offset": 526,
+				"length": 264,
+				"field": "body.tagged_fields",
+				"value": "3 tagged fields: tag 0 (143 bytes), tag 1 (8 bytes), tag 2 (105 bytes)"
+			}
+		]
+	},
+	{
+		"title": "ApiVersions v0, the non-flexible shape",
+		"kind": "wire",
+		"request": "ApiVersions v0, correlation id 8: header v1 (no tagged-field byte) and an empty body",
+		"request_hex": "00000013001200000000000800096b61666b6174657374",
+		"response": "error_code 0, then api_keys as an ordinary int32-counted array of three int16s each — no compact lengths, no throttle_time_ms, no tagged fields",
+		"response_hex": "000001c00000000800000000004900000000000d00010004001200020001000a00030000000d000800020009000900010009000a00000006000b00000009000c00000004000d00000005000e00000005000f00000006001000000005001100000001001200000004001300020007001400010006001500000002001600000005001700020004001800000005001900000004001a00000005001b00010001001c00000005001d00010003001e00010003001f00010003002000010004002100000002002200010002002300010004002400000002002500000003002600010003002700010002002800010002002900010003002a00000002002b00000002002c00000001002d00000001002e00000000002f00000000003000000001003100000001003200000000003300000000003700000002003900000002003c00000002003d00000000004000000000004100000000004200000002004400000001004500000001004a00000001004b00000000004c00010001004d00010001004e00010001004f00010001005000000000005100000000005300000000005400000000005500000000005600000000005700000000005a00000000005b00000000005c00000000",
+		"note": "Compare the two hex dumps: v4 writes the array length as uvarint(count + 1) in one byte, v0 writes it as a 4-byte count. That single difference is what 'flexible versions' (KIP-482) means.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "19 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 2,
+				"field": "header.api_key",
+				"value": "18 (ApiVersions)"
+			},
+			{
+				"offset": 6,
+				"length": 2,
+				"field": "header.api_version",
+				"value": "0"
+			},
+			{
+				"offset": 8,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "8"
+			},
+			{
+				"offset": 12,
+				"length": 11,
+				"field": "header.client_id",
+				"value": "'kafkatest'"
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "448 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "8"
+			},
+			{
+				"offset": 8,
+				"length": 2,
+				"field": "body.error_code",
+				"value": "0 (NONE)"
+			},
+			{
+				"offset": 10,
+				"length": 4,
+				"field": "body.api_keys.length",
+				"value": "73 entries"
+			},
+			{
+				"offset": 14,
+				"length": 2,
+				"field": "body.api_keys[0].api_key",
+				"value": "0 (Produce)"
+			},
+			{
+				"offset": 16,
+				"length": 2,
+				"field": "body.api_keys[0].min_version",
+				"value": "0"
+			},
+			{
+				"offset": 18,
+				"length": 2,
+				"field": "body.api_keys[0].max_version",
+				"value": "13"
+			}
+		]
+	}
+]

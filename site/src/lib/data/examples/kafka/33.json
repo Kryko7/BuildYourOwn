@@ -1,0 +1,940 @@
+[
+	{
+		"title": "acks=0: fire and forget",
+		"kind": "silence",
+		"request": "Produce v11, correlation id 331, acks 0: three records to partition 0 of the fixture topic",
+		"request_hex": "0000008d0000000b0000014b00096b61666b61746573740000000000001388020974312d65783333310200000000600000000000000000000000530000000002e8acffab0000000000020000018bcfe568000000018bcfe56800ffffffffffffffffffffffffffff000000031400000001086669726500120000020106616e640018000004010c666f7267657400000000",
+		"response": "Nothing at all. The records are appended and the connection stays open, but no response frame is ever written — correlation id 331 is never answered.",
+		"response_hex": "",
+		"note": "acks=0 means 'do not tell me', not 'do not do it'. Append the batch, write no bytes back, and keep reading: the next request on this connection still needs its answer. A broker that replies here puts the client permanently one response ahead for the life of the connection.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "141 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 2,
+				"field": "header.api_key",
+				"value": "0 (Produce)"
+			},
+			{
+				"offset": 6,
+				"length": 2,
+				"field": "header.api_version",
+				"value": "11"
+			},
+			{
+				"offset": 8,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "331"
+			},
+			{
+				"offset": 12,
+				"length": 11,
+				"field": "header.client_id",
+				"value": "'kafkatest'"
+			},
+			{
+				"offset": 23,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 24,
+				"length": 1,
+				"field": "body.transactional_id",
+				"value": "null"
+			},
+			{
+				"offset": 25,
+				"length": 2,
+				"field": "body.acks",
+				"value": "0"
+			},
+			{
+				"offset": 27,
+				"length": 4,
+				"field": "body.timeout_ms",
+				"value": "5000"
+			},
+			{
+				"offset": 31,
+				"length": 1,
+				"field": "body.topic_data.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 32,
+				"length": 9,
+				"field": "body.topic_data[0].name",
+				"value": "'t1-ex331'"
+			},
+			{
+				"offset": 41,
+				"length": 1,
+				"field": "body.topic_data[0].partition_data.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 42,
+				"length": 4,
+				"field": "body.topic_data[0].partition_data[0].index",
+				"value": "0"
+			},
+			{
+				"offset": 46,
+				"length": 96,
+				"field": "body.topic_data[0].partition_data[0].records",
+				"value": "95 bytes"
+			},
+			{
+				"offset": 47,
+				"length": 8,
+				"field": "body.topic_data[0].partition_data[0].records.batch[0].base_offset",
+				"value": "0"
+			},
+			{
+				"offset": 55,
+				"length": 4,
+				"field": "body.topic_data[0].partition_data[0].records.batch[0].batch_length",
+				"value": "83 (bytes after this field)"
+			},
+			{
+				"offset": 59,
+				"length": 4,
+				"field": "body.topic_data[0].partition_data[0].records.batch[0].partition_leader_epoch",
+				"value": "0"
+			},
+			{
+				"offset": 63,
+				"length": 1,
+				"field": "body.topic_data[0].partition_data[0].records.batch[0].magic",
+				"value": "2 (v2)"
+			},
+			{
+				"offset": 64,
+				"length": 4,
+				"field": "body.topic_data[0].partition_data[0].records.batch[0].crc",
+				"value": "0xe8acffab (CRC-32C of everything after this field)"
+			},
+			{
+				"offset": 68,
+				"length": 2,
+				"field": "body.topic_data[0].partition_data[0].records.batch[0].attributes",
+				"value": "0 (compression none)"
+			},
+			{
+				"offset": 70,
+				"length": 4,
+				"field": "body.topic_data[0].partition_data[0].records.batch[0].last_offset_delta",
+				"value": "2"
+			},
+			{
+				"offset": 74,
+				"length": 8,
+				"field": "body.topic_data[0].partition_data[0].records.batch[0].base_timestamp",
+				"value": "1700000000000"
+			},
+			{
+				"offset": 82,
+				"length": 8,
+				"field": "body.topic_data[0].partition_data[0].records.batch[0].max_timestamp",
+				"value": "1700000000000"
+			},
+			{
+				"offset": 90,
+				"length": 8,
+				"field": "body.topic_data[0].partition_data[0].records.batch[0].producer_id",
+				"value": "-1"
+			},
+			{
+				"offset": 98,
+				"length": 2,
+				"field": "body.topic_data[0].partition_data[0].records.batch[0].producer_epoch",
+				"value": "-1"
+			},
+			{
+				"offset": 100,
+				"length": 4,
+				"field": "body.topic_data[0].partition_data[0].records.batch[0].base_sequence",
+				"value": "-1"
+			},
+			{
+				"offset": 104,
+				"length": 4,
+				"field": "body.topic_data[0].partition_data[0].records.batch[0].record_count",
+				"value": "3"
+			},
+			{
+				"offset": 108,
+				"length": 1,
+				"field": "body.topic_data[0].partition_data[0].records.batch[0].records[0].length",
+				"value": "10 (varint)"
+			},
+			{
+				"offset": 109,
+				"length": 1,
+				"field": "body.topic_data[0].partition_data[0].records.batch[0].records[0].attributes",
+				"value": "0"
+			},
+			{
+				"offset": 110,
+				"length": 1,
+				"field": "body.topic_data[0].partition_data[0].records.batch[0].records[0].timestamp_delta",
+				"value": "0 (varlong)"
+			},
+			{
+				"offset": 111,
+				"length": 1,
+				"field": "body.topic_data[0].partition_data[0].records.batch[0].records[0].offset_delta",
+				"value": "0 (varint)"
+			},
+			{
+				"offset": 112,
+				"length": 1,
+				"field": "body.topic_data[0].partition_data[0].records.batch[0].records[0].key",
+				"value": "null"
+			},
+			{
+				"offset": 113,
+				"length": 5,
+				"field": "body.topic_data[0].partition_data[0].records.batch[0].records[0].value",
+				"value": "4 bytes 'fire'"
+			},
+			{
+				"offset": 118,
+				"length": 1,
+				"field": "body.topic_data[0].partition_data[0].records.batch[0].records[0].headers.length",
+				"value": "0 (varint)"
+			},
+			{
+				"offset": 142,
+				"length": 1,
+				"field": "body.topic_data[0].partition_data[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 143,
+				"length": 1,
+				"field": "body.topic_data[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 144,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"response_fields": [],
+		"env": {
+			"topics": {
+				"t1": {
+					"name": "t1-ex331",
+					"id": "249b4895-0258-4fab-93c4-8a377cab414d",
+					"partitions": 2
+				}
+			},
+			"group": "kafkatest-group"
+		}
+	},
+	{
+		"title": "acks=-1: the same batch, answered",
+		"kind": "wire",
+		"request": "The identical request with acks -1 instead of 0, correlation id 332 — the only byte that differs in the body is the acks int16",
+		"request_hex": "0000008d0000000b0000014c00096b61666b61746573740000ffff00001388020974312d65783333320200000000600000000000000000000000530000000002e8acffab0000000000020000018bcfe568000000018bcfe56800ffffffffffffffffffffffffffff000000031400000001086669726500120000020106616e640018000004010c666f7267657400000000",
+		"response": "A normal Produce v11 response: index 0, error_code 0 (NONE), base_offset 0, log_append_time_ms -1, log_start_offset 0, throttle_time_ms 0",
+		"response_hex": "000000370000014c00020974312d6578333332020000000000000000000000000000ffffffffffffffff0000000000000000010000000000000000",
+		"note": "acks=1 answers once the leader's own log holds the batch, acks=-1 once every in-sync replica does. On a single-broker setup the leader is the whole ISR, so both answer identically — but the acks value still has to be read, because 0 changes what goes back on the wire.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "141 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 2,
+				"field": "header.api_key",
+				"value": "0 (Produce)"
+			},
+			{
+				"offset": 6,
+				"length": 2,
+				"field": "header.api_version",
+				"value": "11"
+			},
+			{
+				"offset": 8,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "332"
+			},
+			{
+				"offset": 12,
+				"length": 11,
+				"field": "header.client_id",
+				"value": "'kafkatest'"
+			},
+			{
+				"offset": 23,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 24,
+				"length": 1,
+				"field": "body.transactional_id",
+				"value": "null"
+			},
+			{
+				"offset": 25,
+				"length": 2,
+				"field": "body.acks",
+				"value": "-1"
+			},
+			{
+				"offset": 27,
+				"length": 4,
+				"field": "body.timeout_ms",
+				"value": "5000"
+			},
+			{
+				"offset": 31,
+				"length": 1,
+				"field": "body.topic_data.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 32,
+				"length": 9,
+				"field": "body.topic_data[0].name",
+				"value": "'t1-ex332'"
+			},
+			{
+				"offset": 41,
+				"length": 1,
+				"field": "body.topic_data[0].partition_data.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 42,
+				"length": 4,
+				"field": "body.topic_data[0].partition_data[0].index",
+				"value": "0"
+			},
+			{
+				"offset": 46,
+				"length": 96,
+				"field": "body.topic_data[0].partition_data[0].records",
+				"value": "95 bytes"
+			},
+			{
+				"offset": 47,
+				"length": 8,
+				"field": "body.topic_data[0].partition_data[0].records.batch[0].base_offset",
+				"value": "0"
+			},
+			{
+				"offset": 55,
+				"length": 4,
+				"field": "body.topic_data[0].partition_data[0].records.batch[0].batch_length",
+				"value": "83 (bytes after this field)"
+			},
+			{
+				"offset": 59,
+				"length": 4,
+				"field": "body.topic_data[0].partition_data[0].records.batch[0].partition_leader_epoch",
+				"value": "0"
+			},
+			{
+				"offset": 63,
+				"length": 1,
+				"field": "body.topic_data[0].partition_data[0].records.batch[0].magic",
+				"value": "2 (v2)"
+			},
+			{
+				"offset": 64,
+				"length": 4,
+				"field": "body.topic_data[0].partition_data[0].records.batch[0].crc",
+				"value": "0xe8acffab (CRC-32C of everything after this field)"
+			},
+			{
+				"offset": 68,
+				"length": 2,
+				"field": "body.topic_data[0].partition_data[0].records.batch[0].attributes",
+				"value": "0 (compression none)"
+			},
+			{
+				"offset": 70,
+				"length": 4,
+				"field": "body.topic_data[0].partition_data[0].records.batch[0].last_offset_delta",
+				"value": "2"
+			},
+			{
+				"offset": 74,
+				"length": 8,
+				"field": "body.topic_data[0].partition_data[0].records.batch[0].base_timestamp",
+				"value": "1700000000000"
+			},
+			{
+				"offset": 82,
+				"length": 8,
+				"field": "body.topic_data[0].partition_data[0].records.batch[0].max_timestamp",
+				"value": "1700000000000"
+			},
+			{
+				"offset": 90,
+				"length": 8,
+				"field": "body.topic_data[0].partition_data[0].records.batch[0].producer_id",
+				"value": "-1"
+			},
+			{
+				"offset": 98,
+				"length": 2,
+				"field": "body.topic_data[0].partition_data[0].records.batch[0].producer_epoch",
+				"value": "-1"
+			},
+			{
+				"offset": 100,
+				"length": 4,
+				"field": "body.topic_data[0].partition_data[0].records.batch[0].base_sequence",
+				"value": "-1"
+			},
+			{
+				"offset": 104,
+				"length": 4,
+				"field": "body.topic_data[0].partition_data[0].records.batch[0].record_count",
+				"value": "3"
+			},
+			{
+				"offset": 108,
+				"length": 1,
+				"field": "body.topic_data[0].partition_data[0].records.batch[0].records[0].length",
+				"value": "10 (varint)"
+			},
+			{
+				"offset": 109,
+				"length": 1,
+				"field": "body.topic_data[0].partition_data[0].records.batch[0].records[0].attributes",
+				"value": "0"
+			},
+			{
+				"offset": 110,
+				"length": 1,
+				"field": "body.topic_data[0].partition_data[0].records.batch[0].records[0].timestamp_delta",
+				"value": "0 (varlong)"
+			},
+			{
+				"offset": 111,
+				"length": 1,
+				"field": "body.topic_data[0].partition_data[0].records.batch[0].records[0].offset_delta",
+				"value": "0 (varint)"
+			},
+			{
+				"offset": 112,
+				"length": 1,
+				"field": "body.topic_data[0].partition_data[0].records.batch[0].records[0].key",
+				"value": "null"
+			},
+			{
+				"offset": 113,
+				"length": 5,
+				"field": "body.topic_data[0].partition_data[0].records.batch[0].records[0].value",
+				"value": "4 bytes 'fire'"
+			},
+			{
+				"offset": 118,
+				"length": 1,
+				"field": "body.topic_data[0].partition_data[0].records.batch[0].records[0].headers.length",
+				"value": "0 (varint)"
+			},
+			{
+				"offset": 142,
+				"length": 1,
+				"field": "body.topic_data[0].partition_data[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 143,
+				"length": 1,
+				"field": "body.topic_data[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 144,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "55 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "332"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 9,
+				"length": 1,
+				"field": "body.responses.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 10,
+				"length": 9,
+				"field": "body.responses[0].name",
+				"value": "'t1-ex332'"
+			},
+			{
+				"offset": 19,
+				"length": 1,
+				"field": "body.responses[0].partition_responses.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 20,
+				"length": 4,
+				"field": "body.responses[0].partition_responses[0].index",
+				"value": "0"
+			},
+			{
+				"offset": 24,
+				"length": 2,
+				"field": "body.responses[0].partition_responses[0].error_code",
+				"value": "0 (NONE)"
+			},
+			{
+				"offset": 26,
+				"length": 8,
+				"field": "body.responses[0].partition_responses[0].base_offset",
+				"value": "0"
+			},
+			{
+				"offset": 34,
+				"length": 8,
+				"field": "body.responses[0].partition_responses[0].log_append_time_ms",
+				"value": "-1"
+			},
+			{
+				"offset": 42,
+				"length": 8,
+				"field": "body.responses[0].partition_responses[0].log_start_offset",
+				"value": "0"
+			},
+			{
+				"offset": 50,
+				"length": 1,
+				"field": "body.responses[0].partition_responses[0].record_errors.length",
+				"value": "0 entries"
+			},
+			{
+				"offset": 51,
+				"length": 1,
+				"field": "body.responses[0].partition_responses[0].error_message",
+				"value": "null"
+			},
+			{
+				"offset": 52,
+				"length": 1,
+				"field": "body.responses[0].partition_responses[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 53,
+				"length": 1,
+				"field": "body.responses[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 54,
+				"length": 4,
+				"field": "body.throttle_time_ms",
+				"value": "0"
+			},
+			{
+				"offset": 58,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"env": {
+			"topics": {
+				"t1": {
+					"name": "t1-ex332",
+					"id": "66a46e77-bed4-4232-ae1e-c237c5a4088c",
+					"partitions": 2
+				}
+			},
+			"group": "kafkatest-group"
+		}
+	},
+	{
+		"title": "acks=2: a value that does not exist",
+		"kind": "wire",
+		"request": "Produce v11, correlation id 333, acks 2 — one record to partition 0",
+		"request_hex": "000000760000000b0000014d00096b61666b61746573740000000200001388020974312d657833333302000000004900000000000000000000003c00000000027b65ee750000000000000000018bcfe568000000018bcfe56800ffffffffffffffffffffffffffff000000011400000001086e6f706500000000",
+		"response": "One partition_responses entry: index 0, error_code 21 (INVALID_REQUIRED_ACKS), base_offset -1. Nothing is appended: the partition's high watermark stays 0.",
+		"response_hex": "000000370000014d00020974312d657833333302000000000015ffffffffffffffffffffffffffffffffffffffffffffffff010000000000000000",
+		"note": "acks is only ever 0, 1 or -1. Validate it before you touch the log, not after — a rejected request must leave the segment file exactly as it was.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "118 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 2,
+				"field": "header.api_key",
+				"value": "0 (Produce)"
+			},
+			{
+				"offset": 6,
+				"length": 2,
+				"field": "header.api_version",
+				"value": "11"
+			},
+			{
+				"offset": 8,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "333"
+			},
+			{
+				"offset": 12,
+				"length": 11,
+				"field": "header.client_id",
+				"value": "'kafkatest'"
+			},
+			{
+				"offset": 23,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 24,
+				"length": 1,
+				"field": "body.transactional_id",
+				"value": "null"
+			},
+			{
+				"offset": 25,
+				"length": 2,
+				"field": "body.acks",
+				"value": "2"
+			},
+			{
+				"offset": 27,
+				"length": 4,
+				"field": "body.timeout_ms",
+				"value": "5000"
+			},
+			{
+				"offset": 31,
+				"length": 1,
+				"field": "body.topic_data.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 32,
+				"length": 9,
+				"field": "body.topic_data[0].name",
+				"value": "'t1-ex333'"
+			},
+			{
+				"offset": 41,
+				"length": 1,
+				"field": "body.topic_data[0].partition_data.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 42,
+				"length": 4,
+				"field": "body.topic_data[0].partition_data[0].index",
+				"value": "0"
+			},
+			{
+				"offset": 46,
+				"length": 73,
+				"field": "body.topic_data[0].partition_data[0].records",
+				"value": "72 bytes"
+			},
+			{
+				"offset": 47,
+				"length": 8,
+				"field": "body.topic_data[0].partition_data[0].records.batch[0].base_offset",
+				"value": "0"
+			},
+			{
+				"offset": 55,
+				"length": 4,
+				"field": "body.topic_data[0].partition_data[0].records.batch[0].batch_length",
+				"value": "60 (bytes after this field)"
+			},
+			{
+				"offset": 59,
+				"length": 4,
+				"field": "body.topic_data[0].partition_data[0].records.batch[0].partition_leader_epoch",
+				"value": "0"
+			},
+			{
+				"offset": 63,
+				"length": 1,
+				"field": "body.topic_data[0].partition_data[0].records.batch[0].magic",
+				"value": "2 (v2)"
+			},
+			{
+				"offset": 64,
+				"length": 4,
+				"field": "body.topic_data[0].partition_data[0].records.batch[0].crc",
+				"value": "0x7b65ee75 (CRC-32C of everything after this field)"
+			},
+			{
+				"offset": 68,
+				"length": 2,
+				"field": "body.topic_data[0].partition_data[0].records.batch[0].attributes",
+				"value": "0 (compression none)"
+			},
+			{
+				"offset": 70,
+				"length": 4,
+				"field": "body.topic_data[0].partition_data[0].records.batch[0].last_offset_delta",
+				"value": "0"
+			},
+			{
+				"offset": 74,
+				"length": 8,
+				"field": "body.topic_data[0].partition_data[0].records.batch[0].base_timestamp",
+				"value": "1700000000000"
+			},
+			{
+				"offset": 82,
+				"length": 8,
+				"field": "body.topic_data[0].partition_data[0].records.batch[0].max_timestamp",
+				"value": "1700000000000"
+			},
+			{
+				"offset": 90,
+				"length": 8,
+				"field": "body.topic_data[0].partition_data[0].records.batch[0].producer_id",
+				"value": "-1"
+			},
+			{
+				"offset": 98,
+				"length": 2,
+				"field": "body.topic_data[0].partition_data[0].records.batch[0].producer_epoch",
+				"value": "-1"
+			},
+			{
+				"offset": 100,
+				"length": 4,
+				"field": "body.topic_data[0].partition_data[0].records.batch[0].base_sequence",
+				"value": "-1"
+			},
+			{
+				"offset": 104,
+				"length": 4,
+				"field": "body.topic_data[0].partition_data[0].records.batch[0].record_count",
+				"value": "1"
+			},
+			{
+				"offset": 108,
+				"length": 1,
+				"field": "body.topic_data[0].partition_data[0].records.batch[0].records[0].length",
+				"value": "10 (varint)"
+			},
+			{
+				"offset": 109,
+				"length": 1,
+				"field": "body.topic_data[0].partition_data[0].records.batch[0].records[0].attributes",
+				"value": "0"
+			},
+			{
+				"offset": 110,
+				"length": 1,
+				"field": "body.topic_data[0].partition_data[0].records.batch[0].records[0].timestamp_delta",
+				"value": "0 (varlong)"
+			},
+			{
+				"offset": 111,
+				"length": 1,
+				"field": "body.topic_data[0].partition_data[0].records.batch[0].records[0].offset_delta",
+				"value": "0 (varint)"
+			},
+			{
+				"offset": 112,
+				"length": 1,
+				"field": "body.topic_data[0].partition_data[0].records.batch[0].records[0].key",
+				"value": "null"
+			},
+			{
+				"offset": 113,
+				"length": 5,
+				"field": "body.topic_data[0].partition_data[0].records.batch[0].records[0].value",
+				"value": "4 bytes 'nope'"
+			},
+			{
+				"offset": 118,
+				"length": 1,
+				"field": "body.topic_data[0].partition_data[0].records.batch[0].records[0].headers.length",
+				"value": "0 (varint)"
+			},
+			{
+				"offset": 119,
+				"length": 1,
+				"field": "body.topic_data[0].partition_data[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 120,
+				"length": 1,
+				"field": "body.topic_data[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 121,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "55 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "333"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 9,
+				"length": 1,
+				"field": "body.responses.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 10,
+				"length": 9,
+				"field": "body.responses[0].name",
+				"value": "'t1-ex333'"
+			},
+			{
+				"offset": 19,
+				"length": 1,
+				"field": "body.responses[0].partition_responses.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 20,
+				"length": 4,
+				"field": "body.responses[0].partition_responses[0].index",
+				"value": "0"
+			},
+			{
+				"offset": 24,
+				"length": 2,
+				"field": "body.responses[0].partition_responses[0].error_code",
+				"value": "21 (INVALID_REQUIRED_ACKS)"
+			},
+			{
+				"offset": 26,
+				"length": 8,
+				"field": "body.responses[0].partition_responses[0].base_offset",
+				"value": "-1"
+			},
+			{
+				"offset": 34,
+				"length": 8,
+				"field": "body.responses[0].partition_responses[0].log_append_time_ms",
+				"value": "-1"
+			},
+			{
+				"offset": 42,
+				"length": 8,
+				"field": "body.responses[0].partition_responses[0].log_start_offset",
+				"value": "-1"
+			},
+			{
+				"offset": 50,
+				"length": 1,
+				"field": "body.responses[0].partition_responses[0].record_errors.length",
+				"value": "0 entries"
+			},
+			{
+				"offset": 51,
+				"length": 1,
+				"field": "body.responses[0].partition_responses[0].error_message",
+				"value": "null"
+			},
+			{
+				"offset": 52,
+				"length": 1,
+				"field": "body.responses[0].partition_responses[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 53,
+				"length": 1,
+				"field": "body.responses[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 54,
+				"length": 4,
+				"field": "body.throttle_time_ms",
+				"value": "0"
+			},
+			{
+				"offset": 58,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"env": {
+			"topics": {
+				"t1": {
+					"name": "t1-ex333",
+					"id": "73522728-cfd2-4929-91b9-9293b1271bbe",
+					"partitions": 2
+				}
+			},
+			"group": "kafkatest-group"
+		}
+	}
+]

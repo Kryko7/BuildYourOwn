@@ -1,0 +1,64 @@
+stage: 28
+name: "Input redirection with <"
+tests:
+  - name: "cat reads from a redirected file"
+    tags: [ext]
+    fixtures:
+      files: { "in.txt": "line one\nline two\n" }
+    input: ["cat < in.txt", "exit 0"]
+    expect:
+      stdout: "line one\nline two"
+      exit_code: 0
+
+  - name: "a fixture program reads its stdin from the file"
+    tags: [ext]
+    fixtures:
+      files: { "in.txt": "a\nb\n" }
+      path_isolated: true
+      executables:
+        reader: |
+          while read l; do echo "got $l"; done
+    input: ["reader < in.txt", "exit 0"]
+    expect:
+      stdout: "got a\ngot b"
+
+  - name: "redirection can come before the command"
+    tags: [ext]
+    fixtures:
+      files: { "in.txt": "first\n" }
+    input: ["< in.txt cat", "exit 0"]
+    expect:
+      stdout: "first"
+
+  - name: "a missing input file is an error and the shell continues"
+    tags: [ext]
+    input: ["cat < missing.txt", "echo after", "exit 0"]
+    expect:
+      stderr: { contains: "missing.txt" }
+      stdout: "after"
+
+  - name: "< and > together copy a file"
+    tags: [ext]
+    fixtures:
+      files: { "in.txt": "copy me\n" }
+    input: ["cat < in.txt > out.txt", "exit 0"]
+    expect:
+      stdout: ""
+      files:
+        "{TMP}/out.txt": "copy me\n"
+
+  - name: "head reads only the first line"
+    tags: [ext]
+    fixtures:
+      files: { "in.txt": "1\n2\n3\n" }
+    input: ["head -n 1 < in.txt", "exit 0"]
+    expect:
+      stdout: "1"
+
+  - name: "> still truncates (regression: stage 24)"
+    tags: [ext]
+    fixtures:
+      files: { "out.txt": "old\n" }
+    input: ["echo new > out.txt", "cat < out.txt", "exit 0"]
+    expect:
+      stdout: "new"

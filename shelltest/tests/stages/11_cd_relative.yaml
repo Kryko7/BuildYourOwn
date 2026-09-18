@@ -1,0 +1,53 @@
+stage: 11
+name: "cd with relative paths"
+tests:
+  - name: "cd ./dir"
+    fixtures: { dirs: [dir1] }
+    input: ["cd ./dir1", "pwd", "exit 0"]
+    expect:
+      stdout: "{TMP}/dir1"
+      exit_code: 0
+
+  - name: "cd dir without ./ prefix"
+    fixtures: { dirs: [dir1] }
+    input: ["cd dir1", "pwd", "exit 0"]
+    expect:
+      stdout: "{TMP}/dir1"
+
+  - name: "cd .. goes to the parent"
+    fixtures: { dirs: [dir1/sub], cwd: dir1/sub }
+    input: ["cd ..", "pwd", "exit 0"]
+    expect:
+      stdout: "{TMP}/dir1"
+
+  - name: "cd ../../other from a nested directory"
+    fixtures: { dirs: [a/b, other], cwd: a/b }
+    input: ["cd ../../other", "pwd", "exit 0"]
+    expect:
+      stdout: "{TMP}/other"
+
+  - name: "cd into a nested relative path"
+    fixtures: { dirs: [a/b/c] }
+    input: ["cd a/b/c", "pwd", "exit 0"]
+    expect:
+      stdout: "{TMP}/a/b/c"
+
+  - name: "cd . stays put"
+    fixtures: { dirs: [dir1], cwd: dir1 }
+    input: ["cd .", "pwd", "exit 0"]
+    expect:
+      stdout: "{TMP}/dir1"
+
+  - name: "cd to a missing relative directory reports an error"
+    skip_on: [zsh]
+    reason: "zsh words the message as 'cd: no such file or directory: <path>'"
+    input: ["cd missing_dir", "pwd", "exit 0"]
+    expect:
+      stderr: { contains: "cd: missing_dir: No such file or directory" }
+      stdout: "{TMP}"
+
+  - name: "relative cd after absolute cd (regression: stage 10)"
+    fixtures: { dirs: [dir1/sub] }
+    input: ["cd {TMP}/dir1", "cd sub", "pwd", "exit 0"]
+    expect:
+      stdout: "{TMP}/dir1/sub"

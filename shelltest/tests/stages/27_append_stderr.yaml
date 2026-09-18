@@ -1,0 +1,78 @@
+stage: 27
+name: "Append stderr with 2>>"
+tests:
+  - name: "2>> appends stderr to an existing file"
+    fixtures:
+      files: { "err.txt": "first\n" }
+      path_isolated: true
+      executables:
+        err_only: "echo second >&2"
+    input: ["err_only 2>> err.txt", "exit 0"]
+    expect:
+      files:
+        "{TMP}/err.txt": "first\nsecond\n"
+      stderr: ""
+      exit_code: 0
+
+  - name: "2>> creates the file when missing"
+    fixtures:
+      path_isolated: true
+      executables:
+        err_only: "echo created >&2"
+    input: ["err_only 2>> err.txt", "exit 0"]
+    expect:
+      files:
+        "{TMP}/err.txt": "created\n"
+
+  - name: "several 2>> calls accumulate"
+    fixtures:
+      path_isolated: true
+      executables:
+        err_msg: 'echo "$1" >&2'
+    input: ["err_msg one 2>> err.txt", "err_msg two 2>> err.txt", "exit 0"]
+    expect:
+      files:
+        "{TMP}/err.txt": "one\ntwo\n"
+
+  - name: "stdout is untouched by 2>>"
+    fixtures:
+      path_isolated: true
+      executables:
+        both: |
+          echo to-stdout
+          echo to-stderr >&2
+    input: ["both 2>> err.txt", "exit 0"]
+    expect:
+      stdout: "to-stdout"
+      files:
+        "{TMP}/err.txt": "to-stderr\n"
+
+  - name: ">> and 2>> together"
+    fixtures:
+      files: { "out.txt": "o\n", "err.txt": "e\n" }
+      path_isolated: true
+      executables:
+        both: |
+          echo to-stdout
+          echo to-stderr >&2
+    input: ["both >> out.txt 2>> err.txt", "exit 0"]
+    expect:
+      files:
+        "{TMP}/out.txt": "o\nto-stdout\n"
+        "{TMP}/err.txt": "e\nto-stderr\n"
+
+  - name: "cat's missing-file error appends (host cat)"
+    fixtures:
+      files: { "err.txt": "first\n" }
+    input: ["cat no_such_file 2>> err.txt", "exit 0"]
+    expect:
+      files:
+        "{TMP}/err.txt": { regex: "(?s)^first\n.*no_such_file.*\n$" }
+
+  - name: ">> still appends stdout (regression: stage 26)"
+    fixtures:
+      files: { "out.txt": "a\n" }
+    input: ["echo b >> out.txt", "exit 0"]
+    expect:
+      files:
+        "{TMP}/out.txt": "a\nb\n"

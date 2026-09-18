@@ -1,0 +1,105 @@
+stage: 50
+name: "Ctrl-C clears the line or kills the foreground child"
+tests:
+  - name: "Ctrl-C at the prompt discards the typed line and shows a new prompt"
+    tags: [ext]
+    mode: pty
+    steps:
+      - wait: "$ "
+      - send: "echo abc"
+      - sleep_ms: 100
+      - send: "\x03"
+      - wait: "$ "
+      - send: "echo ok\r"
+      - wait: "$ "
+      - send: "exit\r"
+    expect:
+      terminal: { regex: "(?s)echo abc[^\n]*\n\\$ echo ok\nok\n" }
+      exit_code: 0
+
+  - name: "the discarded line is never executed"
+    tags: [ext]
+    mode: pty
+    steps:
+      - wait: "$ "
+      - send: "echo abc"
+      - sleep_ms: 100
+      - send: "\x03"
+      - wait: "$ "
+      - send: "exit\r"
+    expect:
+      terminal: { not_contains: "\nabc\n" }
+
+  - name: "Ctrl-C on an empty line just gives a new prompt"
+    tags: [ext]
+    mode: pty
+    steps:
+      - wait: "$ "
+      - send: "\x03"
+      - wait: "$ "
+      - send: "echo fine\r"
+      - wait: "$ "
+      - send: "exit\r"
+    expect:
+      terminal: { contains: "\nfine\n" }
+      exit_code: 0
+
+  - name: "Ctrl-C kills a running foreground command and the shell survives"
+    tags: [ext]
+    mode: pty
+    timeout_ms: 3000
+    steps:
+      - wait: "$ "
+      - send: "sleep 5\r"
+      - sleep_ms: 300
+      - send: "\x03"
+      - wait: "$ "
+      - send: "echo survived\r"
+      - wait: "$ "
+      - send: "exit\r"
+    expect:
+      terminal: { contains: "\nsurvived\n" }
+      exit_code: 0
+
+  - name: "$? is 130 after the foreground command is interrupted"
+    tags: [ext]
+    mode: pty
+    timeout_ms: 3000
+    steps:
+      - wait: "$ "
+      - send: "sleep 5\r"
+      - sleep_ms: 300
+      - send: "\x03"
+      - wait: "$ "
+      - send: "echo $?\r"
+      - wait: "$ "
+      - send: "exit\r"
+    expect:
+      terminal: { contains: "\n130\n" }
+
+  - name: "Ctrl-C interrupts a pipeline of external commands"
+    tags: [ext]
+    mode: pty
+    timeout_ms: 3000
+    steps:
+      - wait: "$ "
+      - send: "sleep 5 | cat\r"
+      - sleep_ms: 300
+      - send: "\x03"
+      - wait: "$ "
+      - send: "echo back\r"
+      - wait: "$ "
+      - send: "exit\r"
+    expect:
+      terminal: { contains: "\nback\n" }
+
+  - name: "the shell still exits normally after Ctrl-C (regression: stage 4)"
+    tags: [ext]
+    mode: pty
+    steps:
+      - wait: "$ "
+      - send: "\x03"
+      - wait: "$ "
+      - send: "exit 7\r"
+    expect:
+      exit_code: 7

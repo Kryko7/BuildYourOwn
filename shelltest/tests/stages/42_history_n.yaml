@@ -1,0 +1,45 @@
+stage: 42
+name: "history N shows the last N entries"
+tests:
+  - name: "history 2 shows the last two entries"
+    skip_on: [zsh]
+    reason: "zsh's history builtin (fc -l) is not available in non-interactive mode"
+    input: ["echo a", "echo b", "echo c", "history 2", "exit 0"]
+    expect:
+      stdout: "a\nb\nc\n    3  echo c\n    4  history 2"
+      exit_code: 0
+
+  - name: "history 1 shows only the history command itself"
+    skip_on: [zsh]
+    reason: "zsh's history builtin (fc -l) is not available in non-interactive mode"
+    input: ["echo a", "history 1", "exit 0"]
+    expect:
+      stdout: "a\n    2  history 1"
+
+  - name: "history N larger than the list shows everything"
+    skip_on: [zsh]
+    reason: "zsh's history builtin (fc -l) is not available in non-interactive mode"
+    input: ["echo a", "history 100", "exit 0"]
+    expect:
+      stdout: "a\n    1  echo a\n    2  history 100"
+
+  - name: "history 0 shows nothing"
+    skip_on: [zsh]
+    reason: "zsh's history builtin (fc -l) is not available in non-interactive mode"
+    input: ["echo a", "history 0", "exit 0"]
+    expect:
+      stdout: "a"
+
+  - name: "numbers stay absolute when only the tail is shown"
+    skip_on: [zsh]
+    reason: "zsh's history builtin (fc -l) is not available in non-interactive mode"
+    input: ["echo 1", "echo 2", "echo 3", "echo 4", "history 3", "exit 0"]
+    expect:
+      stdout: { regex: "(?m)^    3  echo 3\n    4  echo 4\n    5  history 3$" }
+
+  - name: "plain history still lists everything (regression: stage 41)"
+    skip_on: [zsh]
+    reason: "zsh's history builtin (fc -l) is not available in non-interactive mode"
+    input: ["echo a", "history 1", "history", "exit 0"]
+    expect:
+      stdout: "a\n    2  history 1\n    1  echo a\n    2  history 1\n    3  history"

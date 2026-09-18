@@ -1,0 +1,63 @@
+stage: 51
+name: "Background jobs: &, jobs, wait"
+tests:
+  - name: "cmd & returns to the prompt immediately"
+    tags: [ext]
+    timeout_ms: 3000
+    input: ["sleep 2 &", "echo immediate", "exit 0"]
+    expect:
+      stdout: "immediate"
+      exit_code: 0
+
+  - name: "jobs lists a running background job"
+    tags: [ext]
+    timeout_ms: 4000
+    input: ["sleep 2 &", "jobs", "exit 0"]
+    expect:
+      stdout: { regex: "(?m)^\\[1\\].*sleep 2" }
+
+  - name: "wait blocks until background jobs finish"
+    tags: [ext]
+    fixtures:
+      path_isolated: true
+      executables:
+        slow_echo: "sleep 0.3; echo from-background"
+    input: ["slow_echo &", "wait", "echo after-wait", "exit 0"]
+    expect:
+      stdout: "from-background\nafter-wait"
+
+  - name: "jobs is empty after wait"
+    tags: [ext]
+    input: ["sleep 0.2 &", "wait", "jobs", "echo end", "exit 0"]
+    expect:
+      stdout: "end"
+
+  - name: "several background jobs all complete"
+    tags: [ext]
+    fixtures:
+      path_isolated: true
+      executables:
+        mark: 'sleep 0.1; : > "{TMP}/done_$1"'
+    input: ["mark a &", "mark b &", "mark c &", "wait", "exit 0"]
+    expect:
+      files:
+        "{TMP}/done_a": ""
+        "{TMP}/done_b": ""
+        "{TMP}/done_c": ""
+
+  - name: "foreground commands still run while a job is in the background"
+    tags: [ext]
+    timeout_ms: 3000
+    input: ["sleep 1 &", "echo one", "echo two", "exit 0"]
+    expect:
+      stdout: "one\ntwo"
+
+  - name: "exit status of a foreground command is unaffected by background jobs (regression: stage 48)"
+    tags: [ext]
+    fixtures:
+      path_isolated: true
+      executables:
+        fail3: "exit 3"
+    input: ["sleep 0.2 &", "fail3", "echo $?", "wait", "exit 0"]
+    expect:
+      stdout: "3"

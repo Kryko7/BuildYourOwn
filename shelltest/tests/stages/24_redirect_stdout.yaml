@@ -1,0 +1,75 @@
+stage: 24
+name: "Redirect stdout with > and 1>"
+tests:
+  - name: "> writes command output to a file"
+    input: ["echo hello > out.txt", "exit 0"]
+    expect:
+      stdout: ""
+      files:
+        "{TMP}/out.txt": "hello\n"
+      exit_code: 0
+
+  - name: "1> is the same as >"
+    input: ["echo hello 1> out.txt", "exit 0"]
+    expect:
+      stdout: ""
+      files:
+        "{TMP}/out.txt": "hello\n"
+
+  - name: "> overwrites an existing file"
+    fixtures:
+      files: { "out.txt": "old content that is longer\n" }
+    input: ["echo new > out.txt", "exit 0"]
+    expect:
+      files:
+        "{TMP}/out.txt": "new\n"
+
+  - name: "second redirect replaces the first file contents"
+    input: ["echo one > out.txt", "echo two > out.txt", "exit 0"]
+    expect:
+      files:
+        "{TMP}/out.txt": "two\n"
+
+  - name: "stdout redirection creates the file"
+    fixtures:
+      executables:
+        greet: |
+          echo "hi $1"
+    input:
+      - "greet bob > out.txt"
+      - "exit 0"
+    expect:
+      stdout: ""
+      files:
+        "{TMP}/out.txt": "hi bob\n"
+
+  - name: "stderr is not redirected by >"
+    fixtures:
+      path_isolated: true
+      executables:
+        both: |
+          echo to-stdout
+          echo to-stderr >&2
+    input: ["both > out.txt", "exit 0"]
+    expect:
+      stderr: "to-stderr"
+      stdout: ""
+      files:
+        "{TMP}/out.txt": "to-stdout\n"
+
+  - name: "redirect to a file in a subdirectory by absolute path"
+    fixtures: { dirs: [sub] }
+    input: ["echo deep > {TMP}/sub/out.txt", "exit 0"]
+    expect:
+      files:
+        "{TMP}/sub/out.txt": "deep\n"
+
+  - name: "the shell is not redirected itself: later output still reaches stdout"
+    input: ["echo a > out.txt", "echo b", "exit 0"]
+    expect:
+      stdout: "b"
+
+  - name: "cat of the redirected file shows what was written (regression: stage 8)"
+    input: ["echo round trip > out.txt", "cat out.txt", "exit 0"]
+    expect:
+      stdout: "round trip"

@@ -1,0 +1,571 @@
+[
+	{
+		"title": "Metadata v12 for one named topic",
+		"kind": "wire",
+		"request": "Metadata v12, correlation id 161, topics [the fixture topic], allow_auto_topic_creation false, no authorized-operations flags",
+		"request_hex": "000000320003000c000000a100096b61666b6174657374000200000000000000000000000000000000096d312d657831363100000000",
+		"response": "The cluster first: throttle_time_ms, a brokers array whose single entry has a node_id, the advertised host and the port this connection came in on, then cluster_id (a non-null compact string) and controller_id naming one of those brokers. Then one topics entry: error_code 0, the name, its real topic_id, is_internal false, and three partitions each with leader_id, leader_epoch, replica_nodes and isr_nodes",
+		"response_hex": "000000ab000000a1000000000002000000010a3132372e302e302e310000ab5900001762424a673077764c524e71507631627167475252746700000001020000096d312d65783136316d668df040af44909dc4ee46bce91ea00004000000000001000000010000000002000000010200000001010000000000000200000001000000000200000001020000000101000000000000000000000100000000020000000102000000010100800000000000",
+		"note": "v12 is flexible — compact strings and arrays, a tagged-field byte after every struct — and it is the first Metadata version that carries topic_id beside the name. brokers[] is what a client reconnects to, so it must advertise a listener that really accepts connections, not 0.0.0.0.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "50 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 2,
+				"field": "header.api_key",
+				"value": "3 (Metadata)"
+			},
+			{
+				"offset": 6,
+				"length": 2,
+				"field": "header.api_version",
+				"value": "12"
+			},
+			{
+				"offset": 8,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "161"
+			},
+			{
+				"offset": 12,
+				"length": 11,
+				"field": "header.client_id",
+				"value": "'kafkatest'"
+			},
+			{
+				"offset": 23,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 24,
+				"length": 1,
+				"field": "body.topics.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 25,
+				"length": 16,
+				"field": "body.topics[0].topic_id",
+				"value": "00000000-0000-0000-0000-000000000000 (the all-zero id)"
+			},
+			{
+				"offset": 41,
+				"length": 9,
+				"field": "body.topics[0].name",
+				"value": "'m1-ex161'"
+			},
+			{
+				"offset": 50,
+				"length": 1,
+				"field": "body.topics[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 51,
+				"length": 1,
+				"field": "body.allow_auto_topic_creation",
+				"value": "false"
+			},
+			{
+				"offset": 52,
+				"length": 1,
+				"field": "body.include_topic_authorized_operations",
+				"value": "false"
+			},
+			{
+				"offset": 53,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "171 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "161"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 9,
+				"length": 4,
+				"field": "body.throttle_time_ms",
+				"value": "0"
+			},
+			{
+				"offset": 13,
+				"length": 1,
+				"field": "body.brokers.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 14,
+				"length": 4,
+				"field": "body.brokers[0].node_id",
+				"value": "1"
+			},
+			{
+				"offset": 18,
+				"length": 10,
+				"field": "body.brokers[0].host",
+				"value": "'127.0.0.1'",
+				"varies": true
+			},
+			{
+				"offset": 28,
+				"length": 4,
+				"field": "body.brokers[0].port",
+				"value": "43865",
+				"varies": true
+			},
+			{
+				"offset": 32,
+				"length": 1,
+				"field": "body.brokers[0].rack",
+				"value": "null"
+			},
+			{
+				"offset": 33,
+				"length": 1,
+				"field": "body.brokers[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 34,
+				"length": 23,
+				"field": "body.cluster_id",
+				"value": "'bBJg0wvLRNqPv1bqgGRRtg'",
+				"varies": true
+			},
+			{
+				"offset": 57,
+				"length": 4,
+				"field": "body.controller_id",
+				"value": "1"
+			},
+			{
+				"offset": 61,
+				"length": 1,
+				"field": "body.topics.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 62,
+				"length": 2,
+				"field": "body.topics[0].error_code",
+				"value": "0 (NONE)"
+			},
+			{
+				"offset": 64,
+				"length": 9,
+				"field": "body.topics[0].name",
+				"value": "'m1-ex161'"
+			},
+			{
+				"offset": 73,
+				"length": 16,
+				"field": "body.topics[0].topic_id",
+				"value": "6d668df0-40af-4490-9dc4-ee46bce91ea0",
+				"varies": true
+			},
+			{
+				"offset": 89,
+				"length": 1,
+				"field": "body.topics[0].is_internal",
+				"value": "false"
+			},
+			{
+				"offset": 90,
+				"length": 1,
+				"field": "body.topics[0].partitions.length",
+				"value": "3 entries"
+			},
+			{
+				"offset": 91,
+				"length": 2,
+				"field": "body.topics[0].partitions[0].error_code",
+				"value": "0 (NONE)"
+			},
+			{
+				"offset": 93,
+				"length": 4,
+				"field": "body.topics[0].partitions[0].partition_index",
+				"value": "1"
+			},
+			{
+				"offset": 97,
+				"length": 4,
+				"field": "body.topics[0].partitions[0].leader_id",
+				"value": "1"
+			},
+			{
+				"offset": 101,
+				"length": 4,
+				"field": "body.topics[0].partitions[0].leader_epoch",
+				"value": "0"
+			},
+			{
+				"offset": 105,
+				"length": 1,
+				"field": "body.topics[0].partitions[0].replica_nodes.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 106,
+				"length": 4,
+				"field": "body.topics[0].partitions[0].replica_nodes[0]",
+				"value": "1"
+			},
+			{
+				"offset": 110,
+				"length": 1,
+				"field": "body.topics[0].partitions[0].isr_nodes.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 111,
+				"length": 4,
+				"field": "body.topics[0].partitions[0].isr_nodes[0]",
+				"value": "1"
+			},
+			{
+				"offset": 115,
+				"length": 1,
+				"field": "body.topics[0].partitions[0].offline_replicas.length",
+				"value": "0 entries"
+			},
+			{
+				"offset": 116,
+				"length": 1,
+				"field": "body.topics[0].partitions[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 169,
+				"length": 4,
+				"field": "body.topics[0].topic_authorized_operations",
+				"value": "-2147483648"
+			},
+			{
+				"offset": 173,
+				"length": 1,
+				"field": "body.topics[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 174,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"env": {
+			"topics": {
+				"m1": {
+					"name": "m1-ex161",
+					"id": "6d668df0-40af-4490-9dc4-ee46bce91ea0",
+					"partitions": 3
+				}
+			},
+			"group": "kafkatest-group"
+		}
+	},
+	{
+		"title": "A null topics array asks for every topic",
+		"kind": "wire",
+		"request": "Metadata v12, correlation id 162, the topics array encoded as null (the single byte 0x00), allow_auto_topic_creation false",
+		"request_hex": "000000180003000c000000a200096b61666b61746573740000000000",
+		"response": "The same cluster section, then one entry per topic that exists on the broker — both fixture topics among them, each with its own id, partitions and error_code 0",
+		"response_hex": "0000067b000000a2000000000002000000010a3132372e302e302e310000ab5900001762424a673077764c524e715076316271674752527467000000011200000974312d6578313232419fe3ac35b44ee4a7a93ae02f15e0e600020000000000000000000100000000020000000102000000010100800000000000000c627261766f2d6578313432e77d5030ba284f79bc1d14a0580426bd000300000000000100000001000000000200000001020000000101000000000000000000000100000000020000000102000000010100800000000000000c627261766f2d6578313431c620e0c97b3b4d48bf617c2c6a5ee37f000300000000000100000001000000000200000001020000000101000000000000000000000100000000020000000102000000010100800000000000000974312d65783133316cc1feb775ac4a92947da832d1f9b6840004000000000001000000010000000002000000010200000001010000000000000200000001000000000200000001020000000101000000000000000000000100000000020000000102000000010100800000000000000974312d6578313332c49afa2624264b13ab5e3b5525273eee0004000000000001000000010000000002000000010200000001010000000000000200000001000000000200000001020000000101000000000000000000000100000000020000000102000000010100800000000000000974312d6578313231f4aa7ad7af0d4df4a8f04d1d7921a65600020000000000000000000100000000020000000102000000010100800000000000000a6269672d65783135310d269d5555f244a59eafda0c6390d0d20007000000000001000000010000000002000000010200000001010000000000000300000001000000000200000001020000000101000000000000020000000100000000020000000102000000010100000000000005000000010000000002000000010200000001010000000000000000000001000000000200000001020000000101000000000000040000000100000000020000000102000000010100800000000000000a6269672d6578313532840fb2a3834d49c78fc5d69afb147c77000700000000000100000001000000000200000001020000000101000000000000030000000100000000020000000102000000010100000000000002000000010000000002000000010200000001010000000000000500000001000000000200000001020000000101000000000000000000000100000000020000000102000000010100000000000004000000010000000002000000010200000001010080000000000000096d312d65783136316d668df040af44909dc4ee46bce91ea00004000000000001000000010000000002000000010200000001010000000000000200000001000000000200000001020000000101000000000000000000000100000000020000000102000000010100800000000000000e636861726c69652d657831343290aed0e5a8974feb85dfe587b3efe1f50002000000000000000000010000000002000000010200000001010080000000000000096d312d6578313632881e051a436c42cca675dc5008df0e050004000000000001000000010000000002000000010200000001010000000000000200000001000000000200000001020000000101000000000000000000000100000000020000000102000000010100800000000000000e636861726c69652d6578313431ef4536f522604cbb8594d1961dc920a500020000000000000000000100000000020000000102000000010100800000000000000c616c7068612d6578313432dd486ea0469441bd9dcbe17c446c0ebf00020000000000000000000100000000020000000102000000010100800000000000000c616c7068612d6578313431d98a5b524a064b798bfa2df17d6d66670002000000000000000000010000000002000000010200000001010080000000000000096d322d65783136325a053c71b55e48d3b8c88c70aaaf4ee700020000000000000000000100000000020000000102000000010100800000000000000974322d657831333266fdc26f40bb4146a916daf0d661073c00030000000000010000000100000000020000000102000000010100000000000000000000010000000002000000010200000001010080000000000000135f5f636f6e73756d65725f6f666673657473c35951cc6c6040ab80c434600a57062401020000000000000000000100000000020000000102000000010100800000000000",
+		"note": "Null and empty are two different requests: 0x00 is a null array and means 'every topic', while 0x01 is an empty compact array and means 'no topics, just tell me about the cluster'. Reading the length byte as a count rather than count + 1 confuses the two.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "24 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 2,
+				"field": "header.api_key",
+				"value": "3 (Metadata)"
+			},
+			{
+				"offset": 6,
+				"length": 2,
+				"field": "header.api_version",
+				"value": "12"
+			},
+			{
+				"offset": 8,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "162"
+			},
+			{
+				"offset": 12,
+				"length": 11,
+				"field": "header.client_id",
+				"value": "'kafkatest'"
+			},
+			{
+				"offset": 23,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 24,
+				"length": 1,
+				"field": "body.topics.length",
+				"value": "null"
+			},
+			{
+				"offset": 25,
+				"length": 1,
+				"field": "body.allow_auto_topic_creation",
+				"value": "false"
+			},
+			{
+				"offset": 26,
+				"length": 1,
+				"field": "body.include_topic_authorized_operations",
+				"value": "false"
+			},
+			{
+				"offset": 27,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "1659 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "162"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 9,
+				"length": 4,
+				"field": "body.throttle_time_ms",
+				"value": "0"
+			},
+			{
+				"offset": 13,
+				"length": 1,
+				"field": "body.brokers.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 14,
+				"length": 4,
+				"field": "body.brokers[0].node_id",
+				"value": "1"
+			},
+			{
+				"offset": 18,
+				"length": 10,
+				"field": "body.brokers[0].host",
+				"value": "'127.0.0.1'",
+				"varies": true
+			},
+			{
+				"offset": 28,
+				"length": 4,
+				"field": "body.brokers[0].port",
+				"value": "43865",
+				"varies": true
+			},
+			{
+				"offset": 32,
+				"length": 1,
+				"field": "body.brokers[0].rack",
+				"value": "null"
+			},
+			{
+				"offset": 33,
+				"length": 1,
+				"field": "body.brokers[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 34,
+				"length": 23,
+				"field": "body.cluster_id",
+				"value": "'bBJg0wvLRNqPv1bqgGRRtg'",
+				"varies": true
+			},
+			{
+				"offset": 57,
+				"length": 4,
+				"field": "body.controller_id",
+				"value": "1"
+			},
+			{
+				"offset": 61,
+				"length": 1,
+				"field": "body.topics.length",
+				"value": "17 entries"
+			},
+			{
+				"offset": 62,
+				"length": 2,
+				"field": "body.topics[0].error_code",
+				"value": "0 (NONE)"
+			},
+			{
+				"offset": 64,
+				"length": 9,
+				"field": "body.topics[0].name",
+				"value": "'t1-ex122'"
+			},
+			{
+				"offset": 73,
+				"length": 16,
+				"field": "body.topics[0].topic_id",
+				"value": "419fe3ac-35b4-4ee4-a7a9-3ae02f15e0e6",
+				"varies": true
+			},
+			{
+				"offset": 89,
+				"length": 1,
+				"field": "body.topics[0].is_internal",
+				"value": "false"
+			},
+			{
+				"offset": 90,
+				"length": 1,
+				"field": "body.topics[0].partitions.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 91,
+				"length": 2,
+				"field": "body.topics[0].partitions[0].error_code",
+				"value": "0 (NONE)"
+			},
+			{
+				"offset": 93,
+				"length": 4,
+				"field": "body.topics[0].partitions[0].partition_index",
+				"value": "0"
+			},
+			{
+				"offset": 97,
+				"length": 4,
+				"field": "body.topics[0].partitions[0].leader_id",
+				"value": "1"
+			},
+			{
+				"offset": 101,
+				"length": 4,
+				"field": "body.topics[0].partitions[0].leader_epoch",
+				"value": "0"
+			},
+			{
+				"offset": 105,
+				"length": 1,
+				"field": "body.topics[0].partitions[0].replica_nodes.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 106,
+				"length": 4,
+				"field": "body.topics[0].partitions[0].replica_nodes[0]",
+				"value": "1"
+			},
+			{
+				"offset": 110,
+				"length": 1,
+				"field": "body.topics[0].partitions[0].isr_nodes.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 111,
+				"length": 4,
+				"field": "body.topics[0].partitions[0].isr_nodes[0]",
+				"value": "1"
+			},
+			{
+				"offset": 115,
+				"length": 1,
+				"field": "body.topics[0].partitions[0].offline_replicas.length",
+				"value": "0 entries"
+			},
+			{
+				"offset": 116,
+				"length": 1,
+				"field": "body.topics[0].partitions[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 117,
+				"length": 4,
+				"field": "body.topics[0].topic_authorized_operations",
+				"value": "-2147483648"
+			},
+			{
+				"offset": 121,
+				"length": 1,
+				"field": "body.topics[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 1662,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"env": {
+			"topics": {
+				"m1": {
+					"name": "m1-ex162",
+					"id": "881e051a-436c-42cc-a675-dc5008df0e05",
+					"partitions": 3
+				},
+				"m2": {
+					"name": "m2-ex162",
+					"id": "5a053c71-b55e-48d3-b8c8-8c70aaaf4ee7",
+					"partitions": 1
+				}
+			},
+			"group": "kafkatest-group"
+		}
+	}
+]

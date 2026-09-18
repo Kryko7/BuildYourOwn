@@ -1,0 +1,70 @@
+stage: 53
+name: "Subshells and command substitution"
+tests:
+  - name: "cd inside ( ) does not affect the parent"
+    tags: [ext]
+    fixtures: { dirs: [sub] }
+    input: ["(cd sub && pwd)", "pwd", "exit 0"]
+    expect:
+      stdout: "{TMP}/sub\n{TMP}"
+      exit_code: 0
+
+  - name: "$( ) substitutes command output"
+    tags: [ext]
+    input: ["echo $(echo hi)", "exit 0"]
+    expect:
+      stdout: "hi"
+
+  - name: "quoted $( ) keeps inner spacing"
+    tags: [ext]
+    input: ["echo \"$(echo 'a   b')\"", "exit 0"]
+    expect:
+      stdout: "a   b"
+
+  - name: "backticks also substitute"
+    tags: [ext]
+    input: ["echo `echo bt`", "exit 0"]
+    expect:
+      stdout: "bt"
+
+  - name: "(exit N) sets $? without exiting the shell"
+    tags: [ext]
+    input: ["(exit 3)", "echo $?", "exit 0"]
+    expect:
+      stdout: "3"
+      exit_code: 0
+
+  - name: "variables set in a subshell do not leak"
+    tags: [ext]
+    input: ["FOO=outer", "(FOO=inner; echo $FOO)", "echo $FOO", "exit 0"]
+    expect:
+      stdout: "inner\nouter"
+
+  - name: "nested command substitution"
+    tags: [ext]
+    input: ["echo $(echo $(echo deep))", "exit 0"]
+    expect:
+      stdout: "deep"
+
+  - name: "substitution result is used as an argument"
+    tags: [ext]
+    fixtures: { dirs: [sub] }
+    input: ["cd sub", "echo \"in $(pwd)\"", "exit 0"]
+    expect:
+      stdout: "in {TMP}/sub"
+
+  - name: "trailing newlines are stripped from substitutions"
+    tags: [ext]
+    fixtures:
+      path_isolated: true
+      executables:
+        two_lines: "printf 'x\\n\\n\\n'"
+    input: ["echo \"[$(two_lines)]\"", "exit 0"]
+    expect:
+      stdout: "[x]"
+
+  - name: "single quotes prevent substitution (regression: stage 13)"
+    tags: [ext]
+    input: ["echo '$(echo no)'", "exit 0"]
+    expect:
+      stdout: "$(echo no)"

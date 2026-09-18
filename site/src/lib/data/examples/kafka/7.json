@@ -1,0 +1,24 @@
+[
+	{
+		"title": "Four clients, interleaved",
+		"kind": "text",
+		"request": "Four TCP connections; each writes one ApiVersions v4 frame with its own correlation id (7001, 7002, 7003, 7004) before any of them reads a byte back",
+		"request_hex": "",
+		"response": "Four responses, one per socket, each echoing that socket's correlation id. Connection 7003 may be answered before 7001 — what must never happen is 7001's answer arriving on 7003's socket.",
+		"response_hex": "",
+		"note": "Correlation ids are per connection, not global. Keep the read buffer and the next expected size per socket: a single shared buffer is the classic bug this stage catches.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "One slow client must not stop the others",
+		"kind": "text",
+		"request": "Ten connections are opened and left idle; an eleventh sends ApiVersions v4",
+		"request_hex": "",
+		"response": "The eleventh is answered immediately, while the ten idle sockets stay open",
+		"response_hex": "",
+		"note": "Handle each connection concurrently (a task per socket, or a poll loop). A broker that reads one connection to end-of-stream before accepting the next one deadlocks on the first idle client.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

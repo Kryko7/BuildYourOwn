@@ -1,0 +1,82 @@
+stage: 21
+name: "Variable assignment and export"
+tests:
+  - name: "assignment then expansion"
+    tags: [ext]
+    input: ["FOO=bar", "echo $FOO", "exit 0"]
+    expect:
+      stdout: "bar"
+      exit_code: 0
+
+  - name: "unexported variables are not visible to children"
+    tags: [ext]
+    fixtures:
+      path_isolated: true
+      executables:
+        show_foo: 'echo "[${FOO}]"'
+    input: ["FOO=bar", "show_foo", "exit 0"]
+    expect:
+      stdout: "[]"
+
+  - name: "export VAR=value makes it visible to children"
+    tags: [ext]
+    fixtures:
+      path_isolated: true
+      executables:
+        show_foo: 'echo "[${FOO}]"'
+    input: ["export FOO=bar", "show_foo", "exit 0"]
+    expect:
+      stdout: "[bar]"
+
+  - name: "assign then export by name"
+    tags: [ext]
+    fixtures:
+      path_isolated: true
+      executables:
+        show_foo: 'echo "[${FOO}]"'
+    input: ["FOO=baz", "export FOO", "show_foo", "exit 0"]
+    expect:
+      stdout: "[baz]"
+
+  - name: "prefix assignment applies to one command only"
+    tags: [ext]
+    fixtures:
+      path_isolated: true
+      executables:
+        show_foo: 'echo "[${FOO}]"'
+    input: ["FOO=one show_foo", "echo \"[$FOO]\"", "exit 0"]
+    expect:
+      stdout: "[one]\n[]"
+
+  - name: "reassignment replaces the value"
+    tags: [ext]
+    input: ["FOO=1", "FOO=2", "echo $FOO", "exit 0"]
+    expect:
+      stdout: "2"
+
+  - name: "quoted values keep their spaces"
+    tags: [ext]
+    input: ["FOO='a  b'", "echo \"$FOO\"", "exit 0"]
+    expect:
+      stdout: "a  b"
+
+  - name: "exported variable overrides the inherited environment"
+    tags: [ext]
+    fixtures:
+      env: { SHELLTEST_VAR: "old" }
+      path_isolated: true
+      executables:
+        show_var: 'echo "$SHELLTEST_VAR"'
+    input: ["export SHELLTEST_VAR=new", "show_var", "exit 0"]
+    expect:
+      stdout: "new"
+
+  - name: "$? still works after assignments (regression: stage 20)"
+    tags: [ext]
+    fixtures:
+      path_isolated: true
+      executables:
+        fail2: "exit 2"
+    input: ["fail2", "echo $?", "exit 0"]
+    expect:
+      stdout: "2"

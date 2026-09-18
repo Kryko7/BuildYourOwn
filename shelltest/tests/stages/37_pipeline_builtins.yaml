@@ -1,0 +1,60 @@
+stage: 37
+name: "Builtins in pipelines"
+tests:
+  - name: "echo on the left of a pipe"
+    fixtures:
+      path_isolated: true
+      executables:
+        wrap: 'while read l; do echo "[$l]"; done'
+    input: ["echo hello | wrap", "exit 0"]
+    expect:
+      stdout: "[hello]"
+      exit_code: 0
+
+  - name: "echo | cat"
+    input: ["echo a b c | cat", "exit 0"]
+    expect:
+      stdout: "a b c"
+
+  - name: "type on the right of a pipe still prints"
+    fixtures:
+      files: { "in.txt": "ignored\n" }
+    input: ["cat in.txt | type echo", "exit 0"]
+    expect:
+      stdout: "echo is a shell builtin"
+
+  - name: "pwd on the left of a pipe"
+    input: ["pwd | cat", "exit 0"]
+    expect:
+      stdout: "{TMP}"
+
+  - name: "type on the left of a pipe"
+    fixtures:
+      path_isolated: true
+      executables:
+        wrap: 'while read l; do echo "[$l]"; done'
+    input: ["type pwd | wrap", "exit 0"]
+    expect:
+      stdout: "[pwd is a shell builtin]"
+
+  - name: "echo with quoted spaces through a pipe"
+    fixtures:
+      path_isolated: true
+      executables:
+        wrap: 'while read l; do echo "[$l]"; done'
+    input: ["echo 'a   b' | wrap", "exit 0"]
+    expect:
+      stdout: "[a   b]"
+
+  - name: "a builtin in a pipeline does not change the parent shell's directory"
+    fixtures: { dirs: [sub] }
+    input: ["cd sub | cat", "pwd", "exit 0"]
+    expect:
+      stdout: "{TMP}"
+
+  - name: "external-only pipeline still works (regression: stage 36)"
+    fixtures:
+      files: { "in.txt": "q\nw\n" }
+    input: ["cat in.txt | head -n 1", "exit 0"]
+    expect:
+      stdout: "q"

@@ -1,0 +1,401 @@
+[
+	{
+		"title": "ApiVersions v4, read for the Fetch entry",
+		"kind": "wire",
+		"request": "ApiVersions v4, correlation id 191, client id 'kafkatest'",
+		"request_hex": "0000002500120004000000bf00096b61666b6174657374000a6b61666b617465737406302e312e3000",
+		"response": "error_code 0 (NONE) and the api_keys array, which now carries an entry {api_key 1 (Fetch), min_version 0, max_version >= 16} beside ApiVersions(18) and DescribeTopicPartitions(75)",
+		"response_hex": "00000312000000bf00004a00000000000d000001000400120000020001000a0000030000000d000008000200090000090001000900000a0000000600000b0000000900000c0000000400000d0000000500000e0000000500000f000000060000100000000500001100000001000012000000040000130002000700001400010006000015000000020000160000000500001700020004000018000000050000190000000400001a0000000500001b0001000100001c0000000500001d0001000300001e0001000300001f000100030000200001000400002100000002000022000100020000230001000400002400000002000025000000030000260001000300002700010002000028000100020000290001000300002a0000000200002b0000000200002c0000000100002d0000000100002e0000000000002f0000000000003000000001000031000000010000320000000000003300000000000037000000020000390000000200003c0000000200003d00000000000040000000000000410000000000004200000002000044000000010000450000000100004a0000000100004b0000000000004c0001000100004d0001000100004e0001000100004f000100010000500000000000005100000000000053000000000000540000000000005500000000000056000000000000570000000000005a0000000000005b0000000000005c00000000000000000003008f01070e67726f75702e76657273696f6e00000001000e6b726166742e76657273696f6e0000000100116d657461646174612e76657273696f6e0007001b000e73686172652e76657273696f6e0000000100147472616e73616374696f6e2e76657273696f6e000000020021656c696769626c652e6c65616465722e7265706c696361732e76657273696f6e0000000100010800000000000000540269050e67726f75702e76657273696f6e0001000100147472616e73616374696f6e2e76657273696f6e000200020021656c696769626c652e6c65616465722e7265706c696361732e76657273696f6e0001000100116d657461646174612e76657273696f6e001b001b00",
+		"note": "An entry is three int16s, six bytes: 00 01 00 00 00 10 is Fetch, 0, 16. Advertise only what you actually serve — a client picks the highest version you claim and never asks again on that connection.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "37 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 2,
+				"field": "header.api_key",
+				"value": "18 (ApiVersions)"
+			},
+			{
+				"offset": 6,
+				"length": 2,
+				"field": "header.api_version",
+				"value": "4"
+			},
+			{
+				"offset": 8,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "191"
+			},
+			{
+				"offset": 12,
+				"length": 11,
+				"field": "header.client_id",
+				"value": "'kafkatest'"
+			},
+			{
+				"offset": 23,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 24,
+				"length": 10,
+				"field": "body.client_software_name",
+				"value": "'kafkatest'"
+			},
+			{
+				"offset": 34,
+				"length": 6,
+				"field": "body.client_software_version",
+				"value": "'0.1.0'"
+			},
+			{
+				"offset": 40,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "786 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "191"
+			},
+			{
+				"offset": 8,
+				"length": 2,
+				"field": "body.error_code",
+				"value": "0 (NONE)"
+			},
+			{
+				"offset": 10,
+				"length": 1,
+				"field": "body.api_keys.length",
+				"value": "73 entries"
+			},
+			{
+				"offset": 11,
+				"length": 2,
+				"field": "body.api_keys[0].api_key",
+				"value": "0 (Produce)"
+			},
+			{
+				"offset": 13,
+				"length": 2,
+				"field": "body.api_keys[0].min_version",
+				"value": "0"
+			},
+			{
+				"offset": 15,
+				"length": 2,
+				"field": "body.api_keys[0].max_version",
+				"value": "13"
+			},
+			{
+				"offset": 17,
+				"length": 1,
+				"field": "body.api_keys[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 522,
+				"length": 4,
+				"field": "body.throttle_time_ms",
+				"value": "0"
+			},
+			{
+				"offset": 526,
+				"length": 264,
+				"field": "body.tagged_fields",
+				"value": "3 tagged fields: tag 0 (143 bytes), tag 1 (8 bytes), tag 2 (105 bytes)"
+			}
+		]
+	},
+	{
+		"title": "The handshake a consumer really performs",
+		"kind": "wire",
+		"request": "Two frames written back to back on one connection: ApiVersions v4 (correlation id 192), then a Fetch v16 with an empty topics array (correlation id 193)",
+		"request_hex": "0000002500120004000000c000096b61666b6174657374000a6b61666b617465737406302e312e30000000002d00010010000000c100096b61666b617465737400000001f40000000100a0000000000000000000000001010100",
+		"response": "Two frames, in order: the ApiVersions body listing Fetch(1), then a Fetch v16 body with throttle_time_ms 0, error_code 0 and an empty responses array",
+		"response_hex": "00000312000000c000004a00000000000d000001000400120000020001000a0000030000000d000008000200090000090001000900000a0000000600000b0000000900000c0000000400000d0000000500000e0000000500000f000000060000100000000500001100000001000012000000040000130002000700001400010006000015000000020000160000000500001700020004000018000000050000190000000400001a0000000500001b0001000100001c0000000500001d0001000300001e0001000300001f000100030000200001000400002100000002000022000100020000230001000400002400000002000025000000030000260001000300002700010002000028000100020000290001000300002a0000000200002b0000000200002c0000000100002d0000000100002e0000000000002f0000000000003000000001000031000000010000320000000000003300000000000037000000020000390000000200003c0000000200003d00000000000040000000000000410000000000004200000002000044000000010000450000000100004a0000000100004b0000000000004c0001000100004d0001000100004e0001000100004f000100010000500000000000005100000000000053000000000000540000000000005500000000000056000000000000570000000000005a0000000000005b0000000000005c00000000000000000003008f01070e67726f75702e76657273696f6e00000001000e6b726166742e76657273696f6e0000000100116d657461646174612e76657273696f6e0007001b000e73686172652e76657273696f6e0000000100147472616e73616374696f6e2e76657273696f6e000000020021656c696769626c652e6c65616465722e7265706c696361732e76657273696f6e0000000100010800000000000000540269050e67726f75702e76657273696f6e0001000100147472616e73616374696f6e2e76657273696f6e000200020021656c696769626c652e6c65616465722e7265706c696361732e76657273696f6e0001000100116d657461646174612e76657273696f6e001b001b0000000011000000c10000000000000000e381e60100",
+		"note": "Advertising and serving are one job. A broker that lists Fetch(1) v16 and then cannot decode a v16 request fails at the second frame, not the first — and the client has no way back, because it already chose the version.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "frame0.size",
+				"value": "37 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 2,
+				"field": "frame0.header.api_key",
+				"value": "18 (ApiVersions)"
+			},
+			{
+				"offset": 6,
+				"length": 2,
+				"field": "frame0.header.api_version",
+				"value": "4"
+			},
+			{
+				"offset": 8,
+				"length": 4,
+				"field": "frame0.header.correlation_id",
+				"value": "192"
+			},
+			{
+				"offset": 12,
+				"length": 11,
+				"field": "frame0.header.client_id",
+				"value": "'kafkatest'"
+			},
+			{
+				"offset": 23,
+				"length": 1,
+				"field": "frame0.header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 24,
+				"length": 10,
+				"field": "frame0.body.client_software_name",
+				"value": "'kafkatest'"
+			},
+			{
+				"offset": 34,
+				"length": 6,
+				"field": "frame0.body.client_software_version",
+				"value": "'0.1.0'"
+			},
+			{
+				"offset": 40,
+				"length": 1,
+				"field": "frame0.body.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 41,
+				"length": 4,
+				"field": "frame1.size",
+				"value": "45 (bytes that follow)"
+			},
+			{
+				"offset": 45,
+				"length": 2,
+				"field": "frame1.header.api_key",
+				"value": "1 (Fetch)"
+			},
+			{
+				"offset": 47,
+				"length": 2,
+				"field": "frame1.header.api_version",
+				"value": "16"
+			},
+			{
+				"offset": 49,
+				"length": 4,
+				"field": "frame1.header.correlation_id",
+				"value": "193"
+			},
+			{
+				"offset": 53,
+				"length": 11,
+				"field": "frame1.header.client_id",
+				"value": "'kafkatest'"
+			},
+			{
+				"offset": 64,
+				"length": 1,
+				"field": "frame1.header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 65,
+				"length": 4,
+				"field": "frame1.body.max_wait_ms",
+				"value": "500"
+			},
+			{
+				"offset": 69,
+				"length": 4,
+				"field": "frame1.body.min_bytes",
+				"value": "1"
+			},
+			{
+				"offset": 73,
+				"length": 4,
+				"field": "frame1.body.max_bytes",
+				"value": "10485760"
+			},
+			{
+				"offset": 77,
+				"length": 1,
+				"field": "frame1.body.isolation_level",
+				"value": "0"
+			},
+			{
+				"offset": 78,
+				"length": 4,
+				"field": "frame1.body.session_id",
+				"value": "0"
+			},
+			{
+				"offset": 82,
+				"length": 4,
+				"field": "frame1.body.session_epoch",
+				"value": "0"
+			},
+			{
+				"offset": 86,
+				"length": 1,
+				"field": "frame1.body.topics.length",
+				"value": "0 entries"
+			},
+			{
+				"offset": 87,
+				"length": 1,
+				"field": "frame1.body.forgotten_topics_data.length",
+				"value": "0 entries"
+			},
+			{
+				"offset": 88,
+				"length": 1,
+				"field": "frame1.body.rack_id",
+				"value": "''"
+			},
+			{
+				"offset": 89,
+				"length": 1,
+				"field": "frame1.body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "frame0.size",
+				"value": "786 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "frame0.header.correlation_id",
+				"value": "192"
+			},
+			{
+				"offset": 8,
+				"length": 2,
+				"field": "frame0.body.error_code",
+				"value": "0 (NONE)"
+			},
+			{
+				"offset": 10,
+				"length": 1,
+				"field": "frame0.body.api_keys.length",
+				"value": "73 entries"
+			},
+			{
+				"offset": 11,
+				"length": 2,
+				"field": "frame0.body.api_keys[0].api_key",
+				"value": "0 (Produce)"
+			},
+			{
+				"offset": 13,
+				"length": 2,
+				"field": "frame0.body.api_keys[0].min_version",
+				"value": "0"
+			},
+			{
+				"offset": 15,
+				"length": 2,
+				"field": "frame0.body.api_keys[0].max_version",
+				"value": "13"
+			},
+			{
+				"offset": 17,
+				"length": 1,
+				"field": "frame0.body.api_keys[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 522,
+				"length": 4,
+				"field": "frame0.body.throttle_time_ms",
+				"value": "0"
+			},
+			{
+				"offset": 526,
+				"length": 264,
+				"field": "frame0.body.tagged_fields",
+				"value": "3 tagged fields: tag 0 (143 bytes), tag 1 (8 bytes), tag 2 (105 bytes)"
+			},
+			{
+				"offset": 790,
+				"length": 4,
+				"field": "frame1.size",
+				"value": "17 (bytes that follow)"
+			},
+			{
+				"offset": 794,
+				"length": 4,
+				"field": "frame1.header.correlation_id",
+				"value": "193"
+			},
+			{
+				"offset": 798,
+				"length": 1,
+				"field": "frame1.header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 799,
+				"length": 4,
+				"field": "frame1.body.throttle_time_ms",
+				"value": "0"
+			},
+			{
+				"offset": 803,
+				"length": 2,
+				"field": "frame1.body.error_code",
+				"value": "0 (NONE)"
+			},
+			{
+				"offset": 805,
+				"length": 4,
+				"field": "frame1.body.session_id",
+				"value": "14909926",
+				"varies": true
+			},
+			{
+				"offset": 809,
+				"length": 1,
+				"field": "frame1.body.responses.length",
+				"value": "0 entries"
+			},
+			{
+				"offset": 810,
+				"length": 1,
+				"field": "frame1.body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		]
+	}
+]

@@ -1,0 +1,64 @@
+stage: 39
+name: "Pipeline exit status is the last command's"
+tests:
+  - name: "false | true → 0"
+    tags: [ext]
+    input: ["false | true", "echo $?", "exit 0"]
+    expect:
+      stdout: "0"
+      exit_code: 0
+
+  - name: "true | false → 1"
+    tags: [ext]
+    input: ["true | false", "echo $?", "exit 0"]
+    expect:
+      stdout: "1"
+
+  - name: "failing left command does not affect the status"
+    tags: [ext]
+    fixtures:
+      path_isolated: true
+      executables:
+        fail7: "exit 7"
+      env: { PATH: "{BIN}:/usr/bin:/bin" }
+    input: ["fail7 | cat", "echo $?", "exit 0"]
+    expect:
+      stdout: "0"
+
+  - name: "failing right command sets the status"
+    tags: [ext]
+    fixtures:
+      path_isolated: true
+      executables:
+        fail7: "cat >/dev/null; exit 7"
+    input: ["echo x | fail7", "echo $?", "exit 0"]
+    expect:
+      stdout: "7"
+
+  - name: "command not found on the left still yields the right status"
+    tags: [ext]
+    fixtures:
+      path_isolated: true
+      executables:
+        ok: "cat >/dev/null; exit 0"
+    input: ["nope_cmd | ok", "echo $?", "exit 0"]
+    expect:
+      stdout: "0"
+      stderr: { contains: "nope_cmd" }
+
+  - name: "three-command pipeline status comes from the last"
+    tags: [ext]
+    fixtures:
+      path_isolated: true
+      executables:
+        fail3: "cat >/dev/null; exit 3"
+      env: { PATH: "{BIN}:/usr/bin:/bin" }
+    input: ["echo a | cat | fail3", "echo $?", "exit 0"]
+    expect:
+      stdout: "3"
+
+  - name: "bare exit after a failing pipeline uses its status (regression: stage 4)"
+    tags: [ext]
+    input: ["true | false", "exit"]
+    expect:
+      exit_code: 1

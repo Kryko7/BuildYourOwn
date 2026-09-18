@@ -1,0 +1,83 @@
+stage: 7
+name: "type for executables in PATH"
+tests:
+  - name: "type reports the absolute path of an executable"
+    fixtures:
+      path_isolated: true
+      executables:
+        my_exe: "echo hi"
+    input: ["type my_exe", "exit 0"]
+    expect:
+      stdout: "my_exe is {BIN}/my_exe"
+      exit_code: 0
+
+  - name: "first PATH entry wins when two dirs have the same name"
+    fixtures:
+      path_isolated: true
+      executables:
+        dup: "echo from bin"
+        alt/dup: "echo from alt"
+      env: { PATH: "{TMP}/alt:{BIN}" }
+    input: ["type dup", "exit 0"]
+    expect:
+      stdout: "dup is {TMP}/alt/dup"
+
+  - name: "PATH order reversed picks the other directory"
+    fixtures:
+      path_isolated: true
+      executables:
+        dup: "echo from bin"
+        alt/dup: "echo from alt"
+      env: { PATH: "{BIN}:{TMP}/alt" }
+    input: ["type dup", "exit 0"]
+    expect:
+      stdout: "dup is {BIN}/dup"
+
+  - name: "a non-executable file in PATH is not reported"
+    fixtures:
+      path_isolated: true
+      files:
+        "bin/plainfile": "not a program"
+    skip_on: [bash, zsh]
+    reason: "bash's type falls back to non-executable files in PATH; zsh omits the colon in 'not found'"
+    input: ["type plainfile", "exit 0"]
+    expect:
+      stdout: ""
+      stderr: { contains: "plainfile: not found" }
+
+  - name: "unknown name says not found"
+    fixtures: { path_isolated: true }
+    skip_on: [zsh]
+    reason: "zsh prints 'nothing_here not found' without the colon"
+    input: ["type nothing_here", "exit 0"]
+    expect:
+      stderr: { contains: "nothing_here: not found" }
+      stdout: ""
+
+  - name: "builtins take precedence over executables of the same name"
+    fixtures:
+      path_isolated: true
+      executables:
+        echo: "printf 'fake echo\\n'"
+    input: ["type echo", "exit 0"]
+    expect:
+      stdout: "echo is a shell builtin"
+
+  - name: "type finds executables in a later PATH directory"
+    fixtures:
+      path_isolated: true
+      executables:
+        alt/second_dir_exe: "echo x"
+      env: { PATH: "{BIN}:{TMP}/alt" }
+    input: ["type second_dir_exe", "exit 0"]
+    expect:
+      stdout: "second_dir_exe is {TMP}/alt/second_dir_exe"
+
+  - name: "type for a builtin still works alongside executables (regression: stage 6)"
+    fixtures:
+      path_isolated: true
+      executables:
+        my_exe: "echo hi"
+    input: ["type my_exe", "type pwd", "exit 0"]
+    expect:
+      stdout: "my_exe is {BIN}/my_exe\npwd is a shell builtin"

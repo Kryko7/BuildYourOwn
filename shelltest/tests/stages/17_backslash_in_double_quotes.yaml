@@ -1,0 +1,51 @@
+stage: 17
+name: "Backslash inside double quotes"
+tests:
+  - name: "backslash escapes a double quote"
+    input: ['echo "a\"b"', "exit 0"]
+    expect:
+      stdout: 'a"b'
+      exit_code: 0
+
+  - name: "backslash escapes a backslash"
+    input: ['echo "a\\b"', "exit 0"]
+    expect:
+      stdout: 'a\b'
+
+  - name: "backslash escapes a dollar sign"
+    input: ['echo "a\$b"', "exit 0"]
+    expect:
+      stdout: 'a$b'
+
+  - name: "backslash escapes a backtick"
+    input: ['echo "a\`b"', "exit 0"]
+    expect:
+      stdout: 'a`b'
+
+  - name: "backslash before an ordinary letter is kept"
+    input: ['echo "a\qb"', "exit 0"]
+    expect:
+      stdout: 'a\qb'
+
+  - name: "backslash-n stays literal"
+    input: ['echo "line\nbreak"', "exit 0"]
+    expect:
+      stdout: 'line\nbreak'
+
+  - name: "backslash-space stays literal"
+    input: ['echo "a\ b"', "exit 0"]
+    expect:
+      stdout: 'a\ b'
+
+  - name: "backslash-newline inside double quotes continues the line"
+    input:
+      - 'echo "first\'
+      - 'second"'
+      - "exit 0"
+    expect:
+      stdout: "firstsecond"
+
+  - name: "backslash inside single quotes stays literal (regression: stage 16)"
+    input: ["echo 'a\\\"b'", "exit 0"]
+    expect:
+      stdout: 'a\"b'

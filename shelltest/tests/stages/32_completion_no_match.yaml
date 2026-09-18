@@ -1,0 +1,46 @@
+stage: 32
+name: "Completion with no match rings the bell"
+tests:
+  - name: "TAB on an unknown prefix rings the bell"
+    mode: pty
+    fixtures: { path_isolated: true }
+    keys: ["zzzqqq\t", "\r", "exit\r"]
+    expect:
+      terminal: { contains: "zzzqqq\x07" }
+
+  - name: "the line is left unchanged after the bell"
+    mode: pty
+    fixtures: { path_isolated: true }
+    skip_on: [zsh]
+    reason: "zsh words the message as 'command not found: <cmd>'"
+    keys: ["zzzqqq\t", "\r", "exit\r"]
+    expect:
+      terminal: { regex: "(?s)zzzqqq\x07.*zzzqqq: command not found" }
+
+  - name: "typing continues after a failed completion"
+    mode: pty
+    fixtures: { path_isolated: true }
+    keys: ["zzzqqq\t", "\x15", "echo recovered\r", "exit\r"]
+    expect:
+      terminal: { contains: "\nrecovered\n" }
+
+  - name: "a second TAB on the same unknown prefix rings again"
+    mode: pty
+    fixtures: { path_isolated: true }
+    keys: ["zzzqqq\t", "\t", "\x15", "echo ok\r", "exit\r"]
+    expect:
+      terminal: { regex: "(?s)zzzqqq\x07\x07.*\nok\n" }
+
+  - name: "no match does not print a listing"
+    mode: pty
+    fixtures: { path_isolated: true }
+    keys: ["zzzqqq\t", "\x15", "echo ok\r", "exit\r"]
+    expect:
+      terminal: { regex: "^\\$ zzzqqq\x07[^\n]*\\$ echo ok\nok\n" }
+
+  - name: "a known builtin still completes afterwards (regression: stage 30)"
+    mode: pty
+    fixtures: { path_isolated: true }
+    keys: ["zzzqqq\t", "\x15", "ech\t", "fine\r", "exit\r"]
+    expect:
+      terminal: { contains: "$ echo fine\nfine\n" }

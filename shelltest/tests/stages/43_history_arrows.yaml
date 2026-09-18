@@ -1,0 +1,45 @@
+stage: 43
+name: "Up/Down arrows recall history"
+tests:
+  - name: "Up arrow recalls the previous command"
+    mode: pty
+    keys: ["echo one\r", "\x1b[A", "\r", "exit\r"]
+    expect:
+      terminal: { regex: "(?s)^\\$ echo one\none\n\\$ [^\n]*echo one\none\n" }
+      exit_code: 0
+
+  - name: "Up twice recalls the command before that"
+    mode: pty
+    keys: ["echo one\r", "echo two\r", "\x1b[A", "\x1b[A", "\r", "exit\r"]
+    expect:
+      terminal: { regex: "(?s)two\n\\$ [^\n]*\none\n" }
+
+  - name: "Down after Up returns to the newer command"
+    mode: pty
+    keys: ["echo one\r", "echo two\r", "\x1b[A", "\x1b[A", "\x1b[B", "\r", "exit\r"]
+    expect:
+      terminal: { regex: "(?s)two\n\\$ [^\n]*\ntwo\n" }
+
+  - name: "Down past the newest entry leaves an empty line"
+    mode: pty
+    keys: ["echo one\r", "\x1b[A", "\x1b[B", "echo two\r", "exit\r"]
+    expect:
+      terminal: { regex: "(?s)one\n\\$ [^\n]*echo two\ntwo\n" }
+
+  - name: "recalled command can be edited before running"
+    mode: pty
+    keys: ["echo one\r", "\x1b[A", " more\r", "exit\r"]
+    expect:
+      terminal: { regex: "(?s)one\n\\$ [^\n]*\none more\n" }
+
+  - name: "Up on an empty history does nothing harmful"
+    mode: pty
+    keys: ["\x1b[A", "\x1b[A", "echo ok\r", "exit\r"]
+    expect:
+      terminal: { regex: "(?s)^\\$ [^\n]*echo ok\nok\n" }
+
+  - name: "commands recalled by arrow are added to history (regression: stage 41)"
+    mode: pty
+    keys: ["echo one\r", "\x1b[A", "\r", "history\r", "exit\r"]
+    expect:
+      terminal: { regex: "(?s)    1  echo one\n    2  echo one\n    3  history" }

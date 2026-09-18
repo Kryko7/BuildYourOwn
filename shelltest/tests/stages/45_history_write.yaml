@@ -1,0 +1,55 @@
+stage: 45
+name: "history -w writes the history to a file"
+tests:
+  - name: "history -w writes every entry, one per line"
+    skip_on: [zsh]
+    reason: "zsh's history builtin (fc -l) is not available in non-interactive mode"
+    input: ["echo a", "echo b", "history -w h.txt", "exit 0"]
+    expect:
+      stdout: "a\nb"
+      files:
+        "{TMP}/h.txt": "echo a\necho b\nhistory -w h.txt\n"
+      exit_code: 0
+
+  - name: "history -w overwrites an existing file"
+    fixtures:
+      files: { "h.txt": "stale line\n" }
+    skip_on: [zsh]
+    reason: "zsh's history builtin (fc -l) is not available in non-interactive mode"
+    input: ["echo a", "history -w h.txt", "exit 0"]
+    expect:
+      files:
+        "{TMP}/h.txt": "echo a\nhistory -w h.txt\n"
+
+  - name: "history -w with an absolute path"
+    skip_on: [zsh]
+    reason: "zsh's history builtin (fc -l) is not available in non-interactive mode"
+    input: ["echo abs", "history -w {TMP}/h.txt", "exit 0"]
+    expect:
+      files:
+        "{TMP}/h.txt": "echo abs\nhistory -w {TMP}/h.txt\n"
+
+  - name: "entries loaded with -r are written back by -w"
+    fixtures:
+      files: { "in.txt": "echo loaded\n" }
+    skip_on: [zsh]
+    reason: "zsh's history builtin (fc -l) is not available in non-interactive mode"
+    input: ["history -r in.txt", "history -w out.txt", "exit 0"]
+    expect:
+      files:
+        "{TMP}/out.txt": "history -r in.txt\necho loaded\nhistory -w out.txt\n"
+
+  - name: "quotes and spacing are preserved in the written file"
+    skip_on: [zsh]
+    reason: "zsh's history builtin (fc -l) is not available in non-interactive mode"
+    input: ["echo 'a   b'", "history -w h.txt", "exit 0"]
+    expect:
+      files:
+        "{TMP}/h.txt": "echo 'a   b'\nhistory -w h.txt\n"
+
+  - name: "history still lists after writing (regression: stage 41)"
+    skip_on: [zsh]
+    reason: "zsh's history builtin (fc -l) is not available in non-interactive mode"
+    input: ["echo a", "history -w h.txt", "history", "exit 0"]
+    expect:
+      stdout: "a\n    1  echo a\n    2  history -w h.txt\n    3  history"

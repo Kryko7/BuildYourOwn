@@ -1,0 +1,244 @@
+[
+	{
+		"title": "ApiVersions v4, read for the Produce entry",
+		"kind": "wire",
+		"request": "ApiVersions v4, correlation id 291, from a client about to produce",
+		"request_hex": "00000025001200040000012300096b61666b6174657374000a6b61666b617465737406302e312e3000",
+		"response": "error_code 0 (NONE) and the api_keys compact array; among its entries there is now one with api_key 0 (Produce) whose min_version <= 11 and max_version >= 11, alongside ApiVersions(18), Fetch(1) and DescribeTopicPartitions(75)",
+		"response_hex": "000003120000012300004a00000000000d000001000400120000020001000a0000030000000d000008000200090000090001000900000a0000000600000b0000000900000c0000000400000d0000000500000e0000000500000f000000060000100000000500001100000001000012000000040000130002000700001400010006000015000000020000160000000500001700020004000018000000050000190000000400001a0000000500001b0001000100001c0000000500001d0001000300001e0001000300001f000100030000200001000400002100000002000022000100020000230001000400002400000002000025000000030000260001000300002700010002000028000100020000290001000300002a0000000200002b0000000200002c0000000100002d0000000100002e0000000000002f0000000000003000000001000031000000010000320000000000003300000000000037000000020000390000000200003c0000000200003d00000000000040000000000000410000000000004200000002000044000000010000450000000100004a0000000100004b0000000000004c0001000100004d0001000100004e0001000100004f000100010000500000000000005100000000000053000000000000540000000000005500000000000056000000000000570000000000005a0000000000005b0000000000005c00000000000000000003008f01070e67726f75702e76657273696f6e00000001000e6b726166742e76657273696f6e0000000100116d657461646174612e76657273696f6e0007001b000e73686172652e76657273696f6e0000000100147472616e73616374696f6e2e76657273696f6e000000020021656c696769626c652e6c65616465722e7265706c696361732e76657273696f6e0000000100010800000000000000840269050e67726f75702e76657273696f6e0001000100147472616e73616374696f6e2e76657273696f6e000200020021656c696769626c652e6c65616465722e7265706c696361732e76657273696f6e0001000100116d657461646174612e76657273696f6e001b001b00",
+		"note": "A client picks its Produce version from this list before it sends a single record. Leave api_key 0 out and no producer will ever talk to you — it fails at version negotiation, not at Produce. Watch the indexing: api_key 0 is easy to lose in a loop that treats 0 as 'unset'.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "37 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 2,
+				"field": "header.api_key",
+				"value": "18 (ApiVersions)"
+			},
+			{
+				"offset": 6,
+				"length": 2,
+				"field": "header.api_version",
+				"value": "4"
+			},
+			{
+				"offset": 8,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "291"
+			},
+			{
+				"offset": 12,
+				"length": 11,
+				"field": "header.client_id",
+				"value": "'kafkatest'"
+			},
+			{
+				"offset": 23,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 24,
+				"length": 10,
+				"field": "body.client_software_name",
+				"value": "'kafkatest'"
+			},
+			{
+				"offset": 34,
+				"length": 6,
+				"field": "body.client_software_version",
+				"value": "'0.1.0'"
+			},
+			{
+				"offset": 40,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "786 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "291"
+			},
+			{
+				"offset": 8,
+				"length": 2,
+				"field": "body.error_code",
+				"value": "0 (NONE)"
+			},
+			{
+				"offset": 10,
+				"length": 1,
+				"field": "body.api_keys.length",
+				"value": "73 entries"
+			},
+			{
+				"offset": 11,
+				"length": 2,
+				"field": "body.api_keys[0].api_key",
+				"value": "0 (Produce)"
+			},
+			{
+				"offset": 13,
+				"length": 2,
+				"field": "body.api_keys[0].min_version",
+				"value": "0"
+			},
+			{
+				"offset": 15,
+				"length": 2,
+				"field": "body.api_keys[0].max_version",
+				"value": "13"
+			},
+			{
+				"offset": 17,
+				"length": 1,
+				"field": "body.api_keys[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 522,
+				"length": 4,
+				"field": "body.throttle_time_ms",
+				"value": "0"
+			},
+			{
+				"offset": 526,
+				"length": 264,
+				"field": "body.tagged_fields",
+				"value": "3 tagged fields: tag 0 (143 bytes), tag 1 (8 bytes), tag 2 (105 bytes)"
+			}
+		]
+	},
+	{
+		"title": "A Produce v11 frame carrying no topics",
+		"kind": "wire",
+		"request": "Produce v11, correlation id 292, acks -1, timeout_ms 5000, and an empty topic_data array — the smallest valid Produce request there is",
+		"request_hex": "0000001d0000000b0000012400096b61666b61746573740000ffff000013880100",
+		"response": "A normal Produce v11 response: throttle_time_ms 0 and an empty responses array. There is nothing to append, so there is no error either.",
+		"response_hex": "0000000b0000012400010000000000",
+		"note": "Advertising Produce(0) v11 is a promise to decode this frame. v9 and later are flexible, so the body uses compact arrays and tagged fields; v11 still names topics by name, not by topic id. Get the empty request answering correctly before you touch the log.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "29 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 2,
+				"field": "header.api_key",
+				"value": "0 (Produce)"
+			},
+			{
+				"offset": 6,
+				"length": 2,
+				"field": "header.api_version",
+				"value": "11"
+			},
+			{
+				"offset": 8,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "292"
+			},
+			{
+				"offset": 12,
+				"length": 11,
+				"field": "header.client_id",
+				"value": "'kafkatest'"
+			},
+			{
+				"offset": 23,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 24,
+				"length": 1,
+				"field": "body.transactional_id",
+				"value": "null"
+			},
+			{
+				"offset": 25,
+				"length": 2,
+				"field": "body.acks",
+				"value": "-1"
+			},
+			{
+				"offset": 27,
+				"length": 4,
+				"field": "body.timeout_ms",
+				"value": "5000"
+			},
+			{
+				"offset": 31,
+				"length": 1,
+				"field": "body.topic_data.length",
+				"value": "0 entries"
+			},
+			{
+				"offset": 32,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "11 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "292"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 9,
+				"length": 1,
+				"field": "body.responses.length",
+				"value": "0 entries"
+			},
+			{
+				"offset": 10,
+				"length": 4,
+				"field": "body.throttle_time_ms",
+				"value": "0"
+			},
+			{
+				"offset": 14,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		]
+	}
+]

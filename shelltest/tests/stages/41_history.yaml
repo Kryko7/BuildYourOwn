@@ -1,0 +1,48 @@
+stage: 41
+name: "history lists numbered entries"
+tests:
+  - name: "history lists commands with 1-based numbers"
+    skip_on: [zsh]
+    reason: "zsh's history builtin (fc -l) is not available in non-interactive mode"
+    input: ["echo a", "echo b", "history", "exit 0"]
+    expect:
+      stdout: "a\nb\n    1  echo a\n    2  echo b\n    3  history"
+      exit_code: 0
+
+  - name: "the history command itself is included"
+    skip_on: [zsh]
+    reason: "zsh's history builtin (fc -l) is not available in non-interactive mode"
+    input: ["history", "exit 0"]
+    expect:
+      stdout: "    1  history"
+
+  - name: "entries keep their original spacing and quotes"
+    skip_on: [zsh]
+    reason: "zsh's history builtin (fc -l) is not available in non-interactive mode"
+    input: ["echo 'hello   world'", "history", "exit 0"]
+    expect:
+      stdout: "hello   world\n    1  echo 'hello   world'\n    2  history"
+
+  - name: "unknown commands are recorded too"
+    fixtures: { path_isolated: true }
+    skip_on: [zsh]
+    reason: "zsh's history builtin (fc -l) is not available in non-interactive mode"
+    input: ["nope_cmd", "history", "exit 0"]
+    expect:
+      stdout: "    1  nope_cmd\n    2  history"
+
+  - name: "numbers use a five-wide right-aligned column past nine entries"
+    skip_on: [zsh]
+    reason: "zsh's history builtin (fc -l) is not available in non-interactive mode"
+    input: ["echo 1", "echo 2", "echo 3", "echo 4", "echo 5", "echo 6", "echo 7", "echo 8", "echo 9", "echo 10", "history", "exit 0"]
+    expect:
+      stdout: { regex: "(?m)^    9  echo 9\n   10  echo 10\n   11  history$" }
+
+  - name: "history output can be redirected (regression: stage 24)"
+    skip_on: [zsh]
+    reason: "zsh's history builtin (fc -l) is not available in non-interactive mode"
+    input: ["echo a", "history > h.txt", "exit 0"]
+    expect:
+      stdout: "a"
+      files:
+        "{TMP}/h.txt": "    1  echo a\n    2  history > h.txt\n"

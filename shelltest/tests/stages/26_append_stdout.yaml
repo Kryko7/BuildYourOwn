@@ -1,0 +1,62 @@
+stage: 26
+name: "Append stdout with >> and 1>>"
+tests:
+  - name: ">> appends to an existing file"
+    fixtures:
+      files: { "out.txt": "first\n" }
+    input: ["echo second >> out.txt", "exit 0"]
+    expect:
+      files:
+        "{TMP}/out.txt": "first\nsecond\n"
+      exit_code: 0
+
+  - name: "1>> is the same as >>"
+    fixtures:
+      files: { "out.txt": "first\n" }
+    input: ["echo second 1>> out.txt", "exit 0"]
+    expect:
+      files:
+        "{TMP}/out.txt": "first\nsecond\n"
+
+  - name: ">> creates the file when it does not exist"
+    input: ["echo created >> out.txt", "exit 0"]
+    expect:
+      stdout: ""
+      files:
+        "{TMP}/out.txt": "created\n"
+
+  - name: "several appends accumulate in order"
+    input: ["echo 1 >> out.txt", "echo 2 >> out.txt", "echo 3 >> out.txt", "exit 0"]
+    expect:
+      files:
+        "{TMP}/out.txt": "1\n2\n3\n"
+
+  - name: "> then >> keeps the truncated content and appends"
+    fixtures:
+      files: { "out.txt": "old\n" }
+    input: ["echo a > out.txt", "echo b >> out.txt", "exit 0"]
+    expect:
+      files:
+        "{TMP}/out.txt": "a\nb\n"
+
+  - name: "external program output appends too"
+    fixtures:
+      files: { "out.txt": "start\n" }
+      path_isolated: true
+      executables:
+        greet: 'echo "hi $1"'
+    input: ["greet bob >> out.txt", "exit 0"]
+    expect:
+      files:
+        "{TMP}/out.txt": "start\nhi bob\n"
+
+  - name: "2> does not append (regression: stage 25)"
+    fixtures:
+      files: { "err.txt": "old\n" }
+      path_isolated: true
+      executables:
+        err_only: "echo fresh >&2"
+    input: ["err_only 2> err.txt", "exit 0"]
+    expect:
+      files:
+        "{TMP}/err.txt": "fresh\n"

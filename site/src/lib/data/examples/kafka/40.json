@@ -1,0 +1,363 @@
+[
+	{
+		"title": "The first join, with an empty member id",
+		"kind": "wire",
+		"request": "JoinGroup v9 for 'kafkatest-group' with an empty member_id, session_timeout_ms 10000, rebalance_timeout_ms 10000, protocol_type 'consumer' and one protocol named 'range' whose metadata is a ConsumerProtocolSubscription v0 naming the fixture topic",
+		"request_hex": "00000056000b00090000019100096b61666b617465737400106b61666b61746573742d67726f75700000271000002710010009636f6e73756d6572020672616e676515000000000001000874312d6578343031ffffffff000000",
+		"response": "error_code 79 (MEMBER_ID_REQUIRED), generation_id -1, an empty members array — and a member_id the coordinator has just minted (Kafka builds it from the client id and a fresh UUID). The client must send that id back in a second, otherwise identical, JoinGroup, which is the one that really joins",
+		"response_hex": "00000044000001910000000000004fffffffff000001002f6b61666b61746573742d63616534626331382d643930302d343761622d386434312d3537373236326630333732610100",
+		"note": "This is KIP-394. The first join is refused on purpose: it costs the coordinator nothing to mint an id, and it means a client that disappears between its two joins cannot hold a rebalance open. Do not treat 79 as a failure — it carries the id you need, and only the second join gets generation 1 and the leader's members list.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "86 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 2,
+				"field": "header.api_key",
+				"value": "11 (JoinGroup)"
+			},
+			{
+				"offset": 6,
+				"length": 2,
+				"field": "header.api_version",
+				"value": "9"
+			},
+			{
+				"offset": 8,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "401"
+			},
+			{
+				"offset": 12,
+				"length": 11,
+				"field": "header.client_id",
+				"value": "'kafkatest'"
+			},
+			{
+				"offset": 23,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 24,
+				"length": 16,
+				"field": "body.group_id",
+				"value": "'kafkatest-group'"
+			},
+			{
+				"offset": 40,
+				"length": 4,
+				"field": "body.session_timeout_ms",
+				"value": "10000"
+			},
+			{
+				"offset": 44,
+				"length": 4,
+				"field": "body.rebalance_timeout_ms",
+				"value": "10000"
+			},
+			{
+				"offset": 48,
+				"length": 1,
+				"field": "body.member_id",
+				"value": "''"
+			},
+			{
+				"offset": 49,
+				"length": 1,
+				"field": "body.group_instance_id",
+				"value": "null"
+			},
+			{
+				"offset": 50,
+				"length": 9,
+				"field": "body.protocol_type",
+				"value": "'consumer'"
+			},
+			{
+				"offset": 59,
+				"length": 1,
+				"field": "body.protocols.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 60,
+				"length": 6,
+				"field": "body.protocols[0].name",
+				"value": "'range'"
+			},
+			{
+				"offset": 66,
+				"length": 21,
+				"field": "body.protocols[0].metadata",
+				"value": "20 bytes"
+			},
+			{
+				"offset": 87,
+				"length": 1,
+				"field": "body.protocols[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 88,
+				"length": 1,
+				"field": "body.reason",
+				"value": "null"
+			},
+			{
+				"offset": 89,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "68 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "401"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 9,
+				"length": 4,
+				"field": "body.throttle_time_ms",
+				"value": "0"
+			},
+			{
+				"offset": 13,
+				"length": 2,
+				"field": "body.error_code",
+				"value": "79 (MEMBER_ID_REQUIRED)"
+			},
+			{
+				"offset": 15,
+				"length": 4,
+				"field": "body.generation_id",
+				"value": "-1"
+			},
+			{
+				"offset": 19,
+				"length": 1,
+				"field": "body.protocol_type",
+				"value": "null"
+			},
+			{
+				"offset": 20,
+				"length": 1,
+				"field": "body.protocol_name",
+				"value": "null"
+			},
+			{
+				"offset": 21,
+				"length": 1,
+				"field": "body.leader",
+				"value": "''"
+			},
+			{
+				"offset": 22,
+				"length": 1,
+				"field": "body.skip_assignment",
+				"value": "false"
+			},
+			{
+				"offset": 23,
+				"length": 47,
+				"field": "body.member_id",
+				"value": "'kafkatest-cae4bc18-d900-47ab-8d41-577262f0372a'",
+				"varies": true
+			},
+			{
+				"offset": 70,
+				"length": 1,
+				"field": "body.members.length",
+				"value": "0 entries"
+			},
+			{
+				"offset": 71,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"env": {
+			"topics": {
+				"t1": {
+					"name": "t1-ex401",
+					"id": "a99bc849-e8d6-49c0-9b2d-fb76c770b658",
+					"partitions": 2
+				}
+			},
+			"group": "kafkatest-group"
+		}
+	},
+	{
+		"title": "SyncGroup from a member that never joined",
+		"kind": "wire",
+		"request": "SyncGroup v5 for 'kafkatest-group' claiming generation 1 as the member 'kafkatest-ghost-member', which no coordinator ever handed out, with an empty assignments array (what a follower sends)",
+		"request_hex": "00000051000e00050000019200096b61666b617465737400106b61666b61746573742d67726f757000000001176b61666b61746573742d67686f73742d6d656d6265720009636f6e73756d65720672616e67650100",
+		"response": "error_code 25 (UNKNOWN_MEMBER_ID), throttle_time_ms 0 and an empty assignment; nothing about the group changes",
+		"response_hex": "0000000f000001920000000000001900000100",
+		"note": "Membership is checked before the generation, so this is 25 and not 22 ILLEGAL_GENERATION whatever generation the request claims — and the same 25 comes back whether the group is stable, rebalancing or has never existed. In the happy path SyncGroup hands each member back exactly the bytes the leader addressed to it, unchanged; the group only reaches Stable once the leader has synced.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "81 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 2,
+				"field": "header.api_key",
+				"value": "14 (SyncGroup)"
+			},
+			{
+				"offset": 6,
+				"length": 2,
+				"field": "header.api_version",
+				"value": "5"
+			},
+			{
+				"offset": 8,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "402"
+			},
+			{
+				"offset": 12,
+				"length": 11,
+				"field": "header.client_id",
+				"value": "'kafkatest'"
+			},
+			{
+				"offset": 23,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 24,
+				"length": 16,
+				"field": "body.group_id",
+				"value": "'kafkatest-group'"
+			},
+			{
+				"offset": 40,
+				"length": 4,
+				"field": "body.generation_id",
+				"value": "1"
+			},
+			{
+				"offset": 44,
+				"length": 23,
+				"field": "body.member_id",
+				"value": "'kafkatest-ghost-member'"
+			},
+			{
+				"offset": 67,
+				"length": 1,
+				"field": "body.group_instance_id",
+				"value": "null"
+			},
+			{
+				"offset": 68,
+				"length": 9,
+				"field": "body.protocol_type",
+				"value": "'consumer'"
+			},
+			{
+				"offset": 77,
+				"length": 6,
+				"field": "body.protocol_name",
+				"value": "'range'"
+			},
+			{
+				"offset": 83,
+				"length": 1,
+				"field": "body.assignments.length",
+				"value": "0 entries"
+			},
+			{
+				"offset": 84,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "15 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "402"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 9,
+				"length": 4,
+				"field": "body.throttle_time_ms",
+				"value": "0"
+			},
+			{
+				"offset": 13,
+				"length": 2,
+				"field": "body.error_code",
+				"value": "25 (UNKNOWN_MEMBER_ID)"
+			},
+			{
+				"offset": 15,
+				"length": 1,
+				"field": "body.protocol_type",
+				"value": "null"
+			},
+			{
+				"offset": 16,
+				"length": 1,
+				"field": "body.protocol_name",
+				"value": "null"
+			},
+			{
+				"offset": 17,
+				"length": 1,
+				"field": "body.assignment",
+				"value": "0 bytes"
+			},
+			{
+				"offset": 18,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		]
+	}
+]

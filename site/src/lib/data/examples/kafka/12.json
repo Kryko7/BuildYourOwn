@@ -1,0 +1,506 @@
+[
+	{
+		"title": "A topic with one partition",
+		"kind": "wire",
+		"request": "DescribeTopicPartitions v0, correlation id 121, the fixture topic's real name, response_partition_limit 100",
+		"request_hex": "00000025004b00000000007900096b61666b617465737400020974312d65783132310000000064ff00",
+		"response": "One topics entry with error_code 0 (NONE), the name echoed and the topic's real id from its TopicRecord, then one partition: error_code 0, partition_index 0, leader_id the broker's node id, leader_epoch 0, replica_nodes and isr_nodes both holding just that node, and nothing in eligible_leader_replicas, last_known_elr or offline_replicas; next_cursor is null",
+		"response_hex": "0000004a0000007900000000000200000974312d6578313231f4aa7ad7af0d4df4a8f04d1d7921a65600020000000000000000000100000000020000000102000000010101010000000df800ff00",
+		"note": "The id is the one the metadata log minted, not anything derived from the name — a client that later fetches by id will use exactly these 16 bytes. error_code is 0 even though the partition holds no records.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "37 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 2,
+				"field": "header.api_key",
+				"value": "75 (DescribeTopicPartitions)"
+			},
+			{
+				"offset": 6,
+				"length": 2,
+				"field": "header.api_version",
+				"value": "0"
+			},
+			{
+				"offset": 8,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "121"
+			},
+			{
+				"offset": 12,
+				"length": 11,
+				"field": "header.client_id",
+				"value": "'kafkatest'"
+			},
+			{
+				"offset": 23,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 24,
+				"length": 1,
+				"field": "body.topics.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 25,
+				"length": 9,
+				"field": "body.topics[0].name",
+				"value": "'t1-ex121'"
+			},
+			{
+				"offset": 34,
+				"length": 1,
+				"field": "body.topics[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 35,
+				"length": 4,
+				"field": "body.response_partition_limit",
+				"value": "100"
+			},
+			{
+				"offset": 39,
+				"length": 1,
+				"field": "body.cursor",
+				"value": "null (0xff)"
+			},
+			{
+				"offset": 40,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "74 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "121"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 9,
+				"length": 4,
+				"field": "body.throttle_time_ms",
+				"value": "0"
+			},
+			{
+				"offset": 13,
+				"length": 1,
+				"field": "body.topics.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 14,
+				"length": 2,
+				"field": "body.topics[0].error_code",
+				"value": "0 (NONE)"
+			},
+			{
+				"offset": 16,
+				"length": 9,
+				"field": "body.topics[0].name",
+				"value": "'t1-ex121'"
+			},
+			{
+				"offset": 25,
+				"length": 16,
+				"field": "body.topics[0].topic_id",
+				"value": "f4aa7ad7-af0d-4df4-a8f0-4d1d7921a656",
+				"varies": true
+			},
+			{
+				"offset": 41,
+				"length": 1,
+				"field": "body.topics[0].is_internal",
+				"value": "false"
+			},
+			{
+				"offset": 42,
+				"length": 1,
+				"field": "body.topics[0].partitions.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 43,
+				"length": 2,
+				"field": "body.topics[0].partitions[0].error_code",
+				"value": "0 (NONE)"
+			},
+			{
+				"offset": 45,
+				"length": 4,
+				"field": "body.topics[0].partitions[0].partition_index",
+				"value": "0"
+			},
+			{
+				"offset": 49,
+				"length": 4,
+				"field": "body.topics[0].partitions[0].leader_id",
+				"value": "1"
+			},
+			{
+				"offset": 53,
+				"length": 4,
+				"field": "body.topics[0].partitions[0].leader_epoch",
+				"value": "0"
+			},
+			{
+				"offset": 57,
+				"length": 1,
+				"field": "body.topics[0].partitions[0].replica_nodes.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 58,
+				"length": 4,
+				"field": "body.topics[0].partitions[0].replica_nodes[0]",
+				"value": "1"
+			},
+			{
+				"offset": 62,
+				"length": 1,
+				"field": "body.topics[0].partitions[0].isr_nodes.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 63,
+				"length": 4,
+				"field": "body.topics[0].partitions[0].isr_nodes[0]",
+				"value": "1"
+			},
+			{
+				"offset": 67,
+				"length": 1,
+				"field": "body.topics[0].partitions[0].eligible_leader_replicas.length",
+				"value": "0 entries"
+			},
+			{
+				"offset": 68,
+				"length": 1,
+				"field": "body.topics[0].partitions[0].last_known_elr.length",
+				"value": "0 entries"
+			},
+			{
+				"offset": 69,
+				"length": 1,
+				"field": "body.topics[0].partitions[0].offline_replicas.length",
+				"value": "0 entries"
+			},
+			{
+				"offset": 70,
+				"length": 1,
+				"field": "body.topics[0].partitions[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 71,
+				"length": 4,
+				"field": "body.topics[0].topic_authorized_operations",
+				"value": "3576"
+			},
+			{
+				"offset": 75,
+				"length": 1,
+				"field": "body.topics[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 76,
+				"length": 1,
+				"field": "body.next_cursor",
+				"value": "null (0xff)"
+			},
+			{
+				"offset": 77,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"env": {
+			"topics": {
+				"t1": {
+					"name": "t1-ex121",
+					"id": "f4aa7ad7-af0d-4df4-a8f0-4d1d7921a656",
+					"partitions": 1
+				}
+			},
+			"group": "kafkatest-group"
+		}
+	},
+	{
+		"title": "A known and an unknown topic together",
+		"kind": "wire",
+		"request": "DescribeTopicPartitions v0, correlation id 122, two names: 'zzz-unknown' first, then the fixture topic",
+		"request_hex": "00000032004b00000000007a00096b61666b617465737400030c7a7a7a2d756e6b6e6f776e000974312d65783132320000000064ff00",
+		"response": "Two entries in topic-name order — the fixture topic first with error_code 0, its real id and its single partition, then 'zzz-unknown' with error_code 3 (UNKNOWN_TOPIC_OR_PARTITION), an all-zero id and no partitions",
+		"response_hex": "0000006f0000007a00000000000300000974312d6578313232419fe3ac35b44ee4a7a93ae02f15e0e600020000000000000000000100000000020000000102000000010101010000000df80000030c7a7a7a2d756e6b6e6f776e00000000000000000000000000000000000100000df800ff00",
+		"note": "Each entry carries its own error_code, and the order is the broker's, not the request's: topics are walked in name order so that a cursor can page through them. Match entries by the echoed name.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "50 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 2,
+				"field": "header.api_key",
+				"value": "75 (DescribeTopicPartitions)"
+			},
+			{
+				"offset": 6,
+				"length": 2,
+				"field": "header.api_version",
+				"value": "0"
+			},
+			{
+				"offset": 8,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "122"
+			},
+			{
+				"offset": 12,
+				"length": 11,
+				"field": "header.client_id",
+				"value": "'kafkatest'"
+			},
+			{
+				"offset": 23,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 24,
+				"length": 1,
+				"field": "body.topics.length",
+				"value": "2 entries"
+			},
+			{
+				"offset": 25,
+				"length": 12,
+				"field": "body.topics[0].name",
+				"value": "'zzz-unknown'"
+			},
+			{
+				"offset": 37,
+				"length": 1,
+				"field": "body.topics[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 48,
+				"length": 4,
+				"field": "body.response_partition_limit",
+				"value": "100"
+			},
+			{
+				"offset": 52,
+				"length": 1,
+				"field": "body.cursor",
+				"value": "null (0xff)"
+			},
+			{
+				"offset": 53,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "111 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "122"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 9,
+				"length": 4,
+				"field": "body.throttle_time_ms",
+				"value": "0"
+			},
+			{
+				"offset": 13,
+				"length": 1,
+				"field": "body.topics.length",
+				"value": "2 entries"
+			},
+			{
+				"offset": 14,
+				"length": 2,
+				"field": "body.topics[0].error_code",
+				"value": "0 (NONE)"
+			},
+			{
+				"offset": 16,
+				"length": 9,
+				"field": "body.topics[0].name",
+				"value": "'t1-ex122'"
+			},
+			{
+				"offset": 25,
+				"length": 16,
+				"field": "body.topics[0].topic_id",
+				"value": "419fe3ac-35b4-4ee4-a7a9-3ae02f15e0e6",
+				"varies": true
+			},
+			{
+				"offset": 41,
+				"length": 1,
+				"field": "body.topics[0].is_internal",
+				"value": "false"
+			},
+			{
+				"offset": 42,
+				"length": 1,
+				"field": "body.topics[0].partitions.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 43,
+				"length": 2,
+				"field": "body.topics[0].partitions[0].error_code",
+				"value": "0 (NONE)"
+			},
+			{
+				"offset": 45,
+				"length": 4,
+				"field": "body.topics[0].partitions[0].partition_index",
+				"value": "0"
+			},
+			{
+				"offset": 49,
+				"length": 4,
+				"field": "body.topics[0].partitions[0].leader_id",
+				"value": "1"
+			},
+			{
+				"offset": 53,
+				"length": 4,
+				"field": "body.topics[0].partitions[0].leader_epoch",
+				"value": "0"
+			},
+			{
+				"offset": 57,
+				"length": 1,
+				"field": "body.topics[0].partitions[0].replica_nodes.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 58,
+				"length": 4,
+				"field": "body.topics[0].partitions[0].replica_nodes[0]",
+				"value": "1"
+			},
+			{
+				"offset": 62,
+				"length": 1,
+				"field": "body.topics[0].partitions[0].isr_nodes.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 63,
+				"length": 4,
+				"field": "body.topics[0].partitions[0].isr_nodes[0]",
+				"value": "1"
+			},
+			{
+				"offset": 67,
+				"length": 1,
+				"field": "body.topics[0].partitions[0].eligible_leader_replicas.length",
+				"value": "0 entries"
+			},
+			{
+				"offset": 68,
+				"length": 1,
+				"field": "body.topics[0].partitions[0].last_known_elr.length",
+				"value": "0 entries"
+			},
+			{
+				"offset": 69,
+				"length": 1,
+				"field": "body.topics[0].partitions[0].offline_replicas.length",
+				"value": "0 entries"
+			},
+			{
+				"offset": 70,
+				"length": 1,
+				"field": "body.topics[0].partitions[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 71,
+				"length": 4,
+				"field": "body.topics[0].topic_authorized_operations",
+				"value": "3576"
+			},
+			{
+				"offset": 75,
+				"length": 1,
+				"field": "body.topics[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 113,
+				"length": 1,
+				"field": "body.next_cursor",
+				"value": "null (0xff)"
+			},
+			{
+				"offset": 114,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"env": {
+			"topics": {
+				"t1": {
+					"name": "t1-ex122",
+					"id": "419fe3ac-35b4-4ee4-a7a9-3ae02f15e0e6",
+					"partitions": 1
+				}
+			},
+			"group": "kafkatest-group"
+		}
+	}
+]

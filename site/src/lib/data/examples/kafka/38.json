@@ -1,0 +1,432 @@
+[
+	{
+		"title": "Latest offset of a three-record log",
+		"kind": "wire",
+		"request": "ListOffsets v8, replica_id -1, isolation_level 0 (read_uncommitted), asking the fixture topic's partition 0 for timestamp -1 with current_leader_epoch -1",
+		"request_hex": "00000037000200080000017d00096b61666b617465737400ffffffff00020974312d65783338310200000000ffffffffffffffffffffffff000000",
+		"response": "One topic entry, one partition entry: error_code 0 (NONE), offset 3 — the high watermark, one past the last of the three records — timestamp -1, and the partition's current leader_epoch; throttle_time_ms 0",
+		"response_hex": "000000310000017d0000000000020974312d657833383102000000000000ffffffffffffffff000000000000000300000000000000",
+		"note": "-1 (LATEST) and -2 (EARLIEST) are answered out of the log's metadata: no record is read, which is why the timestamp comes back -1 rather than the last record's timestamp. The offset is the one the next append will get, not the offset of the last record — an off-by-one here makes every consumer read one record twice or stop one short.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "55 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 2,
+				"field": "header.api_key",
+				"value": "2 (ListOffsets)"
+			},
+			{
+				"offset": 6,
+				"length": 2,
+				"field": "header.api_version",
+				"value": "8"
+			},
+			{
+				"offset": 8,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "381"
+			},
+			{
+				"offset": 12,
+				"length": 11,
+				"field": "header.client_id",
+				"value": "'kafkatest'"
+			},
+			{
+				"offset": 23,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 24,
+				"length": 4,
+				"field": "body.replica_id",
+				"value": "-1"
+			},
+			{
+				"offset": 28,
+				"length": 1,
+				"field": "body.isolation_level",
+				"value": "0"
+			},
+			{
+				"offset": 29,
+				"length": 1,
+				"field": "body.topics.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 30,
+				"length": 9,
+				"field": "body.topics[0].name",
+				"value": "'t1-ex381'"
+			},
+			{
+				"offset": 39,
+				"length": 1,
+				"field": "body.topics[0].partitions.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 40,
+				"length": 4,
+				"field": "body.topics[0].partitions[0].partition_index",
+				"value": "0"
+			},
+			{
+				"offset": 44,
+				"length": 4,
+				"field": "body.topics[0].partitions[0].current_leader_epoch",
+				"value": "-1"
+			},
+			{
+				"offset": 48,
+				"length": 8,
+				"field": "body.topics[0].partitions[0].timestamp",
+				"value": "-1"
+			},
+			{
+				"offset": 56,
+				"length": 1,
+				"field": "body.topics[0].partitions[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 57,
+				"length": 1,
+				"field": "body.topics[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 58,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "49 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "381"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 9,
+				"length": 4,
+				"field": "body.throttle_time_ms",
+				"value": "0"
+			},
+			{
+				"offset": 13,
+				"length": 1,
+				"field": "body.topics.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 14,
+				"length": 9,
+				"field": "body.topics[0].name",
+				"value": "'t1-ex381'"
+			},
+			{
+				"offset": 23,
+				"length": 1,
+				"field": "body.topics[0].partitions.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 24,
+				"length": 4,
+				"field": "body.topics[0].partitions[0].partition_index",
+				"value": "0"
+			},
+			{
+				"offset": 28,
+				"length": 2,
+				"field": "body.topics[0].partitions[0].error_code",
+				"value": "0 (NONE)"
+			},
+			{
+				"offset": 30,
+				"length": 8,
+				"field": "body.topics[0].partitions[0].timestamp",
+				"value": "-1"
+			},
+			{
+				"offset": 38,
+				"length": 8,
+				"field": "body.topics[0].partitions[0].offset",
+				"value": "3"
+			},
+			{
+				"offset": 46,
+				"length": 4,
+				"field": "body.topics[0].partitions[0].leader_epoch",
+				"value": "0"
+			},
+			{
+				"offset": 50,
+				"length": 1,
+				"field": "body.topics[0].partitions[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 51,
+				"length": 1,
+				"field": "body.topics[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 52,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"env": {
+			"topics": {
+				"t1": {
+					"name": "t1-ex381",
+					"id": "45dbc779-554f-41de-8ee9-6188c990152c",
+					"partitions": 1
+				}
+			},
+			"group": "kafkatest-group"
+		}
+	},
+	{
+		"title": "Earliest offset of the same log",
+		"kind": "wire",
+		"request": "The same request with timestamp -2 (EARLIEST) instead of -1",
+		"request_hex": "00000037000200080000017e00096b61666b617465737400ffffffff00020974312d65783338320200000000fffffffffffffffffffffffe000000",
+		"response": "error_code 0 and offset 0, the log start offset, with timestamp -1 again: the three records are all still there, so the log starts where it was created",
+		"response_hex": "000000310000017e0000000000020974312d657833383202000000000000ffffffffffffffff000000000000000000000000000000",
+		"note": "The earliest offset is the log start offset, not a constant 0: once retention has deleted the first segments it moves forward, and that is the offset a consumer with auto.offset.reset=earliest resumes from. A timestamp that is neither -1 nor -2 is a real search — the first record stamped at or after it, with that record's own timestamp, or offset -1 / timestamp -1 past the end.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "55 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 2,
+				"field": "header.api_key",
+				"value": "2 (ListOffsets)"
+			},
+			{
+				"offset": 6,
+				"length": 2,
+				"field": "header.api_version",
+				"value": "8"
+			},
+			{
+				"offset": 8,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "382"
+			},
+			{
+				"offset": 12,
+				"length": 11,
+				"field": "header.client_id",
+				"value": "'kafkatest'"
+			},
+			{
+				"offset": 23,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 24,
+				"length": 4,
+				"field": "body.replica_id",
+				"value": "-1"
+			},
+			{
+				"offset": 28,
+				"length": 1,
+				"field": "body.isolation_level",
+				"value": "0"
+			},
+			{
+				"offset": 29,
+				"length": 1,
+				"field": "body.topics.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 30,
+				"length": 9,
+				"field": "body.topics[0].name",
+				"value": "'t1-ex382'"
+			},
+			{
+				"offset": 39,
+				"length": 1,
+				"field": "body.topics[0].partitions.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 40,
+				"length": 4,
+				"field": "body.topics[0].partitions[0].partition_index",
+				"value": "0"
+			},
+			{
+				"offset": 44,
+				"length": 4,
+				"field": "body.topics[0].partitions[0].current_leader_epoch",
+				"value": "-1"
+			},
+			{
+				"offset": 48,
+				"length": 8,
+				"field": "body.topics[0].partitions[0].timestamp",
+				"value": "-2"
+			},
+			{
+				"offset": 56,
+				"length": 1,
+				"field": "body.topics[0].partitions[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 57,
+				"length": 1,
+				"field": "body.topics[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 58,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "49 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "382"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 9,
+				"length": 4,
+				"field": "body.throttle_time_ms",
+				"value": "0"
+			},
+			{
+				"offset": 13,
+				"length": 1,
+				"field": "body.topics.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 14,
+				"length": 9,
+				"field": "body.topics[0].name",
+				"value": "'t1-ex382'"
+			},
+			{
+				"offset": 23,
+				"length": 1,
+				"field": "body.topics[0].partitions.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 24,
+				"length": 4,
+				"field": "body.topics[0].partitions[0].partition_index",
+				"value": "0"
+			},
+			{
+				"offset": 28,
+				"length": 2,
+				"field": "body.topics[0].partitions[0].error_code",
+				"value": "0 (NONE)"
+			},
+			{
+				"offset": 30,
+				"length": 8,
+				"field": "body.topics[0].partitions[0].timestamp",
+				"value": "-1"
+			},
+			{
+				"offset": 38,
+				"length": 8,
+				"field": "body.topics[0].partitions[0].offset",
+				"value": "0"
+			},
+			{
+				"offset": 46,
+				"length": 4,
+				"field": "body.topics[0].partitions[0].leader_epoch",
+				"value": "0"
+			},
+			{
+				"offset": 50,
+				"length": 1,
+				"field": "body.topics[0].partitions[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 51,
+				"length": 1,
+				"field": "body.topics[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 52,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"env": {
+			"topics": {
+				"t1": {
+					"name": "t1-ex382",
+					"id": "0fc23d79-4881-40f8-a243-2d557f8fe8de",
+					"partitions": 1
+				}
+			},
+			"group": "kafkatest-group"
+		}
+	}
+]

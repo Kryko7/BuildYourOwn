@@ -1,0 +1,122 @@
+[
+	{
+		"title": "One bit flipped in api_version",
+		"kind": "wire",
+		"request": "A valid ApiVersions v4 frame with a single bit flipped in the api_version field: 0x0004 becomes 0x4004, api version 16388. api_key 18, the correlation id, the client id and the v4 body are untouched",
+		"request_hex": "0000002500124004000001b900096b61666b6174657374000a6b61666b617465737406302e312e3000",
+		"response": "error_code 35 (UNSUPPORTED_VERSION), written in the v0 ApiVersions shape — response header v0, then error_code and an int32-counted api_keys array, no tagged fields — because the broker cannot answer in a version it does not know. The connection stays open and the next valid request on it is answered normally",
+		"response_hex": "00000010000001b9002300000001001200000004",
+		"note": "ApiVersions is the one api key where an unknown version has a defined answer, which is why it is the example: a client must be able to discover the broker's range before it can speak anything else, so the refusal is written in the one shape every version can parse. For any other api key an unsupported version is an invalid request and Apache Kafka closes the connection. Range-check every version field before you index a table with it.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "37 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 2,
+				"field": "header.api_key",
+				"value": "18 (ApiVersions)"
+			},
+			{
+				"offset": 6,
+				"length": 2,
+				"field": "header.api_version",
+				"value": "16388"
+			},
+			{
+				"offset": 8,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "441"
+			},
+			{
+				"offset": 12,
+				"length": 11,
+				"field": "header.client_id",
+				"value": "'kafkatest'"
+			},
+			{
+				"offset": 23,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 24,
+				"length": 10,
+				"field": "body.client_software_name",
+				"value": "'kafkatest'"
+			},
+			{
+				"offset": 34,
+				"length": 6,
+				"field": "body.client_software_version",
+				"value": "'0.1.0'"
+			},
+			{
+				"offset": 40,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "16 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "441"
+			},
+			{
+				"offset": 8,
+				"length": 2,
+				"field": "body.error_code",
+				"value": "35 (UNSUPPORTED_VERSION)"
+			},
+			{
+				"offset": 10,
+				"length": 4,
+				"field": "body.api_keys.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 14,
+				"length": 2,
+				"field": "body.api_keys[0].api_key",
+				"value": "18 (ApiVersions)"
+			},
+			{
+				"offset": 16,
+				"length": 2,
+				"field": "body.api_keys[0].min_version",
+				"value": "0"
+			},
+			{
+				"offset": 18,
+				"length": 2,
+				"field": "body.api_keys[0].max_version",
+				"value": "4"
+			}
+		]
+	},
+	{
+		"title": "The fuzz loop itself",
+		"kind": "text",
+		"request": "500 frames derived from four valid requests — ApiVersions, DescribeTopicPartitions, Fetch and Produce — mutated by one family each: bit flips, truncation and padding, a lying size prefix, negative and huge array lengths, impossible header fields, and the five combined at random. Every frame goes on its own connection, and every mutation comes from the run's --seed, so --seed <n> --stage 44 replays the exact byte string that broke",
+		"request_hex": "",
+		"response": "Three things, and only three: the process is still alive, a brand-new connection is still answered a clean ApiVersions within 2 s (re-checked every 50 mutations and at the end of every test), and every byte the broker does send is correctly framed — a size prefix followed by exactly that many bytes. An error code, a closed connection and complete silence are all acceptable answers to a mutated frame",
+		"response_hex": "",
+		"note": "Silence is normal: a size prefix larger than the bytes that followed leaves any correct broker waiting for the rest. What is never acceptable is a reply that promises more bytes than it writes — that desynchronizes the client for every later request on the connection, and it is the one bug a fuzzer finds that a hand-written test cannot.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

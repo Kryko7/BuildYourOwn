@@ -1,0 +1,308 @@
+[
+	{
+		"title": "Where does this group live",
+		"kind": "wire",
+		"request": "FindCoordinator v4, key_type 0 (a consumer group), with a single entry in coordinator_keys: the group id 'kafkatest-group'",
+		"request_hex": "00000027000a00040000018700096b61666b6174657374000002106b61666b61746573742d67726f757000",
+		"response": "Top-level error_code 0 and throttle_time_ms 0, then one coordinators entry whose key is the group id it was asked about, error_code 0 (NONE), error_message null, and the node_id, host and port of the broker that owns __consumer_offsets-(hash(group) % partitions) — the same address Metadata advertises for that node",
+		"response_hex": "0000003100000187000000000002106b61666b61746573742d67726f7570000000010a3132372e302e302e310000ab590000010000",
+		"note": "Answer the host and port a client can actually reach, not the socket this request arrived on: the client opens a fresh connection to whatever you return and sends every group request there. Apache Kafka creates __consumer_offsets lazily, so the very first lookup after a cold start can be 15 COORDINATOR_NOT_AVAILABLE for a few hundred milliseconds; a client retries.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "39 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 2,
+				"field": "header.api_key",
+				"value": "10 (FindCoordinator)"
+			},
+			{
+				"offset": 6,
+				"length": 2,
+				"field": "header.api_version",
+				"value": "4"
+			},
+			{
+				"offset": 8,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "391"
+			},
+			{
+				"offset": 12,
+				"length": 11,
+				"field": "header.client_id",
+				"value": "'kafkatest'"
+			},
+			{
+				"offset": 23,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 24,
+				"length": 1,
+				"field": "body.key_type",
+				"value": "0"
+			},
+			{
+				"offset": 25,
+				"length": 1,
+				"field": "body.coordinator_keys.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 26,
+				"length": 16,
+				"field": "body.coordinator_keys[0]",
+				"value": "'kafkatest-group'"
+			},
+			{
+				"offset": 42,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "49 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "391"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 9,
+				"length": 4,
+				"field": "body.throttle_time_ms",
+				"value": "0"
+			},
+			{
+				"offset": 13,
+				"length": 1,
+				"field": "body.coordinators.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 14,
+				"length": 16,
+				"field": "body.coordinators[0].key",
+				"value": "'kafkatest-group'"
+			},
+			{
+				"offset": 30,
+				"length": 4,
+				"field": "body.coordinators[0].node_id",
+				"value": "1"
+			},
+			{
+				"offset": 34,
+				"length": 10,
+				"field": "body.coordinators[0].host",
+				"value": "'127.0.0.1'",
+				"varies": true
+			},
+			{
+				"offset": 44,
+				"length": 4,
+				"field": "body.coordinators[0].port",
+				"value": "43865",
+				"varies": true
+			},
+			{
+				"offset": 48,
+				"length": 2,
+				"field": "body.coordinators[0].error_code",
+				"value": "0 (NONE)"
+			},
+			{
+				"offset": 50,
+				"length": 1,
+				"field": "body.coordinators[0].error_message",
+				"value": "''"
+			},
+			{
+				"offset": 51,
+				"length": 1,
+				"field": "body.coordinators[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 52,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		]
+	},
+	{
+		"title": "Two keys, one of them never used",
+		"kind": "wire",
+		"request": "The same request with two coordinator_keys: 'kafkatest-group' and 'kafkatest-never-used', a group id nothing has ever joined or committed to",
+		"request_hex": "0000003c000a00040000018800096b61666b6174657374000003106b61666b61746573742d67726f7570156b61666b61746573742d6e657665722d7573656400",
+		"response": "coordinators has two entries, in the order the keys were asked, each carrying its own key and error_code 0; on a single-broker cluster both name the same node_id, host and port. The unused group is answered exactly like the used one",
+		"response_hex": "0000005c00000188000000000003106b61666b61746573742d67726f7570000000010a3132372e302e302e310000ab5900000100156b61666b61746573742d6e657665722d75736564000000010a3132372e302e302e310000ab590000010000",
+		"note": "Resolving a coordinator is arithmetic over the group id, not a lookup of group state: a group that does not exist yet still has the broker that would own it. v4 is also a batch API — every key gets its own error_code and the top-level error_code stays 0, which is what lets a client resolve several groups in one round trip.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "60 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 2,
+				"field": "header.api_key",
+				"value": "10 (FindCoordinator)"
+			},
+			{
+				"offset": 6,
+				"length": 2,
+				"field": "header.api_version",
+				"value": "4"
+			},
+			{
+				"offset": 8,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "392"
+			},
+			{
+				"offset": 12,
+				"length": 11,
+				"field": "header.client_id",
+				"value": "'kafkatest'"
+			},
+			{
+				"offset": 23,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 24,
+				"length": 1,
+				"field": "body.key_type",
+				"value": "0"
+			},
+			{
+				"offset": 25,
+				"length": 1,
+				"field": "body.coordinator_keys.length",
+				"value": "2 entries"
+			},
+			{
+				"offset": 26,
+				"length": 16,
+				"field": "body.coordinator_keys[0]",
+				"value": "'kafkatest-group'"
+			},
+			{
+				"offset": 63,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "92 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "392"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 9,
+				"length": 4,
+				"field": "body.throttle_time_ms",
+				"value": "0"
+			},
+			{
+				"offset": 13,
+				"length": 1,
+				"field": "body.coordinators.length",
+				"value": "2 entries"
+			},
+			{
+				"offset": 14,
+				"length": 16,
+				"field": "body.coordinators[0].key",
+				"value": "'kafkatest-group'"
+			},
+			{
+				"offset": 30,
+				"length": 4,
+				"field": "body.coordinators[0].node_id",
+				"value": "1"
+			},
+			{
+				"offset": 34,
+				"length": 10,
+				"field": "body.coordinators[0].host",
+				"value": "'127.0.0.1'",
+				"varies": true
+			},
+			{
+				"offset": 44,
+				"length": 4,
+				"field": "body.coordinators[0].port",
+				"value": "43865",
+				"varies": true
+			},
+			{
+				"offset": 48,
+				"length": 2,
+				"field": "body.coordinators[0].error_code",
+				"value": "0 (NONE)"
+			},
+			{
+				"offset": 50,
+				"length": 1,
+				"field": "body.coordinators[0].error_message",
+				"value": "''"
+			},
+			{
+				"offset": 51,
+				"length": 1,
+				"field": "body.coordinators[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 95,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		]
+	}
+]

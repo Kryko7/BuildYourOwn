@@ -1,0 +1,47 @@
+stage: 6
+name: "type for builtins"
+tests:
+  - name: "type echo"
+    input: ["type echo", "exit 0"]
+    expect:
+      stdout: "echo is a shell builtin"
+      exit_code: 0
+
+  - name: "type exit"
+    input: ["type exit", "exit 0"]
+    expect:
+      stdout: "exit is a shell builtin"
+
+  - name: "type type"
+    input: ["type type", "exit 0"]
+    expect:
+      stdout: "type is a shell builtin"
+
+  - name: "type pwd"
+    input: ["type pwd", "exit 0"]
+    expect:
+      stdout: "pwd is a shell builtin"
+
+  - name: "type cd"
+    input: ["type cd", "exit 0"]
+    expect:
+      stdout: "cd is a shell builtin"
+
+  - name: "type for an unknown name says not found"
+    fixtures: { path_isolated: true }
+    skip_on: [zsh]
+    reason: "zsh prints 'nope_cmd not found' without the colon"
+    input: ["type nope_cmd", "exit 0"]
+    expect:
+      stdout: ""
+      stderr: { contains: "nope_cmd: not found" }
+
+  - name: "type works repeatedly in one session"
+    input: ["type echo", "type cd", "type exit", "exit 0"]
+    expect:
+      stdout: "echo is a shell builtin\ncd is a shell builtin\nexit is a shell builtin"
+
+  - name: "echo still works after type (regression: stage 5)"
+    input: ["type echo", "echo done", "exit 0"]
+    expect:
+      stdout: "echo is a shell builtin\ndone"

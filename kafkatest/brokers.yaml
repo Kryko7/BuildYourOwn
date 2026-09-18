@@ -1,0 +1,41 @@
+# How to launch each broker `kafkatest --broker <name>` knows about.
+#
+# Placeholders substituted in `command`, `cwd`, `log_dir` and `env`:
+#   {PROPS}   path to the server.properties the harness writes for this test
+#   {LOGDIR}  the Kafka log directory for this test (fixtures are written there)
+#   {PORT}    the TCP port the broker must listen on
+#   {TMP}     the test's temporary directory (parent of {LOGDIR})
+#
+# fixtures: files | api
+#   files  the harness writes __cluster_metadata-0 + topic segments on disk before the
+#          broker starts (what the "build your own Kafka" convention expects)
+#   api    the harness creates the same state through CreateTopics/Produce on the running
+#          broker and discovers topic ids via Metadata
+# restart: per_test | per_stage
+#   `files` fixtures are read at broker startup, so they imply per_test.
+
+brokers:
+  # The reference broker: downloaded once into ~/.cache/kafkatest, formatted with
+  # kafka-storage.sh and run in KRaft combined mode on random free ports.
+  apache_kafka:
+    kind: reference
+    version: "4.1.2"
+    fixtures: api
+    restart: per_stage
+    boot_timeout_ms: 60000
+
+  # The broker you are building (track conventions).
+  my_broker:
+    command: ["./your_program.sh", "{PROPS}"]
+    port: 9092
+    log_dir: /tmp/kraft-combined-logs
+    fixtures: files
+    restart: per_test
+    cwd: "."
+
+  # The deliberately broken example broker shipped with the crate; used to show the red path.
+  broken:
+    command: ["target/release/examples/broken_broker", "{PROPS}"]
+    fixtures: files
+    restart: per_test
+    cwd: "."

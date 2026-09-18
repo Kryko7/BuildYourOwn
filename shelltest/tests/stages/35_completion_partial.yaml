@@ -1,0 +1,82 @@
+stage: 35
+name: "Partial completion to the longest common prefix"
+tests:
+  - name: "TAB completes to the longest common prefix"
+    mode: pty
+    fixtures:
+      path_isolated: true
+      executables:
+        xyz_foo: "echo foo ran"
+        xyz_foo_bar: "echo bar ran"
+        xyz_foo_bar_baz: "echo baz ran"
+    keys: ["xyz_\t", "\r", "exit\r"]
+    expect:
+      terminal: { contains: "\nfoo ran\n" }
+      exit_code: 0
+
+  - name: "the partial completion rings the bell because it is ambiguous"
+    mode: pty
+    fixtures:
+      path_isolated: true
+      executables:
+        xyz_foo: "echo foo ran"
+        xyz_foo_bar: "echo bar ran"
+    keys: ["xyz_\t", "\x15", "exit\r"]
+    expect:
+      terminal: { regex: "xyz_\x07?foo\x07?" }
+
+  - name: "typing one more character and TAB extends to the next prefix"
+    mode: pty
+    fixtures:
+      path_isolated: true
+      executables:
+        xyz_foo: "echo foo ran"
+        xyz_foo_bar: "echo bar ran"
+        xyz_foo_bar_baz: "echo baz ran"
+    keys: ["xyz_\t", "_\t", "\r", "exit\r"]
+    expect:
+      terminal: { contains: "\nbar ran\n" }
+
+  - name: "the chain of partial completions reaches the longest name"
+    mode: pty
+    fixtures:
+      path_isolated: true
+      executables:
+        xyz_foo: "echo foo ran"
+        xyz_foo_bar: "echo bar ran"
+        xyz_foo_bar_baz: "echo baz ran"
+    keys: ["xyz_\t", "_\t", "_\t", "\r", "exit\r"]
+    expect:
+      terminal: { regex: "bar_baz \nbaz ran\n" }
+
+  - name: "a prefix shared by two names completes to that prefix, then one letter picks"
+    mode: pty
+    fixtures:
+      path_isolated: true
+      executables:
+        abc_one_x: "echo x ran"
+        abc_one_y: "echo y ran"
+    keys: ["abc\t", "x\r", "exit\r"]
+    expect:
+      terminal: { regex: "_one_x\nx ran\n" }
+
+  - name: "no partial completion when the prefix is already the full common prefix"
+    mode: pty
+    fixtures:
+      path_isolated: true
+      executables:
+        xyz_foo: "echo foo"
+        xyz_qux: "echo qux"
+    keys: ["xyz_\t", "\x15", "echo ok\r", "exit\r"]
+    expect:
+      terminal: { regex: "^\\$ xyz_\x07[^\n]*\\$ echo ok\nok\n" }
+
+  - name: "exact-match completion still adds a space (regression: stage 33)"
+    mode: pty
+    fixtures:
+      path_isolated: true
+      executables:
+        xyz_foo_bar_baz: "echo baz ran"
+    keys: ["xyz_foo\t", "\r", "exit\r"]
+    expect:
+      terminal: { contains: "$ xyz_foo_bar_baz \nbaz ran\n" }

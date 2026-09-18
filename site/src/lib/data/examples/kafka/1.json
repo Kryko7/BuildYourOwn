@@ -1,0 +1,24 @@
+[
+	{
+		"title": "A client connects and says nothing",
+		"kind": "text",
+		"request": "TCP connect to the broker's port; the client sends no bytes at all",
+		"request_hex": "",
+		"response": "Nothing on the wire. The socket stays open and the broker waits for a request.",
+		"response_hex": "",
+		"note": "Kafka is strictly request/response: the client always speaks first. A broker that writes a greeting on accept, or closes an idle connection immediately, fails this stage.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "A second client connects while the first is still open",
+		"kind": "text",
+		"request": "Two TCP connections to the same port, the second opened before the first closes",
+		"request_hex": "",
+		"response": "Both are accepted; nothing is written on either socket.",
+		"response_hex": "",
+		"note": "Accept in a loop and hand each connection to its own task or thread. A broker that only accepts again after the previous client disconnects passes the first test of this stage and fails the third.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

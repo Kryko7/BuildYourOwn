@@ -1,0 +1,801 @@
+[
+	{
+		"title": "InitProducerId with a null transactional id",
+		"kind": "wire",
+		"request": "InitProducerId (api_key 22) v4, correlation id 361: transactional_id null, transaction_timeout_ms -1, producer_id -1 and producer_epoch -1 — what a plain idempotent producer sends when it has no id yet",
+		"request_hex": "00000024001600040000016900096b61666b61746573740000ffffffffffffffffffffffffffff00",
+		"response": "throttle_time_ms 0, error_code 0 (NONE), a producer_id the broker allocated (a fresh int64, different on every boot) and producer_epoch 0",
+		"response_hex": "0000001600000169000000000000000000000000000001000000",
+		"note": "Right after a KRaft broker starts this can answer 14 (COORDINATOR_LOAD_IN_PROGRESS) or 15 (COORDINATOR_NOT_AVAILABLE) until the coordinator has loaded; a real producer retries. Hand out ids from a block you own, never a counter that restarts at 0 with the process, or two producers end up sharing an id.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "36 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 2,
+				"field": "header.api_key",
+				"value": "22 (InitProducerId)"
+			},
+			{
+				"offset": 6,
+				"length": 2,
+				"field": "header.api_version",
+				"value": "4"
+			},
+			{
+				"offset": 8,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "361"
+			},
+			{
+				"offset": 12,
+				"length": 11,
+				"field": "header.client_id",
+				"value": "'kafkatest'"
+			},
+			{
+				"offset": 23,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 24,
+				"length": 1,
+				"field": "body.transactional_id",
+				"value": "null"
+			},
+			{
+				"offset": 25,
+				"length": 4,
+				"field": "body.transaction_timeout_ms",
+				"value": "-1"
+			},
+			{
+				"offset": 29,
+				"length": 8,
+				"field": "body.producer_id",
+				"value": "-1"
+			},
+			{
+				"offset": 37,
+				"length": 2,
+				"field": "body.producer_epoch",
+				"value": "-1"
+			},
+			{
+				"offset": 39,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "22 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "361"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 9,
+				"length": 4,
+				"field": "body.throttle_time_ms",
+				"value": "0"
+			},
+			{
+				"offset": 13,
+				"length": 2,
+				"field": "body.error_code",
+				"value": "0 (NONE)"
+			},
+			{
+				"offset": 15,
+				"length": 8,
+				"field": "body.producer_id",
+				"value": "1",
+				"varies": true
+			},
+			{
+				"offset": 23,
+				"length": 2,
+				"field": "body.producer_epoch",
+				"value": "0"
+			},
+			{
+				"offset": 25,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		]
+	},
+	{
+		"title": "A stamped batch, and then a gap in the sequence",
+		"kind": "wire",
+		"request": "Two Produce v11 frames to the same empty partition. Both batches carry producerId 90000 and producerEpoch 0 in the v2 batch header (the int64 and int16 that follow maxTimestamp, with baseSequence as the int32 after them). The first, correlation id 362, has baseSequence 0 and two records; the second, correlation id 363, has baseSequence 7 and one record.",
+		"request_hex": "0000007b0000000b0000016a00096b61666b61746573740000ffff00001388020974312d657833363202000000004e0000000000000000000000410000000002074460510000000000010000018bcfe568000000018bcfe568000000000000015f90000000000000000000020e000000010261000e00000201026200000000000000730000000b0000016b00096b61666b61746573740000ffff00001388020974312d65783336320200000000460000000000000000000000390000000002426b2da10000000000000000018bcfe568000000018bcfe568000000000000015f90000000000007000000010e00000001026300000000",
+		"response": "Frame 362 answers error_code 0 (NONE) with base_offset 0 — sequences 0 and 1 are now stored for that producer. Frame 363 answers error_code 45 (OUT_OF_ORDER_SEQUENCE_NUMBER), because the next batch had to start at sequence 2, and nothing is appended: the high watermark stays 2.",
+		"response_hex": "000000370000016a00020974312d6578333632020000000000000000000000000000ffffffffffffffff0000000000000000010000000000000000000000370000016b00020974312d65783336320200000000002dffffffffffffffffffffffffffffffff0000000000000000010000000000000000",
+		"note": "Keep the last sequence per (producerId, partition); the next batch must start at last + 1 and its last sequence is baseSequence + lastOffsetDelta. A batch repeating a sequence already stored is a retry after a lost ack — answer the offset it got the first time and append nothing; an older producerEpoch is 47 (INVALID_PRODUCER_EPOCH).",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "frame0.size",
+				"value": "123 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 2,
+				"field": "frame0.header.api_key",
+				"value": "0 (Produce)"
+			},
+			{
+				"offset": 6,
+				"length": 2,
+				"field": "frame0.header.api_version",
+				"value": "11"
+			},
+			{
+				"offset": 8,
+				"length": 4,
+				"field": "frame0.header.correlation_id",
+				"value": "362"
+			},
+			{
+				"offset": 12,
+				"length": 11,
+				"field": "frame0.header.client_id",
+				"value": "'kafkatest'"
+			},
+			{
+				"offset": 23,
+				"length": 1,
+				"field": "frame0.header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 24,
+				"length": 1,
+				"field": "frame0.body.transactional_id",
+				"value": "null"
+			},
+			{
+				"offset": 25,
+				"length": 2,
+				"field": "frame0.body.acks",
+				"value": "-1"
+			},
+			{
+				"offset": 27,
+				"length": 4,
+				"field": "frame0.body.timeout_ms",
+				"value": "5000"
+			},
+			{
+				"offset": 31,
+				"length": 1,
+				"field": "frame0.body.topic_data.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 32,
+				"length": 9,
+				"field": "frame0.body.topic_data[0].name",
+				"value": "'t1-ex362'"
+			},
+			{
+				"offset": 41,
+				"length": 1,
+				"field": "frame0.body.topic_data[0].partition_data.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 42,
+				"length": 4,
+				"field": "frame0.body.topic_data[0].partition_data[0].index",
+				"value": "0"
+			},
+			{
+				"offset": 46,
+				"length": 78,
+				"field": "frame0.body.topic_data[0].partition_data[0].records",
+				"value": "77 bytes"
+			},
+			{
+				"offset": 47,
+				"length": 8,
+				"field": "frame0.body.topic_data[0].partition_data[0].records.batch[0].base_offset",
+				"value": "0"
+			},
+			{
+				"offset": 55,
+				"length": 4,
+				"field": "frame0.body.topic_data[0].partition_data[0].records.batch[0].batch_length",
+				"value": "65 (bytes after this field)"
+			},
+			{
+				"offset": 59,
+				"length": 4,
+				"field": "frame0.body.topic_data[0].partition_data[0].records.batch[0].partition_leader_epoch",
+				"value": "0"
+			},
+			{
+				"offset": 63,
+				"length": 1,
+				"field": "frame0.body.topic_data[0].partition_data[0].records.batch[0].magic",
+				"value": "2 (v2)"
+			},
+			{
+				"offset": 64,
+				"length": 4,
+				"field": "frame0.body.topic_data[0].partition_data[0].records.batch[0].crc",
+				"value": "0x07446051 (CRC-32C of everything after this field)"
+			},
+			{
+				"offset": 68,
+				"length": 2,
+				"field": "frame0.body.topic_data[0].partition_data[0].records.batch[0].attributes",
+				"value": "0 (compression none)"
+			},
+			{
+				"offset": 70,
+				"length": 4,
+				"field": "frame0.body.topic_data[0].partition_data[0].records.batch[0].last_offset_delta",
+				"value": "1"
+			},
+			{
+				"offset": 74,
+				"length": 8,
+				"field": "frame0.body.topic_data[0].partition_data[0].records.batch[0].base_timestamp",
+				"value": "1700000000000"
+			},
+			{
+				"offset": 82,
+				"length": 8,
+				"field": "frame0.body.topic_data[0].partition_data[0].records.batch[0].max_timestamp",
+				"value": "1700000000000"
+			},
+			{
+				"offset": 90,
+				"length": 8,
+				"field": "frame0.body.topic_data[0].partition_data[0].records.batch[0].producer_id",
+				"value": "90000"
+			},
+			{
+				"offset": 98,
+				"length": 2,
+				"field": "frame0.body.topic_data[0].partition_data[0].records.batch[0].producer_epoch",
+				"value": "0"
+			},
+			{
+				"offset": 100,
+				"length": 4,
+				"field": "frame0.body.topic_data[0].partition_data[0].records.batch[0].base_sequence",
+				"value": "0"
+			},
+			{
+				"offset": 104,
+				"length": 4,
+				"field": "frame0.body.topic_data[0].partition_data[0].records.batch[0].record_count",
+				"value": "2"
+			},
+			{
+				"offset": 108,
+				"length": 1,
+				"field": "frame0.body.topic_data[0].partition_data[0].records.batch[0].records[0].length",
+				"value": "7 (varint)"
+			},
+			{
+				"offset": 109,
+				"length": 1,
+				"field": "frame0.body.topic_data[0].partition_data[0].records.batch[0].records[0].attributes",
+				"value": "0"
+			},
+			{
+				"offset": 110,
+				"length": 1,
+				"field": "frame0.body.topic_data[0].partition_data[0].records.batch[0].records[0].timestamp_delta",
+				"value": "0 (varlong)"
+			},
+			{
+				"offset": 111,
+				"length": 1,
+				"field": "frame0.body.topic_data[0].partition_data[0].records.batch[0].records[0].offset_delta",
+				"value": "0 (varint)"
+			},
+			{
+				"offset": 112,
+				"length": 1,
+				"field": "frame0.body.topic_data[0].partition_data[0].records.batch[0].records[0].key",
+				"value": "null"
+			},
+			{
+				"offset": 113,
+				"length": 2,
+				"field": "frame0.body.topic_data[0].partition_data[0].records.batch[0].records[0].value",
+				"value": "1 bytes 'a'"
+			},
+			{
+				"offset": 115,
+				"length": 1,
+				"field": "frame0.body.topic_data[0].partition_data[0].records.batch[0].records[0].headers.length",
+				"value": "0 (varint)"
+			},
+			{
+				"offset": 124,
+				"length": 1,
+				"field": "frame0.body.topic_data[0].partition_data[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 125,
+				"length": 1,
+				"field": "frame0.body.topic_data[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 126,
+				"length": 1,
+				"field": "frame0.body.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 127,
+				"length": 4,
+				"field": "frame1.size",
+				"value": "115 (bytes that follow)"
+			},
+			{
+				"offset": 131,
+				"length": 2,
+				"field": "frame1.header.api_key",
+				"value": "0 (Produce)"
+			},
+			{
+				"offset": 133,
+				"length": 2,
+				"field": "frame1.header.api_version",
+				"value": "11"
+			},
+			{
+				"offset": 135,
+				"length": 4,
+				"field": "frame1.header.correlation_id",
+				"value": "363"
+			},
+			{
+				"offset": 139,
+				"length": 11,
+				"field": "frame1.header.client_id",
+				"value": "'kafkatest'"
+			},
+			{
+				"offset": 150,
+				"length": 1,
+				"field": "frame1.header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 151,
+				"length": 1,
+				"field": "frame1.body.transactional_id",
+				"value": "null"
+			},
+			{
+				"offset": 152,
+				"length": 2,
+				"field": "frame1.body.acks",
+				"value": "-1"
+			},
+			{
+				"offset": 154,
+				"length": 4,
+				"field": "frame1.body.timeout_ms",
+				"value": "5000"
+			},
+			{
+				"offset": 158,
+				"length": 1,
+				"field": "frame1.body.topic_data.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 159,
+				"length": 9,
+				"field": "frame1.body.topic_data[0].name",
+				"value": "'t1-ex362'"
+			},
+			{
+				"offset": 168,
+				"length": 1,
+				"field": "frame1.body.topic_data[0].partition_data.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 169,
+				"length": 4,
+				"field": "frame1.body.topic_data[0].partition_data[0].index",
+				"value": "0"
+			},
+			{
+				"offset": 173,
+				"length": 70,
+				"field": "frame1.body.topic_data[0].partition_data[0].records",
+				"value": "69 bytes"
+			},
+			{
+				"offset": 174,
+				"length": 8,
+				"field": "frame1.body.topic_data[0].partition_data[0].records.batch[0].base_offset",
+				"value": "0"
+			},
+			{
+				"offset": 182,
+				"length": 4,
+				"field": "frame1.body.topic_data[0].partition_data[0].records.batch[0].batch_length",
+				"value": "57 (bytes after this field)"
+			},
+			{
+				"offset": 186,
+				"length": 4,
+				"field": "frame1.body.topic_data[0].partition_data[0].records.batch[0].partition_leader_epoch",
+				"value": "0"
+			},
+			{
+				"offset": 190,
+				"length": 1,
+				"field": "frame1.body.topic_data[0].partition_data[0].records.batch[0].magic",
+				"value": "2 (v2)"
+			},
+			{
+				"offset": 191,
+				"length": 4,
+				"field": "frame1.body.topic_data[0].partition_data[0].records.batch[0].crc",
+				"value": "0x426b2da1 (CRC-32C of everything after this field)"
+			},
+			{
+				"offset": 195,
+				"length": 2,
+				"field": "frame1.body.topic_data[0].partition_data[0].records.batch[0].attributes",
+				"value": "0 (compression none)"
+			},
+			{
+				"offset": 197,
+				"length": 4,
+				"field": "frame1.body.topic_data[0].partition_data[0].records.batch[0].last_offset_delta",
+				"value": "0"
+			},
+			{
+				"offset": 201,
+				"length": 8,
+				"field": "frame1.body.topic_data[0].partition_data[0].records.batch[0].base_timestamp",
+				"value": "1700000000000"
+			},
+			{
+				"offset": 209,
+				"length": 8,
+				"field": "frame1.body.topic_data[0].partition_data[0].records.batch[0].max_timestamp",
+				"value": "1700000000000"
+			},
+			{
+				"offset": 217,
+				"length": 8,
+				"field": "frame1.body.topic_data[0].partition_data[0].records.batch[0].producer_id",
+				"value": "90000"
+			},
+			{
+				"offset": 225,
+				"length": 2,
+				"field": "frame1.body.topic_data[0].partition_data[0].records.batch[0].producer_epoch",
+				"value": "0"
+			},
+			{
+				"offset": 227,
+				"length": 4,
+				"field": "frame1.body.topic_data[0].partition_data[0].records.batch[0].base_sequence",
+				"value": "7"
+			},
+			{
+				"offset": 231,
+				"length": 4,
+				"field": "frame1.body.topic_data[0].partition_data[0].records.batch[0].record_count",
+				"value": "1"
+			},
+			{
+				"offset": 235,
+				"length": 1,
+				"field": "frame1.body.topic_data[0].partition_data[0].records.batch[0].records[0].length",
+				"value": "7 (varint)"
+			},
+			{
+				"offset": 236,
+				"length": 1,
+				"field": "frame1.body.topic_data[0].partition_data[0].records.batch[0].records[0].attributes",
+				"value": "0"
+			},
+			{
+				"offset": 237,
+				"length": 1,
+				"field": "frame1.body.topic_data[0].partition_data[0].records.batch[0].records[0].timestamp_delta",
+				"value": "0 (varlong)"
+			},
+			{
+				"offset": 238,
+				"length": 1,
+				"field": "frame1.body.topic_data[0].partition_data[0].records.batch[0].records[0].offset_delta",
+				"value": "0 (varint)"
+			},
+			{
+				"offset": 239,
+				"length": 1,
+				"field": "frame1.body.topic_data[0].partition_data[0].records.batch[0].records[0].key",
+				"value": "null"
+			},
+			{
+				"offset": 240,
+				"length": 2,
+				"field": "frame1.body.topic_data[0].partition_data[0].records.batch[0].records[0].value",
+				"value": "1 bytes 'c'"
+			},
+			{
+				"offset": 242,
+				"length": 1,
+				"field": "frame1.body.topic_data[0].partition_data[0].records.batch[0].records[0].headers.length",
+				"value": "0 (varint)"
+			},
+			{
+				"offset": 243,
+				"length": 1,
+				"field": "frame1.body.topic_data[0].partition_data[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 244,
+				"length": 1,
+				"field": "frame1.body.topic_data[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 245,
+				"length": 1,
+				"field": "frame1.body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "frame0.size",
+				"value": "55 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "frame0.header.correlation_id",
+				"value": "362"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "frame0.header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 9,
+				"length": 1,
+				"field": "frame0.body.responses.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 10,
+				"length": 9,
+				"field": "frame0.body.responses[0].name",
+				"value": "'t1-ex362'"
+			},
+			{
+				"offset": 19,
+				"length": 1,
+				"field": "frame0.body.responses[0].partition_responses.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 20,
+				"length": 4,
+				"field": "frame0.body.responses[0].partition_responses[0].index",
+				"value": "0"
+			},
+			{
+				"offset": 24,
+				"length": 2,
+				"field": "frame0.body.responses[0].partition_responses[0].error_code",
+				"value": "0 (NONE)"
+			},
+			{
+				"offset": 26,
+				"length": 8,
+				"field": "frame0.body.responses[0].partition_responses[0].base_offset",
+				"value": "0"
+			},
+			{
+				"offset": 34,
+				"length": 8,
+				"field": "frame0.body.responses[0].partition_responses[0].log_append_time_ms",
+				"value": "-1"
+			},
+			{
+				"offset": 42,
+				"length": 8,
+				"field": "frame0.body.responses[0].partition_responses[0].log_start_offset",
+				"value": "0"
+			},
+			{
+				"offset": 50,
+				"length": 1,
+				"field": "frame0.body.responses[0].partition_responses[0].record_errors.length",
+				"value": "0 entries"
+			},
+			{
+				"offset": 51,
+				"length": 1,
+				"field": "frame0.body.responses[0].partition_responses[0].error_message",
+				"value": "null"
+			},
+			{
+				"offset": 52,
+				"length": 1,
+				"field": "frame0.body.responses[0].partition_responses[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 53,
+				"length": 1,
+				"field": "frame0.body.responses[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 54,
+				"length": 4,
+				"field": "frame0.body.throttle_time_ms",
+				"value": "0"
+			},
+			{
+				"offset": 58,
+				"length": 1,
+				"field": "frame0.body.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 59,
+				"length": 4,
+				"field": "frame1.size",
+				"value": "55 (bytes that follow)"
+			},
+			{
+				"offset": 63,
+				"length": 4,
+				"field": "frame1.header.correlation_id",
+				"value": "363"
+			},
+			{
+				"offset": 67,
+				"length": 1,
+				"field": "frame1.header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 68,
+				"length": 1,
+				"field": "frame1.body.responses.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 69,
+				"length": 9,
+				"field": "frame1.body.responses[0].name",
+				"value": "'t1-ex362'"
+			},
+			{
+				"offset": 78,
+				"length": 1,
+				"field": "frame1.body.responses[0].partition_responses.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 79,
+				"length": 4,
+				"field": "frame1.body.responses[0].partition_responses[0].index",
+				"value": "0"
+			},
+			{
+				"offset": 83,
+				"length": 2,
+				"field": "frame1.body.responses[0].partition_responses[0].error_code",
+				"value": "45 (OUT_OF_ORDER_SEQUENCE_NUMBER)"
+			},
+			{
+				"offset": 85,
+				"length": 8,
+				"field": "frame1.body.responses[0].partition_responses[0].base_offset",
+				"value": "-1"
+			},
+			{
+				"offset": 93,
+				"length": 8,
+				"field": "frame1.body.responses[0].partition_responses[0].log_append_time_ms",
+				"value": "-1"
+			},
+			{
+				"offset": 101,
+				"length": 8,
+				"field": "frame1.body.responses[0].partition_responses[0].log_start_offset",
+				"value": "0"
+			},
+			{
+				"offset": 109,
+				"length": 1,
+				"field": "frame1.body.responses[0].partition_responses[0].record_errors.length",
+				"value": "0 entries"
+			},
+			{
+				"offset": 110,
+				"length": 1,
+				"field": "frame1.body.responses[0].partition_responses[0].error_message",
+				"value": "null"
+			},
+			{
+				"offset": 111,
+				"length": 1,
+				"field": "frame1.body.responses[0].partition_responses[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 112,
+				"length": 1,
+				"field": "frame1.body.responses[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 113,
+				"length": 4,
+				"field": "frame1.body.throttle_time_ms",
+				"value": "0"
+			},
+			{
+				"offset": 117,
+				"length": 1,
+				"field": "frame1.body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"env": {
+			"topics": {
+				"t1": {
+					"name": "t1-ex362",
+					"id": "b00f5bda-4865-4d61-81f4-091e94d4a06a",
+					"partitions": 1
+				}
+			},
+			"group": "kafkatest-group"
+		}
+	}
+]

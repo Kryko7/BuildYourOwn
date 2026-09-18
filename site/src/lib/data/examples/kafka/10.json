@@ -1,0 +1,298 @@
+[
+	{
+		"title": "The api_keys entry for key 75",
+		"kind": "wire",
+		"request": "ApiVersions v4, correlation id 101, client id 'kafkatest'",
+		"request_hex": "00000025001200040000006500096b61666b6174657374000a6b61666b617465737406302e312e3000",
+		"response": "error_code 0 (NONE) and the compact api_keys array, which now carries an entry {api_key 75, min_version 0, max_version 0} beside {api_key 18, ...}; then throttle_time_ms and the tagged fields",
+		"response_hex": "000003120000006500004a00000000000d000001000400120000020001000a0000030000000d000008000200090000090001000900000a0000000600000b0000000900000c0000000400000d0000000500000e0000000500000f000000060000100000000500001100000001000012000000040000130002000700001400010006000015000000020000160000000500001700020004000018000000050000190000000400001a0000000500001b0001000100001c0000000500001d0001000300001e0001000300001f000100030000200001000400002100000002000022000100020000230001000400002400000002000025000000030000260001000300002700010002000028000100020000290001000300002a0000000200002b0000000200002c0000000100002d0000000100002e0000000000002f0000000000003000000001000031000000010000320000000000003300000000000037000000020000390000000200003c0000000200003d00000000000040000000000000410000000000004200000002000044000000010000450000000100004a0000000100004b0000000000004c0001000100004d0001000100004e0001000100004f000100010000500000000000005100000000000053000000000000540000000000005500000000000056000000000000570000000000005a0000000000005b0000000000005c00000000000000000003008f01070e67726f75702e76657273696f6e00000001000e6b726166742e76657273696f6e0000000100116d657461646174612e76657273696f6e0007001b000e73686172652e76657273696f6e0000000100147472616e73616374696f6e2e76657273696f6e000000020021656c696769626c652e6c65616465722e7265706c696361732e76657273696f6e0000000100010800000000000000120269050e67726f75702e76657273696f6e0001000100147472616e73616374696f6e2e76657273696f6e000200020021656c696769626c652e6c65616465722e7265706c696361732e76657273696f6e0001000100116d657461646174612e76657273696f6e001b001b00",
+		"note": "Adding an api key means adding an entry and bumping the compact array length, which is uvarint(count + 1). Each entry ends with its own empty tagged-field byte (0x00) — forgetting it shifts every following entry.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "37 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 2,
+				"field": "header.api_key",
+				"value": "18 (ApiVersions)"
+			},
+			{
+				"offset": 6,
+				"length": 2,
+				"field": "header.api_version",
+				"value": "4"
+			},
+			{
+				"offset": 8,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "101"
+			},
+			{
+				"offset": 12,
+				"length": 11,
+				"field": "header.client_id",
+				"value": "'kafkatest'"
+			},
+			{
+				"offset": 23,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 24,
+				"length": 10,
+				"field": "body.client_software_name",
+				"value": "'kafkatest'"
+			},
+			{
+				"offset": 34,
+				"length": 6,
+				"field": "body.client_software_version",
+				"value": "'0.1.0'"
+			},
+			{
+				"offset": 40,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "786 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "101"
+			},
+			{
+				"offset": 8,
+				"length": 2,
+				"field": "body.error_code",
+				"value": "0 (NONE)"
+			},
+			{
+				"offset": 10,
+				"length": 1,
+				"field": "body.api_keys.length",
+				"value": "73 entries"
+			},
+			{
+				"offset": 11,
+				"length": 2,
+				"field": "body.api_keys[0].api_key",
+				"value": "0 (Produce)"
+			},
+			{
+				"offset": 13,
+				"length": 2,
+				"field": "body.api_keys[0].min_version",
+				"value": "0"
+			},
+			{
+				"offset": 15,
+				"length": 2,
+				"field": "body.api_keys[0].max_version",
+				"value": "13"
+			},
+			{
+				"offset": 17,
+				"length": 1,
+				"field": "body.api_keys[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 522,
+				"length": 4,
+				"field": "body.throttle_time_ms",
+				"value": "0"
+			},
+			{
+				"offset": 526,
+				"length": 264,
+				"field": "body.tagged_fields",
+				"value": "3 tagged fields: tag 0 (143 bytes), tag 1 (8 bytes), tag 2 (105 bytes)"
+			}
+		]
+	},
+	{
+		"title": "The request the advertisement unlocks",
+		"kind": "wire",
+		"request": "DescribeTopicPartitions v0, correlation id 102, one topic name, response_partition_limit 100 — what a client sends once it has seen key 75 in the list",
+		"request_hex": "0000002c004b00000000006600096b61666b61746573740002106b61666b61746573742d70726f62650000000064ff00",
+		"response": "A normal DescribeTopicPartitions v0 body: throttle_time_ms, then one topics entry for the requested name with error_code 3 (UNKNOWN_TOPIC_OR_PARTITION), because nothing created that topic",
+		"response_hex": "00000035000000660000000000020003106b61666b61746573742d70726f626500000000000000000000000000000000000100000df800ff00",
+		"note": "A client that cannot find key 75 in ApiVersions gives up before it sends this frame at all, which is why the advertisement is its own stage. What the body has to contain is stage 11's job.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "44 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 2,
+				"field": "header.api_key",
+				"value": "75 (DescribeTopicPartitions)"
+			},
+			{
+				"offset": 6,
+				"length": 2,
+				"field": "header.api_version",
+				"value": "0"
+			},
+			{
+				"offset": 8,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "102"
+			},
+			{
+				"offset": 12,
+				"length": 11,
+				"field": "header.client_id",
+				"value": "'kafkatest'"
+			},
+			{
+				"offset": 23,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 24,
+				"length": 1,
+				"field": "body.topics.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 25,
+				"length": 16,
+				"field": "body.topics[0].name",
+				"value": "'kafkatest-probe'"
+			},
+			{
+				"offset": 41,
+				"length": 1,
+				"field": "body.topics[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 42,
+				"length": 4,
+				"field": "body.response_partition_limit",
+				"value": "100"
+			},
+			{
+				"offset": 46,
+				"length": 1,
+				"field": "body.cursor",
+				"value": "null (0xff)"
+			},
+			{
+				"offset": 47,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "53 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "102"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 9,
+				"length": 4,
+				"field": "body.throttle_time_ms",
+				"value": "0"
+			},
+			{
+				"offset": 13,
+				"length": 1,
+				"field": "body.topics.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 14,
+				"length": 2,
+				"field": "body.topics[0].error_code",
+				"value": "3 (UNKNOWN_TOPIC_OR_PARTITION)"
+			},
+			{
+				"offset": 16,
+				"length": 16,
+				"field": "body.topics[0].name",
+				"value": "'kafkatest-probe'"
+			},
+			{
+				"offset": 32,
+				"length": 16,
+				"field": "body.topics[0].topic_id",
+				"value": "00000000-0000-0000-0000-000000000000 (the all-zero id)"
+			},
+			{
+				"offset": 48,
+				"length": 1,
+				"field": "body.topics[0].is_internal",
+				"value": "false"
+			},
+			{
+				"offset": 49,
+				"length": 1,
+				"field": "body.topics[0].partitions.length",
+				"value": "0 entries"
+			},
+			{
+				"offset": 50,
+				"length": 4,
+				"field": "body.topics[0].topic_authorized_operations",
+				"value": "3576"
+			},
+			{
+				"offset": 54,
+				"length": 1,
+				"field": "body.topics[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 55,
+				"length": 1,
+				"field": "body.next_cursor",
+				"value": "null (0xff)"
+			},
+			{
+				"offset": 56,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		]
+	}
+]

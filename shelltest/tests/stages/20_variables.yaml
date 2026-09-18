@@ -1,0 +1,64 @@
+stage: 20
+name: "Variable expansion"
+tests:
+  - name: "$HOME expands"
+    tags: [ext]
+    input: ["echo $HOME", "exit 0"]
+    expect:
+      stdout: "{HOME}"
+      exit_code: 0
+
+  - name: "${VAR} braces form expands"
+    tags: [ext]
+    input: ["echo ${HOME}", "exit 0"]
+    expect:
+      stdout: "{HOME}"
+
+  - name: "$? is the last exit status"
+    tags: [ext]
+    fixtures:
+      path_isolated: true
+      executables:
+        fail3: "exit 3"
+        ok: "exit 0"
+    input: ["ok", "echo $?", "fail3", "echo $?", "exit 0"]
+    expect:
+      stdout: "0\n3"
+
+  - name: "undefined variables expand to nothing"
+    tags: [ext]
+    input: ["echo \"[$SHELLTEST_UNDEFINED_VAR]\"", "exit 0"]
+    expect:
+      stdout: "[]"
+
+  - name: "no expansion inside single quotes"
+    tags: [ext]
+    input: ["echo '$HOME'", "exit 0"]
+    expect:
+      stdout: "$HOME"
+
+  - name: "expansion inside double quotes"
+    tags: [ext]
+    input: ["echo \"home=$HOME\"", "exit 0"]
+    expect:
+      stdout: "home={HOME}"
+
+  - name: "variable followed by more text"
+    tags: [ext]
+    input: ["echo $HOME/sub", "echo ${HOME}dir", "exit 0"]
+    expect:
+      stdout: "{HOME}/sub\n{HOME}dir"
+
+  - name: "environment variables from the parent are visible"
+    tags: [ext]
+    fixtures:
+      env: { SHELLTEST_GREETING: "hello there" }
+    input: ["echo $SHELLTEST_GREETING", "exit 0"]
+    expect:
+      stdout: "hello there"
+
+  - name: "escaped dollar is not expanded (regression: stage 15)"
+    tags: [ext]
+    input: ['echo \$HOME "\$HOME"', "exit 0"]
+    expect:
+      stdout: "$HOME $HOME"

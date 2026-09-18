@@ -1,0 +1,48 @@
+stage: 31
+name: "Completion followed by typing arguments"
+tests:
+  - name: "arguments typed after completion are passed to the command"
+    mode: pty
+    fixtures: { path_isolated: true }
+    keys: ["ech\t", "hello world\r", "exit\r"]
+    expect:
+      terminal: { contains: "$ echo hello world\nhello world\n" }
+      exit_code: 0
+
+  - name: "quoted arguments after completion"
+    mode: pty
+    fixtures: { path_isolated: true }
+    keys: ["ech\t", "'a   b'\r", "exit\r"]
+    expect:
+      terminal: { contains: "\na   b\n" }
+
+  - name: "exi<TAB> then a status argument exits with that status"
+    mode: pty
+    fixtures: { path_isolated: true }
+    keys: ["exi\t", "3\r"]
+    expect:
+      terminal: { contains: "$ exit 3" }
+      exit_code: 3
+
+  - name: "completion then a redirection argument"
+    mode: pty
+    fixtures: { path_isolated: true }
+    keys: ["ech\t", "saved > out.txt\r", "exit\r"]
+    expect:
+      terminal: { contains: "$ echo saved > out.txt\n" }
+      files:
+        "{TMP}/out.txt": "saved\n"
+
+  - name: "two completions on consecutive lines"
+    mode: pty
+    fixtures: { path_isolated: true }
+    keys: ["ech\t", "one\r", "ech\t", "two\r", "exit\r"]
+    expect:
+      terminal: { regex: "(?s)\\$ echo one\none\n\\$ echo two\ntwo\n" }
+
+  - name: "typing continues normally when no TAB is pressed (regression: stage 5)"
+    mode: pty
+    fixtures: { path_isolated: true }
+    keys: ["echo plain\r", "exit\r"]
+    expect:
+      terminal: { contains: "$ echo plain\nplain\n" }

@@ -1,0 +1,39 @@
+stage: 12
+name: "cd ~ and bare cd go to HOME"
+tests:
+  - name: "cd ~ goes to HOME"
+    input: ["cd ~", "pwd", "exit 0"]
+    expect:
+      stdout: "{HOME}"
+      exit_code: 0
+
+  - name: "bare cd goes to HOME"
+    input: ["cd", "pwd", "exit 0"]
+    expect:
+      stdout: "{HOME}"
+
+  - name: "cd ~ honours a different HOME"
+    fixtures:
+      dirs: [otherhome]
+      env: { HOME: "{TMP}/otherhome" }
+    input: ["cd ~", "pwd", "exit 0"]
+    expect:
+      stdout: "{TMP}/otherhome"
+
+  - name: "cd ~ then relative cd"
+    fixtures: { dirs: ["{HOME}/projects"] }
+    input: ["cd ~", "cd projects", "pwd", "exit 0"]
+    expect:
+      stdout: "{HOME}/projects"
+
+  - name: "cd ~ from a nested directory"
+    fixtures: { dirs: [a/b], cwd: a/b }
+    input: ["cd ~", "pwd", "exit 0"]
+    expect:
+      stdout: "{HOME}"
+
+  - name: "cd, then cd back to an absolute path (regression: stage 10)"
+    fixtures: { dirs: [dir1] }
+    input: ["cd", "cd {TMP}/dir1", "pwd", "cd", "pwd", "exit 0"]
+    expect:
+      stdout: "{TMP}/dir1\n{HOME}"

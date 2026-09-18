@@ -1,0 +1,64 @@
+stage: 25
+name: "Redirect stderr with 2>"
+tests:
+  - name: "2> writes stderr to a file"
+    fixtures:
+      path_isolated: true
+      executables:
+        both: |
+          echo to-stdout
+          echo to-stderr >&2
+    input: ["both 2> err.txt", "exit 0"]
+    expect:
+      stdout: "to-stdout"
+      stderr: ""
+      files:
+        "{TMP}/err.txt": "to-stderr\n"
+      exit_code: 0
+
+  - name: "cat error message is captured in the file"
+    input: ["cat nonexistent_file 2> err.txt", "exit 0"]
+    expect:
+      stdout: ""
+      stderr: ""
+      files:
+        "{TMP}/err.txt": { contains: "nonexistent_file" }
+
+  - name: "2> creates the file even when nothing is written to stderr"
+    input: ["echo ok 2> err.txt", "exit 0"]
+    expect:
+      stdout: "ok"
+      files:
+        "{TMP}/err.txt": ""
+
+  - name: "2> overwrites an existing file"
+    fixtures:
+      files: { "err.txt": "old\n" }
+      path_isolated: true
+      executables:
+        err_only: "echo fresh >&2"
+    input: ["err_only 2> err.txt", "exit 0"]
+    expect:
+      files:
+        "{TMP}/err.txt": "fresh\n"
+
+  - name: "> and 2> together split the streams"
+    fixtures:
+      path_isolated: true
+      executables:
+        both: |
+          echo to-stdout
+          echo to-stderr >&2
+    input: ["both > out.txt 2> err.txt", "exit 0"]
+    expect:
+      stdout: ""
+      stderr: ""
+      files:
+        "{TMP}/out.txt": "to-stdout\n"
+        "{TMP}/err.txt": "to-stderr\n"
+
+  - name: "stdout redirection still works alone (regression: stage 24)"
+    input: ["echo plain > out.txt", "exit 0"]
+    expect:
+      files:
+        "{TMP}/out.txt": "plain\n"

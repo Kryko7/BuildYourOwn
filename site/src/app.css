@@ -1,0 +1,552 @@
+/* ===========================================================================
+   Journey site — design tokens
+   A pastel garden: warm cream and soft petals by day, a plum dusk by night.
+   Every colour used for text is checked to AA against the surface it sits on.
+   =========================================================================== */
+
+:root {
+	color-scheme: light;
+
+	/* surfaces — warm cream, barely-there tints */
+	--bg: #fcf6f0;
+	--bg-2: #fffdfb;
+	--bg-3: #f6ece3;
+	--bg-sunk: #f1e5da;
+	--line: #ecdcce;
+	--line-strong: #d6bfac;
+
+	/* ink — a soft plum-grey rather than black */
+	--ink: #362c41;
+	--ink-2: #5d5269;
+	--ink-3: #7d7189;
+
+	/* the petal palette: the light value paints, the -ink value is safe for text */
+	--pink: #f6b3ca;
+	--pink-ink: #b03a70;
+	--pink-soft: #fde7ef;
+	--lav: #c4b2ef;
+	--lav-ink: #6845b6;
+	--lav-soft: #efe9fd;
+	--mint: #9fdcc3;
+	--mint-ink: #14755a;
+	--mint-soft: #e0f6ec;
+	--butter: #f8dc99;
+	--butter-ink: #8a6208;
+	--butter-soft: #fdf3da;
+	--sky: #a6d7f2;
+	--sky-ink: #10688f;
+	--sky-soft: #e4f3fc;
+	--peach: #fabf9c;
+	--peach-ink: #b35b21;
+	--peach-soft: #fdeade;
+
+	/* greenery */
+	--leaf: #8ec79c;
+	--leaf-deep: #4f9468;
+	--stem: #7bb98c;
+
+	/* track accents */
+	--shell: #b35b21;
+	--shell-bright: #fabf9c;
+	--shell-soft: #fdeade;
+	--kafka: #10688f;
+	--kafka-bright: #a6d7f2;
+	--kafka-soft: #e4f3fc;
+
+	/* states */
+	--ok: #14755a;
+	--ok-bright: #9fdcc3;
+	--ok-soft: #e0f6ec;
+	--bad: #c0392f;
+	--bad-bright: #f4998f;
+	--bad-soft: #fce6e3;
+	--warn: #8a6208;
+	--warn-bright: #f8dc99;
+	--warn-soft: #fdf3da;
+
+	--shadow-1: 0 1px 2px rgba(104, 74, 62, 0.06), 0 4px 14px rgba(104, 74, 62, 0.06);
+	--shadow-2: 0 12px 34px rgba(104, 74, 62, 0.14), 0 2px 8px rgba(104, 74, 62, 0.08);
+	--glow: 0 0 0 6px color-mix(in srgb, var(--accent, var(--pink)) 18%, transparent);
+
+	--r-1: 8px;
+	--r-2: 14px;
+	--r-3: 22px;
+	--r-4: 30px;
+	--r-full: 999px;
+
+	--s-1: 4px;
+	--s-2: 8px;
+	--s-3: 12px;
+	--s-4: 18px;
+	--s-5: 26px;
+	--s-6: 36px;
+	--s-7: 54px;
+	--s-8: 80px;
+
+	--font-display: 'Baloo 2', 'Quicksand', 'Trebuchet MS', system-ui, sans-serif;
+	--font-body: 'Nunito', 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif;
+	--font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, Consolas, monospace;
+
+	--ease: cubic-bezier(0.32, 0.72, 0.3, 1);
+	--bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+	--dur: 220ms;
+	--maxw: 1180px;
+
+	/* the dappled meadow behind everything */
+	--wash-1: color-mix(in srgb, var(--pink) 34%, transparent);
+	--wash-2: color-mix(in srgb, var(--sky) 30%, transparent);
+	--wash-3: color-mix(in srgb, var(--butter) 32%, transparent);
+	--wash-4: color-mix(in srgb, var(--mint) 26%, transparent);
+}
+
+:root[data-theme='dark'] {
+	color-scheme: dark;
+
+	--bg: #191327;
+	--bg-2: #221a33;
+	--bg-3: #2d2341;
+	--bg-sunk: #130e1f;
+	--line: #372b4e;
+	--line-strong: #4e3f6b;
+
+	--ink: #f2ebf8;
+	--ink-2: #c5b6d6;
+	--ink-3: #9c8cb0;
+
+	--pink: #f0a8c6;
+	--pink-ink: #f7bfd7;
+	--pink-soft: #3a2135;
+	--lav: #bda8f2;
+	--lav-ink: #cdbcf8;
+	--lav-soft: #2c2247;
+	--mint: #8ed9bd;
+	--mint-ink: #9de5c9;
+	--mint-soft: #143327;
+	--butter: #f6d894;
+	--butter-ink: #f8e2ad;
+	--butter-soft: #37290f;
+	--sky: #97d2f1;
+	--sky-ink: #a9dcf6;
+	--sky-soft: #12303f;
+	--peach: #f8bb97;
+	--peach-ink: #fbcbb0;
+	--peach-soft: #3b2416;
+
+	--leaf: #7cc294;
+	--leaf-deep: #9ad9ae;
+	--stem: #6fae83;
+
+	--shell: #fbc6a3;
+	--shell-bright: #f8b088;
+	--shell-soft: #3b2416;
+	--kafka: #a9dcf6;
+	--kafka-bright: #8acdf0;
+	--kafka-soft: #12303f;
+
+	--ok: #9de5c9;
+	--ok-bright: #7fd8b3;
+	--ok-soft: #143327;
+	--bad: #ff9e91;
+	--bad-bright: #ff8878;
+	--bad-soft: #40201c;
+	--warn: #f8e2ad;
+	--warn-bright: #f2ce7c;
+	--warn-soft: #37290f;
+
+	--shadow-1: 0 1px 2px rgba(0, 0, 0, 0.45), 0 4px 16px rgba(0, 0, 0, 0.32);
+	--shadow-2: 0 16px 44px rgba(0, 0, 0, 0.55), 0 2px 10px rgba(0, 0, 0, 0.4);
+
+	--wash-1: color-mix(in srgb, var(--pink) 16%, transparent);
+	--wash-2: color-mix(in srgb, var(--sky) 15%, transparent);
+	--wash-3: color-mix(in srgb, var(--butter) 12%, transparent);
+	--wash-4: color-mix(in srgb, var(--mint) 12%, transparent);
+}
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+/* No `scroll-behavior: smooth` here: SvelteKit resets the scroll position on every
+   navigation, and a smooth reset animates the new page up from wherever the old one was —
+   which reads as "the page loaded already scrolled, with the header off screen". */
+
+/* `clip`, not `hidden`: it stops a stray wide child from scrolling the document sideways on
+   a 360 px screen without turning anything into a scroll container (which would break the
+   sticky header). It has to be on the root as well as the body — the viewport's horizontal
+   scrollbar belongs to the root element, not to <body>. */
+html {
+	overflow-x: clip;
+}
+
+body {
+	margin: 0;
+	min-height: 100vh;
+	overflow-x: clip;
+	background-color: var(--bg);
+	/* sunlight through leaves: four soft washes, fixed so they never scroll into a seam */
+	background-image:
+		radial-gradient(58% 42% at 8% 0%, var(--wash-1), transparent 70%),
+		radial-gradient(52% 38% at 92% 6%, var(--wash-2), transparent 72%),
+		radial-gradient(46% 34% at 76% 96%, var(--wash-3), transparent 70%),
+		radial-gradient(44% 30% at 14% 88%, var(--wash-4), transparent 72%);
+	background-attachment: fixed;
+	color: var(--ink);
+	font-family: var(--font-body);
+	font-size: 15.5px;
+	line-height: 1.65;
+	-webkit-font-smoothing: antialiased;
+	text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+h4 {
+	font-family: var(--font-display);
+	font-weight: 600;
+	line-height: 1.18;
+	letter-spacing: -0.005em;
+	margin: 0;
+}
+
+h1 {
+	font-size: clamp(2.1rem, 1.2rem + 3.4vw, 3.5rem);
+	font-weight: 700;
+}
+h2 {
+	font-size: clamp(1.4rem, 1.1rem + 1.2vw, 2rem);
+}
+h3 {
+	font-size: 1.12rem;
+}
+
+p {
+	margin: 0 0 var(--s-3);
+}
+
+a {
+	color: inherit;
+	text-decoration-color: color-mix(in srgb, currentColor 32%, transparent);
+	text-underline-offset: 3px;
+}
+a:hover {
+	text-decoration-color: currentColor;
+}
+
+code,
+kbd,
+pre,
+.mono {
+	font-family: var(--font-mono);
+	font-size: 0.85em;
+	font-variant-ligatures: none;
+}
+
+code {
+	background: var(--bg-3);
+	border-radius: var(--r-1);
+	padding: 0.12em 0.38em;
+}
+
+pre {
+	margin: 0;
+	overflow-x: auto;
+}
+
+kbd {
+	background: var(--bg-3);
+	border: 1px solid var(--line);
+	border-bottom-width: 2px;
+	border-radius: var(--r-1);
+	padding: 1px 6px;
+	font-size: 0.76em;
+	color: var(--ink-2);
+	white-space: nowrap;
+}
+
+button,
+input,
+select,
+textarea {
+	font: inherit;
+	color: inherit;
+}
+
+:focus-visible {
+	outline: 2.5px solid var(--accent, var(--lav-ink));
+	outline-offset: 2px;
+	border-radius: var(--r-1);
+}
+
+::selection {
+	background: color-mix(in srgb, var(--accent, var(--pink)) 40%, transparent);
+}
+
+/* ---------- layout helpers ---------- */
+
+.wrap {
+	width: min(100% - 2rem, var(--maxw));
+	margin-inline: auto;
+}
+
+.stack > * + * {
+	margin-top: var(--s-3);
+}
+
+.row {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+}
+
+.spread {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--s-3);
+}
+
+.muted {
+	color: var(--ink-2);
+}
+.tiny {
+	font-size: 0.79rem;
+	letter-spacing: 0.01em;
+}
+
+.eyebrow {
+	font-family: var(--font-mono);
+	font-size: 0.68rem;
+	text-transform: uppercase;
+	letter-spacing: 0.15em;
+	color: var(--ink-3);
+}
+
+.card {
+	background: var(--bg-2);
+	border: 1px solid var(--line);
+	border-radius: var(--r-3);
+	box-shadow: var(--shadow-1);
+}
+
+/* ---------- buttons ---------- */
+
+.btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--s-2);
+	background: var(--bg-2);
+	border: 1.5px solid var(--line-strong);
+	border-radius: var(--r-full);
+	padding: 7px 16px;
+	font-size: 0.88rem;
+	font-weight: 600;
+	cursor: pointer;
+	transition:
+		background var(--dur) var(--ease),
+		border-color var(--dur) var(--ease),
+		transform 160ms var(--bounce),
+		box-shadow var(--dur) var(--ease);
+	text-decoration: none;
+}
+.btn:hover {
+	background: var(--bg-3);
+	border-color: color-mix(in srgb, var(--accent, var(--lav-ink)) 45%, var(--line-strong));
+	transform: translateY(-1px);
+}
+.btn:active {
+	transform: translateY(1px) scale(0.98);
+}
+.btn[disabled] {
+	opacity: 0.42;
+	cursor: not-allowed;
+	transform: none;
+}
+
+.btn-primary {
+	background: var(--accent, var(--lav-ink));
+	border-color: transparent;
+	color: var(--bg-2);
+}
+.btn-primary:hover {
+	background: color-mix(in srgb, var(--accent, var(--lav-ink)) 86%, var(--ink));
+	border-color: transparent;
+	box-shadow: var(--glow);
+}
+:root[data-theme='dark'] .btn-primary {
+	color: var(--bg-sunk);
+}
+
+.btn-ghost {
+	background: transparent;
+	border-color: transparent;
+	color: var(--ink-2);
+}
+.btn-ghost:hover {
+	background: var(--bg-3);
+	color: var(--ink);
+	border-color: transparent;
+}
+
+.btn-sm {
+	padding: 4px 11px;
+	font-size: 0.78rem;
+}
+
+/* ---------- chips & pills ---------- */
+
+.chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	border-radius: var(--r-full);
+	border: 1px solid var(--line);
+	background: var(--bg-3);
+	padding: 2px 10px;
+	font-size: 0.71rem;
+	font-family: var(--font-mono);
+	letter-spacing: 0.02em;
+	color: var(--ink-2);
+	white-space: nowrap;
+}
+.chip-ext {
+	color: var(--warn);
+	border-color: color-mix(in srgb, var(--warn) 32%, transparent);
+	background: var(--warn-soft);
+}
+.chip-ok {
+	color: var(--ok);
+	border-color: color-mix(in srgb, var(--ok) 32%, transparent);
+	background: var(--ok-soft);
+}
+.chip-bad {
+	color: var(--bad);
+	border-color: color-mix(in srgb, var(--bad) 32%, transparent);
+	background: var(--bad-soft);
+}
+
+/* ---------- terminal blocks (the testers' reporter, on the web) ---------- */
+
+.terminal {
+	background: var(--bg-sunk);
+	border: 1px solid var(--line);
+	border-radius: var(--r-2);
+	font-family: var(--font-mono);
+	font-size: 0.77rem;
+	line-height: 1.6;
+	padding: var(--s-3);
+	overflow-x: auto;
+	white-space: pre;
+	tab-size: 4;
+}
+.terminal .t-gut {
+	color: var(--ink-3);
+	user-select: none;
+}
+.terminal .t-del {
+	color: var(--bad);
+}
+.terminal .t-add {
+	color: var(--ok);
+}
+.terminal .t-head {
+	color: var(--ink);
+	font-weight: 600;
+}
+
+/* ---------- accessibility ---------- */
+
+.visually-hidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+.skip-link {
+	position: absolute;
+	left: var(--s-3);
+	top: -100px;
+	z-index: 200;
+	background: var(--bg-2);
+	border: 1px solid var(--line-strong);
+	border-radius: var(--r-full);
+	padding: 8px 16px;
+	transition: top var(--dur) var(--ease);
+}
+.skip-link:focus {
+	top: var(--s-3);
+}
+
+/* ---------- garden motion ----------
+   Everything that moves does so with transform/opacity only, and stops entirely for a
+   visitor who asked their OS for less motion. `.is-hidden-tab` is set on <html> when the
+   tab goes to the background; motion.ts pauses the looping animations while it is set. */
+
+@keyframes breathe {
+	0%,
+	100% {
+		transform: scale(1);
+	}
+	50% {
+		transform: scale(1.035);
+	}
+}
+
+@keyframes sway {
+	0%,
+	100% {
+		transform: rotate(-2.2deg);
+	}
+	50% {
+		transform: rotate(2.2deg);
+	}
+}
+
+@keyframes driftY {
+	0%,
+	100% {
+		transform: translateY(0);
+	}
+	50% {
+		transform: translateY(-7px);
+	}
+}
+
+@keyframes hop {
+	0%,
+	100% {
+		transform: translateY(0) scaleY(1);
+	}
+	22% {
+		transform: translateY(0) scaleY(0.86);
+	}
+	48% {
+		transform: translateY(-16px) scaleY(1.08);
+	}
+	78% {
+		transform: translateY(0) scaleY(0.94);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.001ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.001ms !important;
+	}
+}
+
+/* Background tabs: only looping (ambient) animations are paused, and that is done from
+   motion.ts with the Web Animations API, so one-shot entrances such as the drawer's slide-in
+   are never frozen at their first frame. */

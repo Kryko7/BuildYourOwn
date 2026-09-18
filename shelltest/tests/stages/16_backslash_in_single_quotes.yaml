@@ -1,0 +1,38 @@
+stage: 16
+name: "Backslash inside single quotes is literal"
+tests:
+  - name: "backslash before a letter is kept"
+    input: ["echo 'a\\b'", "exit 0"]
+    expect:
+      stdout: 'a\b'
+      exit_code: 0
+
+  - name: "double backslash stays double"
+    input: ["echo 'a\\\\b'", "exit 0"]
+    expect:
+      stdout: 'a\\b'
+
+  - name: "backslash-n is not a newline"
+    input: ["echo 'line\\nbreak'", "exit 0"]
+    expect:
+      stdout: 'line\nbreak'
+
+  - name: "backslash before a space is kept"
+    input: ["echo 'a\\ b'", "exit 0"]
+    expect:
+      stdout: 'a\ b'
+
+  - name: "backslash before a dollar is kept"
+    input: ["echo '\\$HOME'", "exit 0"]
+    expect:
+      stdout: '\$HOME'
+
+  - name: "a trailing backslash before the closing quote is kept"
+    input: ["echo 'ends with\\'", "exit 0"]
+    expect:
+      stdout: 'ends with\'
+
+  - name: "backslash-quote inside double quotes still escapes (regression: stage 14)"
+    input: ['echo "x\"y"', "exit 0"]
+    expect:
+      stdout: 'x"y'

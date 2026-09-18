@@ -1,0 +1,78 @@
+stage: 56
+name: "Script mode: file argument, -c, shebang"
+tests:
+  - name: "a script file runs without printing prompts"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "echo from script\necho second\n" }
+    shell_args: ["{TMP}/s.sh"]
+    normalize: { strip_prompt: false }
+    expect:
+      stdout: "from script\nsecond"
+      exit_code: 0
+
+  - name: "the script's exit status becomes the shell's"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "echo before\nexit 4\necho after\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "before"
+      exit_code: 4
+
+  - name: "-c runs a command string"
+    tags: [ext]
+    shell_args: ["-c", "echo from -c"]
+    normalize: { strip_prompt: false }
+    expect:
+      stdout: "from -c"
+      exit_code: 0
+
+  - name: "-c propagates the exit status"
+    tags: [ext]
+    shell_args: ["-c", "exit 5"]
+    expect:
+      exit_code: 5
+
+  - name: "-c with a pipeline and redirection"
+    tags: [ext]
+    shell_args: ["-c", "echo a | cat > {TMP}/out.txt"]
+    expect:
+      files:
+        "{TMP}/out.txt": "a\n"
+
+  - name: "a shebang script naming the shell under test runs"
+    tags: [ext]
+    fixtures:
+      path_isolated: true
+      executables:
+        myscript: "#!{SHELL}\necho via shebang\n"
+    input: ["myscript", "exit 0"]
+    expect:
+      stdout: "via shebang"
+
+  - name: "positional parameters are passed to the script"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "echo \"got $1 $2\"\n" }
+    shell_args: ["{TMP}/s.sh", "alpha", "beta"]
+    expect:
+      stdout: "got alpha beta"
+
+  - name: "an error in a script does not stop the following lines"
+    tags: [ext]
+    fixtures:
+      path_isolated: true
+      files: { "s.sh": "nope_cmd\necho after\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "after"
+      stderr: { contains: "nope_cmd" }
+
+  - name: "a script can use quoting (regression: stage 14)"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "echo \"a   b\" 'c   d'\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "a   b c   d"

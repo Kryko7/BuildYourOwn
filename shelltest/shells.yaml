@@ -1,0 +1,36 @@
+# Reference shells and how to launch them "clean". `--shell <name>` looks up this file;
+# `--shell <path>` that is not a registered name runs that path directly in both modes.
+#
+# Placeholders usable in env/init_script: {TMP} {BIN} {HOME} {HISTFILE} {INIT}
+#   pipe_command  argv used for pipe-mode tests (script on stdin)
+#   pty_command   argv used for pty-mode tests (interactive, inside a pseudo-terminal)
+#   env           extra environment (the harness always sets PATH, HOME, HISTFILE, TERM=dumb, LANG=C)
+#   init_script   written to {INIT} before every test
+#   prompt        the prompt string to wait for / strip (default "$ ")
+shells:
+  bash:
+    pipe_command: ["bash", "--norc", "--noprofile"]
+    pty_command:  ["bash", "--norc", "--noprofile", "-i"]
+    env: { PS1: "$ ", BASH_ENV: "{INIT}", TERM: "dumb" }
+    # Sourced by non-interactive bash (pipe mode) so it behaves like the interactive
+    # shell the tests describe: `set +h` stops command hashing (so `type` reports paths),
+    # aliases expand, and `set -o history` (kept last) turns on history and loads HISTFILE.
+    init_script: |
+      HISTSIZE=1000
+      set +h
+      shopt -s expand_aliases
+      set -o history
+  zsh:
+    # BSD_ECHO makes echo leave backslashes alone like bash; the PROMPT_* options stop
+    # zsh from printing its "%" partial-line marker before every prompt.
+    pipe_command: ["zsh", "-f", "-o", "BSD_ECHO"]
+    pty_command:  ["zsh", "-f", "-i", "-o", "BSD_ECHO", "+o", "PROMPT_SP", "+o", "PROMPT_CR"]
+    env: { PROMPT: "$ ", TERM: "dumb" }
+  dash:
+    pipe_command: ["dash"]
+    pty_command:  ["dash", "-i"]
+    env: { PS1: "$ " }
+  my_shell:
+    pipe_command: ["./my_shell"]
+    pty_command:  ["./my_shell"]
+    prompt: "$ "

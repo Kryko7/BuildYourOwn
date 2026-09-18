@@ -1,0 +1,275 @@
+[
+	{
+		"title": "A heartbeat from a member nobody knows",
+		"kind": "wire",
+		"request": "Heartbeat v4 for 'kafkatest-group', generation_id 1, from the member 'kafkatest-ghost-member', which no coordinator ever issued",
+		"request_hex": "00000041000c0004000001a500096b61666b617465737400106b61666b61746573742d67726f757000000001176b61666b61746573742d67686f73742d6d656d6265720000",
+		"response": "throttle_time_ms 0 and error_code 25 (UNKNOWN_MEMBER_ID) — the same answer whether the group is stable, rebalancing, or has never existed at all",
+		"response_hex": "0000000c000001a50000000000001900",
+		"note": "Check the member id before the generation and before the group's state: a client that gets 25 knows it has been fenced out and must re-join from scratch with an empty member id, while 22 ILLEGAL_GENERATION or 27 REBALANCE_IN_PROGRESS would send it down a different recovery path. The wrong code here is worse than none: it makes a consumer retry forever.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "65 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 2,
+				"field": "header.api_key",
+				"value": "12 (Heartbeat)"
+			},
+			{
+				"offset": 6,
+				"length": 2,
+				"field": "header.api_version",
+				"value": "4"
+			},
+			{
+				"offset": 8,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "421"
+			},
+			{
+				"offset": 12,
+				"length": 11,
+				"field": "header.client_id",
+				"value": "'kafkatest'"
+			},
+			{
+				"offset": 23,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 24,
+				"length": 16,
+				"field": "body.group_id",
+				"value": "'kafkatest-group'"
+			},
+			{
+				"offset": 40,
+				"length": 4,
+				"field": "body.generation_id",
+				"value": "1"
+			},
+			{
+				"offset": 44,
+				"length": 23,
+				"field": "body.member_id",
+				"value": "'kafkatest-ghost-member'"
+			},
+			{
+				"offset": 67,
+				"length": 1,
+				"field": "body.group_instance_id",
+				"value": "null"
+			},
+			{
+				"offset": 68,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "12 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "421"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 9,
+				"length": 4,
+				"field": "body.throttle_time_ms",
+				"value": "0"
+			},
+			{
+				"offset": 13,
+				"length": 2,
+				"field": "body.error_code",
+				"value": "25 (UNKNOWN_MEMBER_ID)"
+			},
+			{
+				"offset": 15,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		]
+	},
+	{
+		"title": "LeaveGroup for a member that never joined",
+		"kind": "wire",
+		"request": "LeaveGroup v5 for 'kafkatest-group' with a members array of one identity: member_id 'kafkatest-ghost-member', no group_instance_id, reason 'kafkatest'",
+		"request_hex": "00000049000d0005000001a600096b61666b617465737400106b61666b61746573742d67726f757002176b61666b61746573742d67686f73742d6d656d626572000a6b61666b61746573740000",
+		"response": "Top-level error_code 0, and one members entry naming the member id it was asked about with error_code 25 (UNKNOWN_MEMBER_ID) in it",
+		"response_hex": "00000028000001a60000000000000002176b61666b61746573742d67686f73742d6d656d6265720000190000",
+		"note": "From v3 on LeaveGroup is a batch: the top level says whether the request was understood, and each member carries its own outcome. A broker that reports 25 at the top level breaks a client leaving several members at once, because the one member that really did leave is then indistinguishable from the one that never existed.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "73 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 2,
+				"field": "header.api_key",
+				"value": "13 (LeaveGroup)"
+			},
+			{
+				"offset": 6,
+				"length": 2,
+				"field": "header.api_version",
+				"value": "5"
+			},
+			{
+				"offset": 8,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "422"
+			},
+			{
+				"offset": 12,
+				"length": 11,
+				"field": "header.client_id",
+				"value": "'kafkatest'"
+			},
+			{
+				"offset": 23,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 24,
+				"length": 16,
+				"field": "body.group_id",
+				"value": "'kafkatest-group'"
+			},
+			{
+				"offset": 40,
+				"length": 1,
+				"field": "body.members.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 41,
+				"length": 23,
+				"field": "body.members[0].member_id",
+				"value": "'kafkatest-ghost-member'"
+			},
+			{
+				"offset": 64,
+				"length": 1,
+				"field": "body.members[0].group_instance_id",
+				"value": "null"
+			},
+			{
+				"offset": 65,
+				"length": 10,
+				"field": "body.members[0].reason",
+				"value": "'kafkatest'"
+			},
+			{
+				"offset": 75,
+				"length": 1,
+				"field": "body.members[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 76,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "40 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "422"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 9,
+				"length": 4,
+				"field": "body.throttle_time_ms",
+				"value": "0"
+			},
+			{
+				"offset": 13,
+				"length": 2,
+				"field": "body.error_code",
+				"value": "0 (NONE)"
+			},
+			{
+				"offset": 15,
+				"length": 1,
+				"field": "body.members.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 16,
+				"length": 23,
+				"field": "body.members[0].member_id",
+				"value": "'kafkatest-ghost-member'",
+				"varies": true
+			},
+			{
+				"offset": 39,
+				"length": 1,
+				"field": "body.members[0].group_instance_id",
+				"value": "null"
+			},
+			{
+				"offset": 40,
+				"length": 2,
+				"field": "body.members[0].error_code",
+				"value": "25 (UNKNOWN_MEMBER_ID)"
+			},
+			{
+				"offset": 42,
+				"length": 1,
+				"field": "body.members[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 43,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		]
+	}
+]

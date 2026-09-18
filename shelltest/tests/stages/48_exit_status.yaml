@@ -1,0 +1,73 @@
+stage: 48
+name: "$? semantics: 0, non-zero, 127 not found, 126 not executable"
+tests:
+  - name: "$? is 0 after success"
+    tags: [ext]
+    input: ["echo hi", "echo $?", "exit 0"]
+    expect:
+      stdout: "hi\n0"
+      exit_code: 0
+
+  - name: "$? carries a program's non-zero status"
+    tags: [ext]
+    fixtures:
+      path_isolated: true
+      executables:
+        fail42: "exit 42"
+    input: ["fail42", "echo $?", "exit 0"]
+    expect:
+      stdout: "42"
+
+  - name: "$? is 127 for an unknown command"
+    tags: [ext]
+    fixtures: { path_isolated: true }
+    input: ["nope_cmd", "echo $?", "exit 0"]
+    expect:
+      stdout: "127"
+
+  - name: "$? is 126 for a file that exists but is not executable"
+    tags: [ext]
+    fixtures:
+      path_isolated: true
+      files: { "noexec.sh": "echo should not run\n" }
+    input: ["./noexec.sh", "echo $?", "exit 0"]
+    expect:
+      stdout: "126"
+      stderr: { contains: "noexec.sh" }
+
+  - name: "$? is 1 after a failed cd"
+    tags: [ext]
+    input: ["cd /nonexistent/dir", "echo $?", "exit 0"]
+    expect:
+      stdout: "1"
+
+  - name: "bare exit uses the last command's status"
+    tags: [ext]
+    fixtures:
+      path_isolated: true
+      executables:
+        fail3: "exit 3"
+    input: ["fail3", "exit"]
+    expect:
+      exit_code: 3
+
+  - name: "$? is reset by each command"
+    tags: [ext]
+    fixtures:
+      path_isolated: true
+      executables:
+        fail3: "exit 3"
+        ok: "exit 0"
+    input: ["fail3", "ok", "echo $?", "fail3", "echo $?", "exit 0"]
+    expect:
+      stdout: "0\n3"
+
+  - name: "echo $? twice: the second reports echo's own success (regression: stage 20)"
+    tags: [ext]
+    fixtures:
+      path_isolated: true
+      executables:
+        fail3: "exit 3"
+    input: ["fail3", "echo $?", "echo $?", "exit 0"]
+    expect:
+      stdout: "3\n0"

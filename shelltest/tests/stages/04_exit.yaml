@@ -1,0 +1,53 @@
+stage: 4
+name: "exit builtin"
+tests:
+  - name: "exit 0"
+    input: ["exit 0"]
+    expect:
+      exit_code: 0
+      stdout: ""
+
+  - name: "exit 3 sets the exit status"
+    input: ["exit 3"]
+    expect:
+      exit_code: 3
+
+  - name: "exit 255"
+    input: ["exit 255"]
+    expect:
+      exit_code: 255
+
+  - name: "bare exit after successful commands exits with 0"
+    input:
+      - "echo a"
+      - "exit"
+    expect:
+      stdout: "a"
+      exit_code: 0
+
+  - name: "commands after exit are never run"
+    input:
+      - "echo before"
+      - "exit 5"
+      - "echo after"
+    expect:
+      stdout: "before"
+      exit_code: 5
+
+  - name: "exit works after an unknown command (regression: stage 2)"
+    fixtures: { path_isolated: true }
+    input:
+      - "nope_cmd"
+      - "exit 1"
+    expect:
+      exit_code: 1
+      stdout: ""
+
+  - name: "exit 0 after output leaves stdout intact"
+    input:
+      - "echo one"
+      - "echo two"
+      - "exit 0"
+    expect:
+      stdout: "one\ntwo"
+      exit_code: 0
