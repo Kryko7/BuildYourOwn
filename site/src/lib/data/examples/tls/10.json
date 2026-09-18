@@ -1,0 +1,736 @@
+[
+	{
+		"title": "A hello offering only TLS_AES_128_GCM_SHA256",
+		"kind": "wire",
+		"request": "cipher_suites holds one entry: 13 01",
+		"request_hex": "010000aa030389298a097e488abae58c7f302c4ed30cd39684f1a1dc59acb447f4de8e3ec73020859cdd20e50bb88d3c2e306c12536a3ec47f8956b3b5ebc06b9129dd84164f3d000213010100005f0000000e000c0000096c6f63616c686f7374002b0003020304000a00060004001d0017000d000e000c040308040805080608070401003300260024001d0020ac898c5fb8807599c901f2532dbc537548fdbd10135988356ddd7f59604a5249",
+		"response": "server_hello.cipher_suite echoes 13 01, two bytes and no list around them.",
+		"response_hex": "020000760303fef5190669f448112afeaaa6c0ec53623ee01502d970b464a6603da713d3f01820859cdd20e50bb88d3c2e306c12536a3ec47f8956b3b5ebc06b9129dd84164f3d130100002e002b0002030400330024001d0020d63731eb82a063d0b0d47c2e1c04b21bb60bbd92ca78b5a7107c2318221a8b4a",
+		"note": "0x1301 means SHA-256 and AES-128-GCM: a 32-byte transcript hash, 32-byte secrets, a 16-byte key and a 12-byte IV.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 1,
+				"field": "client_hello.msg_type",
+				"value": "client_hello(1)"
+			},
+			{
+				"offset": 1,
+				"length": 3,
+				"field": "client_hello.length",
+				"value": "170 (bytes of body that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 2,
+				"field": "client_hello.legacy_version",
+				"value": "0x0303 (TLS 1.3 pins this at 0x0303; the real version is in supported_versions)"
+			},
+			{
+				"offset": 6,
+				"length": 32,
+				"field": "client_hello.random",
+				"value": "89298a097e488abae58c7f302c4ed30cd39684f1a1dc59acb447f4de8e3ec730",
+				"varies": true
+			},
+			{
+				"offset": 38,
+				"length": 1,
+				"field": "client_hello.legacy_session_id.length",
+				"value": "32"
+			},
+			{
+				"offset": 39,
+				"length": 32,
+				"field": "client_hello.legacy_session_id",
+				"value": "859cdd20e50bb88d3c2e306c12536a3ec47f8956b3b5ebc06b9129dd84164f3d (the server must echo this back byte for byte)",
+				"varies": true
+			},
+			{
+				"offset": 71,
+				"length": 2,
+				"field": "client_hello.cipher_suites.length",
+				"value": "2 bytes, 1 suites"
+			},
+			{
+				"offset": 73,
+				"length": 2,
+				"field": "client_hello.cipher_suites[0]",
+				"value": "TLS_AES_128_GCM_SHA256(0x1301)"
+			},
+			{
+				"offset": 75,
+				"length": 1,
+				"field": "client_hello.legacy_compression_methods.length",
+				"value": "1"
+			},
+			{
+				"offset": 76,
+				"length": 1,
+				"field": "client_hello.legacy_compression_methods",
+				"value": "null(0) — TLS 1.3 allows nothing else"
+			},
+			{
+				"offset": 77,
+				"length": 2,
+				"field": "client_hello.extensions.length",
+				"value": "95 bytes of extensions"
+			},
+			{
+				"offset": 79,
+				"length": 2,
+				"field": "client_hello.extensions[0].extension_type",
+				"value": "server_name(0)"
+			},
+			{
+				"offset": 81,
+				"length": 2,
+				"field": "client_hello.extensions[0].length",
+				"value": "14 bytes"
+			},
+			{
+				"offset": 83,
+				"length": 2,
+				"field": "client_hello.extensions[0].server_name_list.length",
+				"value": "12 bytes"
+			},
+			{
+				"offset": 85,
+				"length": 1,
+				"field": "client_hello.extensions[0].server_name_list[0].name_type",
+				"value": "host_name(0)"
+			},
+			{
+				"offset": 86,
+				"length": 2,
+				"field": "client_hello.extensions[0].server_name_list[0].host_name.length",
+				"value": "9"
+			},
+			{
+				"offset": 88,
+				"length": 9,
+				"field": "client_hello.extensions[0].server_name_list[0].host_name",
+				"value": "'localhost'"
+			},
+			{
+				"offset": 97,
+				"length": 2,
+				"field": "client_hello.extensions[1].extension_type",
+				"value": "supported_versions(43)"
+			},
+			{
+				"offset": 99,
+				"length": 2,
+				"field": "client_hello.extensions[1].length",
+				"value": "3 bytes"
+			},
+			{
+				"offset": 101,
+				"length": 1,
+				"field": "client_hello.extensions[1].versions.length",
+				"value": "2"
+			},
+			{
+				"offset": 102,
+				"length": 2,
+				"field": "client_hello.extensions[1].versions[0]",
+				"value": "TLS 1.3 (0x0304)"
+			},
+			{
+				"offset": 104,
+				"length": 2,
+				"field": "client_hello.extensions[2].extension_type",
+				"value": "supported_groups(10)"
+			},
+			{
+				"offset": 106,
+				"length": 2,
+				"field": "client_hello.extensions[2].length",
+				"value": "6 bytes"
+			},
+			{
+				"offset": 108,
+				"length": 2,
+				"field": "client_hello.extensions[2].named_group_list.length",
+				"value": "4 bytes"
+			},
+			{
+				"offset": 110,
+				"length": 2,
+				"field": "client_hello.extensions[2].named_group_list[0]",
+				"value": "x25519(0x001d)"
+			},
+			{
+				"offset": 112,
+				"length": 2,
+				"field": "client_hello.extensions[2].named_group_list[1]",
+				"value": "secp256r1(0x0017)"
+			},
+			{
+				"offset": 114,
+				"length": 2,
+				"field": "client_hello.extensions[3].extension_type",
+				"value": "signature_algorithms(13)"
+			},
+			{
+				"offset": 116,
+				"length": 2,
+				"field": "client_hello.extensions[3].length",
+				"value": "14 bytes"
+			},
+			{
+				"offset": 118,
+				"length": 2,
+				"field": "client_hello.extensions[3].supported_signature_algorithms.length",
+				"value": "12 bytes"
+			},
+			{
+				"offset": 120,
+				"length": 2,
+				"field": "client_hello.extensions[3].supported_signature_algorithms[0]",
+				"value": "ecdsa_secp256r1_sha256(0x0403)"
+			},
+			{
+				"offset": 122,
+				"length": 2,
+				"field": "client_hello.extensions[3].supported_signature_algorithms[1]",
+				"value": "rsa_pss_rsae_sha256(0x0804)"
+			},
+			{
+				"offset": 124,
+				"length": 2,
+				"field": "client_hello.extensions[3].supported_signature_algorithms[2]",
+				"value": "rsa_pss_rsae_sha384(0x0805)"
+			},
+			{
+				"offset": 126,
+				"length": 2,
+				"field": "client_hello.extensions[3].supported_signature_algorithms[3]",
+				"value": "rsa_pss_rsae_sha512(0x0806)"
+			},
+			{
+				"offset": 128,
+				"length": 2,
+				"field": "client_hello.extensions[3].supported_signature_algorithms[4]",
+				"value": "ed25519(0x0807)"
+			},
+			{
+				"offset": 130,
+				"length": 2,
+				"field": "client_hello.extensions[3].supported_signature_algorithms[5]",
+				"value": "rsa_pkcs1_sha256(0x0401)"
+			},
+			{
+				"offset": 132,
+				"length": 2,
+				"field": "client_hello.extensions[4].extension_type",
+				"value": "key_share(51)"
+			},
+			{
+				"offset": 134,
+				"length": 2,
+				"field": "client_hello.extensions[4].length",
+				"value": "38 bytes"
+			},
+			{
+				"offset": 136,
+				"length": 2,
+				"field": "client_hello.extensions[4].client_shares.length",
+				"value": "36 bytes"
+			},
+			{
+				"offset": 138,
+				"length": 2,
+				"field": "client_hello.extensions[4].client_shares[0].group",
+				"value": "x25519(0x001d)"
+			},
+			{
+				"offset": 140,
+				"length": 2,
+				"field": "client_hello.extensions[4].client_shares[0].key_exchange.length",
+				"value": "32"
+			},
+			{
+				"offset": 142,
+				"length": 32,
+				"field": "client_hello.extensions[4].client_shares[0].key_exchange",
+				"value": "ac898c5fb8807599… (32 bytes) — the client's ephemeral public key",
+				"varies": true
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 1,
+				"field": "server_hello.msg_type",
+				"value": "server_hello(2)"
+			},
+			{
+				"offset": 1,
+				"length": 3,
+				"field": "server_hello.length",
+				"value": "118 (bytes of body that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 2,
+				"field": "server_hello.legacy_version",
+				"value": "0x0303 (TLS 1.3 pins this at 0x0303; the real version is in supported_versions)"
+			},
+			{
+				"offset": 6,
+				"length": 32,
+				"field": "server_hello.random",
+				"value": "fef5190669f448112afeaaa6c0ec53623ee01502d970b464a6603da713d3f018",
+				"varies": true
+			},
+			{
+				"offset": 38,
+				"length": 1,
+				"field": "server_hello.legacy_session_id.length",
+				"value": "32"
+			},
+			{
+				"offset": 39,
+				"length": 32,
+				"field": "server_hello.legacy_session_id_echo",
+				"value": "859cdd20e50bb88d3c2e306c12536a3ec47f8956b3b5ebc06b9129dd84164f3d (must equal the ClientHello's legacy_session_id)",
+				"varies": true
+			},
+			{
+				"offset": 71,
+				"length": 2,
+				"field": "server_hello.cipher_suite",
+				"value": "TLS_AES_128_GCM_SHA256(0x1301)"
+			},
+			{
+				"offset": 73,
+				"length": 1,
+				"field": "server_hello.legacy_compression_method",
+				"value": "0 (must be 0)"
+			},
+			{
+				"offset": 74,
+				"length": 2,
+				"field": "server_hello.extensions.length",
+				"value": "46 bytes of extensions"
+			},
+			{
+				"offset": 76,
+				"length": 2,
+				"field": "server_hello.extensions[0].extension_type",
+				"value": "supported_versions(43)"
+			},
+			{
+				"offset": 78,
+				"length": 2,
+				"field": "server_hello.extensions[0].length",
+				"value": "2 bytes"
+			},
+			{
+				"offset": 80,
+				"length": 2,
+				"field": "server_hello.extensions[0].selected_version",
+				"value": "TLS 1.3 (0x0304)"
+			},
+			{
+				"offset": 82,
+				"length": 2,
+				"field": "server_hello.extensions[1].extension_type",
+				"value": "key_share(51)"
+			},
+			{
+				"offset": 84,
+				"length": 2,
+				"field": "server_hello.extensions[1].length",
+				"value": "36 bytes"
+			},
+			{
+				"offset": 86,
+				"length": 2,
+				"field": "server_hello.extensions[1].server_share.group",
+				"value": "x25519(0x001d)"
+			},
+			{
+				"offset": 88,
+				"length": 2,
+				"field": "server_hello.extensions[1].server_share.key_exchange.length",
+				"value": "32"
+			},
+			{
+				"offset": 90,
+				"length": 32,
+				"field": "server_hello.extensions[1].server_share.key_exchange",
+				"value": "d63731eb82a063d0… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
+				"varies": true
+			}
+		]
+	},
+	{
+		"title": "The same hello asking for ChaCha20-Poly1305",
+		"kind": "wire",
+		"request": "cipher_suites holds 13 03",
+		"request_hex": "010000aa03039de64b4bc34548bb6eba7a4447670218f978fd10a93a5ef720c92adad79d9c2020914185ca91adb4bff4f95b778a9a6e178d481979b26cc8462ea03f1ebb2b744c000213030100005f0000000e000c0000096c6f63616c686f7374002b0003020304000a00060004001d0017000d000e000c040308040805080608070401003300260024001d00200a6709a8976b5ba9eb0fa9d47bc1e62a04f608128c0ce913c918a725c3e1176f",
+		"response": "server_hello.cipher_suite is 13 03.",
+		"response_hex": "02000076030308ece18f25baeb3c6803a4e11e65c32365d3a09c940766db0f90560e546da0f020914185ca91adb4bff4f95b778a9a6e178d481979b26cc8462ea03f1ebb2b744c130300002e002b0002030400330024001d00200cd83a044fef00a2a7d049bcc18e3d7ae38b14a13f5839aaf93dd9c339567b0e",
+		"note": "0x1303 is SHA-256 like 0x1301, but a 32-byte AEAD key. Only 0x1302 switches the hash to SHA-384 — and then every secret, every transcript hash and the finished key all become 48 bytes.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 1,
+				"field": "client_hello.msg_type",
+				"value": "client_hello(1)"
+			},
+			{
+				"offset": 1,
+				"length": 3,
+				"field": "client_hello.length",
+				"value": "170 (bytes of body that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 2,
+				"field": "client_hello.legacy_version",
+				"value": "0x0303 (TLS 1.3 pins this at 0x0303; the real version is in supported_versions)"
+			},
+			{
+				"offset": 6,
+				"length": 32,
+				"field": "client_hello.random",
+				"value": "9de64b4bc34548bb6eba7a4447670218f978fd10a93a5ef720c92adad79d9c20",
+				"varies": true
+			},
+			{
+				"offset": 38,
+				"length": 1,
+				"field": "client_hello.legacy_session_id.length",
+				"value": "32"
+			},
+			{
+				"offset": 39,
+				"length": 32,
+				"field": "client_hello.legacy_session_id",
+				"value": "914185ca91adb4bff4f95b778a9a6e178d481979b26cc8462ea03f1ebb2b744c (the server must echo this back byte for byte)",
+				"varies": true
+			},
+			{
+				"offset": 71,
+				"length": 2,
+				"field": "client_hello.cipher_suites.length",
+				"value": "2 bytes, 1 suites"
+			},
+			{
+				"offset": 73,
+				"length": 2,
+				"field": "client_hello.cipher_suites[0]",
+				"value": "TLS_CHACHA20_POLY1305_SHA256(0x1303)"
+			},
+			{
+				"offset": 75,
+				"length": 1,
+				"field": "client_hello.legacy_compression_methods.length",
+				"value": "1"
+			},
+			{
+				"offset": 76,
+				"length": 1,
+				"field": "client_hello.legacy_compression_methods",
+				"value": "null(0) — TLS 1.3 allows nothing else"
+			},
+			{
+				"offset": 77,
+				"length": 2,
+				"field": "client_hello.extensions.length",
+				"value": "95 bytes of extensions"
+			},
+			{
+				"offset": 79,
+				"length": 2,
+				"field": "client_hello.extensions[0].extension_type",
+				"value": "server_name(0)"
+			},
+			{
+				"offset": 81,
+				"length": 2,
+				"field": "client_hello.extensions[0].length",
+				"value": "14 bytes"
+			},
+			{
+				"offset": 83,
+				"length": 2,
+				"field": "client_hello.extensions[0].server_name_list.length",
+				"value": "12 bytes"
+			},
+			{
+				"offset": 85,
+				"length": 1,
+				"field": "client_hello.extensions[0].server_name_list[0].name_type",
+				"value": "host_name(0)"
+			},
+			{
+				"offset": 86,
+				"length": 2,
+				"field": "client_hello.extensions[0].server_name_list[0].host_name.length",
+				"value": "9"
+			},
+			{
+				"offset": 88,
+				"length": 9,
+				"field": "client_hello.extensions[0].server_name_list[0].host_name",
+				"value": "'localhost'"
+			},
+			{
+				"offset": 97,
+				"length": 2,
+				"field": "client_hello.extensions[1].extension_type",
+				"value": "supported_versions(43)"
+			},
+			{
+				"offset": 99,
+				"length": 2,
+				"field": "client_hello.extensions[1].length",
+				"value": "3 bytes"
+			},
+			{
+				"offset": 101,
+				"length": 1,
+				"field": "client_hello.extensions[1].versions.length",
+				"value": "2"
+			},
+			{
+				"offset": 102,
+				"length": 2,
+				"field": "client_hello.extensions[1].versions[0]",
+				"value": "TLS 1.3 (0x0304)"
+			},
+			{
+				"offset": 104,
+				"length": 2,
+				"field": "client_hello.extensions[2].extension_type",
+				"value": "supported_groups(10)"
+			},
+			{
+				"offset": 106,
+				"length": 2,
+				"field": "client_hello.extensions[2].length",
+				"value": "6 bytes"
+			},
+			{
+				"offset": 108,
+				"length": 2,
+				"field": "client_hello.extensions[2].named_group_list.length",
+				"value": "4 bytes"
+			},
+			{
+				"offset": 110,
+				"length": 2,
+				"field": "client_hello.extensions[2].named_group_list[0]",
+				"value": "x25519(0x001d)"
+			},
+			{
+				"offset": 112,
+				"length": 2,
+				"field": "client_hello.extensions[2].named_group_list[1]",
+				"value": "secp256r1(0x0017)"
+			},
+			{
+				"offset": 114,
+				"length": 2,
+				"field": "client_hello.extensions[3].extension_type",
+				"value": "signature_algorithms(13)"
+			},
+			{
+				"offset": 116,
+				"length": 2,
+				"field": "client_hello.extensions[3].length",
+				"value": "14 bytes"
+			},
+			{
+				"offset": 118,
+				"length": 2,
+				"field": "client_hello.extensions[3].supported_signature_algorithms.length",
+				"value": "12 bytes"
+			},
+			{
+				"offset": 120,
+				"length": 2,
+				"field": "client_hello.extensions[3].supported_signature_algorithms[0]",
+				"value": "ecdsa_secp256r1_sha256(0x0403)"
+			},
+			{
+				"offset": 122,
+				"length": 2,
+				"field": "client_hello.extensions[3].supported_signature_algorithms[1]",
+				"value": "rsa_pss_rsae_sha256(0x0804)"
+			},
+			{
+				"offset": 124,
+				"length": 2,
+				"field": "client_hello.extensions[3].supported_signature_algorithms[2]",
+				"value": "rsa_pss_rsae_sha384(0x0805)"
+			},
+			{
+				"offset": 126,
+				"length": 2,
+				"field": "client_hello.extensions[3].supported_signature_algorithms[3]",
+				"value": "rsa_pss_rsae_sha512(0x0806)"
+			},
+			{
+				"offset": 128,
+				"length": 2,
+				"field": "client_hello.extensions[3].supported_signature_algorithms[4]",
+				"value": "ed25519(0x0807)"
+			},
+			{
+				"offset": 130,
+				"length": 2,
+				"field": "client_hello.extensions[3].supported_signature_algorithms[5]",
+				"value": "rsa_pkcs1_sha256(0x0401)"
+			},
+			{
+				"offset": 132,
+				"length": 2,
+				"field": "client_hello.extensions[4].extension_type",
+				"value": "key_share(51)"
+			},
+			{
+				"offset": 134,
+				"length": 2,
+				"field": "client_hello.extensions[4].length",
+				"value": "38 bytes"
+			},
+			{
+				"offset": 136,
+				"length": 2,
+				"field": "client_hello.extensions[4].client_shares.length",
+				"value": "36 bytes"
+			},
+			{
+				"offset": 138,
+				"length": 2,
+				"field": "client_hello.extensions[4].client_shares[0].group",
+				"value": "x25519(0x001d)"
+			},
+			{
+				"offset": 140,
+				"length": 2,
+				"field": "client_hello.extensions[4].client_shares[0].key_exchange.length",
+				"value": "32"
+			},
+			{
+				"offset": 142,
+				"length": 32,
+				"field": "client_hello.extensions[4].client_shares[0].key_exchange",
+				"value": "0a6709a8976b5ba9… (32 bytes) — the client's ephemeral public key",
+				"varies": true
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 1,
+				"field": "server_hello.msg_type",
+				"value": "server_hello(2)"
+			},
+			{
+				"offset": 1,
+				"length": 3,
+				"field": "server_hello.length",
+				"value": "118 (bytes of body that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 2,
+				"field": "server_hello.legacy_version",
+				"value": "0x0303 (TLS 1.3 pins this at 0x0303; the real version is in supported_versions)"
+			},
+			{
+				"offset": 6,
+				"length": 32,
+				"field": "server_hello.random",
+				"value": "08ece18f25baeb3c6803a4e11e65c32365d3a09c940766db0f90560e546da0f0",
+				"varies": true
+			},
+			{
+				"offset": 38,
+				"length": 1,
+				"field": "server_hello.legacy_session_id.length",
+				"value": "32"
+			},
+			{
+				"offset": 39,
+				"length": 32,
+				"field": "server_hello.legacy_session_id_echo",
+				"value": "914185ca91adb4bff4f95b778a9a6e178d481979b26cc8462ea03f1ebb2b744c (must equal the ClientHello's legacy_session_id)",
+				"varies": true
+			},
+			{
+				"offset": 71,
+				"length": 2,
+				"field": "server_hello.cipher_suite",
+				"value": "TLS_CHACHA20_POLY1305_SHA256(0x1303)"
+			},
+			{
+				"offset": 73,
+				"length": 1,
+				"field": "server_hello.legacy_compression_method",
+				"value": "0 (must be 0)"
+			},
+			{
+				"offset": 74,
+				"length": 2,
+				"field": "server_hello.extensions.length",
+				"value": "46 bytes of extensions"
+			},
+			{
+				"offset": 76,
+				"length": 2,
+				"field": "server_hello.extensions[0].extension_type",
+				"value": "supported_versions(43)"
+			},
+			{
+				"offset": 78,
+				"length": 2,
+				"field": "server_hello.extensions[0].length",
+				"value": "2 bytes"
+			},
+			{
+				"offset": 80,
+				"length": 2,
+				"field": "server_hello.extensions[0].selected_version",
+				"value": "TLS 1.3 (0x0304)"
+			},
+			{
+				"offset": 82,
+				"length": 2,
+				"field": "server_hello.extensions[1].extension_type",
+				"value": "key_share(51)"
+			},
+			{
+				"offset": 84,
+				"length": 2,
+				"field": "server_hello.extensions[1].length",
+				"value": "36 bytes"
+			},
+			{
+				"offset": 86,
+				"length": 2,
+				"field": "server_hello.extensions[1].server_share.group",
+				"value": "x25519(0x001d)"
+			},
+			{
+				"offset": 88,
+				"length": 2,
+				"field": "server_hello.extensions[1].server_share.key_exchange.length",
+				"value": "32"
+			},
+			{
+				"offset": 90,
+				"length": 32,
+				"field": "server_hello.extensions[1].server_share.key_exchange",
+				"value": "0cd83a044fef00a2… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
+				"varies": true
+			}
+		]
+	}
+]

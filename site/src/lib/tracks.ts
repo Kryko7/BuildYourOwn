@@ -275,32 +275,31 @@ export const tracks: Record<TrackId, TrackMeta> = {
 		sectionBadges: {
 			A: { badge: 'Clock Clearing', icon: '🕰' },
 			B: { badge: 'The Allotments', icon: '🌾' },
-			C: { badge: 'Pollen Count', icon: '🐝' },
-			D: { badge: 'Converging Beds', icon: '🌻' },
+			C: { badge: 'Converging Beds', icon: '🌻' },
+			D: { badge: 'The Root Cellar', icon: '🥕' },
 			E: { badge: 'Windbreak Row', icon: '🍃' },
-			F: { badge: 'The Root Cellar', icon: '🥕' },
-			G: { badge: 'The Rookery', icon: '🪺' },
-			H: { badge: 'Storm Hedge', icon: '⛈' },
-			I: { badge: 'The Far Orchard', icon: '🌳' }
+			F: { badge: 'The Rookery', icon: '🪺' },
+			G: { badge: 'Storm Hedge', icon: '⛈' },
+			H: { badge: 'The Far Orchard', icon: '🌳' }
 		},
 		ladders: [
 			{
 				id: 'primitives',
 				title: 'Primitives',
 				note: 'The pieces on their own: clocks and causality, partitioning and quorums, probabilistic structures, CRDTs, flow control and failure detection.',
-				sections: ['A', 'B', 'C', 'D', 'E']
+				sections: ['A', 'B', 'C']
 			},
 			{
 				id: 'node',
 				title: 'A durable node',
 				note: 'One process that keeps its promises: MVCC revisions, transactions, leases, watches, and coming back from a crash with everything intact.',
-				sections: ['F']
+				sections: ['D', 'E']
 			},
 			{
 				id: 'cluster',
 				title: 'A cluster',
 				note: 'Replication and consensus, then faults and partitions, then a randomized workload checked against a linearizability model.',
-				sections: ['G', 'H', 'I']
+				sections: ['F', 'G', 'H']
 			}
 		]
 	}

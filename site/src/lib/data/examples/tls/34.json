@@ -1,0 +1,76 @@
+[
+	{
+		"title": "The last line before a close",
+		"kind": "wire",
+		"request": "`bye\\n`, and then an alert record carrying `01 00` — warning, close_notify",
+		"request_hex": "170303001534162d402477d133a2307dc8db8e9b4b8b1419d034",
+		"response": "`eyb\\n`, and then the server's own close_notify, also encrypted, before it closes the socket.",
+		"response_hex": "1703030015c9f32383e0e651c16f663f28404ab33ee21490b1eb",
+		"note": "The alert is two bytes of plaintext inside an application_data record. Its ciphertext is 2 + 1 + 16 = 19 bytes, which is how you spot one without keys — and all you can tell is that *something* two bytes long was said.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 1,
+				"field": "record.type",
+				"value": "application_data(23)"
+			},
+			{
+				"offset": 1,
+				"length": 2,
+				"field": "record.legacy_record_version",
+				"value": "0x0303"
+			},
+			{
+				"offset": 3,
+				"length": 2,
+				"field": "record.length",
+				"value": "21 (bytes that follow)"
+			},
+			{
+				"offset": 5,
+				"length": 21,
+				"field": "record.encrypted_record",
+				"value": "21 bytes: the AEAD ciphertext plus its 16-byte tag. The real content type is inside it, after the content and before the padding.",
+				"varies": true
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 1,
+				"field": "record.type",
+				"value": "application_data(23)"
+			},
+			{
+				"offset": 1,
+				"length": 2,
+				"field": "record.legacy_record_version",
+				"value": "0x0303"
+			},
+			{
+				"offset": 3,
+				"length": 2,
+				"field": "record.length",
+				"value": "21 (bytes that follow)"
+			},
+			{
+				"offset": 5,
+				"length": 21,
+				"field": "record.encrypted_record",
+				"value": "21 bytes: the AEAD ciphertext plus its 16-byte tag. The real content type is inside it, after the content and before the padding.",
+				"varies": true
+			}
+		]
+	},
+	{
+		"title": "Why close_notify is a warning",
+		"kind": "text",
+		"request": "One side has finished writing and says so",
+		"request_hex": "",
+		"response": "The other side may keep writing until it sends its own close_notify. Only then is the connection over.",
+		"response_hex": "",
+		"note": "A TCP close without close_notify is a truncation attack in the general case: the receiver cannot tell a finished stream from a cut one. TLS 1.3 tolerates it, and an application that cares has to check.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

@@ -1,0 +1,111 @@
+[
+	{
+		"title": "What the status endpoint reports",
+		"kind": "node",
+		"request": "an empty object, because status takes no arguments\n\nPOST /v3/maintenance/status\n{}",
+		"request_hex": "7b7d",
+		"response": "the header every endpoint carries, plus the server's own version and sizes\n\nHTTP 200 OK\n{\n  \"dbSize\": \"28672\",\n  \"dbSizeInUse\": \"24576\",\n  \"dbSizeQuota\": \"2147483648\",\n  \"downgradeInfo\": {},\n  \"header\": {\n    \"cluster_id\": \"8601719746434642579\",\n    \"member_id\": \"12121846401917809168\",\n    \"raft_term\": \"2\",\n    \"revision\": \"1\"\n  },\n  \"leader\": \"12121846401917809168\",\n  \"raftAppliedIndex\": \"4\",\n  \"raftIndex\": \"4\",\n  \"raftTerm\": \"2\",\n  \"storageVersion\": \"3.7.0\",\n  \"version\": \"3.7.1\"\n}",
+		"response_hex": "7b22686561646572223a7b22636c75737465725f6964223a2238363031373139373436343334363432353739222c226d656d6265725f6964223a223132313231383436343031393137383039313638222c227265766973696f6e223a2231222c22726166745f7465726d223a2232227d2c2276657273696f6e223a22332e372e31222c22646253697a65223a223238363732222c226c6561646572223a223132313231383436343031393137383039313638222c2272616674496e646578223a2234222c22726166745465726d223a2232222c22726166744170706c696564496e646578223a2234222c22646253697a65496e557365223a223234353736222c2273746f7261676556657273696f6e223a22332e372e30222c22646253697a6551756f7461223a2232313437343833363438222c22646f776e6772616465496e666f223a7b7d7d",
+		"note": "The revision in the header is the store's clock and is at least 1 on an empty store, because bringing the cluster up is itself a write. member_id identifies the server that answered and is never zero.",
+		"request_fields": [],
+		"response_fields": [
+			{
+				"offset": 1,
+				"length": 8,
+				"field": "response.header",
+				"value": "{\"cluster_id\":\"8601719746434642579\",\"member_id\":\"12121846401917809168\",\"raft_term\":\"2\",\"revision\":\"1\"}",
+				"varies": true
+			},
+			{
+				"offset": 113,
+				"length": 9,
+				"field": "response.version",
+				"value": "\"3.7.1\""
+			},
+			{
+				"offset": 131,
+				"length": 8,
+				"field": "response.dbSize",
+				"value": "\"28672\"",
+				"varies": true
+			},
+			{
+				"offset": 148,
+				"length": 8,
+				"field": "response.leader",
+				"value": "\"12121846401917809168\"",
+				"varies": true
+			},
+			{
+				"offset": 180,
+				"length": 11,
+				"field": "response.raftIndex",
+				"value": "\"4\"",
+				"varies": true
+			},
+			{
+				"offset": 196,
+				"length": 10,
+				"field": "response.raftTerm",
+				"value": "\"2\"",
+				"varies": true
+			},
+			{
+				"offset": 211,
+				"length": 18,
+				"field": "response.raftAppliedIndex",
+				"value": "\"4\"",
+				"varies": true
+			},
+			{
+				"offset": 234,
+				"length": 13,
+				"field": "response.dbSizeInUse",
+				"value": "\"24576\"",
+				"varies": true
+			},
+			{
+				"offset": 256,
+				"length": 16,
+				"field": "response.storageVersion",
+				"value": "\"3.7.0\""
+			},
+			{
+				"offset": 281,
+				"length": 13,
+				"field": "response.dbSizeQuota",
+				"value": "\"2147483648\""
+			},
+			{
+				"offset": 308,
+				"length": 15,
+				"field": "response.downgradeInfo",
+				"value": "{}"
+			}
+		]
+	},
+	{
+		"title": "An endpoint that is not there",
+		"kind": "node",
+		"request": "a well-formed POST to a path the API does not define\n\nPOST /v3/kv/nonesuch\n{}",
+		"request_hex": "7b7d",
+		"response": "404, and nothing that could be mistaken for a successful empty answer\n\nHTTP 404 Not Found\n{\n  \"code\": 5,\n  \"message\": \"Not Found\"\n}",
+		"response_hex": "7b22636f6465223a352c226d657373616765223a224e6f7420466f756e64227d",
+		"note": "A catch-all that answers 200 with an empty body is the trap: every decoder in this suite reads a missing field as its zero, so an empty 200 looks exactly like a successful request that found nothing.",
+		"request_fields": [],
+		"response_fields": [
+			{
+				"offset": 1,
+				"length": 6,
+				"field": "response.code",
+				"value": "5"
+			},
+			{
+				"offset": 10,
+				"length": 9,
+				"field": "response.message",
+				"value": "\"Not Found\""
+			}
+		]
+	}
+]

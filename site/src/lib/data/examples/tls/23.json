@@ -1,0 +1,24 @@
+[
+	{
+		"title": "The counter's whole life",
+		"kind": "text",
+		"request": "handshake keys installed -> 0\nthe client's Finished     -> 1\napplication keys installed -> 0\nfirst application record   -> 1\nKeyUpdate sent (under the old keys) -> 3, then new keys -> 0",
+		"request_hex": "",
+		"response": "The server counts its own writes the same way, independently. Nothing about either counter is ever transmitted.",
+		"response_hex": "",
+		"note": "The reset is the part that bites. A counter that keeps running across the key change gives every record after the handshake the wrong nonce, and the failure looks exactly like a wrong key.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "Why out-of-order is not a special case",
+		"kind": "text",
+		"request": "A record arrives twice, or two records arrive swapped",
+		"request_hex": "",
+		"response": "The second one is opened with the next nonce, which is not the nonce it was sealed with, so the tag does not verify: bad_record_mac(20), fatal.",
+		"response_hex": "",
+		"note": "TLS 1.3 does not need a replay window because the record layer is strictly ordered and the transport is TCP. There is nothing extra to implement.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

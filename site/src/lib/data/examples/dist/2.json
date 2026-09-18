@@ -1,0 +1,24 @@
+[
+	{
+		"title": "A message from `a` delivered to `b`",
+		"kind": "primitives",
+		"request": "`a` ticks twice and sends; the message is delivered to `b`; both are read back\n\n./your_program.sh vector-clock\nlocal a\nsend a\nrecv b {\"a\":2}\nget b\nget a",
+		"request_hex": "2e2f796f75725f70726f6772616d2e736820766563746f722d636c6f636b0a6c6f63616c20610a73656e6420610a726563762062207b2261223a327d0a67657420620a6765742061",
+		"response": "`b` ends at {\"a\":2,\"b\":1} — the sender's entry merged, its own incremented\n\n{\"vc\":{\"a\":1}}\n{\"vc\":{\"a\":2}}\n{\"vc\":{\"a\":2,\"b\":1}}\n{\"vc\":{\"a\":2,\"b\":1}}\n{\"vc\":{\"a\":2}}",
+		"response_hex": "7b227663223a7b2261223a317d7d0a7b227663223a7b2261223a327d7d0a7b227663223a7b2261223a322c2262223a317d7d0a7b227663223a7b2261223a322c2262223a317d7d0a7b227663223a7b2261223a327d7d",
+		"note": "The receiver's own entry is incremented *after* the merge, and only its own. A receive that increments every entry, or that increments before merging, still looks plausible on one exchange and orders nothing correctly on two.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "Four comparisons, one per relation",
+		"kind": "primitives",
+		"request": "the same pair of clocks compared both ways, a zero entry, and a fork\n\n./your_program.sh vector-clock\ncmp {\"a\":1,\"b\":2} {\"a\":2,\"b\":3}\ncmp {\"a\":2,\"b\":3} {\"a\":1,\"b\":2}\ncmp {\"a\":1} {\"a\":1,\"b\":0}\ncmp {\"a\":2,\"b\":1} {\"a\":1,\"b\":2}",
+		"request_hex": "2e2f796f75725f70726f6772616d2e736820766563746f722d636c6f636b0a636d70207b2261223a312c2262223a327d207b2261223a322c2262223a337d0a636d70207b2261223a322c2262223a337d207b2261223a312c2262223a327d0a636d70207b2261223a317d207b2261223a312c2262223a307d0a636d70207b2261223a322c2262223a317d207b2261223a312c2262223a327d",
+		"response": "before, after, equal, concurrent\n\n{\"rel\":\"before\"}\n{\"rel\":\"after\"}\n{\"rel\":\"equal\"}\n{\"rel\":\"concurrent\"}",
+		"response_hex": "7b2272656c223a226265666f7265227d0a7b2272656c223a226166746572227d0a7b2272656c223a22657175616c227d0a7b2272656c223a22636f6e63757272656e74227d",
+		"note": "The third comparison is the one that catches a map compared by equality: {\"a\":1} and {\"a\":1,\"b\":0} are the same clock written two ways. Compare the union of the names, not the keys of either side.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

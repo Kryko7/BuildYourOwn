@@ -1,0 +1,24 @@
+[
+	{
+		"title": "Two processes exchanging one message",
+		"kind": "primitives",
+		"request": "a send on `a`, a message stamped 7 delivered to `b`, and both clocks read back\n\n./your_program.sh lamport\nsend a\nrecv b 7\nget b\nget a",
+		"request_hex": "2e2f796f75725f70726f6772616d2e7368206c616d706f72740a73656e6420610a72656376206220370a67657420620a6765742061",
+		"response": "one JSON object per line; the receive answers max(local, 7) + 1\n\n{\"ts\":1}\n{\"ts\":8}\n{\"ts\":8}\n{\"ts\":1}",
+		"response_hex": "7b227473223a317d0a7b227473223a387d0a7b227473223a387d0a7b227473223a317d",
+		"note": "The trap is the +1. `b` had never ticked, so the merge alone would leave it at 7 — the same instant as the send it is supposed to follow. The extra tick is what makes the receive strictly later than the send, and `get` must not add another.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "A message that arrives from the past",
+		"kind": "primitives",
+		"request": "a clock pushed to 3, then a message stamped 1 delivered to it\n\n./your_program.sh lamport\nlocal a\nlocal a\nlocal a\nrecv a 1\nget a",
+		"request_hex": "2e2f796f75725f70726f6772616d2e7368206c616d706f72740a6c6f63616c20610a6c6f63616c20610a6c6f63616c20610a72656376206120310a6765742061",
+		"response": "4, not 2: the maximum is the local value, and it still ticks\n\n{\"ts\":1}\n{\"ts\":2}\n{\"ts\":3}\n{\"ts\":4}\n{\"ts\":4}",
+		"response_hex": "7b227473223a317d0a7b227473223a327d0a7b227473223a337d0a7b227473223a347d0a7b227473223a347d",
+		"note": "A Lamport clock is monotonic per process, so an old message can never pull one back. Writing `ts + 1` instead of `max(local, ts) + 1` passes every test where messages happen to arrive in order and fails the moment one is late.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

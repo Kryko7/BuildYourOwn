@@ -1,0 +1,76 @@
+[
+	{
+		"title": "A line before the keys rotate",
+		"kind": "wire",
+		"request": "`rotate\\n` under application_traffic_secret_0",
+		"request_hex": "170303001804ba3b36153126744f3087e153ab658e861a9a1f441a5b14",
+		"response": "`etator\\n` back. A `18 00 00 01 00` KeyUpdate follows, and then the same exchange works under secret_1.",
+		"response_hex": "17030300188f955adc4b5b8d86c8420a83912e55a6be24855e0a6007cd",
+		"note": "The KeyUpdate message is five bytes: type 24, a uint24 length of 1, and the request_update byte. Everything else about it is derivation.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 1,
+				"field": "record.type",
+				"value": "application_data(23)"
+			},
+			{
+				"offset": 1,
+				"length": 2,
+				"field": "record.legacy_record_version",
+				"value": "0x0303"
+			},
+			{
+				"offset": 3,
+				"length": 2,
+				"field": "record.length",
+				"value": "24 (bytes that follow)"
+			},
+			{
+				"offset": 5,
+				"length": 24,
+				"field": "record.encrypted_record",
+				"value": "24 bytes: the AEAD ciphertext plus its 16-byte tag. The real content type is inside it, after the content and before the padding.",
+				"varies": true
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 1,
+				"field": "record.type",
+				"value": "application_data(23)"
+			},
+			{
+				"offset": 1,
+				"length": 2,
+				"field": "record.legacy_record_version",
+				"value": "0x0303"
+			},
+			{
+				"offset": 3,
+				"length": 2,
+				"field": "record.length",
+				"value": "24 (bytes that follow)"
+			},
+			{
+				"offset": 5,
+				"length": 24,
+				"field": "record.encrypted_record",
+				"value": "24 bytes: the AEAD ciphertext plus its 16-byte tag. The real content type is inside it, after the content and before the padding.",
+				"varies": true
+			}
+		]
+	},
+	{
+		"title": "What a KeyUpdate changes, and what it does not",
+		"kind": "text",
+		"request": "secret_(N+1) = HKDF-Expand-Label(secret_N, \"traffic upd\", \"\", Hash.length)\nkey, iv      = HKDF-Expand-Label(secret_(N+1), \"key\"/\"iv\", \"\", ...)\nsequence number -> 0",
+		"request_hex": "",
+		"response": "Only the sender's direction moves. The transcript is untouched, the master secret is untouched, and no new key exchange happens.",
+		"response_hex": "",
+		"note": "update_requested(1) asks the peer to rotate too, and its answer must say update_not_requested(0). Two peers that both say 1 would never stop.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

@@ -1,0 +1,24 @@
+[
+	{
+		"title": "A tie broken by the writer's name",
+		"kind": "primitives",
+		"request": "an untouched register, then two writes carrying the same timestamp\n\n./your_program.sh lww-register\nvalue r1\nset r1 red 7\nset r2 blue 7\nvalue r1",
+		"request_hex": "2e2f796f75725f70726f6772616d2e7368206c77772d72656769737465720a76616c75652072310a7365742072312072656420370a73657420723220626c756520370a76616c7565207231",
+		"response": "null at first, and then `blue`: on a tie the larger replica name wins\n\n{\"ts\":0,\"value\":null}\n{\"ts\":7,\"value\":\"red\"}\n{\"ts\":7,\"value\":\"blue\"}\n{\"ts\":7,\"value\":\"blue\"}",
+		"response_hex": "7b227473223a302c2276616c7565223a6e756c6c7d0a7b227473223a372c2276616c7565223a22726564227d0a7b227473223a372c2276616c7565223a22626c7565227d0a7b227473223a372c2276616c7565223a22626c7565227d",
+		"note": "Wall clocks tie more often than anyone expects, and two replicas that resolve a tie differently have diverged permanently. The rule has to be a total order on data both sides already hold, so the name rides along with the value.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "An element removed and added again",
+		"kind": "primitives",
+		"request": "one element added, removed, then added a second time\n\n./your_program.sh or-set\nadd r1 x\nremove r1 x\nelements r1\nadd r1 x\nelements r1",
+		"request_hex": "2e2f796f75725f70726f6772616d2e7368206f722d7365740a61646420723120780a72656d6f766520723120780a656c656d656e74732072310a61646420723120780a656c656d656e7473207231",
+		"response": "an empty set, then a set holding `x` again\n\n{\"elements\":[\"x\"]}\n{\"elements\":[]}\n{\"elements\":[]}\n{\"elements\":[\"x\"]}\n{\"elements\":[\"x\"]}",
+		"response_hex": "7b22656c656d656e7473223a5b2278225d7d0a7b22656c656d656e7473223a5b5d7d0a7b22656c656d656e7473223a5b5d7d0a7b22656c656d656e7473223a5b2278225d7d0a7b22656c656d656e7473223a5b2278225d7d",
+		"note": "The second add has to mint a tag the remove never saw. A set that remembers removed *elements* rather than removed *tags* answers the empty set here and can never be talked out of it.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

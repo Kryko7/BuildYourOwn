@@ -1,0 +1,24 @@
+[
+	{
+		"title": "The three-replica settings",
+		"kind": "primitives",
+		"request": "N = 3 with the three settings a store actually ships with\n\n./your_program.sh quorum\ncheck 3 2 2\ncheck 3 1 2\ncheck 3 3 1",
+		"request_hex": "2e2f796f75725f70726f6772616d2e73682071756f72756d0a636865636b2033203220320a636865636b2033203120320a636865636b203320332031",
+		"response": "2/2 overlaps, 1/2 does not, and 3/1 overlaps but lets two writes conflict\n\n{\"min_r\":2,\"overlap\":true,\"write_conflict\":false}\n{\"min_r\":2,\"overlap\":false,\"write_conflict\":false}\n{\"min_r\":3,\"overlap\":true,\"write_conflict\":true}",
+		"response_hex": "7b226d696e5f72223a322c226f7665726c6170223a747275652c2277726974655f636f6e666c696374223a66616c73657d0a7b226d696e5f72223a322c226f7665726c6170223a66616c73652c2277726974655f636f6e666c696374223a66616c73657d0a7b226d696e5f72223a332c226f7665726c6170223a747275652c2277726974655f636f6e666c696374223a747275657d",
+		"note": "`overlap` and `write_conflict` answer different questions and a program that derives one from the other is wrong on the third line: R = 3, W = 1 reads from everybody, so every read sees every write, while two writes of one replica each can land on different nodes and neither will ever see the other.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "Writing to everybody, reading from one",
+		"kind": "primitives",
+		"request": "the two extremes of N = 5, and the degenerate single replica\n\n./your_program.sh quorum\ncheck 5 1 5\ncheck 5 5 1\ncheck 1 1 1",
+		"request_hex": "2e2f796f75725f70726f6772616d2e73682071756f72756d0a636865636b2035203120350a636865636b2035203520310a636865636b203120312031",
+		"response": "`min_r` is 1 when W = 5, and 5 when W = 1\n\n{\"min_r\":1,\"overlap\":true,\"write_conflict\":false}\n{\"min_r\":5,\"overlap\":true,\"write_conflict\":true}\n{\"min_r\":1,\"overlap\":true,\"write_conflict\":false}",
+		"response_hex": "7b226d696e5f72223a312c226f7665726c6170223a747275652c2277726974655f636f6e666c696374223a66616c73657d0a7b226d696e5f72223a352c226f7665726c6170223a747275652c2277726974655f636f6e666c696374223a747275657d0a7b226d696e5f72223a312c226f7665726c6170223a747275652c2277726974655f636f6e666c696374223a66616c73657d",
+		"note": "`min_r` is N - W + 1 and nothing else: it is the smallest read that cannot miss a write of W, not the R that was passed in and not a majority. With W = N one replica is enough, which is exactly the trade a write-all store is making.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

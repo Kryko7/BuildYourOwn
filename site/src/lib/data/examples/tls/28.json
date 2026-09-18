@@ -1,0 +1,64 @@
+[
+	{
+		"title": "The client's Finished closes the handshake",
+		"kind": "wire",
+		"request": "The server's Finished, which the client has just verified",
+		"request_hex": "14000030538d2614918867c273887667e04c9c6f859a72c65c3a57ca9b77c8a5d7341da12b9a722cf11342f5564c28279b5d8237",
+		"response": "The client's own `14` + uint24 length + verify_data, encrypted under the *client* handshake keys — the last message before application keys take over.",
+		"response_hex": "14000030faa52fad8398d1adb616946362daa6b03a02d6db1ade64d93d4a79ecb4420c6be49d7e2f89127c7b1f3a08c4febc37d0",
+		"note": "Two Finished messages, two different finished keys, two different transcripts. The client's covers the server's, so it can only be produced after it.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 1,
+				"field": "finished.msg_type",
+				"value": "finished(20)"
+			},
+			{
+				"offset": 1,
+				"length": 3,
+				"field": "finished.length",
+				"value": "48 (bytes of body that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 48,
+				"field": "finished.verify_data",
+				"value": "538d2614918867c273887667e04c9c6f859a72c65c3a57ca9b77c8a5d7341da12b9a722cf11342f5564c28279b5d8237 — HMAC(finished_key, Transcript-Hash(everything before this message))",
+				"varies": true
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 1,
+				"field": "finished.msg_type",
+				"value": "finished(20)"
+			},
+			{
+				"offset": 1,
+				"length": 3,
+				"field": "finished.length",
+				"value": "48 (bytes of body that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 48,
+				"field": "finished.verify_data",
+				"value": "faa52fad8398d1adb616946362daa6b03a02d6db1ade64d93d4a79ecb4420c6be49d7e2f89127c7b1f3a08c4febc37d0 — HMAC(finished_key, Transcript-Hash(everything before this message))",
+				"varies": true
+			}
+		]
+	},
+	{
+		"title": "What a wrong Finished looks like",
+		"kind": "text",
+		"request": "A Finished whose verify_data is anything other than HMAC(client finished_key, Transcript-Hash(CH..server Finished))",
+		"request_hex": "",
+		"response": "A fatal decrypt_error(51) alert and a closed connection. The record itself decrypted perfectly — it is the MAC inside it that is wrong.",
+		"response_hex": "",
+		"note": "decrypt_error, not bad_record_mac: the record layer was fine. bad_record_mac(20) is for a record whose AEAD tag failed, which is stage 35.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

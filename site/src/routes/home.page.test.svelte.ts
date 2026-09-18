@@ -135,15 +135,24 @@ describe('a stage, on a track with ladders and on one without', () => {
 	});
 
 	it('warns that a planned stage has nothing to run yet', () => {
-		const pending = trackIds.find((t) => catalogs[t].pending);
-		expect(pending).toBeDefined();
-		const app = mountStage(pending!, catalogs[pending!].stages[0].number);
+		// Every tester has landed, so no committed catalog is pending any more. The warning
+		// still has to work: it is what a fresh clone sees for a track whose crate has not
+		// been built yet, so the case is constructed rather than borrowed from whichever
+		// track happens to be unfinished today.
+		const pending = trackIds[trackIds.length - 1];
+		const real = catalogs[pending];
+		const catalog = { ...real, pending: true, stages: real.stages.map((s) => ({ ...s })) };
+		catalog.stages[0] = { ...catalog.stages[0], planned: true };
+		const app = mount(StageContent, {
+			target: host,
+			props: { track: pending, stage: catalog.stages[0], catalog, report: null }
+		});
 		flushSync();
 		expect(host.textContent).toContain('not yet in the tester');
 		expect(host.textContent).toContain('does not know this stage yet');
 		// The message names the crate the learner is waiting on, not whichever tester
 		// happened to need this wording first.
-		expect(host.textContent).toContain(tracks[pending!].tester);
+		expect(host.textContent).toContain(tracks[pending].tester);
 		expect(host.textContent).not.toContain('kafkatest/PLAN.md');
 		unmount(app);
 		expect(noise).toEqual([]);

@@ -1,0 +1,24 @@
+[
+	{
+		"title": "Typing, and then typing at the front",
+		"kind": "primitives",
+		"request": "two characters typed in order, then a third inserted after `root`\n\n./your_program.sh rga\ninsert r1 root a1 h\ninsert r1 a1 a2 i\ntext r1\ninsert r1 root a3 o\ntext r1",
+		"request_hex": "2e2f796f75725f70726f6772616d2e7368207267610a696e7365727420723120726f6f7420613120680a696e7365727420723120613120613220690a746578742072310a696e7365727420723120726f6f74206133206f0a74657874207231",
+		"response": "`hi`, and then `ohi`: `root` is the start of the sequence, not the end\n\n{\"text\":\"h\"}\n{\"text\":\"hi\"}\n{\"text\":\"hi\"}\n{\"text\":\"ohi\"}\n{\"text\":\"ohi\"}",
+		"response_hex": "7b2274657874223a2268227d0a7b2274657874223a226869227d0a7b2274657874223a226869227d0a7b2274657874223a226f6869227d0a7b2274657874223a226f6869227d",
+		"note": "`a3` and `a1` were both inserted after `root`, so they are siblings, and the larger id goes first. That single rule is what makes two replicas that never spoke agree on the order of characters they typed at the same spot.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "A delete leaves something behind",
+		"kind": "primitives",
+		"request": "the second character is deleted, then something is inserted after it\n\n./your_program.sh rga\ninsert r1 root a1 h\ninsert r1 a1 a2 i\ndelete r1 a2\ntext r1\ninsert r1 a2 a3 o\ntext r1",
+		"request_hex": "2e2f796f75725f70726f6772616d2e7368207267610a696e7365727420723120726f6f7420613120680a696e7365727420723120613120613220690a64656c6574652072312061320a746578742072310a696e73657274207231206132206133206f0a74657874207231",
+		"response": "`h`, and then `ho`: the insert still found the place it pointed at\n\n{\"text\":\"h\"}\n{\"text\":\"hi\"}\n{\"text\":\"h\"}\n{\"text\":\"h\"}\n{\"text\":\"ho\"}\n{\"text\":\"ho\"}",
+		"response_hex": "7b2274657874223a2268227d0a7b2274657874223a226869227d0a7b2274657874223a2268227d0a7b2274657874223a2268227d0a7b2274657874223a22686f227d0a7b2274657874223a22686f227d",
+		"note": "The deleted element has to stay in the structure with a flag on it. A replica that erases it cannot place `a3` at all when this arrives from elsewhere, and the two replicas have diverged over a character nobody can see.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

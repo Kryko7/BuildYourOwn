@@ -1,0 +1,76 @@
+[
+	{
+		"title": "One line in, one line out",
+		"kind": "wire",
+		"request": "An application_data record whose plaintext is `hello\\n` — six bytes inside the AEAD, plus the inner content type and the tag",
+		"request_hex": "170303001744aa4c547a16708c31a9a39794f9fd66278ffb80d7c6fc",
+		"response": "An application_data record whose plaintext is `olleh\\n`. The record on the wire is opaque; only the length gives its size away.",
+		"response_hex": "17030300173389991ab0016b207761215e11b8f293f9387a001af7bb",
+		"note": "Compare the two record lengths in the hex: both are 6 + 1 + 16 = 23 bytes of ciphertext. The extra byte is the inner content_type and the 16 are the tag.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 1,
+				"field": "record.type",
+				"value": "application_data(23)"
+			},
+			{
+				"offset": 1,
+				"length": 2,
+				"field": "record.legacy_record_version",
+				"value": "0x0303"
+			},
+			{
+				"offset": 3,
+				"length": 2,
+				"field": "record.length",
+				"value": "23 (bytes that follow)"
+			},
+			{
+				"offset": 5,
+				"length": 23,
+				"field": "record.encrypted_record",
+				"value": "23 bytes: the AEAD ciphertext plus its 16-byte tag. The real content type is inside it, after the content and before the padding.",
+				"varies": true
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 1,
+				"field": "record.type",
+				"value": "application_data(23)"
+			},
+			{
+				"offset": 1,
+				"length": 2,
+				"field": "record.legacy_record_version",
+				"value": "0x0303"
+			},
+			{
+				"offset": 3,
+				"length": 2,
+				"field": "record.length",
+				"value": "23 (bytes that follow)"
+			},
+			{
+				"offset": 5,
+				"length": 23,
+				"field": "record.encrypted_record",
+				"value": "23 bytes: the AEAD ciphertext plus its 16-byte tag. The real content type is inside it, after the content and before the padding.",
+				"varies": true
+			}
+		]
+	},
+	{
+		"title": "Exactly what `-rev` does",
+		"kind": "text",
+		"request": "Read until a newline. Strip trailing CR and LF. Reverse the remaining bytes. Write them, then one LF.",
+		"request_hex": "",
+		"response": "`hello\\n`   -> `olleh\\n`\n`abc\\r\\n`   -> `cba\\n`\n`\\n`        -> `\\n`\n`abc` (no newline) -> nothing, until a newline arrives",
+		"response_hex": "",
+		"note": "The reference reads into a fixed buffer, so a line longer than that buffer is answered in chunks, each reversed on its own. This suite keeps its lines well under that so the contract stays simple.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

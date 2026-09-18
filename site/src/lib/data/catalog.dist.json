@@ -1,231 +1,4219 @@
 {
 	"track": "dist",
-	"generatedAt": "2026-09-18T19:12:09.157Z",
+	"generatedAt": "2026-09-18T20:49:22.276Z",
 	"sections": [
 		{
 			"id": "A",
-			"title": "Clocks & causality",
+			"title": "Primitives: clocks and causality",
 			"stages": [
-				1
-			]
-		},
-		{
-			"id": "B",
-			"title": "Partitioning & quorums",
-			"stages": [
-				2
-			]
-		},
-		{
-			"id": "C",
-			"title": "Probabilistic & anti-entropy structures",
-			"stages": [
-				3
-			]
-		},
-		{
-			"id": "D",
-			"title": "CRDTs & convergence",
-			"stages": [
+				1,
+				2,
+				3,
 				4
 			]
 		},
 		{
-			"id": "E",
-			"title": "Flow control & failure detection",
+			"id": "B",
+			"title": "Primitives: placement, quorums and sketches",
 			"stages": [
-				5
+				5,
+				6,
+				7,
+				8,
+				9,
+				10,
+				11,
+				12,
+				13
+			]
+		},
+		{
+			"id": "C",
+			"title": "Primitives: CRDTs, snapshots and timing",
+			"stages": [
+				14,
+				15,
+				16,
+				17,
+				18,
+				19,
+				20
+			]
+		},
+		{
+			"id": "D",
+			"title": "Single node: the key/value API",
+			"stages": [
+				21,
+				22,
+				23,
+				24,
+				25,
+				26,
+				27,
+				28,
+				29,
+				30
+			]
+		},
+		{
+			"id": "E",
+			"title": "Single node: leases, watches and durability",
+			"stages": [
+				31,
+				32,
+				33,
+				34,
+				35
 			]
 		},
 		{
 			"id": "F",
-			"title": "A durable single node",
+			"title": "Cluster: replication and agreement",
 			"stages": [
-				6
+				36,
+				37,
+				38,
+				39,
+				40,
+				41,
+				42
 			]
 		},
 		{
 			"id": "G",
-			"title": "Replication & consensus",
+			"title": "Cluster: failure, recovery and membership",
 			"stages": [
-				7
+				43,
+				44,
+				45,
+				46,
+				47,
+				48,
+				49,
+				50,
+				51
 			]
 		},
 		{
 			"id": "H",
-			"title": "Faults & partitions",
+			"title": "Cluster: linearizability under fault injection",
 			"stages": [
-				8
-			]
-		},
-		{
-			"id": "I",
-			"title": "Linearizability under fault injection",
-			"stages": [
-				9
+				52,
+				53,
+				54,
+				55
 			]
 		}
 	],
 	"stages": [
 		{
 			"number": 1,
-			"slug": "clocks-causality",
-			"name": "Clocks & causality",
+			"slug": "lamport_clocks",
+			"name": "Lamport clocks",
 			"ext": false,
 			"section": "A",
-			"file": "",
+			"file": "src/stages/s01_lamport_clocks.rs",
 			"planDone": false,
-			"planned": true,
 			"ladder": "primitives",
 			"hints": [
-				"Lamport clocks, and what a scalar counter can and cannot tell you",
-				"Vector clocks and version vectors: happens-before, concurrent, dominated",
-				"Hybrid logical clocks — physical time you can still order"
+				"Topic `lamport`: keep one counter per process and hand it out with `send`",
+				"A local event and a send both increment the counter before it is used",
+				"On receive the counter becomes max(local, received) + 1 — the +1 is the whole point",
+				"Counters never go backwards, even when a message arrives from the past"
 			],
-			"tests": []
+			"tests": [
+				{
+					"name": "a fresh process has not ticked yet",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "a local event moves the clock on by one",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "a send stamps the counter it has just moved",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "a receive takes the maximum plus one",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "a receive never moves the clock backwards",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "reading the clock does not move it",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "each process keeps a counter of its own",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "an exchange orders cause before effect",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "a message from far in the future drags the clock with it",
+					"ext": true,
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "a long seeded exchange matches the tester's own replay",
+					"ext": true,
+					"tags": [
+						"primitives"
+					]
+				}
+			],
+			"exampleCount": 2
 		},
 		{
 			"number": 2,
-			"slug": "partitioning-quorums",
-			"name": "Partitioning & quorums",
+			"slug": "vector_clocks",
+			"name": "Vector clocks and causal comparison",
 			"ext": false,
-			"section": "B",
-			"file": "",
+			"section": "A",
+			"file": "src/stages/s02_vector_clocks.rs",
 			"planDone": false,
-			"planned": true,
 			"ladder": "primitives",
 			"hints": [
-				"Consistent hashing with virtual nodes, and what moves when a node joins",
-				"Rendezvous (highest random weight) hashing as the alternative",
-				"The N/R/W quorum arithmetic, and when R + W > N actually buys you something"
+				"Topic `vector-clock`: a map from process name to counter, and a missing entry is a zero",
+				"`cmp` answers before, after, equal or concurrent — four cases, not three",
+				"Merging on receive takes the componentwise maximum, then increments the receiver's own entry",
+				"Two clocks are concurrent when neither dominates: test both directions"
 			],
-			"tests": []
+			"tests": [
+				{
+					"name": "a process that has done nothing has an empty clock",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "a local event moves only the entry of the process that acted",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "a receive merges componentwise and then increments the receiver",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "a name nobody mentions counts as zero",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "cmp names all four relations",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "a clock is equal to itself",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "before and after are mirrors, and concurrent is symmetric",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "a delivered message is strictly behind the clock that received it",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "a merge never lowers a component",
+					"ext": true,
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "every pair of a seeded exchange agrees with the oracle",
+					"ext": true,
+					"tags": [
+						"primitives"
+					]
+				}
+			],
+			"exampleCount": 2
 		},
 		{
 			"number": 3,
-			"slug": "probabilistic-anti-entropy-structures",
-			"name": "Probabilistic & anti-entropy structures",
-			"ext": false,
-			"section": "C",
-			"file": "",
+			"slug": "version_vectors",
+			"name": "Version vectors and sibling detection",
+			"ext": true,
+			"section": "A",
+			"file": "src/stages/s03_version_vectors.rs",
 			"planDone": false,
-			"planned": true,
 			"ladder": "primitives",
 			"hints": [
-				"Bloom filters: bit math, hash count, and the false-positive rate you promised",
-				"HyperLogLog cardinality estimation",
-				"Merkle trees for finding the difference between two replicas cheaply"
+				"Topic `version-vector`: a value carries the vector of the replica that wrote it",
+				"A write that does not dominate an existing value creates a sibling instead of replacing it",
+				"Sync merges both replicas' sets and drops any value dominated by another",
+				"Siblings come back sorted so two replicas that agree answer identically"
 			],
-			"tests": []
+			"tests": [
+				{
+					"name": "a first write stamps the writing replica, and nothing else",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "a second write on the same replica replaces the first",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "two replicas writing apart fork into siblings",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "a sync leaves both replicas holding the same set",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "siblings come back sorted and deduplicated",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "a write that has seen every sibling replaces them all",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "put-ctx naming the whole context collapses the siblings",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "put-ctx naming a stale context forks again",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "a fresh process shares nothing with the one before it",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "a three-way fork keeps all three values",
+					"ext": true,
+					"tags": [
+						"primitives"
+					]
+				}
+			],
+			"exampleCount": 2
 		},
 		{
 			"number": 4,
-			"slug": "crdts-convergence",
-			"name": "CRDTs & convergence",
-			"ext": false,
-			"section": "D",
-			"file": "",
+			"slug": "hybrid_logical_clocks",
+			"name": "Hybrid logical clocks",
+			"ext": true,
+			"section": "A",
+			"file": "src/stages/s04_hybrid_logical_clocks.rs",
 			"planDone": false,
-			"planned": true,
 			"ladder": "primitives",
 			"hints": [
-				"G-Counter and PN-Counter: merge is a join, not an assignment",
-				"LWW-Register and OR-Set, with the tombstones that make removal work",
-				"RGA for ordered sequences, and convergence under any delivery order"
+				"Topic `hlc`: a timestamp is (l, c) — a physical part and a counter that breaks ties",
+				"`now` takes l = max(l, wall); when l did not move, c increments, otherwise c resets to 0",
+				"`recv` takes l = max(l, l_local, l_msg) and picks c from whichever source it matched",
+				"The result must be strictly greater than both the local clock and the message's"
 			],
-			"tests": []
+			"tests": [
+				{
+					"name": "a fresh clock takes the wall clock it is handed",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "the counter counts a stall and resets when the physical part moves",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "a wall clock that goes backwards never drags the clock back",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "reading the clock does not move it",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "a receive adopts a message from the future",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "a receive of a stale message keeps the local physical part",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "equal physical parts take the larger counter plus one",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "each process carries its own pair",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "a receive dominates both the local clock and the message",
+					"ext": true,
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "a seeded sequence is strictly increasing in (l, c)",
+					"ext": true,
+					"tags": [
+						"primitives"
+					]
+				}
+			],
+			"exampleCount": 2
 		},
 		{
 			"number": 5,
-			"slug": "flow-control-failure-detection",
-			"name": "Flow control & failure detection",
+			"slug": "consistent_hashing",
+			"name": "Consistent hashing with virtual nodes",
 			"ext": false,
-			"section": "E",
-			"file": "",
+			"section": "B",
+			"file": "src/stages/s05_consistent_hashing.rs",
 			"planDone": false,
-			"planned": true,
 			"ladder": "primitives",
 			"hints": [
-				"Token bucket rate limiting, and backoff with jitter that does not synchronize",
-				"Phi-accrual failure detection instead of a fixed timeout",
-				"SWIM: gossip, indirect probes, suspicion"
+				"Topic `consistent-hash`: place `vnodes` points per node on a ring and walk clockwise",
+				"`locate` is a function: the same key must always answer the same node",
+				"Virtual nodes are what makes the load even — one point per node is visibly lumpy",
+				"`stats` reports how many of the sampled keys landed on each node"
 			],
-			"tests": []
+			"tests": [
+				{
+					"name": "a key always lands on the same node",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "a key only ever lands on a node that is on the ring",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "one node owns every key",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "the answer does not drift while the ring stands still",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "virtual nodes spread the keys evenly",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "one point per node is visibly lumpier",
+					"ext": true,
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "stats counts every sampled key exactly once",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "an empty ring answers instead of crashing",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "removing a node that was never added leaves the ring alone",
+					"ext": true,
+					"tags": [
+						"primitives"
+					]
+				}
+			],
+			"exampleCount": 2
 		},
 		{
 			"number": 6,
-			"slug": "a-durable-single-node",
-			"name": "A durable single node",
-			"ext": false,
-			"section": "F",
-			"file": "",
+			"slug": "ring_key_movement",
+			"name": "Key movement when the ring changes",
+			"ext": true,
+			"section": "B",
+			"file": "src/stages/s06_ring_key_movement.rs",
 			"planDone": false,
-			"planned": true,
-			"ladder": "node",
+			"ladder": "primitives",
 			"hints": [
-				"MVCC revisions: every key keeps its history, reads pick a revision",
-				"Transactions, leases and watches",
-				"Crash recovery — everything acknowledged is still there after a kill -9"
+				"Adding a node may only take keys, never shuffle keys between two nodes that stayed",
+				"Removing a node may only give its keys away; everything else stays put",
+				"Roughly 1/N of the keys move when the Nth node joins — that is the whole point",
+				"Re-adding a node that was removed must restore the mapping exactly"
 			],
-			"tests": []
+			"tests": [
+				{
+					"name": "adding a node never shuffles keys between the nodes that stayed",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "every key that moves when a node joins moves to that node",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "removing a node only moves the keys it owned",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "roughly one key in N moves when the Nth node joins",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "removing a node and adding it back restores the mapping exactly",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "three joins in a row still never shuffle a key between survivors",
+					"ext": true,
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "a node leaving and a node joining only touch their own keys",
+					"ext": true,
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "the order the nodes joined in does not change where a key lands",
+					"ext": true,
+					"tags": [
+						"primitives"
+					]
+				}
+			],
+			"exampleCount": 2
 		},
 		{
 			"number": 7,
-			"slug": "replication-consensus",
-			"name": "Replication & consensus",
-			"ext": false,
-			"section": "G",
-			"file": "",
+			"slug": "rendezvous_hashing",
+			"name": "Rendezvous (HRW) hashing",
+			"ext": true,
+			"section": "B",
+			"file": "src/stages/s07_rendezvous_hashing.rs",
 			"planDone": false,
-			"planned": true,
-			"ladder": "cluster",
+			"ladder": "primitives",
 			"hints": [
-				"Leader election, terms, and the votes that decide one",
-				"Log replication, commit index, and applying in order",
-				"Linearizable reads: read index or lease, never just \"ask the leader\""
+				"Topic `rendezvous`: score every node for the key and take the highest",
+				"No ring and no virtual nodes: the score function does all the work",
+				"`locate-k` returns the top k in score order, and its head is what `locate` answers",
+				"Removing a node only moves the keys it owned, exactly as a ring does"
 			],
-			"tests": []
+			"tests": [
+				{
+					"name": "the head of locate-k is what locate answers",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "locate-k ranks every node once, with no repeats",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "asking for more nodes than there are returns every one",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "the same key ranks the nodes the same way every time",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "one node owns every key",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "adding a node only takes keys, it never shuffles them",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "removing a node only moves the keys it owned",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "removing the best node promotes the runner-up",
+					"ext": true,
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "removing a node leaves the others in the same order",
+					"ext": true,
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "locating with no nodes answers instead of crashing",
+					"ext": true,
+					"tags": [
+						"primitives"
+					]
+				}
+			],
+			"exampleCount": 2
 		},
 		{
 			"number": 8,
-			"slug": "faults-partitions",
-			"name": "Faults & partitions",
+			"slug": "quorum_math",
+			"name": "Quorum math: N, R, W and overlap",
 			"ext": false,
-			"section": "H",
-			"file": "",
+			"section": "B",
+			"file": "src/stages/s08_quorum_math.rs",
 			"planDone": false,
-			"planned": true,
-			"ladder": "cluster",
+			"ladder": "primitives",
 			"hints": [
-				"A minority partition must refuse to make progress",
-				"Leader failover with no lost acknowledged write",
-				"Snapshots, log compaction and membership change"
+				"Topic `quorum`: a read and a write quorum overlap when R + W > N",
+				"Two writes can conflict when 2W <= N — that is a different question from overlap",
+				"The smallest read quorum that always sees the latest write is N - W + 1",
+				"Answer for the numbers you were given, not for the defaults"
 			],
-			"tests": []
+			"tests": [
+				{
+					"name": "a read and a write overlap exactly when R + W is more than N",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "two writes can conflict exactly when 2W is at most N",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "the smallest read quorum is N - W + 1",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "the three-replica settings everyone quotes",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "the edges: reading from nobody, writing to everybody, a single replica",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "a seeded sweep of larger triples agrees with the arithmetic",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "a larger read quorum never loses an overlap it already had",
+					"ext": true,
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "the same triple always gets the same answer",
+					"ext": true,
+					"tags": [
+						"primitives"
+					]
+				}
+			],
+			"exampleCount": 2
 		},
 		{
 			"number": 9,
-			"slug": "linearizability-under-fault-injection",
-			"name": "Linearizability under fault injection",
-			"ext": false,
-			"section": "I",
-			"file": "",
+			"slug": "sloppy_quorums",
+			"name": "Sloppy quorums and hinted handoff",
+			"ext": true,
+			"section": "B",
+			"file": "src/stages/s09_sloppy_quorums.rs",
 			"planDone": false,
-			"planned": true,
+			"ladder": "primitives",
+			"hints": [
+				"A sloppy quorum accepts a write on a node outside the preference list when a member is down",
+				"The stand-in records a hint naming the node the write really belongs to",
+				"When the real owner comes back, the hint is handed off and then forgotten",
+				"A sloppy quorum is not a quorum: it can lose the overlap guarantee, and must say so"
+			],
+			"tests": [
+				{
+					"name": "a write with every replica alive needs no stand-in",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "a write with a member down is accepted on a stand-in",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "the number of hints is exactly the number of replicas that were down",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "strict is false exactly when a stand-in was used",
+					"ext": true,
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "hints lists the keys a stand-in is holding",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "a handoff delivers every hint and leaves none",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "handing off twice delivers nothing the second time",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "a hint for an owner that never comes back is still held",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "an owner nobody hinted for is holding nothing",
+					"ext": true,
+					"tags": [
+						"primitives"
+					]
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 10,
+			"slug": "bloom_filter",
+			"name": "Bloom filter",
+			"ext": false,
+			"section": "B",
+			"file": "src/stages/s10_bloom_filter.rs",
+			"planDone": false,
+			"ladder": "primitives",
+			"hints": [
+				"Topic `bloom`: k hash positions per item over m bits, all set on add",
+				"`contains` is only ever 'maybe' or 'no': a false negative is a bug, never a tuning issue",
+				"The measured false-positive rate must sit inside the theoretical bound for m, k and n",
+				"Derive the k positions from one or two hashes; k independent hash functions are not needed"
+			],
+			"tests": [
+				{
+					"name": "init reports back the size it was given",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "an item that was added is always maybe",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "items that were never added are mostly not present",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "a false positive rate inside the theoretical bound",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "set bits grow with insertions and never exceed the filter",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "a filter with too few bits is useless but never loses an item",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "init a second time resets the filter",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "adding the same item twice changes nothing",
+					"ext": true,
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "the optimal number of hashes beats a badly chosen one",
+					"ext": true,
+					"tags": [
+						"primitives"
+					]
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 11,
+			"slug": "hyperloglog",
+			"name": "HyperLogLog",
+			"ext": true,
+			"section": "B",
+			"file": "src/stages/s11_hyperloglog.rs",
+			"planDone": false,
+			"ladder": "primitives",
+			"hints": [
+				"Topic `hll`: 2^p registers, each holding the longest run of leading zeros it has seen",
+				"The estimate is the harmonic mean of the registers, times alpha times m squared",
+				"Small cardinalities need linear counting, or the estimate is badly wrong",
+				"The relative error must sit inside 1.04 / sqrt(2^p) over many trials"
+			],
+			"tests": [
+				{
+					"name": "count on an empty sketch is zero",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "init reports two to the power p registers",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "the estimate of a small set is close to exact",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "adding the same item a thousand times does not change the estimate",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "counting twice gives the same answer",
+					"ext": true,
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "the insertion order does not change the estimate",
+					"ext": true,
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "a mean relative error inside the standard-error envelope",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "a larger precision is not worse than a smaller one",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "init a second time resets the sketch",
+					"ext": true,
+					"tags": [
+						"primitives"
+					]
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 12,
+			"slug": "merkle_tree",
+			"name": "Merkle tree build",
+			"ext": false,
+			"section": "B",
+			"file": "src/stages/s12_merkle_tree.rs",
+			"planDone": false,
+			"ladder": "primitives",
+			"hints": [
+				"Topic `merkle`: leaf = sha256(0x00 || leaf bytes), node = sha256(0x01 || left hex || right hex)",
+				"An odd node at a level is carried up unchanged, not duplicated",
+				"The root changes when any leaf changes, and only then",
+				"The same leaves always produce the same root, whatever order they were added in"
+			],
+			"tests": [
+				{
+					"name": "the root of four leaves is the one the oracle computes",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "a tree of one leaf is that leaf's hash",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "the root of an empty tree is the hash of nothing",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "an odd number of leaves carries the last node up",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "level zero holds the leaf hashes",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "the top level holds the root",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "changing one leaf changes the root and nothing else",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "the same leaves always give the same root",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "trees of every size up to seventeen match the oracle",
+					"ext": true,
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "every node of every level matches the oracle",
+					"ext": true,
+					"tags": [
+						"primitives"
+					]
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 13,
+			"slug": "merkle_diff",
+			"name": "Merkle diff with the fewest round trips",
+			"ext": true,
+			"section": "B",
+			"file": "src/stages/s13_merkle_diff.rs",
+			"planDone": false,
+			"ladder": "primitives",
+			"hints": [
+				"Compare roots first: equal roots mean equal trees and no further work",
+				"Descend only into subtrees whose hashes differ — that is the whole saving",
+				"Report the differing leaves as ranges, so a caller can fetch them in one go",
+				"Count the nodes you compared: a walk that visits everything has learnt nothing"
+			],
+			"tests": [
+				{
+					"name": "two identical trees diff to no ranges at all",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "diffing a tree against itself costs one comparison",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "one differing leaf is found exactly",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "adjacent differing leaves merge into one range",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "scattered differences match the ranges the oracle computes",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "a diff never looks at every node in the tree",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "a large tree with two scattered differences is still cheap",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "the diff is the same in both directions",
+					"ext": true,
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "two trees that differ everywhere report one whole range",
+					"ext": true,
+					"tags": [
+						"primitives"
+					]
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 14,
+			"slug": "counters",
+			"name": "G-Counter and PN-Counter",
+			"ext": false,
+			"section": "C",
+			"file": "src/stages/s14_counters.rs",
+			"planDone": false,
+			"ladder": "primitives",
+			"hints": [
+				"Topics `g-counter` and `pn-counter`: one entry per replica, merged by maximum",
+				"A PN-Counter is two G-Counters: increments and decrements, never one signed number",
+				"Merge must be commutative, associative and idempotent — every delivery order converges",
+				"A replica only ever writes its own entry; it copies others by taking the maximum"
+			],
+			"tests": [
+				{
+					"name": "a fresh counter reads zero and then counts up",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "the value is the sum over every replica",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "a stale merge never lowers the value",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "merging the same state twice changes nothing",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "a replica writes only its own entry, so no increment is lost",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "every delivery order of the same updates converges",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "a pn-counter keeps increments and decrements apart",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "a pn-counter can go below zero",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "every delivery order of increments and decrements converges",
+					"ext": true,
+					"tags": [
+						"primitives"
+					]
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 15,
+			"slug": "registers_and_sets",
+			"name": "LWW-Register and OR-Set",
+			"ext": false,
+			"section": "C",
+			"file": "src/stages/s15_registers_and_sets.rs",
+			"planDone": false,
+			"ladder": "primitives",
+			"hints": [
+				"Topic `lww-register`: value plus timestamp, and a deterministic tie-break on equal timestamps",
+				"Topic `or-set`: an add carries a unique tag; a remove takes away the tags it saw",
+				"An add concurrent with a remove survives — that is the whole difference from a 2P-Set",
+				"Re-adding after a remove must work, which is why tags cannot be reused"
+			],
+			"tests": [
+				{
+					"name": "an untouched register reads null",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "a set answers with the value it now holds",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "the larger timestamp wins whichever order the merges arrive in",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "equal timestamps break by replica name, so two replicas agree",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "every delivery order of register writes converges",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "elements come back sorted and without duplicates",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "an add concurrent with a remove survives",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "re-adding after a remove works, and a stale state cannot undo it",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "every delivery order of a mixed add and remove exchange converges",
+					"tags": [
+						"primitives"
+					]
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 16,
+			"slug": "rga_sequence",
+			"name": "RGA: a replicated sequence",
+			"ext": true,
+			"section": "C",
+			"file": "src/stages/s16_rga_sequence.rs",
+			"planDone": false,
+			"ladder": "primitives",
+			"hints": [
+				"Topic `rga`: every element has an id and points at the element it was inserted after",
+				"Concurrent inserts at the same position are ordered by id, consistently on every replica",
+				"A delete leaves a tombstone: later inserts may still point at it",
+				"Every delivery order of the same operations must read back the same sequence"
+			],
+			"tests": [
+				{
+					"name": "a sequence builds up as it is typed",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "inserting after root prepends",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "a delete takes the character out of the text",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "an insert after a deleted element still lands in its place",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "two replicas inserting at the same position converge",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "both replicas read back the same sequence after a longer exchange",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "a tombstone survives a state that predates the delete",
+					"ext": true,
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "every delivery order of inserts and deletes converges",
+					"ext": true,
+					"tags": [
+						"primitives"
+					]
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 17,
+			"slug": "chandy_lamport",
+			"name": "Chandy-Lamport snapshots",
+			"ext": true,
+			"section": "C",
+			"file": "src/stages/s17_chandy_lamport.rs",
+			"planDone": false,
+			"ladder": "primitives",
+			"hints": [
+				"Topic `snapshot`: a process records its own state when it first sees a marker",
+				"After that it records every message arriving on a channel until that channel's marker",
+				"The snapshot's total must equal the system's total, whatever the interleaving",
+				"A process sends a marker on every outgoing channel immediately after recording"
+			],
+			"tests": [
+				{
+					"name": "a snapshot of a quiet system is the state the system is in",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "a snapshot taken while money is in flight still totals correctly",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "a process records its own state the first time it sees a marker and not again",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "a message arriving after its channel's marker is not recorded",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "a snapshot is complete only once every process and channel has reported",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "a seeded interleaving snapshots the same total every time",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "two snapshots in a row both total correctly",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "a marker started anywhere goes round a one-way ring",
+					"ext": true,
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "the reported total is the recorded balances plus the recorded channels",
+					"ext": true,
+					"tags": [
+						"primitives"
+					]
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 18,
+			"slug": "causal_broadcast",
+			"name": "Causal broadcast delivery order",
+			"ext": false,
+			"section": "C",
+			"file": "src/stages/s18_causal_broadcast.rs",
+			"planDone": false,
+			"ladder": "primitives",
+			"hints": [
+				"Topic `causal-broadcast`: a message carries the sender's vector clock",
+				"Deliver only when the message is the sender's next, and its other entries are already seen",
+				"Anything else waits in a buffer and is re-checked after every delivery",
+				"Delivering a message out of causal order is the failure this stage looks for"
+			],
+			"tests": [
+				{
+					"name": "a message whose dependency has not arrived is buffered, not delivered",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "filling the gap releases the buffered message at once",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "a sender's own messages are never delivered out of order",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "every delivery order satisfies the causal rule",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "a message that has already been delivered is not delivered twice",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "a seeded reordering of a causal chain still delivers in causal order",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "a broadcast stamps the sender's own entry and nothing else",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "two concurrent messages may be delivered in either order",
+					"ext": true,
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "a chain delivered in the order it was created never buffers anything",
+					"ext": true,
+					"tags": [
+						"primitives"
+					]
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 19,
+			"slug": "rate_limiting",
+			"name": "Token bucket and leaky bucket",
+			"ext": false,
+			"section": "C",
+			"file": "src/stages/s19_rate_limiting.rs",
+			"planDone": false,
+			"ladder": "primitives",
+			"hints": [
+				"Topic `token-bucket`: refill rate * elapsed, capped at the burst, then spend",
+				"Topic `leaky-bucket`: drain rate * elapsed, then refuse whatever would overflow",
+				"Time arrives with every command: never read a clock of your own",
+				"A long idle period fills the token bucket to the burst and no further"
+			],
+			"tests": [
+				{
+					"name": "a full bucket allows exactly the burst at time zero",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "the bucket refills at its rate and no faster",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "a bucket that has idled holds exactly the burst",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "a seeded sequence of takes matches the oracle step by step",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "fractional refills accumulate instead of being truncated",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "the same instant twice means no time has passed",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "a timestamp that goes backwards adds no tokens",
+					"ext": true,
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "the leaky bucket refuses what would overflow and takes it once it has drained",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "a seeded sequence of offers matches the leaky bucket oracle step by step",
+					"tags": [
+						"primitives"
+					]
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 20,
+			"slug": "failure_detection",
+			"name": "Backoff, phi-accrual and SWIM suspicion",
+			"ext": true,
+			"section": "C",
+			"file": "src/stages/s20_failure_detection.rs",
+			"planDone": false,
+			"ladder": "primitives",
+			"hints": [
+				"Topic `backoff`: full jitter is uniform(0, min(cap, base * 2^attempt))",
+				"Topic `phi-accrual`: phi rises with the time since the last heartbeat, smoothly",
+				"Topic `swim`: alive, then suspect, then dead — two deadlines, both sharp",
+				"The sampled value arrives with the command, so a jittered delay is still reproducible"
+			],
+			"tests": [
+				{
+					"name": "a sweep of attempts and samples matches the full jitter formula",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "the cap holds however many attempts have failed",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "a seeded sample is never negative and never above the ceiling",
+					"ext": true,
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "phi never falls as the silence grows",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "phi stays well under one while the heartbeats keep coming",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "phi passes four once ten intervals have gone by",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "swim moves from alive to suspect to dead as the oracle says",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "both deadlines are sharp at the exact instant they fall",
+					"tags": [
+						"primitives"
+					]
+				},
+				{
+					"name": "an ack moves a suspect node back to alive",
+					"tags": [
+						"primitives"
+					]
+				}
+			],
+			"exampleCount": 3
+		},
+		{
+			"number": 21,
+			"slug": "bind_version_health",
+			"name": "Bind, /version and /health",
+			"ext": false,
+			"section": "D",
+			"file": "src/stages/s21_bind_version_health.rs",
+			"planDone": false,
+			"ladder": "node",
+			"hints": [
+				"Listen on the --listen-client-urls address and answer HTTP/1.1 on it",
+				"GET /version answers {\"etcdserver\":..,\"etcdcluster\":..} and GET /health {\"health\":\"true\"}",
+				"Keep the connection alive: the suite reuses one connection for thousands of requests",
+				"An unknown path is 404, and a GET on a POST-only endpoint is not a 200"
+			],
+			"tests": [
+				{
+					"name": "GET /version answers both version strings",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "GET /health says the node is healthy",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "an unknown path is a 404, not an empty 200",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "a refused path leaves the connection usable",
+					"ext": true,
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "a GET on a POST-only endpoint is not a 200",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "fifty requests in a row are all answered",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "a body that is not JSON is refused, and the node keeps serving",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "the status endpoint reports a version, a member id and a revision",
+					"tags": [
+						"node"
+					]
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 22,
+			"slug": "put_header",
+			"name": "Put and the response header",
+			"ext": false,
+			"section": "D",
+			"file": "src/stages/s22_put_header.rs",
+			"planDone": false,
+			"ladder": "node",
+			"hints": [
+				"POST /v3/kv/put with base64 key and value, answering a header",
+				"Every write increments the store revision by one, and the header reports the new value",
+				"64-bit numbers are JSON strings; a field at its zero value may be left out entirely",
+				"raft_term is in the header too, and it never goes backwards"
+			],
+			"tests": [
+				{
+					"name": "a put answers with a header",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "the revision increases by exactly one",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "the revision is the same for every member id",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "writing the same key again still moves the revision",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "an empty value is a value",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "a key with awkward bytes survives the round trip",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "a large value is stored whole",
+					"ext": true,
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "many writes produce one increasing sequence",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "the header travels on every endpoint",
+					"ext": true,
+					"tags": [
+						"node"
+					]
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 23,
+			"slug": "range_one_key",
+			"name": "Range: reading one key",
+			"ext": false,
+			"section": "D",
+			"file": "src/stages/s23_range_one_key.rs",
+			"planDone": false,
+			"ladder": "node",
+			"hints": [
+				"POST /v3/kv/range with just a key is a point read",
+				"A key that is not there answers no kvs and count 0 — not an error",
+				"create_revision is set once, mod_revision moves with every put, version counts the puts",
+				"count is the number of keys the range holds, whatever limit was asked for"
+			],
+			"tests": [
+				{
+					"name": "a key that was never written is not an error",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "a key that was written reads back with its revisions",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "version counts the puts since the key was created",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "create_revision never moves while mod_revision does",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "the revision of a read is at least the revision of the write",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "a key holding an empty value is still one key",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "two keys do not see each other",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "a point read is exact, not a prefix",
+					"tags": [
+						"node"
+					]
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 24,
+			"slug": "range_over_ranges",
+			"name": "Ranges, prefixes and the whole store",
+			"ext": false,
+			"section": "D",
+			"file": "src/stages/s24_range_over_ranges.rs",
+			"planDone": false,
+			"ladder": "node",
+			"hints": [
+				"range_end makes the request a half-open range [key, range_end)",
+				"A prefix range ends at the key with its last byte incremented",
+				"key and range_end both \u0000 means every key in the store",
+				"Results come back in key order, which is byte order, not string order"
+			],
+			"tests": [
+				{
+					"name": "range_end is excluded, because the range is half-open",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "a prefix range takes everything under the prefix",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "a prefix range stops at the prefix boundary",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "a zero byte at both ends is every key in the store",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "keys come back in byte order, not string order",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "a range that covers no key answers nothing",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "a range whose end sorts before its start is empty, not an error",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "keys written in a scrambled order still come back sorted",
+					"tags": [
+						"node"
+					]
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 25,
+			"slug": "range_options",
+			"name": "limit, sort order, count_only and keys_only",
+			"ext": true,
+			"section": "D",
+			"file": "src/stages/s25_range_options.rs",
+			"planDone": false,
+			"ladder": "node",
+			"hints": [
+				"limit cuts the answer and sets more, but never changes count",
+				"sort_order and sort_target together decide the order; the default is ascending by key",
+				"count_only answers the count and no kvs at all",
+				"keys_only answers the kvs with their values left out, not with empty values invented"
+			],
+			"tests": [
+				{
+					"name": "a limit cuts the answer but never the count",
+					"ext": true,
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "a limit as large as the range leaves more false",
+					"ext": true,
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "a descending sort by key reverses the answer",
+					"ext": true,
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "sorting by mod revision follows the writes",
+					"ext": true,
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "sorting by create revision follows the creations",
+					"ext": true,
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "count_only answers a count and no pairs at all",
+					"ext": true,
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "keys_only answers keys with their values left out",
+					"ext": true,
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "a limit with a descending sort takes the last keys",
+					"ext": true,
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "the options are harmless over a range that holds nothing",
+					"ext": true,
+					"tags": [
+						"node"
+					]
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 26,
+			"slug": "mvcc_past_revisions",
+			"name": "MVCC: reading at a past revision",
+			"ext": true,
+			"section": "D",
+			"file": "src/stages/s26_mvcc_past_revisions.rs",
+			"planDone": false,
+			"ladder": "node",
+			"hints": [
+				"revision in a range request reads the store as it was at that revision",
+				"A key deleted later is still there when read at a revision before the delete",
+				"The header of a historical read still reports the store's current revision",
+				"Revision 0 means 'now', because 0 is the zero value and cannot mean 'the beginning'"
+			],
+			"tests": [
+				{
+					"name": "a read at an old revision sees the old value",
+					"ext": true,
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "a key deleted later is still there before the delete",
+					"ext": true,
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "a key created later is absent before its creation",
+					"ext": true,
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "the header of a historical read reports the current revision",
+					"ext": true,
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "revision zero means now",
+					"ext": true,
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "a revision the store has not reached is an error",
+					"ext": true,
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "a historical range sees the store as it was",
+					"ext": true,
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "a historical range respects limit and sorting too",
+					"ext": true,
+					"tags": [
+						"node"
+					]
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 27,
+			"slug": "prev_kv_and_delete",
+			"name": "prev_kv and deleting ranges",
+			"ext": false,
+			"section": "D",
+			"file": "src/stages/s27_prev_kv_and_delete.rs",
+			"planDone": false,
+			"ladder": "node",
+			"hints": [
+				"prev_kv on a put answers the pair as it was before the write, or nothing when it is new",
+				"POST /v3/kv/deleterange answers how many keys it removed",
+				"A delete over a range removes every key in it and counts them all",
+				"Deleting a key that is not there is a successful request that deleted zero keys"
+			],
+			"tests": [
+				{
+					"name": "prev_kv on a put of a key that existed answers the old pair",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "prev_kv on a put of a new key answers nothing",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "a delete answers how many keys it removed",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "deleting a key that is not there deletes zero and moves nothing",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "deleting a range removes every key in it",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "prev_kv on a delete answers everything that was removed",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "a delete moves the revision exactly once",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "after a delete the key reads back as absent",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "a key put again after a delete starts a new life",
+					"ext": true,
+					"tags": [
+						"node"
+					]
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 28,
+			"slug": "txn_branches",
+			"name": "Transactions: compare, success, failure",
+			"ext": false,
+			"section": "D",
+			"file": "src/stages/s28_txn_branches.rs",
+			"planDone": false,
+			"ladder": "node",
+			"hints": [
+				"POST /v3/kv/txn runs the success branch when every comparison holds, the failure one otherwise",
+				"succeeded is false when the failure branch ran, and may be omitted rather than sent as false",
+				"responses carries one entry per operation of the branch that ran, in order",
+				"A transaction is one atomic step: its writes share one revision"
+			],
+			"tests": [
+				{
+					"name": "a transaction with no comparisons succeeds",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "a comparison that holds runs the success branch",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "a comparison that does not hold runs the failure branch",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "responses carries one entry per operation, in order",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "two puts in one transaction share one revision",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "every comparison has to hold",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "a range inside a transaction sees the transaction's own writes",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "a transaction that writes nothing does not move the revision",
+					"tags": [
+						"node"
+					]
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 29,
+			"slug": "txn_compare_and_swap",
+			"name": "Compare-and-swap semantics",
+			"ext": true,
+			"section": "D",
+			"file": "src/stages/s29_txn_compare_and_swap.rs",
+			"planDone": false,
+			"ladder": "node",
+			"hints": [
+				"VERSION = 0 is how you say 'this key does not exist'",
+				"CREATE, MOD, VALUE and VERSION are four different comparisons with four different fields",
+				"Two concurrent swaps from the same value: exactly one may succeed",
+				"A comparison naming a key that does not exist compares against zeros, it does not fail the request"
+			],
+			"tests": [
+				{
+					"name": "a create-if-absent transaction succeeds exactly once",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "a VERSION comparison holds only at that version",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "a CREATE comparison names the revision the key was born at",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "a MOD comparison names the revision of the last put",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "a VALUE comparison swaps only from the value it names",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "a comparison on a key that does not exist compares against zeros",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "two swaps from the same value cannot both succeed",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "a swap that fails leaves the store untouched",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "GREATER, LESS and NOT_EQUAL compare the same four fields",
+					"ext": true,
+					"tags": [
+						"node"
+					]
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 30,
+			"slug": "compaction",
+			"name": "Compaction and ErrCompacted",
+			"ext": true,
+			"section": "D",
+			"file": "src/stages/s30_compaction.rs",
+			"planDone": false,
+			"ladder": "node",
+			"hints": [
+				"POST /v3/kv/compaction drops every revision below the one given",
+				"A read below the compacted revision is code 11, not an empty answer",
+				"Compaction never removes the newest version of a live key",
+				"Compacting twice, or below what is already compacted, is an error, not a no-op"
+			],
+			"tests": [
+				{
+					"name": "a read below the compacted revision is code 11",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "a read at the compacted revision still works",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "a read above the compacted revision still works",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "the newest version of a live key survives compaction",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "compacting to a revision above the current one is an error",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "compacting twice to the same revision is an error",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "a physical compaction answers a header",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "the store keeps writing after a compaction",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "a compaction does not move the revision",
+					"ext": true,
+					"tags": [
+						"node"
+					]
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 31,
+			"slug": "leases",
+			"name": "Leases: grant, attach, expire, revoke",
+			"ext": false,
+			"section": "E",
+			"file": "src/stages/s31_leases.rs",
+			"planDone": false,
+			"ladder": "node",
+			"hints": [
+				"POST /v3/lease/grant answers an ID and the TTL it settled on",
+				"A put naming a lease binds the key to it; the kv answers with that lease id",
+				"When the lease expires every key attached to it disappears in one revision",
+				"Revoking is the same thing on demand, and revoking twice is an error"
+			],
+			"tests": [
+				{
+					"name": "a grant answers an id and a ttl",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "a put naming a lease binds the key to it",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "a key on an expired lease disappears",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "revoking a lease removes its keys at once",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "revoking a lease twice is an error",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "a put naming a lease that does not exist is an error",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "every key on one lease disappears in a single revision",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "a key overwritten without a lease survives the expiry",
+					"ext": true,
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "two leases keep their own keys",
+					"ext": true,
+					"tags": [
+						"node"
+					]
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 32,
+			"slug": "lease_keepalive",
+			"name": "Lease keepalive and TTL",
+			"ext": true,
+			"section": "E",
+			"file": "src/stages/s32_lease_keepalive.rs",
+			"planDone": false,
+			"ladder": "node",
+			"hints": [
+				"POST /v3/lease/keepalive is a stream: the answer is wrapped in {\"result\": ...}",
+				"A keepalive resets the lease's remaining time to its TTL",
+				"A keepalive for a lease that is gone answers TTL 0, not an error",
+				"Keys survive exactly as long as something keeps the lease alive"
+			],
+			"tests": [
+				{
+					"name": "a keepalive answers the id it was asked about",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "a keepalive message is wrapped in a result",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "keeping a lease alive keeps its key past the original ttl",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "the key goes once the keepalives stop",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "a keepalive for a lease that was never granted answers a ttl of zero",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "a keepalive for a revoked lease answers a ttl of zero",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "a keepalive does not move the store revision",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "keeping one lease alive does nothing for another",
+					"ext": true,
+					"tags": [
+						"node"
+					]
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 33,
+			"slug": "watches",
+			"name": "Watches",
+			"ext": true,
+			"section": "E",
+			"file": "src/stages/s33_watches.rs",
+			"planDone": false,
+			"ladder": "node",
+			"hints": [
+				"POST /v3/watch is a stream: every message is a line of JSON wrapped in {\"result\": ...}",
+				"The first message acknowledges the create request and carries created: true",
+				"start_revision replays everything from that revision onwards, in revision order",
+				"A delete event carries type DELETE and a kv with only the key and mod_revision"
+			],
+			"tests": [
+				{
+					"name": "the first message carries created",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "a put produces one event carrying the new kv",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "a delete produces an event with the key and a revision and no value",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "start_revision replays history in revision order",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "a prefix watch sees everything under the prefix and nothing else",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "a burst of writes arrives in revision order",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "a create and a cancel in one body are both acknowledged",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "a watch on a key nothing touches says nothing",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "an event carries prev_kv when the watch asks for it",
+					"ext": true,
+					"tags": [
+						"node"
+					]
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 34,
+			"slug": "error_responses",
+			"name": "Error responses",
+			"ext": true,
+			"section": "E",
+			"file": "src/stages/s34_error_responses.rs",
+			"planDone": false,
+			"ladder": "node",
+			"hints": [
+				"Errors are a 4xx status and a body of {\"code\": <grpc code>, \"message\": \"...\"}",
+				"Bad base64 is code 3, a lease that does not exist is code 5, too large is code 8",
+				"An unknown path is 404 and never a 200 with an empty body",
+				"A bad request must not change the store, and must not close the connection"
+			],
+			"tests": [
+				{
+					"name": "a key that is not base64 is code 3",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "a lease that does not exist is code 5",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "a request that is too large is code 8",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "an unknown path is a 404",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "a body that is not JSON is refused",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "an error body carries a code and a message",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "a refused request changes nothing",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "the store keeps serving afterwards",
+					"tags": [
+						"node"
+					]
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 35,
+			"slug": "durability",
+			"name": "Durability across SIGKILL",
+			"ext": true,
+			"section": "E",
+			"file": "src/stages/s35_durability.rs",
+			"planDone": false,
+			"ladder": "node",
+			"hints": [
+				"An acknowledged write must survive kill -9 and a restart: fsync before you answer",
+				"The data directory must be reopenable without being reformatted",
+				"The revision sequence continues where it left off; it never restarts at 1",
+				"A torn record at the tail of the log may be dropped, but never an acknowledged write"
+			],
+			"tests": [
+				{
+					"name": "an acknowledged write survives a kill",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "a hundred acknowledged writes all survive",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "the revision sequence continues after a restart",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "create_revision, mod_revision and version survive a restart",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "a kill in the middle of a workload loses nothing that was acknowledged",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "a delete is as durable as a write",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "two restarts in a row lose nothing",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "the data directory is reopened, not reformatted",
+					"tags": [
+						"node"
+					]
+				},
+				{
+					"name": "a large value comes back byte for byte",
+					"ext": true,
+					"tags": [
+						"node"
+					]
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 36,
+			"slug": "cluster_forms",
+			"name": "A cluster forms and elects one leader",
+			"ext": false,
+			"section": "F",
+			"file": "src/stages/s36_cluster_forms.rs",
+			"planDone": false,
 			"ladder": "cluster",
 			"hints": [
-				"Randomized concurrent workloads recorded as a history",
-				"The history is checked against a linearizability model, not against a golden file",
-				"Partitions, pauses and crashes injected mid-run, with a seed so it replays"
+				"--initial-cluster lists every member as name=peer-url, and every member gets the same list",
+				"Dial the peer URL you were told, not the address the member listens on",
+				"/v3/maintenance/status reports the leader's member id and the current raft term",
+				"Every member must name the same leader, and the term must be the same on all of them"
 			],
-			"tests": []
+			"tests": [
+				{
+					"name": "every member answers",
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "one leader, named by everyone",
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "the leader is a member of the cluster",
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "every member reports the same cluster id",
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "member ids are distinct",
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "the member list names every member",
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "the term is the same everywhere",
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "a quorum is a majority of three",
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "the leader survives being asked repeatedly",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "five members also form one cluster",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				}
+			],
+			"exampleCount": 1
+		},
+		{
+			"number": 37,
+			"slug": "replicated_writes",
+			"name": "A write on any member is visible on every member",
+			"ext": false,
+			"section": "F",
+			"file": "src/stages/s37_replicated_writes.rs",
+			"planDone": false,
+			"ladder": "cluster",
+			"hints": [
+				"A write accepted by a follower is forwarded to the leader, not applied locally",
+				"The revision a member answers with is the cluster's, not its own counter",
+				"Every member must end up holding the same value for the key",
+				"Writes through different members still produce one increasing revision sequence"
+			],
+			"tests": [
+				{
+					"name": "a write through the leader reaches every member",
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "a write through a follower is accepted and reaches every member",
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "writes through three members make one revision sequence",
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "every member holds the same value for the key",
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "a delete replicates too",
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "a batch of writes through rotating members all land",
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "the revision a member answers with is the cluster's",
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "create and mod revisions are the same on every member",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "forty writes through rotating members keep one order",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 38,
+			"slug": "linearizable_reads",
+			"name": "Linearizable reads after a write elsewhere",
+			"ext": false,
+			"section": "F",
+			"file": "src/stages/s38_linearizable_reads.rs",
+			"planDone": false,
+			"ladder": "cluster",
+			"hints": [
+				"A read that is not serializable must not answer from a stale local state",
+				"Confirm leadership (a read index, or a round of heartbeats) before answering",
+				"A write acknowledged by one member must be visible to a read on any other, immediately",
+				"serializable: true is the opt-out, and it is the only way to answer locally"
+			],
+			"tests": [
+				{
+					"name": "a write on one member is on the next read of another",
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "every ordered pair of members sees the write at once",
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "a member that handled neither the write nor the last read still sees it",
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "a delete is visible to the next read on another member",
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "a read-after-write loop across members never misses",
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "a serializable read may be stale but never invents a value",
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "a serializable read catches up on its own",
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "the read's header revision is at least the write's",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "a key that was never written is absent on every member",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 39,
+			"slug": "revision_agreement",
+			"name": "Revisions and terms agree across members",
+			"ext": true,
+			"section": "F",
+			"file": "src/stages/s39_revision_agreement.rs",
+			"planDone": false,
+			"ladder": "cluster",
+			"hints": [
+				"cluster_id is the same on every member; member_id is not",
+				"Revisions are cluster-wide: two members never answer different revisions for the same state",
+				"raft_term is the same on every member once an election has settled",
+				"raft_applied_index catches up to raft_index on a quiet cluster"
+			],
+			"tests": [
+				{
+					"name": "the cluster id is the same on every member",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "no two members share a member id",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "every member reports the same revision on a quiet cluster",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "the raft term is the same everywhere once an election has settled",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "the applied index catches up to the raft index",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "two members never answer different values at the same revision",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "the member list is the same seen from every member",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "no member's revision ever goes backwards",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "the member that answered names itself in the header",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 40,
+			"slug": "minority_refuses_writes",
+			"name": "The minority of a partition refuses writes",
+			"ext": true,
+			"section": "F",
+			"file": "src/stages/s40_minority_refuses_writes.rs",
+			"planDone": false,
+			"ladder": "cluster",
+			"hints": [
+				"A member that cannot reach a quorum must refuse a write rather than apply it locally",
+				"It must also refuse a linearizable read: answering from stale state is the same bug",
+				"Refuse with an error the client can see, and do not hang forever",
+				"A serializable read may still be answered, and may be stale — that is what it means"
+			],
+			"tests": [
+				{
+					"name": "the isolated member refuses a write",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "the isolated member refuses a linearizable read",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "a serializable read on the isolated member is still answered",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "the isolated leader does not carry on as if nothing had happened",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "the majority keeps accepting writes while one member is cut off",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "the isolated member still answers for itself",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "the isolated member writes again once the partition heals",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "two members of five, cut off together, still refuse writes",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				}
+			],
+			"exampleCount": 1
+		},
+		{
+			"number": 41,
+			"slug": "majority_keeps_serving",
+			"name": "The majority of a partition keeps serving",
+			"ext": true,
+			"section": "F",
+			"file": "src/stages/s41_majority_keeps_serving.rs",
+			"planDone": false,
+			"ladder": "cluster",
+			"hints": [
+				"A quorum of members is enough: the cluster does not need everyone",
+				"The majority side elects a leader among itself if the old one was cut off",
+				"Writes keep succeeding on the majority side while the partition stands",
+				"The revision keeps advancing, and the minority side knows nothing about it"
+			],
+			"tests": [
+				{
+					"name": "the majority accepts writes with one member cut off",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "the majority elects a leader of its own when the old one is cut off",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "the revision keeps advancing on the majority side",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "reads on the majority side see every write",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "a write on the majority side is invisible to the cut-off member",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "both sides of the split name the same leader on the majority side",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "the majority survives the whole partition with no restart",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "three of five keep serving with two cut off",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				}
+			],
+			"exampleCount": 1
+		},
+		{
+			"number": 42,
+			"slug": "partition_heals",
+			"name": "A healed partition catches the minority up",
+			"ext": true,
+			"section": "F",
+			"file": "src/stages/s42_partition_heals.rs",
+			"planDone": false,
+			"ladder": "cluster",
+			"hints": [
+				"When the link comes back, the stale member learns the entries it missed",
+				"It adopts the higher term and steps down if it still thought it was leader",
+				"Nothing the minority side accepted may appear in the log afterwards",
+				"The catch-up must finish without a restart or an operator"
+			],
+			"tests": [
+				{
+					"name": "a cut-off member catches up on its own once the link is back",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "the healed member adopts the term and the leader the majority moved to",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "nothing the cut-off member tried to write survives the heal",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "the whole cluster agrees on one revision again",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "a delete made during the partition reaches the healed member too",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "a second partition and heal works exactly the same way",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "a member that missed a few hundred writes still catches up",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "a five-member cluster heals a two-against-three split",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				}
+			],
+			"exampleCount": 1
+		},
+		{
+			"number": 43,
+			"slug": "leader_election",
+			"name": "A killed leader is replaced",
+			"ext": true,
+			"section": "G",
+			"file": "src/stages/s43_leader_election.rs",
+			"planDone": false,
+			"ladder": "cluster",
+			"hints": [
+				"A follower that stops hearing from the leader starts an election",
+				"Only a member whose log is at least as up to date may win",
+				"The new term is strictly greater than the old one",
+				"The cluster must be serving again within a bounded time, not eventually"
+			],
+			"tests": [
+				{
+					"name": "a killed leader is replaced within a bound",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "the term after the election is strictly greater",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "the survivors agree on who the new leader is",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "the cluster accepts writes again after the election",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "the new leader still holds every acknowledged write",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "the killed member rejoins when it is started again",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "killing a follower changes nothing",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "a five-member cluster survives two kills",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				}
+			],
+			"exampleCount": 1
+		},
+		{
+			"number": 44,
+			"slug": "no_acknowledged_write_lost",
+			"name": "No acknowledged write is lost",
+			"ext": true,
+			"section": "G",
+			"file": "src/stages/s44_no_acknowledged_write_lost.rs",
+			"planDone": false,
+			"ladder": "cluster",
+			"hints": [
+				"A write is only acknowledged once a quorum has it on disk",
+				"After the leader is killed, every acknowledged write must still be readable",
+				"A write that was never acknowledged may be there or not: both are correct",
+				"This is the property the whole design exists to provide"
+			],
+			"tests": [
+				{
+					"name": "an acknowledged write survives the leader being killed",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "a hundred acknowledged writes survive a leader kill",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "writes acknowledged through a follower survive too",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "the revision an acknowledged write was given is still readable",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "a kill in the middle of a burst loses nothing that was acknowledged",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "the survivors agree about every key, acknowledged or not",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "an acknowledged delete is as durable as an acknowledged write",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "five members and two leader kills lose nothing",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				}
+			],
+			"exampleCount": 1
+		},
+		{
+			"number": 45,
+			"slug": "old_leader_rejoins",
+			"name": "An old leader rejoins without resurrecting anything",
+			"ext": true,
+			"section": "G",
+			"file": "src/stages/s45_old_leader_rejoins.rs",
+			"planDone": false,
+			"ladder": "cluster",
+			"hints": [
+				"A leader that was cut off may hold entries no quorum ever accepted",
+				"On rejoining it sees a higher term, steps down, and truncates those entries",
+				"A client that read from the new majority must never see the old entries appear",
+				"Its own view of the key must become the cluster's, not the other way round"
+			],
+			"tests": [
+				{
+					"name": "the old leader's view of a key becomes the cluster's",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "a write on the isolated old leader is refused",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "nothing the isolated side was told to write appears after the heal",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "a value read from the new majority never turns back into the old one",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "the term the old leader ends in is at least the new one",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "the old leader's revision catches up with the majority's",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "isolating and healing the same member twice works",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "the cluster names exactly one leader once the link is back",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				}
+			],
+			"exampleCount": 1
+		},
+		{
+			"number": 46,
+			"slug": "follower_catch_up",
+			"name": "A long-partitioned follower catches up",
+			"ext": true,
+			"section": "G",
+			"file": "src/stages/s46_follower_catch_up.rs",
+			"planDone": false,
+			"ladder": "cluster",
+			"hints": [
+				"The leader keeps sending from the follower's next index until it catches up",
+				"Hundreds of missed writes must arrive without a restart",
+				"Until it has caught up, the follower must not answer linearizable reads from stale state",
+				"Catching up must not disturb the members that were healthy"
+			],
+			"tests": [
+				{
+					"name": "a follower that missed three hundred writes catches up on its own",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "every key it missed is there and correct afterwards",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "its revision lags behind the majority's while it is cut off",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "it answers the newest revision once it has caught up",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "the members that stayed healthy were undisturbed",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "the cluster kept serving while the follower was away",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "catching up does not change the leader",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "a follower cut off twice in a row catches up twice",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				}
+			],
+			"exampleCount": 1
+		},
+		{
+			"number": 47,
+			"slug": "snapshot_catch_up",
+			"name": "A far-behind follower is caught up by snapshot",
+			"ext": true,
+			"section": "G",
+			"file": "src/stages/s47_snapshot_catch_up.rs",
+			"planDone": false,
+			"ladder": "cluster",
+			"hints": [
+				"When the entries a follower needs have been compacted away, send a snapshot instead",
+				"The follower replaces its whole state with the snapshot and continues from its index",
+				"After a snapshot install the follower answers the same values as everyone else",
+				"Compaction on the leader is what makes this path necessary at all"
+			],
+			"tests": [
+				{
+					"name": "a follower converges after the entries it missed were compacted away",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "its values match the majority's once it is back",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "it answers the current revision once it is back",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "a read below the compacted revision is an error on every member alike",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "the cluster keeps serving while the follower is being caught up",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "writes made while it was catching up reach it as well",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "compacting with every member healthy changes nothing",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "the newest value of every key survives a compaction",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				}
+			],
+			"exampleCount": 1
+		},
+		{
+			"number": 48,
+			"slug": "member_add",
+			"name": "Adding a member",
+			"ext": true,
+			"section": "G",
+			"file": "src/stages/s48_member_add.rs",
+			"planDone": false,
+			"ladder": "cluster",
+			"hints": [
+				"POST /v3/cluster/member/add takes the new member's peer URLs and changes the configuration",
+				"The new member starts with --initial-cluster-state existing and the full member list",
+				"The cluster keeps serving throughout: a configuration change is one more log entry",
+				"The new member catches up from the leader and then counts towards the quorum"
+			],
+			"tests": [
+				{
+					"name": "the member list grows to four",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "the new member catches up and answers every value",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "values written after the add reach the new member too",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "the cluster keeps serving before, during and after the add",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "the new member counts towards the quorum afterwards",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "adding a member that is already there is an error",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "the new member reports the same cluster id, leader and term",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				}
+			],
+			"exampleCount": 1
+		},
+		{
+			"number": 49,
+			"slug": "member_remove",
+			"name": "Removing a member",
+			"ext": true,
+			"section": "G",
+			"file": "src/stages/s49_member_remove.rs",
+			"planDone": false,
+			"ladder": "cluster",
+			"hints": [
+				"POST /v3/cluster/member/remove takes the member id, not its name",
+				"The quorum size changes with the membership, so removing a member can restore availability",
+				"The removed member must stop being counted, and the rest must keep serving",
+				"Removing a member that does not exist is an error, not a silent success"
+			],
+			"tests": [
+				{
+					"name": "the member list shrinks to two",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "the cluster keeps serving once a member is removed",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "nothing written before the removal is lost by it",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "the removed member is no longer counted anywhere",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "two of two is the quorum once the third is gone",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "removing the leader triggers an election and the cluster recovers",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "removing a member id that does not exist is an error",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "you cannot remove your way below one member",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				}
+			],
+			"exampleCount": 1
+		},
+		{
+			"number": 50,
+			"slug": "whole_cluster_restart",
+			"name": "Restarting the whole cluster loses nothing",
+			"ext": true,
+			"section": "G",
+			"file": "src/stages/s50_whole_cluster_restart.rs",
+			"planDone": false,
+			"ladder": "cluster",
+			"hints": [
+				"Every member restarts from its own data directory with no reformatting",
+				"The cluster re-elects a leader and continues from the revision it had",
+				"Every acknowledged write is still there, with the same revisions",
+				"A member that restarts must not rejoin as a brand new one"
+			],
+			"tests": [
+				{
+					"name": "every acknowledged write survives a restart of every member",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "the cluster elects a leader again",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "the revision continues rather than restarting",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "the member list and the cluster id are unchanged",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "the cluster serves writes again after a restart",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "two restarts in a row lose nothing",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "a restart after a partition has healed loses nothing",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "every member still holds the same data",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "five members restart together",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				}
+			],
+			"exampleCount": 1
+		},
+		{
+			"number": 51,
+			"slug": "clock_skew",
+			"name": "Clock skew changes nothing about safety",
+			"ext": true,
+			"section": "G",
+			"file": "src/stages/s51_clock_skew.rs",
+			"planDone": false,
+			"ladder": "cluster",
+			"hints": [
+				"Raft safety rests on terms and indexes, never on wall-clock time",
+				"A member whose clock is hours off must still agree on every value",
+				"Lease expiry may be affected; linearizability may not",
+				"Never compare timestamps from two different machines to order writes"
+			],
+			"tests": [
+				{
+					"name": "a 50 ms delay on every link changes no value",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "a 200 ms delay on every link changes no value",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "the revision sequence stays strictly increasing under a delay",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "every member converges once the delay is removed",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "the leader may change under a large delay, the values may not",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "a delay on one link alone changes nothing",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "no member's revision goes backwards while peer traffic is skewed",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "writes made under skew are all readable once it is gone",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				}
+			],
+			"exampleCount": 1
+		},
+		{
+			"number": 52,
+			"slug": "lossy_link",
+			"name": "A slow, lossy link degrades throughput, not safety",
+			"ext": true,
+			"section": "H",
+			"file": "src/stages/s52_lossy_link.rs",
+			"planDone": false,
+			"ladder": "cluster",
+			"hints": [
+				"Delay and connection loss slow the cluster down; they never change what it answers",
+				"A transport that cannot deliver must retry, not drop the entry",
+				"Throughput falls and latency rises: the test records both and asserts neither",
+				"Every acknowledged write must still be readable when the link recovers"
+			],
+			"tests": [
+				{
+					"name": "a workload over a lossy link still acknowledges writes",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "throughput and latency are measured and reported, not asserted",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "every acknowledged write is readable once the link recovers",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "every member converges once the link recovers",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "no member's revision goes backwards",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "a lossy link changes no value",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "one leader is named again once the link recovers",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "the injector really did refuse peer connections",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				}
+			],
+			"exampleCount": 1
+		},
+		{
+			"number": 53,
+			"slug": "duplicate_and_reorder",
+			"name": "Duplicated and reordered peer messages are tolerated",
+			"ext": true,
+			"section": "H",
+			"file": "src/stages/s53_duplicate_and_reorder.rs",
+			"planDone": false,
+			"ladder": "cluster",
+			"hints": [
+				"A retransmitted append must be idempotent: applying it twice changes nothing",
+				"An out-of-order append is rejected on its previous index, not applied at the wrong place",
+				"Terms and indexes are what make this safe, not the order bytes happen to arrive in",
+				"The cluster must keep making progress, not merely avoid corruption"
+			],
+			"tests": [
+				{
+					"name": "a run of writes all succeed while peer messages are mangled",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "every value written under mangling reads back",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "the revision sequence is unbroken",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "every member converges once the mangling stops",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "a retransmitted append is idempotent, so no value is applied twice",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "one leader is still named under mangling",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "a read under mangling never invents a value",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "what the proxy managed to mangle is reported",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				}
+			],
+			"exampleCount": 1
+		},
+		{
+			"number": 54,
+			"slug": "linearizability",
+			"name": "Linearizability under fault injection",
+			"ext": true,
+			"section": "H",
+			"file": "src/stages/s54_linearizability.rs",
+			"planDone": false,
+			"ladder": "cluster",
+			"hints": [
+				"A randomized concurrent workload runs while the seeded schedule cuts and heals the network",
+				"Every call is recorded with the instant it was made and the instant it answered",
+				"An operation whose answer was lost may have happened or not; everything else is pinned",
+				"The checker looks for one total order that a single key/value store could have produced"
+			],
+			"tests": [
+				{
+					"name": "an impossible history is reported with the operations that make it impossible",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "an undecided search is reported as a note, not as a failure",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "a workload with no faults is linearizable",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "the recorded history holds a real workload",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "every member converges once the workload stops",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "a workload under the seeded schedule is linearizable",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "a workload with one member isolated throughout is linearizable",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "a workload across a leader kill is linearizable",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				}
+			],
+			"exampleCount": 1
+		},
+		{
+			"number": 55,
+			"slug": "five_node_soak",
+			"name": "Five members, mixed faults, and nothing left behind",
+			"ext": true,
+			"section": "H",
+			"file": "src/stages/s55_five_node_soak.rs",
+			"planDone": false,
+			"ladder": "cluster",
+			"hints": [
+				"Five members tolerate two failures; the quorum arithmetic is the only thing that changes",
+				"Partitions, kills, delays and message mangling all in one run",
+				"After the faults heal, every member must converge on the same values",
+				"No process, port or temporary file may survive the end of the run"
+			],
+			"tests": [
+				{
+					"name": "five members form one cluster and name one leader",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "a mixed-fault soak on five members is linearizable",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "every member converges after the soak",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "five members survive two failures",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "a two-against-three partition leaves the three serving",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "the quorum arithmetic of five is not the arithmetic of three",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				},
+				{
+					"name": "nothing is left behind when the soak is over",
+					"ext": true,
+					"tags": [
+						"cluster"
+					]
+				}
+			],
+			"exampleCount": 1
 		}
 	],
 	"totals": {
-		"stages": 9,
-		"tests": 0,
-		"ext": 0
+		"stages": 55,
+		"tests": 475,
+		"ext": 35
 	},
-	"pending": true,
-	"source": "placeholder — disttest has not published a catalog or a plan yet"
+	"source": "disttest/catalog.json"
 }

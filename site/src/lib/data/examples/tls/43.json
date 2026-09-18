@@ -1,0 +1,101 @@
+[
+	{
+		"title": "A NewSessionTicket",
+		"kind": "wire",
+		"request": "The client's Finished, which is what the resumption secret is taken over",
+		"request_hex": "14000030baf2e65c8ce085f5263ed3618b91ca1bbe8d9e7bf90d8dff0a1c1da00ff987b2ebf27f7529f6010e3f84d92ba555a627",
+		"response": "`04`, a uint24 length, ticket_lifetime, ticket_age_add, a ticket_nonce, the opaque ticket itself, and an extensions block.",
+		"response_hex": "040000e500001c20416dce0008000000000000000000d04ed6b5ec736ca989487f59f314e9223b6adf64476406965c46fb140dcf22bfd65cf64bdb4f4a66f65b0d9bc13d10d6f855a4bc9d33a9496b4d23f375a7307c6f5cb32341e08d014b617030edf1551d5426a1842ad260e49541bb4d7e7426e349e87bcd51a54243156dc54420e78c19c7c27a60a0095606146a0ea4f1ad168f6217062a6b8f4af6576bae1fa649b80ce09be286ad5fd4eca9745a8efb75d271377283e688e0a9e58566c433a7bc525ff3d852a82e37c64c337dd74a7e45fad7774912b54bc894d23443d07422353535c00000",
+		"note": "The ticket is opaque to the client: it is whatever the server needs to recover the PSK, usually its own state sealed under a key only it holds.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 1,
+				"field": "finished.msg_type",
+				"value": "finished(20)"
+			},
+			{
+				"offset": 1,
+				"length": 3,
+				"field": "finished.length",
+				"value": "48 (bytes of body that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 48,
+				"field": "finished.verify_data",
+				"value": "baf2e65c8ce085f5263ed3618b91ca1bbe8d9e7bf90d8dff0a1c1da00ff987b2ebf27f7529f6010e3f84d92ba555a627 — HMAC(finished_key, Transcript-Hash(everything before this message))",
+				"varies": true
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 1,
+				"field": "new_session_ticket.msg_type",
+				"value": "new_session_ticket(4)"
+			},
+			{
+				"offset": 1,
+				"length": 3,
+				"field": "new_session_ticket.length",
+				"value": "229 (bytes of body that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "new_session_ticket.ticket_lifetime",
+				"value": "7200 seconds"
+			},
+			{
+				"offset": 8,
+				"length": 4,
+				"field": "new_session_ticket.ticket_age_add",
+				"value": "0x416dce00 — added to the client's ticket age so it cannot be correlated",
+				"varies": true
+			},
+			{
+				"offset": 12,
+				"length": 1,
+				"field": "new_session_ticket.ticket_nonce.length",
+				"value": "8"
+			},
+			{
+				"offset": 13,
+				"length": 8,
+				"field": "new_session_ticket.ticket_nonce",
+				"value": "0000000000000000 — the PSK is HKDF-Expand-Label(resumption_master_secret, \"resumption\", this, Hash.length)"
+			},
+			{
+				"offset": 21,
+				"length": 2,
+				"field": "new_session_ticket.ticket.length",
+				"value": "208 bytes"
+			},
+			{
+				"offset": 23,
+				"length": 208,
+				"field": "new_session_ticket.ticket",
+				"value": "4ed6b5ec736ca989… (208 bytes) — opaque to the client; it becomes the PSK identity",
+				"varies": true
+			},
+			{
+				"offset": 231,
+				"length": 2,
+				"field": "new_session_ticket.extensions.length",
+				"value": "0 — an `early_data` extension here would carry max_early_data_size"
+			}
+		]
+	},
+	{
+		"title": "The binder, step by step",
+		"kind": "text",
+		"request": "binder_key   = Derive-Secret(Early Secret, \"res binder\", \"\")\nfinished_key = HKDF-Expand-Label(binder_key, \"finished\", \"\", Hash.length)\nbinder       = HMAC(finished_key, Transcript-Hash(Truncate(ClientHello)))",
+		"request_hex": "",
+		"response": "Truncate() stops just before the binder list's two-byte length — everything from `01` to the end of the identities is hashed, and nothing after.",
+		"response_hex": "",
+		"note": "The Early Secret here is HKDF-Extract(0, PSK), not the zero-PSK one: the binder proves the client knows the PSK before the server has spent anything on it.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

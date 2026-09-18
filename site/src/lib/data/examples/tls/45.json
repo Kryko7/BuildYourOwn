@@ -1,0 +1,24 @@
+[
+	{
+		"title": "The shortest independent client there is",
+		"kind": "text",
+		"request": "printf 'interop\\n' | openssl s_client -connect 127.0.0.1:PORT -tls1_3 -quiet",
+		"request_hex": "",
+		"response": "`ponretni` on stdout. With `-quiet` dropped, s_client also prints the negotiated protocol, cipher suite, temp key and certificate chain.",
+		"response_hex": "",
+		"note": "This is the test that catches the bugs two implementations by the same author agree on. Run it early and often — it costs one command line.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "Pinning the negotiation from the outside",
+		"kind": "text",
+		"request": "-ciphersuites TLS_CHACHA20_POLY1305_SHA256   pins the suite\n-groups secp256r1                            pins the group\n-sess_out f / -sess_in f                     saves and resumes a session\n-CAfile cert.pem -verify_return_error        makes verification fatal",
+		"request_hex": "",
+		"response": "Each flag exercises one negotiation path end to end, with an implementation that has no idea what your server does internally.",
+		"response_hex": "",
+		"note": "`curl --tlsv1.3` is deliberately not used here: this track's contract is a line-reversing echo, not HTTP, so curl would have nothing meaningful to say.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

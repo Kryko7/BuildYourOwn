@@ -1,0 +1,76 @@
+[
+	{
+		"title": "The message that ends the server's flight",
+		"kind": "wire",
+		"request": "The CertificateVerify that comes immediately before it",
+		"request_hex": "0f00004b040300473045022100875b80f34552a424d327a7220505f36f9ed2a8da6c35dae6e9c988a869b8750602207359a4e6f41ef0a845cebfed6c6a2dbef7e65f707c01156f9f910794ddacb5ba",
+		"response": "`14`, `00 00 20` (or `00 00 30` under SHA-384), and the verify_data — an HMAC and nothing else.",
+		"response_hex": "14000030e33f182d02d512d1d010a4fb02748e798e7127e26c9d672fff6d88371e38d6aa04c310730871bb7013c323ff841d4440",
+		"note": "Once this verifies, the client knows the server holds the handshake keys and that neither side's view of the transcript has been tampered with.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 1,
+				"field": "certificate_verify.msg_type",
+				"value": "certificate_verify(15)"
+			},
+			{
+				"offset": 1,
+				"length": 3,
+				"field": "certificate_verify.length",
+				"value": "75 (bytes of body that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 2,
+				"field": "certificate_verify.algorithm",
+				"value": "ecdsa_secp256r1_sha256(0x0403)"
+			},
+			{
+				"offset": 6,
+				"length": 2,
+				"field": "certificate_verify.signature.length",
+				"value": "71 bytes"
+			},
+			{
+				"offset": 8,
+				"length": 71,
+				"field": "certificate_verify.signature",
+				"value": "over 64 spaces, \"TLS 1.3, server CertificateVerify\", a zero byte and Transcript-Hash(ClientHello..Certificate) — 3045022100875b80… (71 bytes)",
+				"varies": true
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 1,
+				"field": "finished.msg_type",
+				"value": "finished(20)"
+			},
+			{
+				"offset": 1,
+				"length": 3,
+				"field": "finished.length",
+				"value": "48 (bytes of body that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 48,
+				"field": "finished.verify_data",
+				"value": "e33f182d02d512d1d010a4fb02748e798e7127e26c9d672fff6d88371e38d6aa04c310730871bb7013c323ff841d4440 — HMAC(finished_key, Transcript-Hash(everything before this message))",
+				"varies": true
+			}
+		]
+	},
+	{
+		"title": "Signature and MAC, and why both",
+		"kind": "text",
+		"request": "CertificateVerify proves possession of the certificate's private key over the transcript up to Certificate.",
+		"request_hex": "",
+		"response": "Finished proves possession of the handshake traffic secret — that is, of the (EC)DHE shared secret — over the transcript up to CertificateVerify.",
+		"response_hex": "",
+		"note": "The signature authenticates the identity; the MAC binds that identity to *this* key exchange. Without the Finished, a signature captured from another connection could be replayed.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

@@ -1,0 +1,24 @@
+[
+	{
+		"title": "A snapshot with money in the channel",
+		"kind": "primitives",
+		"request": "`p1` sends 30, then `p2` starts the snapshot while that 30 is still in the channel\n\n./your_program.sh snapshot\ninit p1 100\ninit p2 50\nchannel p1 p2\nchannel p2 p1\nsend p1 p2 30\nsnapshot p2\ndeliver p2 p1\ndeliver p1 p2\ndeliver p1 p2\nresult",
+		"request_hex": "2e2f796f75725f70726f6772616d2e736820736e617073686f740a696e6974207031203130300a696e69742070322035300a6368616e6e656c2070312070320a6368616e6e656c2070322070310a73656e642070312070322033300a736e617073686f742070320a64656c697665722070322070310a64656c697665722070312070320a64656c697665722070312070320a726573756c74",
+		"response": "balances 70 and 50, the channel `p1->p2` holding the 30, and a total of 150 — the money the system started with\n\n{\"processes\":1}\n{\"processes\":2}\n{\"channels\":1}\n{\"channels\":2}\n{\"in_flight\":1}\n{\"started\":true}\n{\"balance\":70}\n{\"balance\":80}\n{\"balance\":80}\n{\"balances\":{\"p1\":70,\"p2\":50},\"channels\":{\"p1->p2\":30,\"p2->p1\":0},\"complete\":true,\"total\":150}",
+		"response_hex": "7b2270726f636573736573223a317d0a7b2270726f636573736573223a327d0a7b226368616e6e656c73223a317d0a7b226368616e6e656c73223a327d0a7b22696e5f666c69676874223a317d0a7b2273746172746564223a747275657d0a7b2262616c616e6365223a37307d0a7b2262616c616e6365223a38307d0a7b2262616c616e6365223a38307d0a7b2262616c616e636573223a7b227031223a37302c227032223a35307d2c226368616e6e656c73223a7b2270312d3e7032223a33302c2270322d3e7031223a307d2c22636f6d706c657465223a747275652c22746f74616c223a3135307d",
+		"note": "The 30 is in neither balance at the instant of the snapshot: it has left `p1` and not reached `p2`. A snapshot that records only balances loses it, which is exactly why the algorithm records channels as well.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "What the marker separates",
+		"kind": "primitives",
+		"request": "a marker delivered to `p2`, and only then a payment down the same channel\n\n./your_program.sh snapshot\ninit p1 100\ninit p2 50\nchannel p1 p2\nchannel p2 p1\nsnapshot p1\ndeliver p1 p2\nsend p1 p2 25\ndeliver p1 p2\ndeliver p2 p1\nresult",
+		"request_hex": "2e2f796f75725f70726f6772616d2e736820736e617073686f740a696e6974207031203130300a696e69742070322035300a6368616e6e656c2070312070320a6368616e6e656c2070322070310a736e617073686f742070310a64656c697665722070312070320a73656e642070312070322032350a64656c697665722070312070320a64656c697665722070322070310a726573756c74",
+		"response": "a complete snapshot whose channels are both empty, still totalling 150\n\n{\"processes\":1}\n{\"processes\":2}\n{\"channels\":1}\n{\"channels\":2}\n{\"started\":true}\n{\"balance\":50}\n{\"in_flight\":1}\n{\"balance\":75}\n{\"balance\":75}\n{\"balances\":{\"p1\":100,\"p2\":50},\"channels\":{\"p1->p2\":0,\"p2->p1\":0},\"complete\":true,\"total\":150}",
+		"response_hex": "7b2270726f636573736573223a317d0a7b2270726f636573736573223a327d0a7b226368616e6e656c73223a317d0a7b226368616e6e656c73223a327d0a7b2273746172746564223a747275657d0a7b2262616c616e6365223a35307d0a7b22696e5f666c69676874223a317d0a7b2262616c616e6365223a37357d0a7b2262616c616e6365223a37357d0a7b2262616c616e636573223a7b227031223a3130302c227032223a35307d2c226368616e6e656c73223a7b2270312d3e7032223a302c2270322d3e7031223a307d2c22636f6d706c657465223a747275652c22746f74616c223a3135307d",
+		"note": "The 25 was sent after the marker, so it belongs to the future of the snapshot, not to its past. Recording it would count it twice: once in the balance `p1` recorded before it left, and once in the channel.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

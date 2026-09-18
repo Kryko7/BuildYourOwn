@@ -1,0 +1,35 @@
+[
+	{
+		"title": "A jittered delay, and where the cap bites",
+		"kind": "primitives",
+		"request": "a 100 ms base capped at a second, sampled at four attempts\n\n./your_program.sh backoff\ninit 100 1000\nnext 0 1\nnext 3 1\nnext 5 1\nnext 3 0.5\nnext 3 0",
+		"request_hex": "2e2f796f75725f70726f6772616d2e7368206261636b6f66660a696e69742031303020313030300a6e657874203020310a6e657874203320310a6e657874203520310a6e657874203320302e350a6e65787420332030",
+		"response": "100, 800, 1000 — the cap — then 400 and 0 for the smaller samples\n\n{\"ok\":true}\n{\"delay\":100.0}\n{\"delay\":800.0}\n{\"delay\":1000.0}\n{\"delay\":400.0}\n{\"delay\":0.0}",
+		"response_hex": "7b226f6b223a747275657d0a7b2264656c6179223a3130302e307d0a7b2264656c6179223a3830302e307d0a7b2264656c6179223a313030302e307d0a7b2264656c6179223a3430302e307d0a7b2264656c6179223a302e307d",
+		"note": "The sample `u` arrives with the command rather than being drawn inside, so a jittered delay is still exactly reproducible. A real sample comes from [0, 1); the 1 here is only to show where the ceiling is. Full jitter spreads over the whole interval from zero, and a retry that always waits the ceiling is not jittered at all — a fleet of them then retries in lockstep.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "Silence, and how suspicious it is",
+		"kind": "primitives",
+		"request": "a heartbeat a second, then phi asked at the last beat, a second on, and ten\n\n./your_program.sh phi-accrual\nheartbeat 0\nheartbeat 1000\nheartbeat 2000\nphi 2000\nphi 3000\nphi 12000",
+		"request_hex": "2e2f796f75725f70726f6772616d2e7368207068692d6163637275616c0a68656172746265617420300a68656172746265617420313030300a68656172746265617420323030300a70686920323030300a70686920333030300a706869203132303030",
+		"response": "phi near zero, then a fraction, then a number well past four\n\n{\"samples\":0}\n{\"samples\":1}\n{\"samples\":2}\n{\"phi\":0.0}\n{\"phi\":0.43429448190325176}\n{\"phi\":4.3429448190325175}",
+		"response_hex": "7b2273616d706c6573223a307d0a7b2273616d706c6573223a317d0a7b2273616d706c6573223a327d0a7b22706869223a302e307d0a7b22706869223a302e34333432393434383139303332353137367d0a7b22706869223a342e333432393434383139303332353137357d",
+		"note": "Phi is not a verdict but a number: how unlikely this much silence is, on a log scale, given how the heartbeats have been arriving. A detector that compares the gap with a fixed timeout cannot adapt to a link that is simply slower.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "Two deadlines from the last ack",
+		"kind": "primitives",
+		"request": "a node acked at 0 ms, asked about either side of both deadlines, then acked again\n\n./your_program.sh swim\ninit 1000 3000\nack n2 0\nstatus n2 999\nstatus n2 1000\nstatus n2 3000\nack n2 3000\nstatus n2 3100",
+		"request_hex": "2e2f796f75725f70726f6772616d2e7368207377696d0a696e6974203130303020333030300a61636b206e3220300a737461747573206e32203939390a737461747573206e3220313030300a737461747573206e3220333030300a61636b206e3220333030300a737461747573206e322033313030",
+		"response": "alive, suspect, dead — and alive again once the ack lands\n\n{\"ok\":true}\n{\"ok\":true}\n{\"state\":\"alive\"}\n{\"state\":\"suspect\"}\n{\"state\":\"dead\"}\n{\"ok\":true}\n{\"state\":\"alive\"}",
+		"response_hex": "7b226f6b223a747275657d0a7b226f6b223a747275657d0a7b227374617465223a22616c697665227d0a7b227374617465223a2273757370656374227d0a7b227374617465223a2264656164227d0a7b226f6b223a747275657d0a7b227374617465223a22616c697665227d",
+		"note": "Both deadlines are measured from the last ack and both are sharp: at exactly 1000 ms the node is already suspect. Suspicion is not a verdict of death, which is why the third state exists at all.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

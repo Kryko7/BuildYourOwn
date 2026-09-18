@@ -1,0 +1,24 @@
+[
+	{
+		"title": "A reply that overtakes what it replies to",
+		"kind": "primitives",
+		"request": "`b` answers `a`, and `c` is handed the answer before the question\n\n./your_program.sh causal-broadcast\ninit a,b,c\nbcast a m1\nrecv b a m1 {\"a\":1}\nbcast b m2\nrecv c b m2 {\"a\":1,\"b\":1}\nrecv c a m1 {\"a\":1}\ndelivered c",
+		"request_hex": "2e2f796f75725f70726f6772616d2e73682063617573616c2d62726f6164636173740a696e697420612c622c630a62636173742061206d310a7265637620622061206d31207b2261223a317d0a62636173742062206d320a7265637620632062206d32207b2261223a312c2262223a317d0a7265637620632061206d31207b2261223a317d0a64656c6976657265642063",
+		"response": "m2 waits in the buffer, then both are delivered the moment m1 arrives\n\n{\"processes\":3}\n{\"vc\":{\"a\":1}}\n{\"buffered\":0,\"delivered\":[\"m1\"]}\n{\"vc\":{\"a\":1,\"b\":1}}\n{\"buffered\":1,\"delivered\":[]}\n{\"buffered\":0,\"delivered\":[\"m1\",\"m2\"]}\n{\"messages\":[\"m1\",\"m2\"]}",
+		"response_hex": "7b2270726f636573736573223a337d0a7b227663223a7b2261223a317d7d0a7b226275666665726564223a302c2264656c697665726564223a5b226d31225d7d0a7b227663223a7b2261223a312c2262223a317d7d0a7b226275666665726564223a312c2264656c697665726564223a5b5d7d0a7b226275666665726564223a302c2264656c697665726564223a5b226d31222c226d32225d7d0a7b226d65737361676573223a5b226d31222c226d32225d7d",
+		"note": "The clock on m2 is {\"a\":1,\"b\":1}: it says `b` had seen one message from `a` before it spoke. `c` has seen none, so the entry for `a` is the gap, and the buffer is what a receiver does with a message it is not yet allowed to read.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "Two senders who never heard each other",
+		"kind": "primitives",
+		"request": "`a` and `b` broadcast without seeing each other, and `c` hears `b` first\n\n./your_program.sh causal-broadcast\ninit a,b,c\nbcast a m1\nbcast b m2\nrecv c b m2 {\"b\":1}\nrecv c a m1 {\"a\":1}\ndelivered c",
+		"request_hex": "2e2f796f75725f70726f6772616d2e73682063617573616c2d62726f6164636173740a696e697420612c622c630a62636173742061206d310a62636173742062206d320a7265637620632062206d32207b2262223a317d0a7265637620632061206d31207b2261223a317d0a64656c6976657265642063",
+		"response": "both are delivered straight away, in the order they arrived\n\n{\"processes\":3}\n{\"vc\":{\"a\":1}}\n{\"vc\":{\"b\":1}}\n{\"buffered\":0,\"delivered\":[\"m2\"]}\n{\"buffered\":0,\"delivered\":[\"m1\"]}\n{\"messages\":[\"m2\",\"m1\"]}",
+		"response_hex": "7b2270726f636573736573223a337d0a7b227663223a7b2261223a317d7d0a7b227663223a7b2262223a317d7d0a7b226275666665726564223a302c2264656c697665726564223a5b226d32225d7d0a7b226275666665726564223a302c2264656c697665726564223a5b226d31225d7d0a7b226d65737361676573223a5b226d32222c226d31225d7d",
+		"note": "Causal order is a partial order, not a queue. m1 and m2 are concurrent, so either order is correct and a test that demands one of them is wrong. Holding m2 back until m1 arrives would be the opposite mistake: needless blocking.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

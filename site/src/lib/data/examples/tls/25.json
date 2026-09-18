@@ -1,0 +1,100 @@
+[
+	{
+		"title": "A CertificateVerify message",
+		"kind": "wire",
+		"request": "The Certificate message whose hash this signature covers",
+		"request_hex": "0b0001c4000001c00001bb308201b73082015da003020102021447a04d5d7708feeaec52c950f90e203cb0301996300a06082a8648ce3d04030230173115301306035504030c0c746c7374657374206c656166301e170d3234303130313030303030305a170d3335303130313030303030305a30173115301306035504030c0c746c7374657374206c6561663059301306072a8648ce3d020106082a8648ce3d0301070342000447a88f1cbf5f0a0dbc5b93a22191cc4e4f8859568d4d5edf01e93ba94a05f1233c672b516ca470797c85d5f0ed9afeda87d643f10f2f215fb0d2b5c74008f018a38186308183302b0603551d110424302282096c6f63616c686f737487047f000001820f746c73746573742e696e76616c6964300f0603551d0f0101ff0405030307a00030130603551d25040c300a06082b06010505070301301d0603551d0e041604145ab3987b6ae55fdd8fc5fbc950498f1a58a222ec300f0603551d130101ff04053003010100300a06082a8648ce3d0403020348003045022100bb8b43522f57fd12d7c7205732daa32c0cdb710440c75c1fb34f17b32d4fc05a02204af7e869782a11d1d563c2ced981dfafe5853868582099b4585d7b229dc2b1450000",
+		"response": "`0f`, a uint24 length, a uint16 SignatureScheme, a uint16 signature length, and the signature.",
+		"response_hex": "0f00004b0403004730450220251877ec05d0205cd6b95ec187993192223f56cbde8a5221d193c21c470ad4ff022100d20db24166fd8ef53b659481967bd9b0964e5488ceafe37ac4d243e13895ec50",
+		"note": "The signature is over content the message does not contain: 64 spaces, a context string, a zero byte and the transcript hash up to and including Certificate.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 1,
+				"field": "certificate.msg_type",
+				"value": "certificate(11)"
+			},
+			{
+				"offset": 1,
+				"length": 3,
+				"field": "certificate.length",
+				"value": "452 (bytes of body that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 1,
+				"field": "certificate.certificate_request_context.length",
+				"value": "0 — a server's Certificate always carries an empty context"
+			},
+			{
+				"offset": 5,
+				"length": 3,
+				"field": "certificate.certificate_list.length",
+				"value": "448 bytes"
+			},
+			{
+				"offset": 8,
+				"length": 3,
+				"field": "certificate.certificate_list[0].cert_data.length",
+				"value": "443 bytes"
+			},
+			{
+				"offset": 11,
+				"length": 443,
+				"field": "certificate.certificate_list[0].cert_data",
+				"value": "a DER X.509 certificate — entry 0 is the end-entity certificate, and each later entry certifies the one before it",
+				"varies": true
+			},
+			{
+				"offset": 454,
+				"length": 2,
+				"field": "certificate.certificate_list[0].extensions.length",
+				"value": "0 — every entry carries its own extensions block, new in TLS 1.3"
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 1,
+				"field": "certificate_verify.msg_type",
+				"value": "certificate_verify(15)"
+			},
+			{
+				"offset": 1,
+				"length": 3,
+				"field": "certificate_verify.length",
+				"value": "75 (bytes of body that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 2,
+				"field": "certificate_verify.algorithm",
+				"value": "ecdsa_secp256r1_sha256(0x0403)"
+			},
+			{
+				"offset": 6,
+				"length": 2,
+				"field": "certificate_verify.signature.length",
+				"value": "71 bytes"
+			},
+			{
+				"offset": 8,
+				"length": 71,
+				"field": "certificate_verify.signature",
+				"value": "over 64 spaces, \"TLS 1.3, server CertificateVerify\", a zero byte and Transcript-Hash(ClientHello..Certificate) — 30450220251877ec… (71 bytes)",
+				"varies": true
+			}
+		]
+	},
+	{
+		"title": "The bytes that are signed",
+		"kind": "text",
+		"request": "20 20 20 ... 20                                   (64 bytes)\n\"TLS 1.3, server CertificateVerify\"               (33 bytes)\n00                                                (1 byte)\nTranscript-Hash(ClientHello .. Certificate)        (32 or 48 bytes)",
+		"request_hex": "",
+		"response": "130 bytes under SHA-256, or 146 under SHA-384. That string is hashed by the signature algorithm — except for Ed25519, which signs it directly.",
+		"response_hex": "",
+		"note": "Every element earns its place: the spaces defeat cross-protocol replay, the string separates client from server, the zero byte stops the string running into the hash.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

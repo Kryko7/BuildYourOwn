@@ -1,0 +1,24 @@
+[
+	{
+		"title": "The schedule, top to bottom",
+		"kind": "text",
+		"request": "0 -> HKDF-Extract(salt=0, IKM=PSK|0) -> Early Secret\nEarly Secret -> Derive-Secret(., \"derived\", \"\") -> salt\nsalt + (EC)DHE -> HKDF-Extract -> Handshake Secret\nHandshake Secret -> Derive-Secret(., \"c hs traffic\"|\"s hs traffic\", CH..SH)\nHandshake Secret -> Derive-Secret(., \"derived\", \"\") -> salt\nsalt + 0 -> HKDF-Extract -> Master Secret",
+		"request_hex": "",
+		"response": "Master Secret -> Derive-Secret(., \"c ap traffic\"|\"s ap traffic\", CH..server Finished), \"exp master\" likewise, and \"res master\" over CH..client Finished.",
+		"response_hex": "",
+		"note": "Every arrow is one HMAC call. The two `\"derived\"` steps are over the hash of the empty string, and every other Derive-Secret is over the transcript so far.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "HkdfLabel on the wire",
+		"kind": "text",
+		"request": "HKDF-Expand-Label(secret, \"key\", \"\", 16)",
+		"request_hex": "",
+		"response": "info = 00 10 | 09 | 74 6c 73 31 33 20 6b 65 79 | 00\nthat is: length 16, a 9-byte label \"tls13 key\", and a zero-length context.",
+		"response_hex": "",
+		"note": "Six bytes of prefix, and the sixth is a space. Getting that wrong gives keys that are self-consistent and interoperate with nothing.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

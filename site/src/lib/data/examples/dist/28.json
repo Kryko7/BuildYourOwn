@@ -1,0 +1,96 @@
+[
+	{
+		"title": "A comparison that holds",
+		"kind": "node",
+		"request": "write both keys, but only if `cmp` still holds `one`\n\nPOST /v3/kv/txn\n{\n  \"compare\": [\n    {\n      \"key\": \"Y21w\",\n      \"result\": \"EQUAL\",\n      \"target\": \"VALUE\",\n      \"value\": \"b25l\"\n    }\n  ],\n  \"failure\": [\n    {\n      \"requestRange\": {\n        \"key\": \"Y21w\"\n      }\n    }\n  ],\n  \"success\": [\n    {\n      \"requestPut\": {\n        \"key\": \"Y21w\",\n        \"value\": \"dHdv\"\n      }\n    },\n    {\n      \"requestPut\": {\n        \"key\": \"Y21wL290aGVy\",\n        \"value\": \"eA==\"\n      }\n    }\n  ]\n}",
+		"request_hex": "7b22636f6d70617265223a5b7b226b6579223a2259323177222c22726573756c74223a22455155414c222c22746172676574223a2256414c5545222c2276616c7565223a226232356c227d5d2c226661696c757265223a5b7b227265717565737452616e6765223a7b226b6579223a2259323177227d7d5d2c2273756363657373223a5b7b2272657175657374507574223a7b226b6579223a2259323177222c2276616c7565223a2264486476227d7d2c7b2272657175657374507574223a7b226b6579223a22593231774c32393061475679222c2276616c7565223a2265413d3d227d7d5d7d",
+		"response": "succeeded true, and one response per put, both at the same revision\n\nHTTP 200 OK\n{\n  \"header\": {\n    \"cluster_id\": \"6956274895403184600\",\n    \"member_id\": \"1224370201670780091\",\n    \"raft_term\": \"2\",\n    \"revision\": \"3\"\n  },\n  \"responses\": [\n    {\n      \"response_put\": {\n        \"header\": {\n          \"revision\": \"3\"\n        }\n      }\n    },\n    {\n      \"response_put\": {\n        \"header\": {\n          \"revision\": \"3\"\n        }\n      }\n    }\n  ],\n  \"succeeded\": true\n}",
+		"response_hex": "7b22686561646572223a7b22636c75737465725f6964223a2236393536323734383935343033313834363030222c226d656d6265725f6964223a2231323234333730323031363730373830303931222c227265766973696f6e223a2233222c22726166745f7465726d223a2232227d2c22737563636565646564223a747275652c22726573706f6e736573223a5b7b22726573706f6e73655f707574223a7b22686561646572223a7b227265766973696f6e223a2233227d7d7d2c7b22726573706f6e73655f707574223a7b22686561646572223a7b227265766973696f6e223a2233227d7d7d5d7d",
+		"note": "Both puts report the transaction's revision, not two consecutive ones. That is what atomic means here: no reader can be shown a store in which the first write happened and the second did not.",
+		"request_fields": [
+			{
+				"offset": 1,
+				"length": 9,
+				"field": "request.compare",
+				"value": "[{\"key\":\"Y21w\",\"result\":\"EQUAL\",\"target\":\"VALUE\",\"value\":\"b25l\"}]"
+			},
+			{
+				"offset": 77,
+				"length": 9,
+				"field": "request.failure",
+				"value": "[{\"requestRange\":{\"key\":\"Y21w\"}}]"
+			},
+			{
+				"offset": 121,
+				"length": 9,
+				"field": "request.success",
+				"value": "[{\"requestPut\":{\"key\":\"Y21w\",\"value\":\"dHdv\"}},{\"requestPut\":{\"key\":\"Y21wL290aGVy\",\"value\":\"eA==\"}}]"
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 1,
+				"length": 8,
+				"field": "response.header",
+				"value": "{\"cluster_id\":\"6956274895403184600\",\"member_id\":\"1224370201670780091\",\"raft_term\":\"2\",\"revision\":\"3\"}",
+				"varies": true
+			},
+			{
+				"offset": 112,
+				"length": 11,
+				"field": "response.succeeded",
+				"value": "true"
+			},
+			{
+				"offset": 129,
+				"length": 11,
+				"field": "response.responses",
+				"value": "[{\"response_put\":{\"header\":{\"revision\":\"3\"}}},{\"response_put\":{\"header\":{\"revision\":\"3\"}}}]"
+			}
+		]
+	},
+	{
+		"title": "A comparison that does not",
+		"kind": "node",
+		"request": "the same transaction, with a comparison that is now wrong\n\nPOST /v3/kv/txn\n{\n  \"compare\": [\n    {\n      \"key\": \"Y21w\",\n      \"result\": \"EQUAL\",\n      \"target\": \"VALUE\",\n      \"value\": \"c29tZXRoaW5nIGVsc2U=\"\n    }\n  ],\n  \"failure\": [\n    {\n      \"requestRange\": {\n        \"key\": \"Y21w\"\n      }\n    }\n  ],\n  \"success\": [\n    {\n      \"requestPut\": {\n        \"key\": \"Y21w\",\n        \"value\": \"dHdv\"\n      }\n    }\n  ]\n}",
+		"request_hex": "7b22636f6d70617265223a5b7b226b6579223a2259323177222c22726573756c74223a22455155414c222c22746172676574223a2256414c5545222c2276616c7565223a22633239745a58526f6157356e494756736332553d227d5d2c226661696c757265223a5b7b227265717565737452616e6765223a7b226b6579223a2259323177227d7d5d2c2273756363657373223a5b7b2272657175657374507574223a7b226b6579223a2259323177222c2276616c7565223a2264486476227d7d5d7d",
+		"response": "the failure branch, and no `succeeded` field at all\n\nHTTP 200 OK\n{\n  \"header\": {\n    \"cluster_id\": \"14442539683568842594\",\n    \"member_id\": \"13227346379436722157\",\n    \"raft_term\": \"2\",\n    \"revision\": \"2\"\n  },\n  \"responses\": [\n    {\n      \"response_range\": {\n        \"count\": \"1\",\n        \"header\": {\n          \"revision\": \"2\"\n        },\n        \"kvs\": [\n          {\n            \"create_revision\": \"2\",\n            \"key\": \"Y21w\",\n            \"mod_revision\": \"2\",\n            \"value\": \"b25l\",\n            \"version\": \"1\"\n          }\n        ]\n      }\n    }\n  ]\n}",
+		"response_hex": "7b22686561646572223a7b22636c75737465725f6964223a223134343432353339363833353638383432353934222c226d656d6265725f6964223a223133323237333436333739343336373232313537222c227265766973696f6e223a2232222c22726166745f7465726d223a2232227d2c22726573706f6e736573223a5b7b22726573706f6e73655f72616e6765223a7b22686561646572223a7b227265766973696f6e223a2232227d2c226b7673223a5b7b226b6579223a2259323177222c226372656174655f7265766973696f6e223a2232222c226d6f645f7265766973696f6e223a2232222c2276657273696f6e223a2231222c2276616c7565223a226232356c227d5d2c22636f756e74223a2231227d7d5d7d",
+		"note": "`succeeded` is false, and false is the zero value of a boolean, so protobuf's JSON mapping drops it. Reading a missing `succeeded` as anything but false is the mistake; asserting it is present is the other one.",
+		"request_fields": [
+			{
+				"offset": 1,
+				"length": 9,
+				"field": "request.compare",
+				"value": "[{\"key\":\"Y21w\",\"result\":\"EQUAL\",\"target\":\"VALUE\",\"value\":\"c29tZXRoaW5nIGVsc2U=\"}]"
+			},
+			{
+				"offset": 93,
+				"length": 9,
+				"field": "request.failure",
+				"value": "[{\"requestRange\":{\"key\":\"Y21w\"}}]"
+			},
+			{
+				"offset": 137,
+				"length": 9,
+				"field": "request.success",
+				"value": "[{\"requestPut\":{\"key\":\"Y21w\",\"value\":\"dHdv\"}}]"
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 1,
+				"length": 8,
+				"field": "response.header",
+				"value": "{\"cluster_id\":\"14442539683568842594\",\"member_id\":\"13227346379436722157\",\"raft_term\":\"2\",\"revision\":\"2\"}",
+				"varies": true
+			},
+			{
+				"offset": 114,
+				"length": 11,
+				"field": "response.responses",
+				"value": "[{\"response_range\":{\"count\":\"1\",\"header\":{\"revision\":\"2\"},\"kvs\":[{\"create_revision\":\"2\",\"key\":\"Y21w\",\"mod_revision\":\"2\",…"
+			}
+		]
+	}
+]

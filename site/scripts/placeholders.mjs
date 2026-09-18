@@ -18,7 +18,7 @@ import { kafkaPlaceholderPlan } from './kafka-placeholder.mjs';
 
 /** Which ladder a section sits on, for tracks that have ladders (`dist`). */
 const LADDERS = {
-	dist: { A: 'primitives', B: 'primitives', C: 'primitives', D: 'primitives', E: 'primitives', F: 'node', G: 'cluster', H: 'cluster', I: 'cluster' }
+	dist: { A: 'primitives', B: 'primitives', C: 'primitives', D: 'node', E: 'node', F: 'cluster', G: 'cluster', H: 'cluster' }
 };
 
 /** [sectionId, title, ...what the section is expected to cover] */
@@ -88,42 +88,38 @@ const SECTIONS = {
 			'Session tickets, resumption, early-data rejection, and real-client interop']
 	],
 	dist: [
-		['A', 'Clocks & causality',
+		['A', 'Primitives: clocks and causality',
 			'Lamport clocks, and what a scalar counter can and cannot tell you',
 			'Vector clocks and version vectors: happens-before, concurrent, dominated',
 			'Hybrid logical clocks — physical time you can still order'],
-		['B', 'Partitioning & quorums',
+		['B', 'Primitives: placement, quorums and sketches',
 			'Consistent hashing with virtual nodes, and what moves when a node joins',
 			'Rendezvous (highest random weight) hashing as the alternative',
-			'The N/R/W quorum arithmetic, and when R + W > N actually buys you something'],
-		['C', 'Probabilistic & anti-entropy structures',
-			'Bloom filters: bit math, hash count, and the false-positive rate you promised',
-			'HyperLogLog cardinality estimation',
-			'Merkle trees for finding the difference between two replicas cheaply'],
-		['D', 'CRDTs & convergence',
-			'G-Counter and PN-Counter: merge is a join, not an assignment',
-			'LWW-Register and OR-Set, with the tombstones that make removal work',
-			'RGA for ordered sequences, and convergence under any delivery order'],
-		['E', 'Flow control & failure detection',
-			'Token bucket rate limiting, and backoff with jitter that does not synchronize',
-			'Phi-accrual failure detection instead of a fixed timeout',
-			'SWIM: gossip, indirect probes, suspicion'],
-		['F', 'A durable single node',
-			'MVCC revisions: every key keeps its history, reads pick a revision',
-			'Transactions, leases and watches',
-			'Crash recovery — everything acknowledged is still there after a kill -9'],
-		['G', 'Replication & consensus',
-			'Leader election, terms, and the votes that decide one',
-			'Log replication, commit index, and applying in order',
-			'Linearizable reads: read index or lease, never just "ask the leader"'],
-		['H', 'Faults & partitions',
-			'A minority partition must refuse to make progress',
-			'Leader failover with no lost acknowledged write',
-			'Snapshots, log compaction and membership change'],
-		['I', 'Linearizability under fault injection',
-			'Randomized concurrent workloads recorded as a history',
-			'The history is checked against a linearizability model, not against a golden file',
-			'Partitions, pauses and crashes injected mid-run, with a seed so it replays']
+			'N/R/W quorum arithmetic, Bloom filters and HyperLogLog, held to their promised error'],
+		['C', 'Primitives: CRDTs, snapshots and timing',
+			'G-Counter, PN-Counter, LWW-Register, OR-Set and RGA, checked by replaying every delivery order',
+			'Chandy–Lamport snapshots and causal broadcast',
+			'Token and leaky buckets, backoff jitter, phi-accrual and SWIM'],
+		['D', 'Single node: the key/value API',
+			'Put, range, delete and the revision every answer carries',
+			'MVCC: reading at a past revision, prev_kv, prefix and limit',
+			'Transactions that compare before they write, and compaction that forgets safely'],
+		['E', 'Single node: leases, watches and durability',
+			'Leases with a TTL, keepalive, and keys that vanish when the lease does',
+			'Watches from a revision, in order, without gaps',
+			'A write you acknowledged must survive SIGKILL and come back on restart'],
+		['F', 'Cluster: replication and agreement',
+			'Three nodes electing one leader and agreeing on a term',
+			'A write on any member visible on every member',
+			'Linearizable reads, and what makes a read safe to serve'],
+		['G', 'Cluster: failure, recovery and membership',
+			'The minority side of a partition must refuse writes rather than lie',
+			'Leader failover with no acknowledged write lost, and a far-behind follower caught up by snapshot',
+			'Adding and removing a member while the cluster stays available'],
+		['H', 'Cluster: linearizability under fault injection',
+			'A randomized concurrent workload recorded as a history',
+			'Faults on a seeded schedule: partitions, delays, drops, duplicates, reordering',
+			'The history checked against a linearizability model, minimal counter-example printed']
 	],
 	link: [
 		['A', 'Reading relocatable objects',

@@ -1,0 +1,24 @@
+[
+	{
+		"title": "Scoring one key against three nodes",
+		"kind": "primitives",
+		"request": "three nodes, the whole ranking for one key, then the plain lookup\n\n./your_program.sh rendezvous\nadd n1\nadd n2\nadd n3\nlocate-k user-42 3\nlocate user-42",
+		"request_hex": "2e2f796f75725f70726f6772616d2e73682072656e64657a766f75730a616464206e310a616464206e320a616464206e330a6c6f636174652d6b20757365722d343220330a6c6f6361746520757365722d3432",
+		"response": "three distinct nodes in descending score order, then the first of them\n\n{\"nodes\":1}\n{\"nodes\":2}\n{\"nodes\":3}\n{\"nodes\":[\"n2\",\"n1\",\"n3\"]}\n{\"node\":\"n2\"}",
+		"response_hex": "7b226e6f646573223a317d0a7b226e6f646573223a327d0a7b226e6f646573223a337d0a7b226e6f646573223a5b226e32222c226e31222c226e33225d7d0a7b226e6f6465223a226e32227d",
+		"note": "`locate` is not a second implementation. It is `locate-k <key> 1` with the brackets taken off, and the suite checks exactly that: a head that disagrees with the ranking means two different score functions are in the program.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "A node leaves",
+		"kind": "primitives",
+		"request": "the ranking for a key, then the same ranking without `n1`\n\n./your_program.sh rendezvous\nadd n1\nadd n2\nadd n3\nlocate-k user-42 3\nremove n1\nlocate-k user-42 3\nlocate user-42",
+		"request_hex": "2e2f796f75725f70726f6772616d2e73682072656e64657a766f75730a616464206e310a616464206e320a616464206e330a6c6f636174652d6b20757365722d343220330a72656d6f7665206e310a6c6f636174652d6b20757365722d343220330a6c6f6361746520757365722d3432",
+		"response": "the second ranking is the first with `n1` deleted — the rest keep their order\n\n{\"nodes\":1}\n{\"nodes\":2}\n{\"nodes\":3}\n{\"nodes\":[\"n2\",\"n1\",\"n3\"]}\n{\"nodes\":2}\n{\"nodes\":[\"n2\",\"n3\"]}\n{\"node\":\"n2\"}",
+		"response_hex": "7b226e6f646573223a317d0a7b226e6f646573223a327d0a7b226e6f646573223a337d0a7b226e6f646573223a5b226e32222c226e31222c226e33225d7d0a7b226e6f646573223a327d0a7b226e6f646573223a5b226e32222c226e33225d7d0a7b226e6f6465223a226e32227d",
+		"note": "This is what rendezvous buys over a ring: not only do the survivors keep their keys, the *replicas* keep their order, so a key whose owner died already knows which node takes over without asking anybody.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

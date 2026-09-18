@@ -1,0 +1,76 @@
+[
+	{
+		"title": "What each of the fifty connections does",
+		"kind": "wire",
+		"request": "A full handshake, then `conn00\\n` as application data, then close_notify",
+		"request_hex": "1703030018d493c1b968837013f8be8e0fa3f4286ff2eee55f53fa963c",
+		"response": "`00nnoc\\n`, and a close_notify back.",
+		"response_hex": "1703030018e4fd3169b7e83f7a29ac3e20b919ba88c396f1519f2cb01c",
+		"note": "Fifty of these at once. Nothing about any one of them is unusual — the test is whether the fiftieth is as correct as the first.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 1,
+				"field": "record.type",
+				"value": "application_data(23)"
+			},
+			{
+				"offset": 1,
+				"length": 2,
+				"field": "record.legacy_record_version",
+				"value": "0x0303"
+			},
+			{
+				"offset": 3,
+				"length": 2,
+				"field": "record.length",
+				"value": "24 (bytes that follow)"
+			},
+			{
+				"offset": 5,
+				"length": 24,
+				"field": "record.encrypted_record",
+				"value": "24 bytes: the AEAD ciphertext plus its 16-byte tag. The real content type is inside it, after the content and before the padding.",
+				"varies": true
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 1,
+				"field": "record.type",
+				"value": "application_data(23)"
+			},
+			{
+				"offset": 1,
+				"length": 2,
+				"field": "record.legacy_record_version",
+				"value": "0x0303"
+			},
+			{
+				"offset": 3,
+				"length": 2,
+				"field": "record.length",
+				"value": "24 (bytes that follow)"
+			},
+			{
+				"offset": 5,
+				"length": 24,
+				"field": "record.encrypted_record",
+				"value": "24 bytes: the AEAD ciphertext plus its 16-byte tag. The real content type is inside it, after the content and before the padding.",
+				"varies": true
+			}
+		]
+	},
+	{
+		"title": "Serial and parallel are both fine",
+		"kind": "text",
+		"request": "Fifty sockets opened before any of them has finished its handshake",
+		"request_hex": "",
+		"response": "A threaded server serves them at once; a single-threaded one serves them from the listen backlog in turn. Both finish all fifty.",
+		"response_hex": "",
+		"note": "The reference is single-threaded, so this suite never requires two handshakes to be in flight at the same moment — only that opening fifty sockets does not lose any of them.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

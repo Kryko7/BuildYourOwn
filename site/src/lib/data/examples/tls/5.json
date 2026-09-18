@@ -1,0 +1,203 @@
+[
+	{
+		"title": "One ClientHello, three handshake records",
+		"kind": "wire",
+		"request": "The same ClientHello message as always, cut into three pieces and sent as three handshake records back to back",
+		"request_hex": "160303003c010000ae0303d977ab7d3890b1b92ad9ae0cb722486fd8d58e1c098963af32a934a99dfdec3c20262c6f02ca58c3a6c9c9c9df0e83e16aca4437a3e5160303003cf7331773a5e1de0dee51d700061302130313010100005f0000000e000c0000096c6f63616c686f7374002b0003020304000a00060004001d0017000d160303003a000e000c040308040805080608070401003300260024001d002097460ae0d0e0f03844c99a5115a2db09c1eb131eddca5050dc1bee166d255c49",
+		"response": "One ServerHello, exactly as if the hello had arrived in a single record. Nothing about the answer changes.",
+		"response_hex": "160303007a02000076030348ef96f893e792a43179eac58ba31d5055a911af63c558cb518c55cc7000594420262c6f02ca58c3a6c9c9c9df0e83e16aca4437a3e5f7331773a5e1de0dee51d7130200002e002b0002030400330024001d002084c76d3d6a207b77609b22fd405beaaf0e62171dadfc507357c64deea916e82c",
+		"note": "Look at the three record headers in the request: each has its own length, and the handshake header's uint24 length spans all three. Reassemble, then parse.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 1,
+				"field": "record.type",
+				"value": "handshake(22)"
+			},
+			{
+				"offset": 1,
+				"length": 2,
+				"field": "record.legacy_record_version",
+				"value": "0x0303"
+			},
+			{
+				"offset": 3,
+				"length": 2,
+				"field": "record.length",
+				"value": "60 (bytes that follow)"
+			},
+			{
+				"offset": 65,
+				"length": 1,
+				"field": "record1.record.type",
+				"value": "handshake(22)"
+			},
+			{
+				"offset": 66,
+				"length": 2,
+				"field": "record1.record.legacy_record_version",
+				"value": "0x0303"
+			},
+			{
+				"offset": 68,
+				"length": 2,
+				"field": "record1.record.length",
+				"value": "60 (bytes that follow)"
+			},
+			{
+				"offset": 130,
+				"length": 1,
+				"field": "record2.record.type",
+				"value": "handshake(22)"
+			},
+			{
+				"offset": 131,
+				"length": 2,
+				"field": "record2.record.legacy_record_version",
+				"value": "0x0303"
+			},
+			{
+				"offset": 133,
+				"length": 2,
+				"field": "record2.record.length",
+				"value": "58 (bytes that follow)"
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 1,
+				"field": "record.type",
+				"value": "handshake(22)"
+			},
+			{
+				"offset": 1,
+				"length": 2,
+				"field": "record.legacy_record_version",
+				"value": "0x0303"
+			},
+			{
+				"offset": 3,
+				"length": 2,
+				"field": "record.length",
+				"value": "122 (bytes that follow)"
+			},
+			{
+				"offset": 5,
+				"length": 1,
+				"field": "server_hello.msg_type",
+				"value": "server_hello(2)"
+			},
+			{
+				"offset": 6,
+				"length": 3,
+				"field": "server_hello.length",
+				"value": "118 (bytes of body that follow)"
+			},
+			{
+				"offset": 9,
+				"length": 2,
+				"field": "server_hello.legacy_version",
+				"value": "0x0303 (TLS 1.3 pins this at 0x0303; the real version is in supported_versions)"
+			},
+			{
+				"offset": 11,
+				"length": 32,
+				"field": "server_hello.random",
+				"value": "48ef96f893e792a43179eac58ba31d5055a911af63c558cb518c55cc70005944",
+				"varies": true
+			},
+			{
+				"offset": 43,
+				"length": 1,
+				"field": "server_hello.legacy_session_id.length",
+				"value": "32"
+			},
+			{
+				"offset": 44,
+				"length": 32,
+				"field": "server_hello.legacy_session_id_echo",
+				"value": "262c6f02ca58c3a6c9c9c9df0e83e16aca4437a3e5f7331773a5e1de0dee51d7 (must equal the ClientHello's legacy_session_id)",
+				"varies": true
+			},
+			{
+				"offset": 76,
+				"length": 2,
+				"field": "server_hello.cipher_suite",
+				"value": "TLS_AES_256_GCM_SHA384(0x1302)"
+			},
+			{
+				"offset": 78,
+				"length": 1,
+				"field": "server_hello.legacy_compression_method",
+				"value": "0 (must be 0)"
+			},
+			{
+				"offset": 79,
+				"length": 2,
+				"field": "server_hello.extensions.length",
+				"value": "46 bytes of extensions"
+			},
+			{
+				"offset": 81,
+				"length": 2,
+				"field": "server_hello.extensions[0].extension_type",
+				"value": "supported_versions(43)"
+			},
+			{
+				"offset": 83,
+				"length": 2,
+				"field": "server_hello.extensions[0].length",
+				"value": "2 bytes"
+			},
+			{
+				"offset": 85,
+				"length": 2,
+				"field": "server_hello.extensions[0].selected_version",
+				"value": "TLS 1.3 (0x0304)"
+			},
+			{
+				"offset": 87,
+				"length": 2,
+				"field": "server_hello.extensions[1].extension_type",
+				"value": "key_share(51)"
+			},
+			{
+				"offset": 89,
+				"length": 2,
+				"field": "server_hello.extensions[1].length",
+				"value": "36 bytes"
+			},
+			{
+				"offset": 91,
+				"length": 2,
+				"field": "server_hello.extensions[1].server_share.group",
+				"value": "x25519(0x001d)"
+			},
+			{
+				"offset": 93,
+				"length": 2,
+				"field": "server_hello.extensions[1].server_share.key_exchange.length",
+				"value": "32"
+			},
+			{
+				"offset": 95,
+				"length": 32,
+				"field": "server_hello.extensions[1].server_share.key_exchange",
+				"value": "84c76d3d6a207b77… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
+				"varies": true
+			}
+		]
+	},
+	{
+		"title": "What goes into the transcript",
+		"kind": "text",
+		"request": "A ClientHello that arrived in three records",
+		"request_hex": "",
+		"response": "Transcript-Hash(ClientHello) is over the handshake message — msg_type, the uint24 length and the body — and over nothing else.",
+		"response_hex": "",
+		"note": "The five-byte record headers never enter the transcript. A server that hashes what it read off the socket will pass every test until the first fragmented hello, and then fail the Finished check with no obvious reason.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

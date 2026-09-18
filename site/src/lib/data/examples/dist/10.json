@@ -1,0 +1,24 @@
+[
+	{
+		"title": "A filter that is certain about what it holds",
+		"kind": "primitives",
+		"request": "a 1024-bit filter with three positions per item, two items added, two asked about\n\n./your_program.sh bloom\ninit 1024 3\nadd alpha\nadd beta\ncontains alpha\ncontains gamma\nstats",
+		"request_hex": "2e2f796f75725f70726f6772616d2e736820626c6f6f6d0a696e6974203130323420330a61646420616c7068610a61646420626574610a636f6e7461696e7320616c7068610a636f6e7461696e732067616d6d610a7374617473",
+		"response": "`maybe` for the item that was added; almost certainly `no` for the one that was not\n\n{\"bits\":1024,\"hashes\":3}\n{\"ok\":true}\n{\"ok\":true}\n{\"maybe\":true}\n{\"maybe\":false}\n{\"bits\":1024,\"hashes\":3,\"items\":2,\"set_bits\":6}",
+		"response_hex": "7b2262697473223a313032342c22686173686573223a337d0a7b226f6b223a747275657d0a7b226f6b223a747275657d0a7b226d61796265223a747275657d0a7b226d61796265223a66616c73657d0a7b2262697473223a313032342c22686173686573223a332c226974656d73223a322c227365745f62697473223a367d",
+		"note": "`contains` has two answers and neither of them is `yes`. `maybe` means every one of the k bits is set, which an item that was never added can also manage once the filter is full enough. `no` is the only certain answer a Bloom filter gives.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "What the filter will admit to",
+		"kind": "primitives",
+		"request": "three items in a filter far too small for them, then its own accounting\n\n./your_program.sh bloom\ninit 64 4\nadd one\nadd two\nadd three\nstats",
+		"request_hex": "2e2f796f75725f70726f6772616d2e736820626c6f6f6d0a696e697420363420340a616464206f6e650a6164642074776f0a6164642074687265650a7374617473",
+		"response": "around a dozen of the sixty-four bits set, and `items` counting the adds\n\n{\"bits\":64,\"hashes\":4}\n{\"ok\":true}\n{\"ok\":true}\n{\"ok\":true}\n{\"bits\":64,\"hashes\":4,\"items\":3,\"set_bits\":12}",
+		"response_hex": "7b2262697473223a36342c22686173686573223a347d0a7b226f6b223a747275657d0a7b226f6b223a747275657d0a7b226f6b223a747275657d0a7b2262697473223a36342c22686173686573223a342c226974656d73223a332c227365745f62697473223a31327d",
+		"note": "set_bits is the honest measure of how full a filter is: it rises by at most k per add and by less once positions start colliding. When it approaches bits, every `contains` answers `maybe` and the filter has stopped saying anything.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

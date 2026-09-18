@@ -1,0 +1,24 @@
+[
+	{
+		"title": "Two replicas counting in one process",
+		"kind": "primitives",
+		"request": "two replicas increment their own entries, then the counter is read\n\n./your_program.sh g-counter\ninc r1 5\ninc r2 7\nvalue r1\nstate r1",
+		"request_hex": "2e2f796f75725f70726f6772616d2e736820672d636f756e7465720a696e6320723120350a696e6320723220370a76616c75652072310a7374617465207231",
+		"response": "the value is the sum of the entries, and `state` hands back a shippable copy\n\n{\"value\":5}\n{\"value\":12}\n{\"value\":12}\n{\"state\":{\"p\":{\"r1\":5,\"r2\":7}}}",
+		"response_hex": "7b2276616c7565223a357d0a7b2276616c7565223a31327d0a7b2276616c7565223a31327d0a7b227374617465223a7b2270223a7b227231223a352c227232223a377d7d7d",
+		"note": "The shape of `state` is entirely yours: the harness never looks inside it, it only hands it to another replica's `merge`. What it must do is round trip, so whatever a replica needs to keep has to be in there.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "Increments and decrements are counted apart",
+		"kind": "primitives",
+		"request": "one replica adds ten and takes three, then another takes twenty\n\n./your_program.sh pn-counter\ninc r1 10\ndec r1 3\nvalue r1\ndec r2 20\nvalue r1",
+		"request_hex": "2e2f796f75725f70726f6772616d2e736820706e2d636f756e7465720a696e632072312031300a64656320723120330a76616c75652072310a6465632072322032300a76616c7565207231",
+		"response": "7, and then -13: a PN-Counter is free to be negative\n\n{\"value\":10}\n{\"value\":7}\n{\"value\":7}\n{\"value\":-13}\n{\"value\":-13}",
+		"response_hex": "7b2276616c7565223a31307d0a7b2276616c7565223a377d0a7b2276616c7565223a377d0a7b2276616c7565223a2d31337d0a7b2276616c7565223a2d31337d",
+		"note": "Storing 7 as a single number would be the bug. Two G-Counters merge by maximum on each half independently, and the difference is read at the end; one signed number has no maximum that means 'whoever saw more updates'.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

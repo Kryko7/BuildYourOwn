@@ -1,0 +1,24 @@
+[
+	{
+		"title": "Two replicas that agree",
+		"kind": "primitives",
+		"request": "two eight-leaf trees built from the same data\n\n./your_program.sh merkle\nbuild a a,b,c,d,e,f,g,h\nbuild b a,b,c,d,e,f,g,h\ndiff a b",
+		"request_hex": "2e2f796f75725f70726f6772616d2e7368206d65726b6c650a6275696c64206120612c622c632c642c652c662c672c680a6275696c64206220612c622c632c642c652c662c672c680a6469666620612062",
+		"response": "no ranges, and exactly one comparison\n\n{\"leaves\":8,\"root\":\"1d295224db01021123c4c0c052e415c00a4c329b752eaf16764dbf6837366ccd\"}\n{\"leaves\":8,\"root\":\"1d295224db01021123c4c0c052e415c00a4c329b752eaf16764dbf6837366ccd\"}\n{\"compared\":1,\"ranges\":[]}",
+		"response_hex": "7b226c6561766573223a382c22726f6f74223a2231643239353232346462303130323131323363346330633035326534313563303061346333323962373532656166313637363464626636383337333636636364227d0a7b226c6561766573223a382c22726f6f74223a2231643239353232346462303130323131323363346330633035326534313563303061346333323962373532656166313637363464626636383337333636636364227d0a7b22636f6d7061726564223a312c2272616e676573223a5b5d7d",
+		"note": "The roots match, so there is nothing below them to look at. This is the case anti-entropy spends almost all of its time in, and it has to cost one hash comparison and not fifteen.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "Two replicas that disagree about one key",
+		"kind": "primitives",
+		"request": "the same trees with leaf 5 changed on one side\n\n./your_program.sh merkle\nbuild a a,b,c,d,e,f,g,h\nbuild b a,b,c,d,e,X,g,h\ndiff a b",
+		"request_hex": "2e2f796f75725f70726f6772616d2e7368206d65726b6c650a6275696c64206120612c622c632c642c652c662c672c680a6275696c64206220612c622c632c642c652c582c672c680a6469666620612062",
+		"response": "the single range [5, 5], found in seven comparisons rather than fifteen\n\n{\"leaves\":8,\"root\":\"1d295224db01021123c4c0c052e415c00a4c329b752eaf16764dbf6837366ccd\"}\n{\"leaves\":8,\"root\":\"8a8ca94cb6707353db170cf7a1d0def0722a20ff43c3ab8841056cd91d1a2240\"}\n{\"compared\":7,\"ranges\":[[5,5]]}",
+		"response_hex": "7b226c6561766573223a382c22726f6f74223a2231643239353232346462303130323131323363346330633035326534313563303061346333323962373532656166313637363464626636383337333636636364227d0a7b226c6561766573223a382c22726f6f74223a2238613863613934636236373037333533646231373063663761316430646566303732326132306666343363336162383834313035366364393164316132323430227d0a7b22636f6d7061726564223a372c2272616e676573223a5b5b352c355d5d7d",
+		"note": "Seven is 1 + 2 per level: the root, then the two children at each of the three levels below it, of which only one differs and is followed. `compared` is the assertion this stage is really about — a diff that answers [[5,5]] after reading all fifteen nodes has done a linear scan with extra steps.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

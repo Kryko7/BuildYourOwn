@@ -1,0 +1,67 @@
+[
+	{
+		"title": "Throwing away everything below revision 3",
+		"kind": "node",
+		"request": "compact up to revision 3, after two writes have happened\n\nPOST /v3/kv/compaction\n{\n  \"revision\": \"3\"\n}",
+		"request_hex": "7b227265766973696f6e223a2233227d",
+		"response": "a bare header: compaction answers when it happened, not what it removed\n\nHTTP 200 OK\n{\n  \"header\": {\n    \"cluster_id\": \"1058365337093208304\",\n    \"member_id\": \"13404231698559974900\",\n    \"raft_term\": \"2\",\n    \"revision\": \"3\"\n  }\n}",
+		"response_hex": "7b22686561646572223a7b22636c75737465725f6964223a2231303538333635333337303933323038333034222c226d656d6265725f6964223a223133343034323331363938353539393734393030222c227265766973696f6e223a2233222c22726166745f7465726d223a2232227d7d",
+		"note": "Compaction is not a write. The revision in this header is the store's clock as it already was; nothing was appended to make room.",
+		"request_fields": [
+			{
+				"offset": 1,
+				"length": 10,
+				"field": "request.revision",
+				"value": "\"3\"",
+				"varies": true
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 1,
+				"length": 8,
+				"field": "response.header",
+				"value": "{\"cluster_id\":\"1058365337093208304\",\"member_id\":\"13404231698559974900\",\"raft_term\":\"2\",\"revision\":\"3\"}",
+				"varies": true
+			}
+		]
+	},
+	{
+		"title": "Reading a revision that has been compacted away",
+		"kind": "node",
+		"request": "a point read as of revision 2, which compaction has just dropped\n\nPOST /v3/kv/range\n{\n  \"key\": \"aGlzdA==\",\n  \"revision\": \"2\"\n}",
+		"request_hex": "7b226b6579223a2261476c7a64413d3d222c227265766973696f6e223a2232227d",
+		"response": "HTTP 400 and code 11, `mvcc: required revision has been compacted`\n\nHTTP 400 Bad Request\n{\n  \"code\": 11,\n  \"message\": \"etcdserver: mvcc: required revision has been compacted\"\n}",
+		"response_hex": "7b22636f6465223a31312c226d657373616765223a22657463647365727665723a206d7663633a207265717569726564207265766973696f6e20686173206265656e20636f6d706163746564227d",
+		"note": "An empty answer would be a lie: there was a value at revision 2, and the store no longer knows it. Code 11 is how a paging reader learns it has fallen behind and must start again from the current revision.",
+		"request_fields": [
+			{
+				"offset": 1,
+				"length": 5,
+				"field": "request.key",
+				"value": "\"aGlzdA==\""
+			},
+			{
+				"offset": 18,
+				"length": 10,
+				"field": "request.revision",
+				"value": "\"2\"",
+				"varies": true
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 1,
+				"length": 6,
+				"field": "response.code",
+				"value": "11"
+			},
+			{
+				"offset": 11,
+				"length": 9,
+				"field": "response.message",
+				"value": "\"etcdserver: mvcc: required revision has been compacted\""
+			}
+		]
+	}
+]

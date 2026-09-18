@@ -1,0 +1,76 @@
+[
+	{
+		"title": "What is really inside an encrypted record",
+		"kind": "wire",
+		"request": "`pad\\n` as application data. Inside the AEAD the plaintext is `pad\\n` followed by the byte 0x17, and then as many zero bytes as the sender likes.",
+		"request_hex": "1703030015f75eb72212e78a8a159dda9c0fafb39b4902e85524",
+		"response": "The answer's plaintext is `dap\\n` || 0x17, with whatever padding the server chose. Both records say application_data(23) in the clear.",
+		"response_hex": "1703030015026fe47184d5a3c858d4626a6c476125df53fce24e",
+		"note": "The outer content type of every protected record is 23, always — even for a handshake message or an alert. The real type is the last non-zero byte of the decrypted fragment.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 1,
+				"field": "record.type",
+				"value": "application_data(23)"
+			},
+			{
+				"offset": 1,
+				"length": 2,
+				"field": "record.legacy_record_version",
+				"value": "0x0303"
+			},
+			{
+				"offset": 3,
+				"length": 2,
+				"field": "record.length",
+				"value": "21 (bytes that follow)"
+			},
+			{
+				"offset": 5,
+				"length": 21,
+				"field": "record.encrypted_record",
+				"value": "21 bytes: the AEAD ciphertext plus its 16-byte tag. The real content type is inside it, after the content and before the padding.",
+				"varies": true
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 1,
+				"field": "record.type",
+				"value": "application_data(23)"
+			},
+			{
+				"offset": 1,
+				"length": 2,
+				"field": "record.legacy_record_version",
+				"value": "0x0303"
+			},
+			{
+				"offset": 3,
+				"length": 2,
+				"field": "record.length",
+				"value": "21 (bytes that follow)"
+			},
+			{
+				"offset": 5,
+				"length": 21,
+				"field": "record.encrypted_record",
+				"value": "21 bytes: the AEAD ciphertext plus its 16-byte tag. The real content type is inside it, after the content and before the padding.",
+				"varies": true
+			}
+		]
+	},
+	{
+		"title": "Finding the content type",
+		"kind": "text",
+		"request": "decrypted = 61 62 63 0a 17 00 00 00 00\nScan back from the end past the zeros.",
+		"request_hex": "",
+		"response": "The first non-zero byte is 0x17 at index 4: content is `abc\\n`, type is application_data(23), padding is four bytes.",
+		"response_hex": "",
+		"note": "Scan, do not assume. A fixed `plaintext[len-1]` works right up until the first peer that pads — and TLS 1.3 pads to hide traffic patterns, so that peer will turn up.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

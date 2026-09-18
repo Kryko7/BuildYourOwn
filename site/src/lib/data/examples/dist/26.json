@@ -1,0 +1,85 @@
+[
+	{
+		"title": "Reading a key as it was",
+		"kind": "node",
+		"request": "the key `mv` as the store held it at revision 2\n\nPOST /v3/kv/range\n{\n  \"key\": \"bXY=\",\n  \"revision\": \"2\"\n}",
+		"request_hex": "7b226b6579223a226258593d222c227265766973696f6e223a2232227d",
+		"response": "the first value, alongside a header whose revision is the current one\n\nHTTP 200 OK\n{\n  \"count\": \"1\",\n  \"header\": {\n    \"cluster_id\": \"5362496128757657102\",\n    \"member_id\": \"10309688420055604722\",\n    \"raft_term\": \"2\",\n    \"revision\": \"3\"\n  },\n  \"kvs\": [\n    {\n      \"create_revision\": \"2\",\n      \"key\": \"bXY=\",\n      \"mod_revision\": \"2\",\n      \"value\": \"b25l\",\n      \"version\": \"1\"\n    }\n  ]\n}",
+		"response_hex": "7b22686561646572223a7b22636c75737465725f6964223a2235333632343936313238373537363537313032222c226d656d6265725f6964223a223130333039363838343230303535363034373232222c227265766973696f6e223a2233222c22726166745f7465726d223a2232227d2c226b7673223a5b7b226b6579223a226258593d222c226372656174655f7265766973696f6e223a2232222c226d6f645f7265766973696f6e223a2232222c2276657273696f6e223a2231222c2276616c7565223a226232356c227d5d2c22636f756e74223a2231227d",
+		"note": "The kv carries the revisions it had then — mod_revision 2, version 1 — while the header carries the store's clock now. Nothing about a historical read rewinds the header.",
+		"request_fields": [
+			{
+				"offset": 1,
+				"length": 5,
+				"field": "request.key",
+				"value": "\"bXY=\""
+			},
+			{
+				"offset": 14,
+				"length": 10,
+				"field": "request.revision",
+				"value": "\"2\"",
+				"varies": true
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 1,
+				"length": 8,
+				"field": "response.header",
+				"value": "{\"cluster_id\":\"5362496128757657102\",\"member_id\":\"10309688420055604722\",\"raft_term\":\"2\",\"revision\":\"3\"}",
+				"varies": true
+			},
+			{
+				"offset": 113,
+				"length": 5,
+				"field": "response.kvs",
+				"value": "[{\"create_revision\":\"2\",\"key\":\"bXY=\",\"mod_revision\":\"2\",\"value\":\"b25l\",\"version\":\"1\"}]"
+			},
+			{
+				"offset": 206,
+				"length": 7,
+				"field": "response.count",
+				"value": "\"1\""
+			}
+		]
+	},
+	{
+		"title": "A revision the store has not reached",
+		"kind": "node",
+		"request": "a revision far beyond anything that has happened\n\nPOST /v3/kv/range\n{\n  \"key\": \"bXY=\",\n  \"revision\": \"99999\"\n}",
+		"request_hex": "7b226b6579223a226258593d222c227265766973696f6e223a223939393939227d",
+		"response": "HTTP 400 and code 11, out of range\n\nHTTP 400 Bad Request\n{\n  \"code\": 11,\n  \"message\": \"etcdserver: mvcc: required revision is a future revision\"\n}",
+		"response_hex": "7b22636f6465223a31312c226d657373616765223a22657463647365727665723a206d7663633a207265717569726564207265766973696f6e206973206120667574757265207265766973696f6e227d",
+		"note": "A future revision is refused rather than answered empty: an empty answer would claim the key did not exist at a moment that has not happened. The same code comes back for a revision compacted away at the other end of the history.",
+		"request_fields": [
+			{
+				"offset": 1,
+				"length": 5,
+				"field": "request.key",
+				"value": "\"bXY=\""
+			},
+			{
+				"offset": 14,
+				"length": 10,
+				"field": "request.revision",
+				"value": "\"99999\"",
+				"varies": true
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 1,
+				"length": 6,
+				"field": "response.code",
+				"value": "11"
+			},
+			{
+				"offset": 11,
+				"length": 9,
+				"field": "response.message",
+				"value": "\"etcdserver: mvcc: required revision is a future revision\""
+			}
+		]
+	}
+]

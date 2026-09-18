@@ -1,0 +1,389 @@
+[
+	{
+		"title": "A hello offering early_data, and the refusal",
+		"kind": "wire",
+		"request": "An ordinary ClientHello with an extra extension: type 42, length 0. The extension is a flag and carries no body.",
+		"request_hex": "010000b20303e6516d42f056623d3b0477afb5c8f6df94ec1473d72f8d791b638dd80cf4bfe420a10957883bae1ce0b73943bcf12d5b4ef35620e53413bf357fc5ba1d17344bbb0006130213031301010000630000000e000c0000096c6f63616c686f7374002b0003020304000a00060004001d0017000d000e000c040308040805080608070401003300260024001d00202e7db5c9e0184ce108c50cb8e6c1f2c18103fbf179cdab1d6384cef4c64cc971002a0000",
+		"response": "EncryptedExtensions with no early_data extension in it. That absence is the whole refusal — there is no alert and nothing to retry.",
+		"response_hex": "080000180016000a0012001011ec001d0017001e0018001901000101",
+		"note": "Offering costs the client nothing. A server that does not want 0-RTT says so by saying nothing, and the connection carries on as a normal 1-RTT handshake.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 1,
+				"field": "client_hello.msg_type",
+				"value": "client_hello(1)"
+			},
+			{
+				"offset": 1,
+				"length": 3,
+				"field": "client_hello.length",
+				"value": "178 (bytes of body that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 2,
+				"field": "client_hello.legacy_version",
+				"value": "0x0303 (TLS 1.3 pins this at 0x0303; the real version is in supported_versions)"
+			},
+			{
+				"offset": 6,
+				"length": 32,
+				"field": "client_hello.random",
+				"value": "e6516d42f056623d3b0477afb5c8f6df94ec1473d72f8d791b638dd80cf4bfe4",
+				"varies": true
+			},
+			{
+				"offset": 38,
+				"length": 1,
+				"field": "client_hello.legacy_session_id.length",
+				"value": "32"
+			},
+			{
+				"offset": 39,
+				"length": 32,
+				"field": "client_hello.legacy_session_id",
+				"value": "a10957883bae1ce0b73943bcf12d5b4ef35620e53413bf357fc5ba1d17344bbb (the server must echo this back byte for byte)",
+				"varies": true
+			},
+			{
+				"offset": 71,
+				"length": 2,
+				"field": "client_hello.cipher_suites.length",
+				"value": "6 bytes, 3 suites"
+			},
+			{
+				"offset": 73,
+				"length": 2,
+				"field": "client_hello.cipher_suites[0]",
+				"value": "TLS_AES_256_GCM_SHA384(0x1302)"
+			},
+			{
+				"offset": 75,
+				"length": 2,
+				"field": "client_hello.cipher_suites[1]",
+				"value": "TLS_CHACHA20_POLY1305_SHA256(0x1303)"
+			},
+			{
+				"offset": 77,
+				"length": 2,
+				"field": "client_hello.cipher_suites[2]",
+				"value": "TLS_AES_128_GCM_SHA256(0x1301)"
+			},
+			{
+				"offset": 79,
+				"length": 1,
+				"field": "client_hello.legacy_compression_methods.length",
+				"value": "1"
+			},
+			{
+				"offset": 80,
+				"length": 1,
+				"field": "client_hello.legacy_compression_methods",
+				"value": "null(0) — TLS 1.3 allows nothing else"
+			},
+			{
+				"offset": 81,
+				"length": 2,
+				"field": "client_hello.extensions.length",
+				"value": "99 bytes of extensions"
+			},
+			{
+				"offset": 83,
+				"length": 2,
+				"field": "client_hello.extensions[0].extension_type",
+				"value": "server_name(0)"
+			},
+			{
+				"offset": 85,
+				"length": 2,
+				"field": "client_hello.extensions[0].length",
+				"value": "14 bytes"
+			},
+			{
+				"offset": 87,
+				"length": 2,
+				"field": "client_hello.extensions[0].server_name_list.length",
+				"value": "12 bytes"
+			},
+			{
+				"offset": 89,
+				"length": 1,
+				"field": "client_hello.extensions[0].server_name_list[0].name_type",
+				"value": "host_name(0)"
+			},
+			{
+				"offset": 90,
+				"length": 2,
+				"field": "client_hello.extensions[0].server_name_list[0].host_name.length",
+				"value": "9"
+			},
+			{
+				"offset": 92,
+				"length": 9,
+				"field": "client_hello.extensions[0].server_name_list[0].host_name",
+				"value": "'localhost'"
+			},
+			{
+				"offset": 101,
+				"length": 2,
+				"field": "client_hello.extensions[1].extension_type",
+				"value": "supported_versions(43)"
+			},
+			{
+				"offset": 103,
+				"length": 2,
+				"field": "client_hello.extensions[1].length",
+				"value": "3 bytes"
+			},
+			{
+				"offset": 105,
+				"length": 1,
+				"field": "client_hello.extensions[1].versions.length",
+				"value": "2"
+			},
+			{
+				"offset": 106,
+				"length": 2,
+				"field": "client_hello.extensions[1].versions[0]",
+				"value": "TLS 1.3 (0x0304)"
+			},
+			{
+				"offset": 108,
+				"length": 2,
+				"field": "client_hello.extensions[2].extension_type",
+				"value": "supported_groups(10)"
+			},
+			{
+				"offset": 110,
+				"length": 2,
+				"field": "client_hello.extensions[2].length",
+				"value": "6 bytes"
+			},
+			{
+				"offset": 112,
+				"length": 2,
+				"field": "client_hello.extensions[2].named_group_list.length",
+				"value": "4 bytes"
+			},
+			{
+				"offset": 114,
+				"length": 2,
+				"field": "client_hello.extensions[2].named_group_list[0]",
+				"value": "x25519(0x001d)"
+			},
+			{
+				"offset": 116,
+				"length": 2,
+				"field": "client_hello.extensions[2].named_group_list[1]",
+				"value": "secp256r1(0x0017)"
+			},
+			{
+				"offset": 118,
+				"length": 2,
+				"field": "client_hello.extensions[3].extension_type",
+				"value": "signature_algorithms(13)"
+			},
+			{
+				"offset": 120,
+				"length": 2,
+				"field": "client_hello.extensions[3].length",
+				"value": "14 bytes"
+			},
+			{
+				"offset": 122,
+				"length": 2,
+				"field": "client_hello.extensions[3].supported_signature_algorithms.length",
+				"value": "12 bytes"
+			},
+			{
+				"offset": 124,
+				"length": 2,
+				"field": "client_hello.extensions[3].supported_signature_algorithms[0]",
+				"value": "ecdsa_secp256r1_sha256(0x0403)"
+			},
+			{
+				"offset": 126,
+				"length": 2,
+				"field": "client_hello.extensions[3].supported_signature_algorithms[1]",
+				"value": "rsa_pss_rsae_sha256(0x0804)"
+			},
+			{
+				"offset": 128,
+				"length": 2,
+				"field": "client_hello.extensions[3].supported_signature_algorithms[2]",
+				"value": "rsa_pss_rsae_sha384(0x0805)"
+			},
+			{
+				"offset": 130,
+				"length": 2,
+				"field": "client_hello.extensions[3].supported_signature_algorithms[3]",
+				"value": "rsa_pss_rsae_sha512(0x0806)"
+			},
+			{
+				"offset": 132,
+				"length": 2,
+				"field": "client_hello.extensions[3].supported_signature_algorithms[4]",
+				"value": "ed25519(0x0807)"
+			},
+			{
+				"offset": 134,
+				"length": 2,
+				"field": "client_hello.extensions[3].supported_signature_algorithms[5]",
+				"value": "rsa_pkcs1_sha256(0x0401)"
+			},
+			{
+				"offset": 136,
+				"length": 2,
+				"field": "client_hello.extensions[4].extension_type",
+				"value": "key_share(51)"
+			},
+			{
+				"offset": 138,
+				"length": 2,
+				"field": "client_hello.extensions[4].length",
+				"value": "38 bytes"
+			},
+			{
+				"offset": 140,
+				"length": 2,
+				"field": "client_hello.extensions[4].client_shares.length",
+				"value": "36 bytes"
+			},
+			{
+				"offset": 142,
+				"length": 2,
+				"field": "client_hello.extensions[4].client_shares[0].group",
+				"value": "x25519(0x001d)"
+			},
+			{
+				"offset": 144,
+				"length": 2,
+				"field": "client_hello.extensions[4].client_shares[0].key_exchange.length",
+				"value": "32"
+			},
+			{
+				"offset": 146,
+				"length": 32,
+				"field": "client_hello.extensions[4].client_shares[0].key_exchange",
+				"value": "2e7db5c9e0184ce1… (32 bytes) — the client's ephemeral public key",
+				"varies": true
+			},
+			{
+				"offset": 178,
+				"length": 2,
+				"field": "client_hello.extensions[5].extension_type",
+				"value": "early_data(42)"
+			},
+			{
+				"offset": 180,
+				"length": 2,
+				"field": "client_hello.extensions[5].length",
+				"value": "0 bytes"
+			},
+			{
+				"offset": 182,
+				"length": 0,
+				"field": "client_hello.extensions[5].extension_data",
+				"value": "empty — this extension is a flag"
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 1,
+				"field": "encrypted_extensions.msg_type",
+				"value": "encrypted_extensions(8)"
+			},
+			{
+				"offset": 1,
+				"length": 3,
+				"field": "encrypted_extensions.length",
+				"value": "24 (bytes of body that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 2,
+				"field": "encrypted_extensions.extensions.length",
+				"value": "22 bytes of extensions"
+			},
+			{
+				"offset": 6,
+				"length": 2,
+				"field": "encrypted_extensions.extensions[0].extension_type",
+				"value": "supported_groups(10)"
+			},
+			{
+				"offset": 8,
+				"length": 2,
+				"field": "encrypted_extensions.extensions[0].length",
+				"value": "18 bytes"
+			},
+			{
+				"offset": 10,
+				"length": 2,
+				"field": "encrypted_extensions.extensions[0].named_group_list.length",
+				"value": "16 bytes"
+			},
+			{
+				"offset": 12,
+				"length": 2,
+				"field": "encrypted_extensions.extensions[0].named_group_list[0]",
+				"value": "X25519MLKEM768(0x11ec)"
+			},
+			{
+				"offset": 14,
+				"length": 2,
+				"field": "encrypted_extensions.extensions[0].named_group_list[1]",
+				"value": "x25519(0x001d)"
+			},
+			{
+				"offset": 16,
+				"length": 2,
+				"field": "encrypted_extensions.extensions[0].named_group_list[2]",
+				"value": "secp256r1(0x0017)"
+			},
+			{
+				"offset": 18,
+				"length": 2,
+				"field": "encrypted_extensions.extensions[0].named_group_list[3]",
+				"value": "x448(0x001e)"
+			},
+			{
+				"offset": 20,
+				"length": 2,
+				"field": "encrypted_extensions.extensions[0].named_group_list[4]",
+				"value": "secp384r1(0x0018)"
+			},
+			{
+				"offset": 22,
+				"length": 2,
+				"field": "encrypted_extensions.extensions[0].named_group_list[5]",
+				"value": "secp521r1(0x0019)"
+			},
+			{
+				"offset": 24,
+				"length": 2,
+				"field": "encrypted_extensions.extensions[0].named_group_list[6]",
+				"value": "ffdhe2048(0x0100)"
+			},
+			{
+				"offset": 26,
+				"length": 2,
+				"field": "encrypted_extensions.extensions[0].named_group_list[7]",
+				"value": "unknown(0x0101)"
+			}
+		]
+	},
+	{
+		"title": "Why refusing is the sane default",
+		"kind": "text",
+		"request": "0-RTT data is sent before the server has said anything, so it cannot be bound to a fresh exchange.",
+		"request_hex": "",
+		"response": "An attacker who captures it can replay it, and the server cannot tell the copy from the original without state it may not have.",
+		"response_hex": "",
+		"note": "RFC 8446 appendix E.5 is explicit: applications must not use 0-RTT for anything non-idempotent. Advertising it is opt-in per ticket, and refusing an offer is always allowed.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

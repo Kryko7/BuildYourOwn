@@ -1,0 +1,24 @@
+[
+	{
+		"title": "A sketch counting four things, one of them twice",
+		"kind": "primitives",
+		"request": "a sketch of 2^12 registers, five adds over four distinct items\n\n./your_program.sh hll\ninit 12\nadd a\nadd b\nadd c\nadd b\nadd d\ncount",
+		"request_hex": "2e2f796f75725f70726f6772616d2e736820686c6c0a696e69742031320a61646420610a61646420620a61646420630a61646420620a61646420640a636f756e74",
+		"response": "4096 registers, and an estimate of exactly 4\n\n{\"registers\":4096}\n{\"ok\":true}\n{\"ok\":true}\n{\"ok\":true}\n{\"ok\":true}\n{\"ok\":true}\n{\"estimate\":4}",
+		"response_hex": "7b22726567697374657273223a343039367d0a7b226f6b223a747275657d0a7b226f6b223a747275657d0a7b226f6b223a747275657d0a7b226f6b223a747275657d0a7b226f6b223a747275657d0a7b22657374696d617465223a347d",
+		"note": "Five adds, four distinct items, and the answer is the distinct count: a register only ever moves up to a longer run of zeros, so the second `add b` writes the same value it wrote the first time and changes nothing.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "Where the raw estimator cannot be trusted",
+		"kind": "primitives",
+		"request": "one item in a sketch of 16 registers, then the same item in a sketch of 16384\n\n./your_program.sh hll\ninit 4\nadd a\ncount\ninit 14\nadd a\ncount",
+		"request_hex": "2e2f796f75725f70726f6772616d2e736820686c6c0a696e697420340a61646420610a636f756e740a696e69742031340a61646420610a636f756e74",
+		"response": "1 both times\n\n{\"registers\":16}\n{\"ok\":true}\n{\"estimate\":1}\n{\"registers\":16384}\n{\"ok\":true}\n{\"estimate\":1}",
+		"response_hex": "7b22726567697374657273223a31367d0a7b226f6b223a747275657d0a7b22657374696d617465223a317d0a7b22726567697374657273223a31363338347d0a7b226f6b223a747275657d0a7b22657374696d617465223a317d",
+		"note": "With one item in 16 registers the harmonic-mean estimator is wildly biased — it is asymptotic, and one item is not the asymptote. Linear counting over the registers still at zero is what makes a small set come back as itself, and the usual threshold to switch at is 2.5 m.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

@@ -1,0 +1,66 @@
+[
+	{
+		"title": "The write a watcher is waiting for",
+		"kind": "node",
+		"request": "an ordinary put, sent while a watch on `wk` is open\n\nPOST /v3/kv/put\n{\n  \"key\": \"d2s=\",\n  \"value\": \"djE=\"\n}",
+		"request_hex": "7b226b6579223a226432733d222c2276616c7565223a22646a453d227d",
+		"response": "the put's own header — and, on the open stream, one event at that revision\n\nHTTP 200 OK\n{\n  \"header\": {\n    \"cluster_id\": \"8120124649628684138\",\n    \"member_id\": \"4254765522799318016\",\n    \"raft_term\": \"2\",\n    \"revision\": \"2\"\n  }\n}",
+		"response_hex": "7b22686561646572223a7b22636c75737465725f6964223a2238313230313234363439363238363834313338222c226d656d6265725f6964223a2234323534373635353232373939333138303136222c227265766973696f6e223a2232222c22726166745f7465726d223a2232227d7d",
+		"note": "The watcher's stream carries `{\"result\":{\"header\":{...,\"revision\":\"N\"},\"events\":[{\"kv\":{\"key\":\"d2s=\",\"create_revision\":\"N\",\"mod_revision\":\"N\",\"version\":\"1\",\"value\":\"djE=\"}}]}}`, where N is the revision in this response. There is no `type`: PUT is the zero value of that enum, so it is left out.",
+		"request_fields": [
+			{
+				"offset": 1,
+				"length": 5,
+				"field": "request.key",
+				"value": "\"d2s=\""
+			},
+			{
+				"offset": 14,
+				"length": 7,
+				"field": "request.value",
+				"value": "\"djE=\""
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 1,
+				"length": 8,
+				"field": "response.header",
+				"value": "{\"cluster_id\":\"8120124649628684138\",\"member_id\":\"4254765522799318016\",\"raft_term\":\"2\",\"revision\":\"2\"}",
+				"varies": true
+			}
+		]
+	},
+	{
+		"title": "And the delete after it",
+		"kind": "node",
+		"request": "the delete of the same key, again with a watch open\n\nPOST /v3/kv/deleterange\n{\n  \"key\": \"d2s=\"\n}",
+		"request_hex": "7b226b6579223a226432733d227d",
+		"response": "`deleted: 1` here, and a second event on the stream\n\nHTTP 200 OK\n{\n  \"deleted\": \"1\",\n  \"header\": {\n    \"cluster_id\": \"3327965217934999551\",\n    \"member_id\": \"13214582014237292270\",\n    \"raft_term\": \"2\",\n    \"revision\": \"3\"\n  }\n}",
+		"response_hex": "7b22686561646572223a7b22636c75737465725f6964223a2233333237393635323137393334393939353531222c226d656d6265725f6964223a223133323134353832303134323337323932323730222c227265766973696f6e223a2233222c22726166745f7465726d223a2232227d2c2264656c65746564223a2231227d",
+		"note": "That event is `{\"type\":\"DELETE\",\"kv\":{\"key\":\"d2s=\",\"mod_revision\":\"N\"}}`: the key, the revision it went at, and nothing else. A watcher that expects a value here, or expects `version` to be there, breaks on the first delete it sees.",
+		"request_fields": [
+			{
+				"offset": 1,
+				"length": 5,
+				"field": "request.key",
+				"value": "\"d2s=\""
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 1,
+				"length": 8,
+				"field": "response.header",
+				"value": "{\"cluster_id\":\"3327965217934999551\",\"member_id\":\"13214582014237292270\",\"raft_term\":\"2\",\"revision\":\"3\"}",
+				"varies": true
+			},
+			{
+				"offset": 113,
+				"length": 9,
+				"field": "response.deleted",
+				"value": "\"1\""
+			}
+		]
+	}
+]

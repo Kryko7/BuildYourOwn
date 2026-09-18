@@ -1,0 +1,24 @@
+[
+	{
+		"title": "Which hash is used where",
+		"kind": "text",
+		"request": "CH..SH                 -> client/server handshake traffic secrets\nCH..Certificate        -> the CertificateVerify signature\nCH..CertificateVerify  -> the server's Finished\nCH..server Finished    -> the application traffic secrets and the client's Finished\nCH..client Finished    -> resumption_master_secret",
+		"request_hex": "",
+		"response": "Five snapshots of one running hash, taken in order. Nothing is ever hashed twice and nothing is ever removed.",
+		"response_hex": "",
+		"note": "Take the snapshot before adding the message that consumes it. Adding the Finished and then computing its own verify_data is the classic off-by-one here, and it fails with an opaque 'bad Finished'.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "What never goes in",
+		"kind": "text",
+		"request": "Record headers; ChangeCipherSpec records; the AEAD tag and padding; the sequence numbers; anything read off the socket that is not a handshake message body",
+		"request_hex": "",
+		"response": "Only `msg_type || uint24 length || body`, in the order the messages were sent, reassembled across records where they were fragmented.",
+		"response_hex": "",
+		"note": "A handy check while building: hash the messages you *sent and received* at the message layer, never the bytes you read at the socket layer.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

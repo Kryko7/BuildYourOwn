@@ -1,0 +1,24 @@
+[
+	{
+		"title": "A wall clock that stalls, then jumps, then slips",
+		"kind": "primitives",
+		"request": "five readings of a clock whose physical part stands still and then goes back\n\n./your_program.sh hlc\nnow a 100\nnow a 100\nnow a 100\nnow a 200\nnow a 150",
+		"request_hex": "2e2f796f75725f70726f6772616d2e736820686c630a6e6f772061203130300a6e6f772061203130300a6e6f772061203130300a6e6f772061203230300a6e6f77206120313530",
+		"response": "(100,0), (100,1), (100,2), (200,0), then (200,1) — never a smaller pair\n\n{\"c\":0,\"l\":100}\n{\"c\":1,\"l\":100}\n{\"c\":2,\"l\":100}\n{\"c\":0,\"l\":200}\n{\"c\":1,\"l\":200}",
+		"response_hex": "7b2263223a302c226c223a3130307d0a7b2263223a312c226c223a3130307d0a7b2263223a322c226c223a3130307d0a7b2263223a302c226c223a3230307d0a7b2263223a312c226c223a3230307d",
+		"note": "The counter is not a count of events; it is what orders events the physical part cannot separate. It resets the moment `l` moves, which is what keeps it small and bounded rather than growing for the lifetime of the process.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "A message from a node whose clock is ahead",
+		"kind": "primitives",
+		"request": "a message stamped (500, 3) delivered to a process whose wall clock reads 10\n\n./your_program.sh hlc\nrecv b 10 500 3\nget b\nnow b 100",
+		"request_hex": "2e2f796f75725f70726f6772616d2e736820686c630a7265637620622031302035303020330a67657420620a6e6f77206220313030",
+		"response": "(500,4): the message's physical part wins, so the counter comes from it\n\n{\"c\":4,\"l\":500}\n{\"c\":4,\"l\":500}\n{\"c\":5,\"l\":500}",
+		"response_hex": "7b2263223a342c226c223a3530307d0a7b2263223a342c226c223a3530307d0a7b2263223a352c226c223a3530307d",
+		"note": "The receive has to beat the message, not merely match it, so the counter that came with the message is incremented. Taking `max(c_local, c_msg)` without the +1 gives a timestamp equal to one already used elsewhere, and two different events then share an instant.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

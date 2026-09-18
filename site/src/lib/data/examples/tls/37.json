@@ -1,0 +1,92 @@
+[
+	{
+		"title": "A handshake message of a type that does not exist",
+		"kind": "wire",
+		"request": "`4d 00 00 10` and sixteen bytes — a well-framed handshake message whose type, 77, TLS has never defined",
+		"request_hex": "16030300144d000010aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+		"response": "A fatal alert; unexpected_message(10) is the one RFC 8446 names.",
+		"response_hex": "1503030002020a",
+		"note": "Unlike an extension, an unknown handshake message cannot be skipped. The framing says how long it is, but not what state the connection would be in afterwards — so there is nothing safe to do but stop.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 1,
+				"field": "record.type",
+				"value": "handshake(22)"
+			},
+			{
+				"offset": 1,
+				"length": 2,
+				"field": "record.legacy_record_version",
+				"value": "0x0303"
+			},
+			{
+				"offset": 3,
+				"length": 2,
+				"field": "record.length",
+				"value": "20 (bytes that follow)"
+			},
+			{
+				"offset": 5,
+				"length": 1,
+				"field": "unknown.msg_type",
+				"value": "unknown(77)"
+			},
+			{
+				"offset": 6,
+				"length": 3,
+				"field": "unknown.length",
+				"value": "16 (bytes of body that follow)"
+			},
+			{
+				"offset": 9,
+				"length": 16,
+				"field": "unknown.body",
+				"value": "16 bytes"
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 1,
+				"field": "record.type",
+				"value": "alert(21)"
+			},
+			{
+				"offset": 1,
+				"length": 2,
+				"field": "record.legacy_record_version",
+				"value": "0x0303"
+			},
+			{
+				"offset": 3,
+				"length": 2,
+				"field": "record.length",
+				"value": "2 (bytes that follow)"
+			},
+			{
+				"offset": 5,
+				"length": 1,
+				"field": "alert.level",
+				"value": "fatal(2)"
+			},
+			{
+				"offset": 6,
+				"length": 1,
+				"field": "alert.description",
+				"value": "unexpected_message(10)"
+			}
+		]
+	},
+	{
+		"title": "Which alert for which kind of broken",
+		"kind": "text",
+		"request": "A type that does not exist         -> unexpected_message(10)\nA body that will not parse         -> decode_error(50)\nA body that parses but is illegal  -> illegal_parameter(47)\nA length longer than the bytes sent -> wait, then decode_error",
+		"request_hex": "",
+		"response": "All of them fatal, all of them closing the connection. The distinction is for the operator reading a log, not for the peer.",
+		"response_hex": "",
+		"note": "Check the length before you index. Every one of these is a bounds check that happens before a parse, not after it.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

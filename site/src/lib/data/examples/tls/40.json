@@ -1,0 +1,24 @@
+[
+	{
+		"title": "One of the four hundred: a hello cut to a third",
+		"kind": "closed",
+		"request": "The first third of a perfectly good ClientHello record. The header promises far more than follows.",
+		"request_hex": "16030300b2010000ae0303820266317e052fcd29eb9ea1846bc7ddd81a02579a231e7fb7a2faa5949d1b822067c5e9f402780d8870437b40991e3d3986",
+		"response": "Nothing, or an alert, and then a close. The next connection is accepted as though nothing had happened.",
+		"response_hex": "",
+		"note": "The other seven mutations are a flipped bit, a length replaced with 0xffff, a length replaced with zero, a run of noise, a duplicated slice, an undefined content type and an undefined handshake type.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "What a fuzz failure looks like",
+		"kind": "text",
+		"request": "`tlstest --server my_server --stage 40 --seed 0x1234`",
+		"request_hex": "",
+		"response": "The report names the round and the mutation: 'round 137 (a length field replaced with 0xffff)'. The same seed replays the same corpus exactly.",
+		"response_hex": "",
+		"note": "Reproducibility is the whole value. Re-run with `--seed` and the same bytes come back, so the crash can be debugged rather than described.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

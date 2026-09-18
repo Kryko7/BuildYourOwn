@@ -1,0 +1,24 @@
+[
+	{
+		"title": "A client connects and says nothing",
+		"kind": "text",
+		"request": "TCP connect to the port named by `-accept`; the client sends no bytes",
+		"request_hex": "",
+		"response": "Nothing on the wire. The socket stays open and the server waits for a ClientHello.",
+		"response_hex": "",
+		"note": "TLS is strictly client-speaks-first: the ClientHello is the first byte either side sends. A server that writes a greeting on accept, or that closes an idle socket immediately, fails this stage.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "A client connects and disconnects without a ClientHello",
+		"kind": "text",
+		"request": "TCP connect, then an immediate FIN",
+		"request_hex": "",
+		"response": "The server closes that socket and goes back to accepting. Nothing is logged as fatal and the process keeps running.",
+		"response_hex": "",
+		"note": "Port scanners and health checks do this all day. `read()` returning 0 before a ClientHello is the end of a connection, not an error to abort on.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

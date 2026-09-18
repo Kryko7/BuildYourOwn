@@ -1,0 +1,552 @@
+[
+	{
+		"title": "A ClientHello, then the client shuts down its write half",
+		"kind": "closed",
+		"request": "A complete ClientHello, immediately followed by a TCP FIN on the client's write half. No Finished will ever arrive.",
+		"request_hex": "16030300b2010000ae0303f6c505b07647790acb999710523b30ee1c7b89ad287ce35be324d2e818f311fd2093652be0fb5a2d3d93828178891d60fb9ccf9ba99539e46960ac6ba3b1c8395f00061302130313010100005f0000000e000c0000096c6f63616c686f7374002b0003020304000a00060004001d0017000d000e000c040308040805080608070401003300260024001d0020daaf6f117da3e53162f21088f2f5d808de17be510ebcc01a30d662c8e714884f",
+		"response": "The server may send its whole flight anyway, and then closes. Either way the process survives and the next connection is accepted.",
+		"response_hex": "160303007a020000760303acfa905b17a41bdaaa85d8c4ba6d168832d1991d09356d2efd358b2e2b5fb42b2093652be0fb5a2d3d93828178891d60fb9ccf9ba99539e46960ac6ba3b1c8395f130200002e002b0002030400330024001d00205b162ce9ac326053d8ceff7c79670a2c8f8464ff187139628ec085ceb2b35623140303000101170303002db524d630c89a699fad81b5bb917f1c35cbacec2fd4725cdbe504346d243d18a568ea67c45ffb0ef3f83ab0983d17030301d93891592f589ff2d0b4d5d17b74a3f21bb5687a7adc469a298fd472d3c6f6f54885038b6cf90c9d043f5a5f49947c3257309a3c1994f8bbc4bbba30acd8b291d91a67ba19d1e7698bac0880feb79cf745ab9c07aed0a0bb7af290bf6378367f956df7447aa0437cc4a8053aa16daca47fc1161efe71f030732f6c5ad8b2766a45d9a248d1813ebbdc152eadfc2c2dc1cb29bc5c748196413c673503509016edfbbc724c8431c58bc1a3506cfba3ea9e0496b8ceb6c3ce01ca0160335ffe6422664ab2d62841ad3daceb8821d145b09dc9dd1a31ad895f3ab4bb7bc72ad5f4475cb7d1b8ba7352922de31f351f6c1d0fc6dced6ca31de04f9846ab8fe5d3a67ab2fbcbb73cebf45829fb7656c54f7e463329612b5cf3d87f756cbc067230912d6fc6f0c256bad22916434a2a0ffba28e78639fee265ea902960baa2740045d337f216a17ac8fe9c8fb9c701cfb0ef74615725613487513303f38ee3fc064e9c68878190e1397f484add39e3f32800feb7f17330fa9d070b1ebd193e35abff82ed9d534026176f80f8372e24cc11b61b8987a291649e77c3ee6122d80f5826a2b30f114d5dc796efbfc2f010c165c9a1cc6de47a41c4915a67aec64efa5a826c426a9264577d42738373f2d9db2c743d064e63848ee5678685b43170303005fab937c8429f12f9ce7911e65a2e744c49865f23f84693ce69657d43483c02b75d9a7dd78b199ce3672455d4328b6187c29a8c20070e8a6725a2cfd41337e2ca12dd533f26b7faf379a0525a2bc7b3f38e5b503233053081711d61bde9e24d817030300455e923156b7e8c6ea63ad343a5989c9e7b3121da48c4c04bfaf88ae8de36baa0a10a1aac304b1855cc8790d4999c08f579291af91d3f7681c1ac3c4eac0773327b131982803",
+		"note": "read() == 0 means the peer will send nothing more. Free that connection's state and return to accept(); it is not an error condition.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 1,
+				"field": "record.type",
+				"value": "handshake(22)"
+			},
+			{
+				"offset": 1,
+				"length": 2,
+				"field": "record.legacy_record_version",
+				"value": "0x0303"
+			},
+			{
+				"offset": 3,
+				"length": 2,
+				"field": "record.length",
+				"value": "178 (bytes that follow)"
+			},
+			{
+				"offset": 5,
+				"length": 1,
+				"field": "client_hello.msg_type",
+				"value": "client_hello(1)"
+			},
+			{
+				"offset": 6,
+				"length": 3,
+				"field": "client_hello.length",
+				"value": "174 (bytes of body that follow)"
+			},
+			{
+				"offset": 9,
+				"length": 2,
+				"field": "client_hello.legacy_version",
+				"value": "0x0303 (TLS 1.3 pins this at 0x0303; the real version is in supported_versions)"
+			},
+			{
+				"offset": 11,
+				"length": 32,
+				"field": "client_hello.random",
+				"value": "f6c505b07647790acb999710523b30ee1c7b89ad287ce35be324d2e818f311fd",
+				"varies": true
+			},
+			{
+				"offset": 43,
+				"length": 1,
+				"field": "client_hello.legacy_session_id.length",
+				"value": "32"
+			},
+			{
+				"offset": 44,
+				"length": 32,
+				"field": "client_hello.legacy_session_id",
+				"value": "93652be0fb5a2d3d93828178891d60fb9ccf9ba99539e46960ac6ba3b1c8395f (the server must echo this back byte for byte)",
+				"varies": true
+			},
+			{
+				"offset": 76,
+				"length": 2,
+				"field": "client_hello.cipher_suites.length",
+				"value": "6 bytes, 3 suites"
+			},
+			{
+				"offset": 78,
+				"length": 2,
+				"field": "client_hello.cipher_suites[0]",
+				"value": "TLS_AES_256_GCM_SHA384(0x1302)"
+			},
+			{
+				"offset": 80,
+				"length": 2,
+				"field": "client_hello.cipher_suites[1]",
+				"value": "TLS_CHACHA20_POLY1305_SHA256(0x1303)"
+			},
+			{
+				"offset": 82,
+				"length": 2,
+				"field": "client_hello.cipher_suites[2]",
+				"value": "TLS_AES_128_GCM_SHA256(0x1301)"
+			},
+			{
+				"offset": 84,
+				"length": 1,
+				"field": "client_hello.legacy_compression_methods.length",
+				"value": "1"
+			},
+			{
+				"offset": 85,
+				"length": 1,
+				"field": "client_hello.legacy_compression_methods",
+				"value": "null(0) — TLS 1.3 allows nothing else"
+			},
+			{
+				"offset": 86,
+				"length": 2,
+				"field": "client_hello.extensions.length",
+				"value": "95 bytes of extensions"
+			},
+			{
+				"offset": 88,
+				"length": 2,
+				"field": "client_hello.extensions[0].extension_type",
+				"value": "server_name(0)"
+			},
+			{
+				"offset": 90,
+				"length": 2,
+				"field": "client_hello.extensions[0].length",
+				"value": "14 bytes"
+			},
+			{
+				"offset": 92,
+				"length": 2,
+				"field": "client_hello.extensions[0].server_name_list.length",
+				"value": "12 bytes"
+			},
+			{
+				"offset": 94,
+				"length": 1,
+				"field": "client_hello.extensions[0].server_name_list[0].name_type",
+				"value": "host_name(0)"
+			},
+			{
+				"offset": 95,
+				"length": 2,
+				"field": "client_hello.extensions[0].server_name_list[0].host_name.length",
+				"value": "9"
+			},
+			{
+				"offset": 97,
+				"length": 9,
+				"field": "client_hello.extensions[0].server_name_list[0].host_name",
+				"value": "'localhost'"
+			},
+			{
+				"offset": 106,
+				"length": 2,
+				"field": "client_hello.extensions[1].extension_type",
+				"value": "supported_versions(43)"
+			},
+			{
+				"offset": 108,
+				"length": 2,
+				"field": "client_hello.extensions[1].length",
+				"value": "3 bytes"
+			},
+			{
+				"offset": 110,
+				"length": 1,
+				"field": "client_hello.extensions[1].versions.length",
+				"value": "2"
+			},
+			{
+				"offset": 111,
+				"length": 2,
+				"field": "client_hello.extensions[1].versions[0]",
+				"value": "TLS 1.3 (0x0304)"
+			},
+			{
+				"offset": 113,
+				"length": 2,
+				"field": "client_hello.extensions[2].extension_type",
+				"value": "supported_groups(10)"
+			},
+			{
+				"offset": 115,
+				"length": 2,
+				"field": "client_hello.extensions[2].length",
+				"value": "6 bytes"
+			},
+			{
+				"offset": 117,
+				"length": 2,
+				"field": "client_hello.extensions[2].named_group_list.length",
+				"value": "4 bytes"
+			},
+			{
+				"offset": 119,
+				"length": 2,
+				"field": "client_hello.extensions[2].named_group_list[0]",
+				"value": "x25519(0x001d)"
+			},
+			{
+				"offset": 121,
+				"length": 2,
+				"field": "client_hello.extensions[2].named_group_list[1]",
+				"value": "secp256r1(0x0017)"
+			},
+			{
+				"offset": 123,
+				"length": 2,
+				"field": "client_hello.extensions[3].extension_type",
+				"value": "signature_algorithms(13)"
+			},
+			{
+				"offset": 125,
+				"length": 2,
+				"field": "client_hello.extensions[3].length",
+				"value": "14 bytes"
+			},
+			{
+				"offset": 127,
+				"length": 2,
+				"field": "client_hello.extensions[3].supported_signature_algorithms.length",
+				"value": "12 bytes"
+			},
+			{
+				"offset": 129,
+				"length": 2,
+				"field": "client_hello.extensions[3].supported_signature_algorithms[0]",
+				"value": "ecdsa_secp256r1_sha256(0x0403)"
+			},
+			{
+				"offset": 131,
+				"length": 2,
+				"field": "client_hello.extensions[3].supported_signature_algorithms[1]",
+				"value": "rsa_pss_rsae_sha256(0x0804)"
+			},
+			{
+				"offset": 133,
+				"length": 2,
+				"field": "client_hello.extensions[3].supported_signature_algorithms[2]",
+				"value": "rsa_pss_rsae_sha384(0x0805)"
+			},
+			{
+				"offset": 135,
+				"length": 2,
+				"field": "client_hello.extensions[3].supported_signature_algorithms[3]",
+				"value": "rsa_pss_rsae_sha512(0x0806)"
+			},
+			{
+				"offset": 137,
+				"length": 2,
+				"field": "client_hello.extensions[3].supported_signature_algorithms[4]",
+				"value": "ed25519(0x0807)"
+			},
+			{
+				"offset": 139,
+				"length": 2,
+				"field": "client_hello.extensions[3].supported_signature_algorithms[5]",
+				"value": "rsa_pkcs1_sha256(0x0401)"
+			},
+			{
+				"offset": 141,
+				"length": 2,
+				"field": "client_hello.extensions[4].extension_type",
+				"value": "key_share(51)"
+			},
+			{
+				"offset": 143,
+				"length": 2,
+				"field": "client_hello.extensions[4].length",
+				"value": "38 bytes"
+			},
+			{
+				"offset": 145,
+				"length": 2,
+				"field": "client_hello.extensions[4].client_shares.length",
+				"value": "36 bytes"
+			},
+			{
+				"offset": 147,
+				"length": 2,
+				"field": "client_hello.extensions[4].client_shares[0].group",
+				"value": "x25519(0x001d)"
+			},
+			{
+				"offset": 149,
+				"length": 2,
+				"field": "client_hello.extensions[4].client_shares[0].key_exchange.length",
+				"value": "32"
+			},
+			{
+				"offset": 151,
+				"length": 32,
+				"field": "client_hello.extensions[4].client_shares[0].key_exchange",
+				"value": "daaf6f117da3e531… (32 bytes) — the client's ephemeral public key",
+				"varies": true
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 1,
+				"field": "record.type",
+				"value": "handshake(22)"
+			},
+			{
+				"offset": 1,
+				"length": 2,
+				"field": "record.legacy_record_version",
+				"value": "0x0303"
+			},
+			{
+				"offset": 3,
+				"length": 2,
+				"field": "record.length",
+				"value": "122 (bytes that follow)"
+			},
+			{
+				"offset": 5,
+				"length": 1,
+				"field": "server_hello.msg_type",
+				"value": "server_hello(2)"
+			},
+			{
+				"offset": 6,
+				"length": 3,
+				"field": "server_hello.length",
+				"value": "118 (bytes of body that follow)"
+			},
+			{
+				"offset": 9,
+				"length": 2,
+				"field": "server_hello.legacy_version",
+				"value": "0x0303 (TLS 1.3 pins this at 0x0303; the real version is in supported_versions)"
+			},
+			{
+				"offset": 11,
+				"length": 32,
+				"field": "server_hello.random",
+				"value": "acfa905b17a41bdaaa85d8c4ba6d168832d1991d09356d2efd358b2e2b5fb42b",
+				"varies": true
+			},
+			{
+				"offset": 43,
+				"length": 1,
+				"field": "server_hello.legacy_session_id.length",
+				"value": "32"
+			},
+			{
+				"offset": 44,
+				"length": 32,
+				"field": "server_hello.legacy_session_id_echo",
+				"value": "93652be0fb5a2d3d93828178891d60fb9ccf9ba99539e46960ac6ba3b1c8395f (must equal the ClientHello's legacy_session_id)",
+				"varies": true
+			},
+			{
+				"offset": 76,
+				"length": 2,
+				"field": "server_hello.cipher_suite",
+				"value": "TLS_AES_256_GCM_SHA384(0x1302)"
+			},
+			{
+				"offset": 78,
+				"length": 1,
+				"field": "server_hello.legacy_compression_method",
+				"value": "0 (must be 0)"
+			},
+			{
+				"offset": 79,
+				"length": 2,
+				"field": "server_hello.extensions.length",
+				"value": "46 bytes of extensions"
+			},
+			{
+				"offset": 81,
+				"length": 2,
+				"field": "server_hello.extensions[0].extension_type",
+				"value": "supported_versions(43)"
+			},
+			{
+				"offset": 83,
+				"length": 2,
+				"field": "server_hello.extensions[0].length",
+				"value": "2 bytes"
+			},
+			{
+				"offset": 85,
+				"length": 2,
+				"field": "server_hello.extensions[0].selected_version",
+				"value": "TLS 1.3 (0x0304)"
+			},
+			{
+				"offset": 87,
+				"length": 2,
+				"field": "server_hello.extensions[1].extension_type",
+				"value": "key_share(51)"
+			},
+			{
+				"offset": 89,
+				"length": 2,
+				"field": "server_hello.extensions[1].length",
+				"value": "36 bytes"
+			},
+			{
+				"offset": 91,
+				"length": 2,
+				"field": "server_hello.extensions[1].server_share.group",
+				"value": "x25519(0x001d)"
+			},
+			{
+				"offset": 93,
+				"length": 2,
+				"field": "server_hello.extensions[1].server_share.key_exchange.length",
+				"value": "32"
+			},
+			{
+				"offset": 95,
+				"length": 32,
+				"field": "server_hello.extensions[1].server_share.key_exchange",
+				"value": "5b162ce9ac326053… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
+				"varies": true
+			},
+			{
+				"offset": 127,
+				"length": 1,
+				"field": "record1.record.type",
+				"value": "change_cipher_spec(20)"
+			},
+			{
+				"offset": 128,
+				"length": 2,
+				"field": "record1.record.legacy_record_version",
+				"value": "0x0303"
+			},
+			{
+				"offset": 130,
+				"length": 2,
+				"field": "record1.record.length",
+				"value": "1 (bytes that follow)"
+			},
+			{
+				"offset": 132,
+				"length": 1,
+				"field": "record1.change_cipher_spec",
+				"value": "0x01, the compatibility byte TLS 1.3 keeps for middleboxes"
+			},
+			{
+				"offset": 133,
+				"length": 1,
+				"field": "record2.record.type",
+				"value": "application_data(23)"
+			},
+			{
+				"offset": 134,
+				"length": 2,
+				"field": "record2.record.legacy_record_version",
+				"value": "0x0303"
+			},
+			{
+				"offset": 136,
+				"length": 2,
+				"field": "record2.record.length",
+				"value": "45 (bytes that follow)"
+			},
+			{
+				"offset": 138,
+				"length": 45,
+				"field": "record2.record.encrypted_record",
+				"value": "45 bytes: the AEAD ciphertext plus its 16-byte tag. The real content type is inside it, after the content and before the padding.",
+				"varies": true
+			},
+			{
+				"offset": 183,
+				"length": 1,
+				"field": "record3.record.type",
+				"value": "application_data(23)"
+			},
+			{
+				"offset": 184,
+				"length": 2,
+				"field": "record3.record.legacy_record_version",
+				"value": "0x0303"
+			},
+			{
+				"offset": 186,
+				"length": 2,
+				"field": "record3.record.length",
+				"value": "473 (bytes that follow)"
+			},
+			{
+				"offset": 188,
+				"length": 473,
+				"field": "record3.record.encrypted_record",
+				"value": "473 bytes: the AEAD ciphertext plus its 16-byte tag. The real content type is inside it, after the content and before the padding.",
+				"varies": true
+			},
+			{
+				"offset": 661,
+				"length": 1,
+				"field": "record4.record.type",
+				"value": "application_data(23)"
+			},
+			{
+				"offset": 662,
+				"length": 2,
+				"field": "record4.record.legacy_record_version",
+				"value": "0x0303"
+			},
+			{
+				"offset": 664,
+				"length": 2,
+				"field": "record4.record.length",
+				"value": "95 (bytes that follow)"
+			},
+			{
+				"offset": 666,
+				"length": 95,
+				"field": "record4.record.encrypted_record",
+				"value": "95 bytes: the AEAD ciphertext plus its 16-byte tag. The real content type is inside it, after the content and before the padding.",
+				"varies": true
+			},
+			{
+				"offset": 761,
+				"length": 1,
+				"field": "record5.record.type",
+				"value": "application_data(23)"
+			},
+			{
+				"offset": 762,
+				"length": 2,
+				"field": "record5.record.legacy_record_version",
+				"value": "0x0303"
+			},
+			{
+				"offset": 764,
+				"length": 2,
+				"field": "record5.record.length",
+				"value": "69 (bytes that follow)"
+			},
+			{
+				"offset": 766,
+				"length": 69,
+				"field": "record5.record.encrypted_record",
+				"value": "69 bytes: the AEAD ciphertext plus its 16-byte tag. The real content type is inside it, after the content and before the padding.",
+				"varies": true
+			}
+		]
+	},
+	{
+		"title": "An abandoned handshake",
+		"kind": "text",
+		"request": "The client sends a ClientHello, reads the ServerHello, and then simply stops — no Finished, no close_notify, the socket left open.",
+		"request_hex": "",
+		"response": "Nothing, until the server's own timeout. What matters is that the server is still accepting new connections while it waits.",
+		"response_hex": "",
+		"note": "This is what a port scanner and a flaky mobile client both look like. A server that blocks its accept loop on one half-finished handshake is trivially denied service by a single connection.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

@@ -1,0 +1,76 @@
+[
+	{
+		"title": "A short line, for scale",
+		"kind": "wire",
+		"request": "`size\\n` — five bytes of content in a 22-byte ciphertext",
+		"request_hex": "1703030016b883a8be0a5197c50c6bf049600d629dc20fa5b72ad5",
+		"response": "`ezis\\n`, the same shape back.",
+		"response_hex": "1703030016ff6a27103e7272a6d9604d4d687dfe3f777817ca6e73",
+		"note": "Every protected record costs five header bytes, one inner type byte and a 16-byte tag. At one byte per record that is 22 bytes on the wire for one — legal, and a good reason to batch.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 1,
+				"field": "record.type",
+				"value": "application_data(23)"
+			},
+			{
+				"offset": 1,
+				"length": 2,
+				"field": "record.legacy_record_version",
+				"value": "0x0303"
+			},
+			{
+				"offset": 3,
+				"length": 2,
+				"field": "record.length",
+				"value": "22 (bytes that follow)"
+			},
+			{
+				"offset": 5,
+				"length": 22,
+				"field": "record.encrypted_record",
+				"value": "22 bytes: the AEAD ciphertext plus its 16-byte tag. The real content type is inside it, after the content and before the padding.",
+				"varies": true
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 1,
+				"field": "record.type",
+				"value": "application_data(23)"
+			},
+			{
+				"offset": 1,
+				"length": 2,
+				"field": "record.legacy_record_version",
+				"value": "0x0303"
+			},
+			{
+				"offset": 3,
+				"length": 2,
+				"field": "record.length",
+				"value": "22 (bytes that follow)"
+			},
+			{
+				"offset": 5,
+				"length": 22,
+				"field": "record.encrypted_record",
+				"value": "22 bytes: the AEAD ciphertext plus its 16-byte tag. The real content type is inside it, after the content and before the padding.",
+				"varies": true
+			}
+		]
+	},
+	{
+		"title": "The two ceilings",
+		"kind": "text",
+		"request": "TLSPlaintext.length <= 2^14        (16384)\nTLSCiphertext.length <= 2^14 + 256 (16640)",
+		"request_hex": "",
+		"response": "A megabyte of application data is therefore at least 64 records. Splitting is the sender's job and reassembling is the receiver's.",
+		"response_hex": "",
+		"note": "The limits are per record and say nothing about the connection. A receiver that allocates one buffer per connection and grows it for ever has a different bug, and an attacker will find it.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

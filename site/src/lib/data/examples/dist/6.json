@@ -1,0 +1,24 @@
+[
+	{
+		"title": "A fourth node joins",
+		"kind": "primitives",
+		"request": "three nodes, a key located, a fourth node, the same key located again\n\n./your_program.sh consistent-hash\nadd n1 128\nadd n2 128\nadd n3 128\nlocate user-42\nadd n4 128\nlocate user-42",
+		"request_hex": "2e2f796f75725f70726f6772616d2e736820636f6e73697374656e742d686173680a616464206e31203132380a616464206e32203132380a616464206e33203132380a6c6f6361746520757365722d34320a616464206e34203132380a6c6f6361746520757365722d3432",
+		"response": "the two `locate` answers are either the same node or the new one, never a third\n\n{\"nodes\":1,\"vnodes\":128}\n{\"nodes\":2,\"vnodes\":256}\n{\"nodes\":3,\"vnodes\":384}\n{\"node\":\"n1\"}\n{\"nodes\":4,\"vnodes\":512}\n{\"node\":\"n1\"}",
+		"response_hex": "7b226e6f646573223a312c22766e6f646573223a3132387d0a7b226e6f646573223a322c22766e6f646573223a3235367d0a7b226e6f646573223a332c22766e6f646573223a3338347d0a7b226e6f6465223a226e31227d0a7b226e6f646573223a342c22766e6f646573223a3531327d0a7b226e6f6465223a226e31227d",
+		"note": "A key may only stay where it is or move to `n4`. If `user-42` had been on `n1` and answered `n2` after the join, the ring is not consistent hashing — it is `hash(key) % n` wearing a costume, and every key in the store would be in the wrong place after a join.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "A node leaves and comes back",
+		"kind": "primitives",
+		"request": "a key located before a removal, during it, and after the node is back\n\n./your_program.sh consistent-hash\nadd n1 128\nadd n2 128\nadd n3 128\nlocate user-42\nremove n2\nlocate user-42\nadd n2 128\nlocate user-42",
+		"request_hex": "2e2f796f75725f70726f6772616d2e736820636f6e73697374656e742d686173680a616464206e31203132380a616464206e32203132380a616464206e33203132380a6c6f6361746520757365722d34320a72656d6f7665206e320a6c6f6361746520757365722d34320a616464206e32203132380a6c6f6361746520757365722d3432",
+		"response": "the first and third answers are identical\n\n{\"nodes\":1,\"vnodes\":128}\n{\"nodes\":2,\"vnodes\":256}\n{\"nodes\":3,\"vnodes\":384}\n{\"node\":\"n1\"}\n{\"nodes\":2}\n{\"node\":\"n1\"}\n{\"nodes\":3,\"vnodes\":384}\n{\"node\":\"n1\"}",
+		"response_hex": "7b226e6f646573223a312c22766e6f646573223a3132387d0a7b226e6f646573223a322c22766e6f646573223a3235367d0a7b226e6f646573223a332c22766e6f646573223a3338347d0a7b226e6f6465223a226e31227d0a7b226e6f646573223a327d0a7b226e6f6465223a226e31227d0a7b226e6f646573223a332c22766e6f646573223a3338347d0a7b226e6f6465223a226e31227d",
+		"note": "The points a node owns have to be derived from its name, not from when it joined or from a counter. Seed a random generator per `add` and this last `locate` answers something else, which means every key that node held is lost after a restart.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

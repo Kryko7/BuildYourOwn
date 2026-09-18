@@ -1,0 +1,24 @@
+[
+	{
+		"title": "Two replicas writing at the same time",
+		"kind": "primitives",
+		"request": "one write on each replica, no communication between them, then a sync\n\n./your_program.sh version-vector\nput r1 cart red\nput r2 cart blue\nsync r1 r2\nread r1 cart\nread r2 cart",
+		"request_hex": "2e2f796f75725f70726f6772616d2e73682076657273696f6e2d766563746f720a7075742072312063617274207265640a707574207232206361727420626c75650a73796e632072312072320a7265616420723120636172740a726561642072322063617274",
+		"response": "both replicas answer with the same two siblings, sorted by value\n\n{\"vv\":{\"r1\":1}}\n{\"vv\":{\"r2\":1}}\n{\"ok\":true}\n{\"siblings\":[{\"value\":\"blue\",\"vv\":{\"r2\":1}},{\"value\":\"red\",\"vv\":{\"r1\":1}}]}\n{\"siblings\":[{\"value\":\"blue\",\"vv\":{\"r2\":1}},{\"value\":\"red\",\"vv\":{\"r1\":1}}]}",
+		"response_hex": "7b227676223a7b227231223a317d7d0a7b227676223a7b227232223a317d7d0a7b226f6b223a747275657d0a7b227369626c696e6773223a5b7b2276616c7565223a22626c7565222c227676223a7b227232223a317d7d2c7b2276616c7565223a22726564222c227676223a7b227231223a317d7d5d7d0a7b227369626c696e6773223a5b7b2276616c7565223a22626c7565222c227676223a7b227232223a317d7d2c7b2276616c7565223a22726564222c227676223a7b227231223a317d7d5d7d",
+		"note": "Neither vector dominates the other — {\"r1\":1} and {\"r2\":1} are concurrent — so the sync has no basis for dropping either. Picking the later arrival, or the larger replica name, silently loses a write; that is the bug this whole stage exists to catch.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "Resolving the siblings with put-ctx",
+		"kind": "primitives",
+		"request": "a write that names, as its context, the merge of both siblings' vectors\n\n./your_program.sh version-vector\nput r1 cart red\nput r2 cart blue\nsync r1 r2\nput-ctx r1 cart purple {\"r1\":1,\"r2\":1}\nread r1 cart",
+		"request_hex": "2e2f796f75725f70726f6772616d2e73682076657273696f6e2d766563746f720a7075742072312063617274207265640a707574207232206361727420626c75650a73796e632072312072320a7075742d637478207231206361727420707572706c65207b227231223a312c227232223a317d0a726561642072312063617274",
+		"response": "one sibling left, stamped {\"r1\":2,\"r2\":1}\n\n{\"vv\":{\"r1\":1}}\n{\"vv\":{\"r2\":1}}\n{\"ok\":true}\n{\"vv\":{\"r1\":2,\"r2\":1}}\n{\"siblings\":[{\"value\":\"purple\",\"vv\":{\"r1\":2,\"r2\":1}}]}",
+		"response_hex": "7b227676223a7b227231223a317d7d0a7b227676223a7b227232223a317d7d0a7b226f6b223a747275657d0a7b227676223a7b227231223a322c227232223a317d7d0a7b227369626c696e6773223a5b7b2276616c7565223a22707572706c65222c227676223a7b227231223a322c227232223a317d7d5d7d",
+		"note": "The context is the claim \"I read both of these\". Increment the writer's own entry on top of it and the result dominates both siblings, so both are dropped. A write that ignores the context it was given cannot collapse anything, and the siblings accumulate for ever.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

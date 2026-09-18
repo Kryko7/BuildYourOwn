@@ -1,0 +1,24 @@
+[
+	{
+		"title": "A two-node ring and one key",
+		"kind": "primitives",
+		"request": "two nodes with the default 128 points each, then the same key located twice\n\n./your_program.sh consistent-hash\nadd n1 128\nadd n2 128\nlocate user-42\nlocate user-42",
+		"request_hex": "2e2f796f75725f70726f6772616d2e736820636f6e73697374656e742d686173680a616464206e31203132380a616464206e32203132380a6c6f6361746520757365722d34320a6c6f6361746520757365722d3432",
+		"response": "the node count after each add, then the same node name both times\n\n{\"nodes\":1,\"vnodes\":128}\n{\"nodes\":2,\"vnodes\":256}\n{\"node\":\"n1\"}\n{\"node\":\"n1\"}",
+		"response_hex": "7b226e6f646573223a312c22766e6f646573223a3132387d0a7b226e6f646573223a322c22766e6f646573223a3235367d0a7b226e6f6465223a226e31227d0a7b226e6f6465223a226e31227d",
+		"note": "Which node answers is your hash's business and no test here predicts it. That the second answer equals the first is not: `locate` is a pure function of the key and the current membership.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "What the virtual nodes are for",
+		"kind": "primitives",
+		"request": "four nodes, then where `key0`..`key3999` land\n\n./your_program.sh consistent-hash\nadd n1 128\nadd n2 128\nadd n3 128\nadd n4 128\nstats 4000",
+		"request_hex": "2e2f796f75725f70726f6772616d2e736820636f6e73697374656e742d686173680a616464206e31203132380a616464206e32203132380a616464206e33203132380a616464206e34203132380a73746174732034303030",
+		"response": "a count per node, all four within a few per cent of a quarter of the sample\n\n{\"nodes\":1,\"vnodes\":128}\n{\"nodes\":2,\"vnodes\":256}\n{\"nodes\":3,\"vnodes\":384}\n{\"nodes\":4,\"vnodes\":512}\n{\"nodes\":{\"n1\":1210,\"n2\":960,\"n3\":885,\"n4\":945}}",
+		"response_hex": "7b226e6f646573223a312c22766e6f646573223a3132387d0a7b226e6f646573223a322c22766e6f646573223a3235367d0a7b226e6f646573223a332c22766e6f646573223a3338347d0a7b226e6f646573223a342c22766e6f646573223a3531327d0a7b226e6f646573223a7b226e31223a313231302c226e32223a3936302c226e33223a3838352c226e34223a3934357d7d",
+		"note": "Run the same thing with `add n1 1` and the counts stop looking like quarters: four random points on a ring cut it into four very unequal arcs, and the arc is the share of the key space. That is the whole reason for the points.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

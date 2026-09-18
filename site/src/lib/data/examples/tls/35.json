@@ -1,0 +1,76 @@
+[
+	{
+		"title": "A record that is not tampered with, for comparison",
+		"kind": "wire",
+		"request": "`good\\n` sealed with the client's application keys",
+		"request_hex": "1703030016838eefc1776ad368707fc980eb7594d14d8c62bc38a2",
+		"response": "`doog\\n` back. Flip any bit of that ciphertext and this stops happening.",
+		"response_hex": "17030300160f251d85aa8e017c97bd3a61b55a6bb01c7e758ec7ca",
+		"note": "AEAD is all-or-nothing: one changed bit anywhere in the ciphertext, the tag, or the five header bytes that make up the additional data, and decryption fails outright. There is no partially valid record.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 1,
+				"field": "record.type",
+				"value": "application_data(23)"
+			},
+			{
+				"offset": 1,
+				"length": 2,
+				"field": "record.legacy_record_version",
+				"value": "0x0303"
+			},
+			{
+				"offset": 3,
+				"length": 2,
+				"field": "record.length",
+				"value": "22 (bytes that follow)"
+			},
+			{
+				"offset": 5,
+				"length": 22,
+				"field": "record.encrypted_record",
+				"value": "22 bytes: the AEAD ciphertext plus its 16-byte tag. The real content type is inside it, after the content and before the padding.",
+				"varies": true
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 1,
+				"field": "record.type",
+				"value": "application_data(23)"
+			},
+			{
+				"offset": 1,
+				"length": 2,
+				"field": "record.legacy_record_version",
+				"value": "0x0303"
+			},
+			{
+				"offset": 3,
+				"length": 2,
+				"field": "record.length",
+				"value": "22 (bytes that follow)"
+			},
+			{
+				"offset": 5,
+				"length": 22,
+				"field": "record.encrypted_record",
+				"value": "22 bytes: the AEAD ciphertext plus its 16-byte tag. The real content type is inside it, after the content and before the padding.",
+				"varies": true
+			}
+		]
+	},
+	{
+		"title": "What must not differ",
+		"kind": "text",
+		"request": "A flipped ciphertext bit; a flipped tag bit; a header length that no longer matches; a record replayed at the wrong sequence number.",
+		"request_hex": "",
+		"response": "All four: bad_record_mac(20), fatal, connection closed. Same alert, same moment, no extra information.",
+		"response_hex": "",
+		"note": "Distinguishing them would be an oracle. The reason TLS 1.3 has one alert here rather than several is a decade of padding-oracle attacks on the versions that had more.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

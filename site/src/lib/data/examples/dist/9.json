@@ -1,0 +1,24 @@
+[
+	{
+		"title": "A write while one replica is down",
+		"kind": "primitives",
+		"request": "W = 3 of N = 3 with everybody up, then with one down, then W = 2 with one up\n\n./your_program.sh quorum\nsloppy 3 3 3\nsloppy 3 3 2\nsloppy 3 2 1",
+		"request_hex": "2e2f796f75725f70726f6772616d2e73682071756f72756d0a736c6f7070792033203320330a736c6f7070792033203320320a736c6f707079203320322031",
+		"response": "accepted every time; `hints` is 0, then 1, then 1, and `strict` follows it\n\n{\"accepted\":true,\"hints\":0,\"strict\":true}\n{\"accepted\":true,\"hints\":1,\"strict\":false}\n{\"accepted\":true,\"hints\":1,\"strict\":false}",
+		"response_hex": "7b226163636570746564223a747275652c2268696e7473223a302c22737472696374223a747275657d0a7b226163636570746564223a747275652c2268696e7473223a312c22737472696374223a66616c73657d0a7b226163636570746564223a747275652c2268696e7473223a312c22737472696374223a66616c73657d",
+		"note": "All three writes are accepted, which is the whole point of being sloppy, but only the first one is a quorum write. The second and third were completed by a node outside the preference list, so the overlap argument from stage 08 does not cover them and `strict` has to say so.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "Hinted handoff",
+		"kind": "primitives",
+		"request": "`n4` takes two writes belonging to `n1`, then `n1` comes back\n\n./your_program.sh quorum\nhint n1 n4 user-42\nhint n1 n4 user-99\nhints n1\nhandoff n1\nhints n1",
+		"request_hex": "2e2f796f75725f70726f6772616d2e73682071756f72756d0a68696e74206e31206e3420757365722d34320a68696e74206e31206e3420757365722d39390a68696e7473206e310a68616e646f6666206e310a68696e7473206e31",
+		"response": "two keys held for `n1`, then a handoff of two, then nothing left\n\n{\"hints\":1}\n{\"hints\":2}\n{\"keys\":[\"user-42\",\"user-99\"]}\n{\"delivered\":2,\"hints\":0}\n{\"keys\":[]}",
+		"response_hex": "7b2268696e7473223a317d0a7b2268696e7473223a327d0a7b226b657973223a5b22757365722d3432222c22757365722d3939225d7d0a7b2264656c697665726564223a322c2268696e7473223a307d0a7b226b657973223a5b5d7d",
+		"note": "A hint is per owner, and the handoff is what makes it temporary. A store that delivers the data but keeps the hint hands the same keys over again on the next handoff, and one that drops the hint without delivering has quietly lost a write that was acknowledged.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

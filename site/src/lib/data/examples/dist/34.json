@@ -1,0 +1,76 @@
+[
+	{
+		"title": "A key that is not base64",
+		"kind": "node",
+		"request": "a range whose key is plain text where base64 was required\n\nPOST /v3/kv/range\n{\n  \"key\": \"not base64!\"\n}",
+		"request_hex": "7b226b6579223a226e6f742062617365363421227d",
+		"response": "HTTP 400 and `{\"code\":3,\"message\":\"...\"}` — invalid argument\n\nHTTP 400 Bad Request\n{\n  \"code\": 3,\n  \"message\": \"proto: (line 1:8): invalid value for bytes field key: \\\"not base64!\\\"\"\n}",
+		"response_hex": "7b22636f6465223a332c226d657373616765223a2270726f746f3a20286c696e6520313a38293a20696e76616c69642076616c756520666f72206279746573206669656c64206b65793a205c226e6f7420626173653634215c22227d",
+		"note": "Every key and value on this wire is base64, and the decoder rejects the request before the store ever sees it. Answering 200 with an empty result here is the bug this test exists to catch: the caller would read it as \"no such key\".",
+		"request_fields": [
+			{
+				"offset": 1,
+				"length": 5,
+				"field": "request.key",
+				"value": "\"not base64!\""
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 1,
+				"length": 6,
+				"field": "response.code",
+				"value": "3"
+			},
+			{
+				"offset": 10,
+				"length": 9,
+				"field": "response.message",
+				"value": "\"proto: (line 1:8): invalid value for bytes field key: \\\"not base64!\\\"\""
+			}
+		]
+	},
+	{
+		"title": "A put onto a lease nobody granted",
+		"kind": "node",
+		"request": "a perfectly well-formed put naming a lease id that does not exist\n\nPOST /v3/kv/put\n{\n  \"key\": \"b29wcw==\",\n  \"lease\": \"999999\",\n  \"value\": \"dg==\"\n}",
+		"request_hex": "7b226b6579223a226232397763773d3d222c226c65617365223a22393939393939222c2276616c7565223a2264673d3d227d",
+		"response": "HTTP 404 and `{\"code\":5,\"message\":\"etcdserver: requested lease not found\"}`\n\nHTTP 404 Not Found\n{\n  \"code\": 5,\n  \"message\": \"etcdserver: requested lease not found\"\n}",
+		"response_hex": "7b22636f6465223a352c226d657373616765223a22657463647365727665723a20726571756573746564206c65617365206e6f7420666f756e64227d",
+		"note": "Code 5 is not-found, and the request is refused whole: the key is not written, not even without the lease. The HTTP status tracks the gRPC code, which is why this one is a 404 and the bad-base64 one is a 400.",
+		"request_fields": [
+			{
+				"offset": 1,
+				"length": 5,
+				"field": "request.key",
+				"value": "\"b29wcw==\""
+			},
+			{
+				"offset": 18,
+				"length": 7,
+				"field": "request.lease",
+				"value": "\"999999\""
+			},
+			{
+				"offset": 35,
+				"length": 7,
+				"field": "request.value",
+				"value": "\"dg==\""
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 1,
+				"length": 6,
+				"field": "response.code",
+				"value": "5"
+			},
+			{
+				"offset": 10,
+				"length": 9,
+				"field": "response.message",
+				"value": "\"etcdserver: requested lease not found\""
+			}
+		]
+	}
+]

@@ -1,0 +1,24 @@
+[
+	{
+		"title": "A burst, then the refill",
+		"kind": "primitives",
+		"request": "ten tokens a second with a burst of five, spent at 0 ms, 100 ms and much later\n\n./your_program.sh token-bucket\ninit 10 5\ntake 0 5\ntake 0 1\ntake 100 1\ntake 100 1\ntake 100000 5",
+		"request_hex": "2e2f796f75725f70726f6772616d2e736820746f6b656e2d6275636b65740a696e697420313020350a74616b65203020350a74616b65203020310a74616b652031303020310a74616b652031303020310a74616b65203130303030302035",
+		"response": "the burst, then a refusal, then one token per 100 ms, then the burst again\n\n{\"ok\":true}\n{\"allowed\":true,\"tokens\":0.0}\n{\"allowed\":false,\"tokens\":0.0}\n{\"allowed\":true,\"tokens\":0.0}\n{\"allowed\":false,\"tokens\":0.0}\n{\"allowed\":true,\"tokens\":0.0}",
+		"response_hex": "7b226f6b223a747275657d0a7b22616c6c6f776564223a747275652c22746f6b656e73223a302e307d0a7b22616c6c6f776564223a66616c73652c22746f6b656e73223a302e307d0a7b22616c6c6f776564223a747275652c22746f6b656e73223a302e307d0a7b22616c6c6f776564223a66616c73652c22746f6b656e73223a302e307d0a7b22616c6c6f776564223a747275652c22746f6b656e73223a302e307d",
+		"note": "100 ms at ten a second is exactly one token, and the take at 100 000 ms finds five rather than a thousand: the cap is what makes a bucket a bucket. Note that the two takes at 100 ms answer differently — the clock has not moved, so nothing has been added between them.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "A queue that drains rather than fills",
+		"kind": "primitives",
+		"request": "a queue of three draining at ten a second, offered work at 0 ms and 200 ms\n\n./your_program.sh leaky-bucket\ninit 10 3\noffer 0 3\noffer 0 1\noffer 200 2\noffer 200 2",
+		"request_hex": "2e2f796f75725f70726f6772616d2e7368206c65616b792d6275636b65740a696e697420313020330a6f66666572203020330a6f66666572203020310a6f666665722032303020320a6f66666572203230302032",
+		"response": "three accepted, the fourth refused, then two accepted once 200 ms have drained two — and nothing more at that same instant\n\n{\"ok\":true}\n{\"accepted\":true,\"queue\":3.0}\n{\"accepted\":false,\"queue\":3.0}\n{\"accepted\":true,\"queue\":3.0}\n{\"accepted\":false,\"queue\":3.0}",
+		"response_hex": "7b226f6b223a747275657d0a7b226163636570746564223a747275652c227175657565223a332e307d0a7b226163636570746564223a66616c73652c227175657565223a332e307d0a7b226163636570746564223a747275652c227175657565223a332e307d0a7b226163636570746564223a66616c73652c227175657565223a332e307d",
+		"note": "The leaky bucket refuses rather than delays: there is no queue of pending answers here, only a level that says whether the next unit fits. Accepting work and reporting a queue longer than the capacity is the mistake to watch for.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]
