@@ -28,9 +28,10 @@ export interface ApiHealth {
 }
 
 /**
- * `GET /api/tracks` — what the installed `byo` knows about (PLAN.md §5.6). It is not in
- * `byo/API.md` yet, so the site treats it as optional everywhere: with it, a track can say
- * "tester installed, v0.2.0"; without it, the built-in registry is the whole truth.
+ * `GET /api/tracks` — what the installed `byo` knows about (`byo/API.md`, PLAN.md §5.6).
+ * Older `byo` builds and static hosting have no such endpoint, so the site treats it as
+ * optional everywhere: with it, a track can say "tester installed, v0.2.0"; without it, the
+ * built-in registry is the whole truth.
  */
 export interface ApiTrack {
 	id: TrackId;
