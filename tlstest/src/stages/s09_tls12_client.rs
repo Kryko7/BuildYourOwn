@@ -26,28 +26,19 @@ pub fn stage() -> Stage {
             "The check comes before cipher-suite selection: the version decides whether the \
              rest of the hello even means what you think it means",
         ],
-        examples: examples,
+        examples,
         tests: vec![
             Test::new(
                 "a hello with no supported_versions extension is refused",
                 no_extension,
             ),
-            Test::new(
-                "a hello offering only TLS 1.2 is refused",
-                only_tls12,
-            ),
-            Test::new(
-                "a hello offering only TLS 1.0 and 1.1 is refused",
-                only_old,
-            ),
+            Test::new("a hello offering only TLS 1.2 is refused", only_tls12),
+            Test::new("a hello offering only TLS 1.0 and 1.1 is refused", only_old),
             Test::new(
                 "the refusal is protocol_version(70) when an alert is sent",
                 alert_description,
             ),
-            Test::new(
-                "a hello offering 1.2 and 1.3 is accepted",
-                both_versions,
-            ),
+            Test::new("a hello offering 1.2 and 1.3 is accepted", both_versions),
             Test::new(
                 "the server still serves a 1.3 client afterwards",
                 still_serving,
@@ -75,10 +66,13 @@ async fn expect_refusal(
     versions: Option<&[u16]>,
     what: &str,
 ) -> Result<crate::tls::conn::Reaction, crate::assert::Failure> {
-    let message =
-        hello_without_13(&ctx.config(), versions).map_err(crate::stages::harness)?;
+    let message = hello_without_13(&ctx.config(), versions).map_err(crate::stages::harness)?;
     let mut conn = ctx.connect().await?;
-    let reaction = provoke(&mut conn, &Record::build(22, LEGACY_VERSION_TLS12, &message)).await;
+    let reaction = provoke(
+        &mut conn,
+        &Record::build(22, LEGACY_VERSION_TLS12, &message),
+    )
+    .await;
     let mut c = Check::new(format!("what the server does with {what}"));
     c.block("client_hello", &message);
     check_refused_with(
@@ -107,7 +101,12 @@ tls_test!(only_tls12, |ctx| {
 });
 
 tls_test!(only_old, |ctx| {
-    expect_refusal(ctx, Some(&[0x0302, 0x0301]), "a hello offering only TLS 1.1 and 1.0").await?;
+    expect_refusal(
+        ctx,
+        Some(&[0x0302, 0x0301]),
+        "a hello offering only TLS 1.1 and 1.0",
+    )
+    .await?;
     Ok(())
 });
 
@@ -157,9 +156,13 @@ tls_test!(still_serving, |ctx| {
     let message =
         hello_without_13(&ctx.config(), Some(&[0x0303])).map_err(crate::stages::harness)?;
     let mut conn = ctx.connect().await?;
-    let _ = provoke(&mut conn, &Record::build(22, LEGACY_VERSION_TLS12, &message)).await;
+    let _ = provoke(
+        &mut conn,
+        &Record::build(22, LEGACY_VERSION_TLS12, &message),
+    )
+    .await;
     drop(conn);
-    ctx.expect_still_serving("a refused TLS 1.2 client").await
+    ctx.expect_still_answering("a refused TLS 1.2 client").await
 });
 
 fn tls12_hello(env: &ExampleEnv) -> Result<Vec<u8>, String> {

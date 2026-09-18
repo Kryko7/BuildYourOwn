@@ -1,11 +1,9 @@
 //! Stage 18 — The key schedule: Early, Handshake and Master secrets.
 
 use crate::assert::Check;
-use crate::examples::{ExampleSpec};
+use crate::examples::ExampleSpec;
 use crate::stages::{Stage, Test};
-use crate::tls::crypto::{
-    derive_secret, hkdf_extract, hkdf_label, HashAlg, KeySchedule,
-};
+use crate::tls::crypto::{derive_secret, hkdf_extract, hkdf_label, HashAlg, KeySchedule};
 use crate::tls_test;
 
 /// Stage definition.
@@ -26,7 +24,7 @@ pub fn stage() -> Stage {
              opaque<7..255>, then the context as an opaque<0..255> — the six-byte prefix \
              includes the space",
         ],
-        examples: examples,
+        examples,
         tests: vec![
             Test::new(
                 "the Early Secret is HKDF-Extract of two zero blocks",
@@ -150,7 +148,10 @@ tls_test!(traffic_labels, |ctx| {
     )
     .map_err(crate::assert::Failure::tls)?;
     let mut c = Check::new("the two handshake traffic secrets");
-    c.keying(&client.hash_after_server_hello, "c hs traffic / s hs traffic");
+    c.keying(
+        &client.hash_after_server_hello,
+        "c hs traffic / s hs traffic",
+    );
     c.note(
         "Both are taken over Transcript-Hash(ClientHello..ServerHello) — everything sent so \
          far, and nothing after.",
@@ -200,7 +201,11 @@ tls_test!(secret_lengths, |ctx| {
             schedule.suite.hash.name()
         ));
         c.eq("Early Secret length", n, schedule.early_secret.len());
-        c.eq("Handshake Secret length", n, schedule.handshake_secret.len());
+        c.eq(
+            "Handshake Secret length",
+            n,
+            schedule.handshake_secret.len(),
+        );
         c.eq("Master Secret length", n, schedule.master_secret.len());
         c.eq(
             "transcript hash length",

@@ -27,7 +27,7 @@ pub fn stage() -> Stage {
             "key_share and supported_versions are the two extensions that make this a TLS 1.3 \
              ServerHello at all; everything else belongs in EncryptedExtensions",
         ],
-        examples: examples,
+        examples,
         tests: vec![
             Test::new("legacy_version is 0x0303", legacy_version),
             Test::new("legacy_compression_method is 0", compression),
@@ -93,7 +93,11 @@ tls_test!(random_bytes, |ctx| {
     c.block("server_hello", &client.server_hello_bytes);
     c.mark(6..38);
     c.eq("server_hello.random.len()", 32usize, hello.random.len());
-    c.ne("server_hello.random", [0u8; 32].to_vec(), hello.random.to_vec());
+    c.ne(
+        "server_hello.random",
+        [0u8; 32].to_vec(),
+        hello.random.to_vec(),
+    );
     c.that(
         "server_hello.random",
         "not a copy of the client's random",

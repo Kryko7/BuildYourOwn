@@ -169,7 +169,11 @@ impl TlsConn {
     }
 
     /// Write one record, encrypting it when write keys are in force.
-    pub async fn write_record(&mut self, content_type: ContentType, content: &[u8]) -> TlsResult<()> {
+    pub async fn write_record(
+        &mut self,
+        content_type: ContentType,
+        content: &[u8],
+    ) -> TlsResult<()> {
         self.write_record_padded(content_type, content, 0).await
     }
 
@@ -216,7 +220,12 @@ impl TlsConn {
         );
         self.stream.write_all(&bytes).await?;
         self.stream.flush().await?;
-        self.trace(Direction::Sent, "record change_cipher_spec(20)", &bytes, false);
+        self.trace(
+            Direction::Sent,
+            "record change_cipher_spec(20)",
+            &bytes,
+            false,
+        );
         Ok(())
     }
 
@@ -339,7 +348,10 @@ impl TlsConn {
                 ContentType::Handshake if !self.layer.reading_encrypted() => {
                     self.hs_buf.extend_from_slice(&record.fragment);
                 }
-                ContentType::Alert if !self.layer.reading_encrypted() => {
+                // A plaintext alert is normal before keys exist, and several real servers
+                // also send one in the clear when a handshake collapses after them. Reading
+                // it is strictly more informative than calling it an unexpected record.
+                ContentType::Alert if record.fragment.len() == 2 => {
                     let alert = Alert::parse(&record.fragment)?;
                     self.last_alert = Some(alert);
                     return Ok(Incoming::Alert(alert));
@@ -353,7 +365,8 @@ impl TlsConn {
         if self.hs_buf.len() < 4 {
             return Ok(None);
         }
-        let length = u32::from_be_bytes([0, self.hs_buf[1], self.hs_buf[2], self.hs_buf[3]]) as usize;
+        let length =
+            u32::from_be_bytes([0, self.hs_buf[1], self.hs_buf[2], self.hs_buf[3]]) as usize;
         if self.hs_buf.len() < 4 + length {
             return Ok(None);
         }
@@ -385,7 +398,10 @@ impl TlsConn {
                 ));
             }
             let before = self.inbuf.len();
-            if !self.fill(left, "the server to close the connection").await? {
+            if !self
+                .fill(left, "the server to close the connection")
+                .await?
+            {
                 seen.extend_from_slice(&self.inbuf);
                 self.inbuf.clear();
                 self.trace(Direction::Received, "TCP FIN (server closed)", &[], false);
@@ -595,7 +611,10 @@ mod tests {
             .expect("connect");
         match conn.next_message().await.expect("message") {
             Incoming::Alert(a) => {
-                assert_eq!(a.description, crate::tls::AlertDescription::PROTOCOL_VERSION)
+                assert_eq!(
+                    a.description,
+                    crate::tls::AlertDescription::PROTOCOL_VERSION
+                )
             }
             other => panic!("expected an alert, got {}", other.describe()),
         }
@@ -618,6 +637,9 @@ mod tests {
             conn.reaction(Duration::from_millis(100)).await,
             Reaction::Silence
         );
-        assert_eq!(conn.reaction(Duration::from_secs(2)).await, Reaction::Closed);
+        assert_eq!(
+            conn.reaction(Duration::from_secs(2)).await,
+            Reaction::Closed
+        );
     }
 }

@@ -25,7 +25,7 @@ pub fn stage() -> Stage {
             "Sign the transcript hash as it stood *before* this message; the message cannot \
              cover itself",
         ],
-        examples: examples,
+        examples,
         tests: vec![
             Test::new(
                 "the signature verifies over the documented content",
@@ -47,10 +47,7 @@ pub fn stage() -> Stage {
                 "the 64 leading spaces are part of the signed content",
                 spaces_matter,
             ),
-            Test::new(
-                "the body is exactly algorithm and signature",
-                body_shape,
-            ),
+            Test::new("the body is exactly algorithm and signature", body_shape),
             Test::new(
                 "the signature is fresh on every connection",
                 fresh_each_time,
@@ -73,7 +70,10 @@ tls_test!(verifies, |ctx| {
     let mut c = Check::new("the CertificateVerify signature");
     c.block("certificate_verify", &client.certificate_verify_bytes);
     c.block("the bytes that were signed", &content);
-    c.keying(&client.hash_after_certificate, "Transcript-Hash(CH..Certificate)");
+    c.keying(
+        &client.hash_after_certificate,
+        "Transcript-Hash(CH..Certificate)",
+    );
     c.note(format!(
         "content = 64 × 0x20 || {SERVER_CV_CONTEXT:?} || 0x00 || the transcript hash \
          ({} bytes in total)",
@@ -92,12 +92,7 @@ tls_test!(verifies, |ctx| {
 });
 
 /// Prove that `content` is *not* what was signed.
-fn must_not_verify(
-    c: &mut Check,
-    path: &str,
-    client: &crate::tls::client::Client,
-    content: &[u8],
-) {
+fn must_not_verify(c: &mut Check, path: &str, client: &crate::tls::client::Client, content: &[u8]) {
     let (Some(key), Some(cv)) = (
         client.server_public_key.as_ref(),
         client.certificate_verify.as_ref(),
@@ -221,7 +216,11 @@ tls_test!(body_shape, |ctx| {
         let body = u32::from_be_bytes([0, bytes[1], bytes[2], bytes[3]]) as usize;
         let sig_len = u16::from_be_bytes([bytes[6], bytes[7]]) as usize;
         c.eq("certificate_verify.length", bytes.len() - 4, body);
-        c.eq("certificate_verify.signature.length", cv.signature.len(), sig_len);
+        c.eq(
+            "certificate_verify.signature.length",
+            cv.signature.len(),
+            sig_len,
+        );
         c.eq(
             "certificate_verify.length accounted for",
             2 + 2 + sig_len,
@@ -232,7 +231,12 @@ tls_test!(body_shape, |ctx| {
             crate::tls::sig_name(cv.algorithm),
         );
     } else {
-        c.that("certificate_verify", "at least eight bytes", false, bytes.len());
+        c.that(
+            "certificate_verify",
+            "at least eight bytes",
+            false,
+            bytes.len(),
+        );
     }
     c.finish()
 });

@@ -7,13 +7,13 @@
 //! what a server does with an odd but legal hello, and what it does with an illegal one.
 
 use super::buf::{Reader, Writer};
-use p256::elliptic_curve::sec1::ToEncodedPoint;
 use super::{
     ext_name, group_name, AlertDescription, AlertLevel, HandshakeType, TlsError, TlsResult,
     EXT_ALPN, EXT_COOKIE, EXT_EARLY_DATA, EXT_KEY_SHARE, EXT_PRE_SHARED_KEY,
     EXT_PSK_KEY_EXCHANGE_MODES, EXT_SERVER_NAME, EXT_SIGNATURE_ALGORITHMS, EXT_SUPPORTED_GROUPS,
     EXT_SUPPORTED_VERSIONS, GROUP_SECP256R1, GROUP_X25519, LEGACY_VERSION_TLS12, TLS13_VERSION,
 };
+use p256::elliptic_curve::sec1::ToEncodedPoint;
 
 // ---------------------------------------------------------------------------------------
 // Extensions
@@ -287,7 +287,8 @@ impl KeyExchange {
                 let public = p256::PublicKey::from_sec1_bytes(point.as_bytes()).map_err(|e| {
                     TlsError::Crypto(format!("server_hello.key_share.key_exchange: {e}"))
                 })?;
-                let shared = p256::ecdh::diffie_hellman(secret.to_nonzero_scalar(), public.as_affine());
+                let shared =
+                    p256::ecdh::diffie_hellman(secret.to_nonzero_scalar(), public.as_affine());
                 Ok(shared.raw_secret_bytes().to_vec())
             }
         }
@@ -831,14 +832,23 @@ mod tests {
         let b = KeyExchange::from_entropy(GROUP_SECP256R1, &[4u8; 32]).expect("b");
         assert_eq!(a.public().len(), 65);
         assert_eq!(a.public()[0], 0x04, "TLS sends uncompressed points");
-        assert_eq!(a.complete(b.public()).expect("ab"), b.complete(a.public()).expect("ba"));
+        assert_eq!(
+            a.complete(b.public()).expect("ab"),
+            b.complete(a.public()).expect("ba")
+        );
     }
 
     #[test]
     fn a_small_order_x25519_point_is_refused() {
         let a = KeyExchange::from_entropy(GROUP_X25519, &[5u8; 32]).expect("a");
-        assert!(a.complete(&[0u8; 32]).is_err(), "all-zero u must be rejected");
-        assert!(a.complete(&[0u8; 31]).is_err(), "a short share must be rejected");
+        assert!(
+            a.complete(&[0u8; 32]).is_err(),
+            "all-zero u must be rejected"
+        );
+        assert!(
+            a.complete(&[0u8; 31]).is_err(),
+            "a short share must be rejected"
+        );
     }
 
     #[test]

@@ -195,13 +195,13 @@ impl Runner {
     }
 
     /// Run one test end to end.
-    pub async fn run_test(&mut self, _stage: &Stage, test: &Test, index: u64) -> TestResult {
+    pub async fn run_test(&mut self, stage: &Stage, test: &Test, index: u64) -> TestResult {
         let started = Instant::now();
         if let Some(reason) = test.skip_reason(&self.def.name) {
             return TestResult {
                 name: test.name.to_string(),
                 status: Status::Skip,
-                ext: test.is_ext(),
+                ext: stage.test_is_ext(test),
                 duration_ms: 0,
                 failure: None,
                 skip_reason: Some(reason.to_string()),
@@ -209,7 +209,21 @@ impl Runner {
             };
         }
         let mut notes = Vec::new();
-        let result = self.prepare_and_run(test, index, &mut notes).await;
+        let mut skipped: Option<String> = None;
+        let result = self
+            .prepare_and_run(test, index, &mut notes, &mut skipped)
+            .await;
+        if let Some(reason) = skipped {
+            return TestResult {
+                name: test.name.to_string(),
+                status: Status::Skip,
+                ext: stage.test_is_ext(test),
+                duration_ms: started.elapsed().as_millis(),
+                failure: None,
+                skip_reason: Some(reason),
+                notes,
+            };
+        }
         let mut failure = result.err();
         // A server that died turns any other failure into the crash that caused it.
         if let Some(s) = self.server.as_mut() {
@@ -230,7 +244,7 @@ impl Runner {
             } else {
                 Status::Fail
             },
-            ext: test.is_ext(),
+            ext: stage.test_is_ext(test),
             duration_ms: started.elapsed().as_millis(),
             failure,
             skip_reason: None,
@@ -243,6 +257,7 @@ impl Runner {
         test: &Test,
         index: u64,
         notes: &mut Vec<String>,
+        skipped: &mut Option<String>,
     ) -> Result<(), Failure> {
         let options = (test.server_options)();
         let per_test = self.def.restart == RestartPolicy::PerTest;
@@ -288,6 +303,7 @@ impl Runner {
         };
         self.server = ctx.server.take();
         notes.append(&mut ctx.notes);
+        *skipped = ctx.skip.take();
         outcome
     }
 

@@ -15,8 +15,8 @@
 
 use super::crypto::HashAlg;
 use super::{
-    sig_name, TlsError, TlsResult, SERVER_CV_CONTEXT, SIG_ECDSA_SECP256R1_SHA256,
-    SIG_ED25519, SIG_RSA_PKCS1_SHA256, SIG_RSA_PSS_RSAE_SHA256, SIG_RSA_PSS_RSAE_SHA384,
+    sig_name, TlsError, TlsResult, SERVER_CV_CONTEXT, SIG_ECDSA_SECP256R1_SHA256, SIG_ED25519,
+    SIG_RSA_PKCS1_SHA256, SIG_RSA_PSS_RSAE_SHA256, SIG_RSA_PSS_RSAE_SHA384,
     SIG_RSA_PSS_RSAE_SHA512,
 };
 use rsa::pkcs1::DecodeRsaPublicKey;
@@ -72,7 +72,9 @@ impl PublicKey {
             "1.2.840.113549.1.1.1" => {
                 let key = rsa::RsaPublicKey::from_pkcs1_der(key_bytes)
                     .or_else(|_| rsa::RsaPublicKey::from_public_key_der(spki.raw))
-                    .map_err(|e| TlsError::Decode(format!("the RSA public key does not parse: {e}")))?;
+                    .map_err(|e| {
+                        TlsError::Decode(format!("the RSA public key does not parse: {e}"))
+                    })?;
                 Ok(PublicKey::Rsa(Box::new(key)))
             }
             // id-ecPublicKey — the curve is in the parameters; this client only does P-256.
@@ -174,7 +176,9 @@ pub fn verify_content(
         (PublicKey::Rsa(k), SIG_RSA_PKCS1_SHA256) => {
             let vk = rsa::pkcs1v15::VerifyingKey::<sha2::Sha256>::new((**k).clone());
             let sig = rsa::pkcs1v15::Signature::try_from(signature).map_err(|e| {
-                TlsError::Crypto(format!("certificate_verify.signature is not an RSA signature: {e}"))
+                TlsError::Crypto(format!(
+                    "certificate_verify.signature is not an RSA signature: {e}"
+                ))
             })?;
             vk.verify(content, &sig).map_err(|e| {
                 TlsError::Crypto(format!(
@@ -236,7 +240,11 @@ mod tests {
         let c = server_signed_content(&[0xab; 32]);
         assert_eq!(&c[..64], &[0x20u8; 64]);
         assert_eq!(&c[64..64 + 33], SERVER_CV_CONTEXT.as_bytes());
-        assert_eq!(c[64 + 33], 0, "a zero byte separates the context from the hash");
+        assert_eq!(
+            c[64 + 33],
+            0,
+            "a zero byte separates the context from the hash"
+        );
         assert_eq!(&c[64 + 34..], &[0xab; 32]);
         assert_eq!(c.len(), 64 + 33 + 1 + 32);
     }
@@ -252,6 +260,10 @@ mod tests {
     fn scheme_hashes_are_named() {
         assert_eq!(scheme_hash(SIG_RSA_PSS_RSAE_SHA256), Some(HashAlg::Sha256));
         assert_eq!(scheme_hash(SIG_RSA_PSS_RSAE_SHA384), Some(HashAlg::Sha384));
-        assert_eq!(scheme_hash(SIG_ED25519), None, "Ed25519 signs the content itself");
+        assert_eq!(
+            scheme_hash(SIG_ED25519),
+            None,
+            "Ed25519 signs the content itself"
+        );
     }
 }

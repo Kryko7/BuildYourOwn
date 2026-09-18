@@ -329,6 +329,16 @@ impl Stage {
     pub fn file_name(&self) -> String {
         format!("src/stages/s{:02}_{}.rs", self.number, self.slug)
     }
+
+    /// Whether `test` is beyond the core track, which it is if either the test or the whole
+    /// stage says so.
+    ///
+    /// `--skip-ext` and the catalog both go through here, so a stage marked `ext: true`
+    /// really does hide every one of its tests rather than only the individually tagged
+    /// ones.
+    pub fn test_is_ext(&self, test: &Test) -> bool {
+        self.ext || test.is_ext()
+    }
 }
 
 /// Everything a test body can reach.
@@ -359,6 +369,8 @@ pub struct Ctx {
     pub server: Option<ServerHandle>,
     /// Informational lines the test wants in the report even when it passes.
     pub notes: Vec<String>,
+    /// Set by [`Ctx::skip`] when the test decided at run time that it does not apply.
+    pub skip: Option<String>,
 }
 
 impl Ctx {
@@ -389,12 +401,23 @@ impl Ctx {
             openssl,
             server: None,
             notes: Vec::new(),
+            skip: None,
         }
     }
 
     /// Add an informational line to the test's report entry, pass or fail.
     pub fn note(&mut self, line: impl Into<String>) {
         self.notes.push(line.into());
+    }
+
+    /// Decide at run time that this test does not apply, with a reason that is always
+    /// printed.
+    ///
+    /// `Test::skip_on` covers "this server never passes this test"; this covers "the thing
+    /// this test needs is not installed here" — a missing `openssl` for the interop stage,
+    /// say. The body should return `Ok(())` straight after calling it.
+    pub fn skip(&mut self, reason: impl Into<String>) {
+        self.skip = Some(reason.into());
     }
 
     /// The default ClientHello configuration for this test: seeded, and different from
@@ -441,13 +464,65 @@ impl Ctx {
         }
     }
 
+    /// Prove the server is still *accepting* after whatever the test just did to it,
+    /// without requiring a handshake.
+    ///
+    /// Stage 01 uses this rather than [`Ctx::expect_still_serving`], so that a learner who
+    /// has written an accept loop and nothing else can get the first stage green.
+    pub async fn expect_accepting(&self, after: &str) -> Result<(), Failure> {
+        let conn = self.connect().await.map_err(|f| {
+            f.note(format!(
+                "the server stopped accepting TCP connections after {after}"
+            ))
+        })?;
+        drop(conn);
+        Ok(())
+    }
+
+    /// Prove the server still answers a ClientHello with a handshake record, without
+    /// requiring the whole handshake.
+    ///
+    /// This is the liveness check sections A and B use: a learner working on the record
+    /// layer has a ServerHello and nothing after it, and a robustness test has no business
+    /// demanding a Finished.
+    pub async fn expect_still_answering(&self, after: &str) -> Result<(), Failure> {
+        let message =
+            crate::stages::hello_message(&self.config_n(0xa11e)).map_err(crate::stages::harness)?;
+        let mut conn = self.connect().await.map_err(|f| {
+            f.note(format!(
+                "the server stopped accepting connections after {after}"
+            ))
+        })?;
+        conn.write_record(crate::tls::ContentType::Handshake, &message)
+            .await
+            .map_err(Failure::tls)?;
+        let record = conn.read_record().await.map_err(|e| {
+            Failure::tls(e).note(format!(
+                "a fresh connection must still be answered after {after}"
+            ))
+        })?;
+        if record.content_type != crate::tls::ContentType::Handshake {
+            return Err(Failure::new(
+                FailureKind::Protocol,
+                format!(
+                    "after {after}, a fresh ClientHello was answered with a {} record instead \
+                     of a handshake record",
+                    record.content_type.name()
+                ),
+            )
+            .block("the record the server sent", &record.raw));
+        }
+        Ok(())
+    }
+
     /// Prove the server is still able to serve a fresh connection after whatever the test
     /// just did to it.
     pub async fn expect_still_serving(&self, after: &str) -> Result<(), Failure> {
-        let mut client = self
-            .client_with(self.config_n(0xfeed))
-            .await
-            .map_err(|f| f.note(format!("the server stopped accepting connections after {after}")))?;
+        let mut client = self.client_with(self.config_n(0xfeed)).await.map_err(|f| {
+            f.note(format!(
+                "the server stopped accepting connections after {after}"
+            ))
+        })?;
         match client.handshake().await {
             Ok(()) => Ok(()),
             Err(e) => Err(handshake_failure(e, &client).note(format!(
@@ -561,6 +636,23 @@ mod tests {
                 "stage {} has duplicate test names",
                 s.number
             );
+        }
+    }
+
+    #[test]
+    fn an_ext_stage_makes_every_one_of_its_tests_ext() {
+        for s in all() {
+            if !s.ext {
+                continue;
+            }
+            for t in &s.tests {
+                assert!(
+                    s.test_is_ext(t),
+                    "stage {} is ext but test '{}' is not hidden by --skip-ext",
+                    s.number,
+                    t.name
+                );
+            }
         }
     }
 

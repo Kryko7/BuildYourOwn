@@ -6,9 +6,7 @@ use crate::stages::{check_refused_with, provoke, provoke_edited_hello, Stage, Te
 use crate::tls::client::{build_hello, ClientConfig};
 use crate::tls::msg::{find_extension, Extension};
 use crate::tls::record::Record;
-use crate::tls::{
-    AlertDescription, EXT_SUPPORTED_VERSIONS, LEGACY_VERSION_TLS12,
-};
+use crate::tls::{AlertDescription, EXT_SUPPORTED_VERSIONS, LEGACY_VERSION_TLS12};
 use crate::tls_test;
 
 /// Stage definition.
@@ -28,13 +26,16 @@ pub fn stage() -> Stage {
             "legacy_compression_methods must be exactly `01 00`; anything else is \
              illegal_parameter",
         ],
-        examples: examples,
+        examples,
         tests: vec![
             Test::new(
                 "a 32-byte legacy_session_id is echoed exactly",
                 session_id_echo,
             ),
-            Test::new("an empty legacy_session_id is echoed as empty", empty_session_id),
+            Test::new(
+                "an empty legacy_session_id is echoed as empty",
+                empty_session_id,
+            ),
             Test::new(
                 "an odd-length legacy_session_id is echoed exactly",
                 odd_session_id,
@@ -71,10 +72,7 @@ async fn echo_session_id(
         .server_hello
         .as_ref()
         .ok_or_else(|| crate::stages::harness("no ServerHello"))?;
-    let mut c = Check::new(format!(
-        "the echo of a {}-byte legacy_session_id",
-        id.len()
-    ));
+    let mut c = Check::new(format!("the echo of a {}-byte legacy_session_id", id.len()));
     c.block("client_hello", &client.client_hello_bytes);
     c.block("server_hello", &client.server_hello_bytes);
     c.note(
@@ -130,7 +128,8 @@ tls_test!(duplicate_extension, |ctx| {
 
 tls_test!(lying_extension_length, |ctx| {
     // Build a clean hello, then overwrite one extension's length with something far too big.
-    let (hello, _) = build_hello(&ctx.config()).map_err(|e| crate::stages::harness(e.to_string()))?;
+    let (hello, _) =
+        build_hello(&ctx.config()).map_err(|e| crate::stages::harness(e.to_string()))?;
     let mut bytes = hello.encode();
     // Find the extensions block: 4 header + 2 version + 32 random + session id + suites +
     // compression, then a two-byte extensions length.
@@ -167,12 +166,13 @@ tls_test!(lying_extension_length, |ctx| {
     );
     c.finish()?;
     drop(conn);
-    ctx.expect_still_serving("an extension with a lying length")
+    ctx.expect_still_answering("an extension with a lying length")
         .await
 });
 
 tls_test!(lying_block_length, |ctx| {
-    let (hello, _) = build_hello(&ctx.config()).map_err(|e| crate::stages::harness(e.to_string()))?;
+    let (hello, _) =
+        build_hello(&ctx.config()).map_err(|e| crate::stages::harness(e.to_string()))?;
     let mut bytes = hello.encode();
     let session_len = bytes[4 + 2 + 32] as usize;
     let mut at = 4 + 2 + 32 + 1 + session_len;
@@ -201,7 +201,7 @@ tls_test!(lying_block_length, |ctx| {
     );
     c.finish()?;
     drop(conn);
-    ctx.expect_still_serving("an extensions block with a lying length")
+    ctx.expect_still_answering("an extensions block with a lying length")
         .await
 });
 
@@ -231,7 +231,8 @@ tls_test!(bad_compression, |ctx| {
     );
     c.finish()?;
     drop(conn);
-    ctx.expect_still_serving("a hello offering compression").await
+    ctx.expect_still_answering("a hello offering compression")
+        .await
 });
 
 tls_test!(still_serving, |ctx| {
@@ -247,7 +248,7 @@ tls_test!(still_serving, |ctx| {
     )
     .await;
     drop(conn);
-    ctx.expect_still_serving("a malformed hello").await
+    ctx.expect_still_answering("a malformed hello").await
 });
 
 fn duplicate_hello(env: &ExampleEnv) -> Result<Vec<u8>, String> {

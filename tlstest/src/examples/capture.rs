@@ -136,9 +136,9 @@ async fn one(
     example.response_hex = hex(&response);
     if !request.is_empty() {
         let (fields, clean) = request_part.annotate(&request);
-        if !clean {
+        if !clean && !spec.malformed {
             problems.push(format!(
-                "{where_}: the walk over the request bytes did not end on the last byte"
+                "{where_}: the walk over the request bytes did not end on the last byte                  (add .malformed() if that is the point of the example)"
             ));
         }
         example.request_fields = fields;
@@ -210,14 +210,12 @@ async fn raw(
                 Err(e) => bail!("waiting for a close: {e}"),
             }
         },
-        Expect::Silence => {
-            match conn.read_silence(Duration::from_millis(SILENCE_MS)).await {
-                Ok(seen) if seen.is_empty() => {}
-                Ok(seen) => bail!("expected silence, {} bytes came back", seen.len()),
-                Err(TlsError::Closed) => {}
-                Err(e) => bail!("expected silence, got {e}"),
-            }
-        }
+        Expect::Silence => match conn.read_silence(Duration::from_millis(SILENCE_MS)).await {
+            Ok(seen) if seen.is_empty() => {}
+            Ok(seen) => bail!("expected silence, {} bytes came back", seen.len()),
+            Err(TlsError::Closed) => {}
+            Err(e) => bail!("expected silence, got {e}"),
+        },
     }
     Ok((bytes, response))
 }
@@ -236,7 +234,10 @@ async fn handshake(
         .await
         .map_err(|e| anyhow::anyhow!("the handshake did not complete: {e}"))?;
     if request == Part::NewSessionTicket || response == Part::NewSessionTicket {
-        client.collect_tickets(Duration::from_millis(800)).await.ok();
+        client
+            .collect_tickets(Duration::from_millis(800))
+            .await
+            .ok();
     }
     let take = |part: Part| -> Result<Vec<u8>> {
         Ok(match part {

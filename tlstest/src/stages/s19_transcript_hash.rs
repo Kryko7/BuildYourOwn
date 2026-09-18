@@ -24,7 +24,7 @@ pub fn stage() -> Stage {
             "The hash a signature or a MAC covers is the one *before* that message was added — \
              CertificateVerify covers up to Certificate, Finished covers up to CertificateVerify",
         ],
-        examples: examples,
+        examples,
         tests: vec![
             Test::new(
                 "the hash after the ClientHello is the hash of its bytes",
@@ -34,10 +34,7 @@ pub fn stage() -> Stage {
                 "the hash after the ServerHello covers both hellos",
                 after_server_hello,
             ),
-            Test::new(
-                "every boundary has a different hash",
-                boundaries_differ,
-            ),
+            Test::new("every boundary has a different hash", boundaries_differ),
             Test::new(
                 "CertificateVerify signs the hash taken after Certificate",
                 certificate_verify_boundary,
@@ -163,7 +160,10 @@ tls_test!(certificate_verify_boundary, |ctx| {
         .ok_or_else(|| crate::stages::harness("no CertificateVerify"))?;
     let mut c = Check::new("which transcript hash the signature covers");
     c.block("certificate_verify", &client.certificate_verify_bytes);
-    c.keying(&client.hash_after_certificate, "Transcript-Hash(CH..Certificate)");
+    c.keying(
+        &client.hash_after_certificate,
+        "Transcript-Hash(CH..Certificate)",
+    );
     c.note(
         "The signature is over the hash taken *after* Certificate and *before* \
          CertificateVerify itself — a message cannot sign its own bytes.",
@@ -214,11 +214,7 @@ tls_test!(finished_boundary, |ctx| {
         &client.hash_before_server_finished,
         "s hs traffic → finished_key, then HMAC over the transcript",
     );
-    c.bytes_eq(
-        "finished.verify_data",
-        &want,
-        &client.server_verify_data,
-    );
+    c.bytes_eq("finished.verify_data", &want, &client.server_verify_data);
     let wrong = schedule
         .verify_data(keys, &client.hash_after_server_finished)
         .map_err(crate::assert::Failure::tls)?;

@@ -38,15 +38,11 @@ pub fn stage() -> Stage {
             "When nothing in the list fits the key, the answer is handshake_failure(40), not \
              a signature the client cannot check",
         ],
-        examples: examples,
+        examples,
         tests: vec![
-            Test::new(
-                "an ECDSA key signs with ecdsa_secp256r1_sha256",
-                ecdsa_key,
-            ),
+            Test::new("an ECDSA key signs with ecdsa_secp256r1_sha256", ecdsa_key),
             Test::new("an RSA key signs with RSA-PSS", rsa_key).with_server(rsa_server),
-            Test::new("an Ed25519 key signs with ed25519", ed25519_key)
-                .with_server(ed25519_server),
+            Test::new("an Ed25519 key signs with ed25519", ed25519_key).with_server(ed25519_server),
             Test::new(
                 "the chosen scheme is always one the client offered",
                 scheme_is_offered,

@@ -24,7 +24,7 @@ pub fn stage() -> Stage {
             "A record that promises more bytes than the client ever sends must time out or \
              close, never spin or wedge the accept loop",
         ],
-        examples: examples,
+        examples,
         tests: vec![
             Test::new(
                 "a record claiming more than 2^14 fragment bytes is refused",
@@ -87,7 +87,7 @@ tls_test!(oversized_record, |ctx| {
     );
     c.finish()?;
     drop(conn);
-    ctx.expect_still_serving("an oversized record").await
+    ctx.expect_still_answering("an oversized record").await
 });
 
 tls_test!(at_the_limit, |ctx| {
@@ -106,7 +106,8 @@ tls_test!(at_the_limit, |ctx| {
     );
     c.finish()?;
     drop(conn);
-    ctx.expect_still_serving("a record at the size limit").await
+    ctx.expect_still_answering("a record at the size limit")
+        .await
 });
 
 tls_test!(short_of_promise, |ctx| {
@@ -128,7 +129,7 @@ tls_test!(short_of_promise, |ctx| {
     );
     c.finish()?;
     drop(conn);
-    ctx.expect_still_serving("a record that promised more than it delivered")
+    ctx.expect_still_answering("a record that promised more than it delivered")
         .await
 });
 
@@ -148,7 +149,7 @@ tls_test!(zero_length, |ctx| {
     );
     c.finish()?;
     drop(conn);
-    ctx.expect_still_serving("a zero-length record").await
+    ctx.expect_still_answering("a zero-length record").await
 });
 
 tls_test!(enormous_length, |ctx| {
@@ -176,7 +177,7 @@ tls_test!(enormous_length, |ctx| {
     );
     c.finish()?;
     drop(conn);
-    ctx.expect_still_serving("a 64 KiB length prefix").await
+    ctx.expect_still_answering("a 64 KiB length prefix").await
 });
 
 tls_test!(still_serving, |ctx| {
@@ -189,7 +190,7 @@ tls_test!(still_serving, |ctx| {
         let _ = provoke(&mut conn, &bytes).await;
         drop(conn);
     }
-    ctx.expect_still_serving("three malformed records in a row")
+    ctx.expect_still_answering("three malformed records in a row")
         .await
 });
 

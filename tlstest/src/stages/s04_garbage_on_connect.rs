@@ -5,7 +5,7 @@ use crate::examples::{ExampleEnv, ExampleSpec, Expect};
 use crate::stages::{check_refused, hello_message, provoke, Stage, Test};
 use crate::tls::conn::Reaction;
 use crate::tls::record::Record;
-use crate::tls::{LEGACY_VERSION_TLS12};
+use crate::tls::LEGACY_VERSION_TLS12;
 use crate::tls_test;
 use rand::Rng;
 
@@ -26,7 +26,7 @@ pub fn stage() -> Stage {
             "Whatever you decide, decide it quickly; a stranger must not be able to hold a \
              connection open for ever by sending four bytes",
         ],
-        examples: examples,
+        examples,
         tests: vec![
             Test::new("an HTTP request on the TLS port is refused", http_request),
             Test::new("an SSH banner is refused", ssh_banner),
@@ -48,7 +48,11 @@ pub fn stage() -> Stage {
     }
 }
 
-async fn refuse(ctx: &mut crate::stages::Ctx, bytes: &[u8], what: &str) -> Result<(), crate::assert::Failure> {
+async fn refuse(
+    ctx: &mut crate::stages::Ctx,
+    bytes: &[u8],
+    what: &str,
+) -> Result<(), crate::assert::Failure> {
     let mut conn = ctx.connect().await?;
     let reaction = provoke(&mut conn, bytes).await;
     let mut c = Check::new(format!("what the server does with {what}"));
@@ -56,7 +60,7 @@ async fn refuse(ctx: &mut crate::stages::Ctx, bytes: &[u8], what: &str) -> Resul
     check_refused(&mut c, "the server's reaction", what, &reaction);
     c.finish()?;
     drop(conn);
-    ctx.expect_still_serving(what).await
+    ctx.expect_still_answering(what).await
 }
 
 tls_test!(http_request, |ctx| {
@@ -106,7 +110,8 @@ tls_test!(one_byte, |ctx| {
     );
     c.finish()?;
     drop(conn);
-    ctx.expect_still_serving("one byte of a record header").await
+    ctx.expect_still_answering("one byte of a record header")
+        .await
 });
 
 tls_test!(still_serving, |ctx| {
@@ -114,7 +119,11 @@ tls_test!(still_serving, |ctx| {
         b"GET / HTTP/1.0\r\n\r\n".to_vec(),
         b"\x00\x00\x00\x00".to_vec(),
         Record::build(20, LEGACY_VERSION_TLS12, &[1]),
-        Record::build(23, LEGACY_VERSION_TLS12, b"application data before a handshake"),
+        Record::build(
+            23,
+            LEGACY_VERSION_TLS12,
+            b"application data before a handshake",
+        ),
     ];
     for bytes in &garbage {
         let mut conn = ctx.connect().await?;
@@ -122,7 +131,7 @@ tls_test!(still_serving, |ctx| {
         drop(conn);
     }
     ctx.note(format!("{} kinds of garbage sent", garbage.len()));
-    ctx.expect_still_serving("four kinds of garbage").await
+    ctx.expect_still_answering("four kinds of garbage").await
 });
 
 fn http_bytes(_env: &ExampleEnv) -> Result<Vec<u8>, String> {
@@ -139,16 +148,21 @@ fn good_hello(env: &ExampleEnv) -> Result<Vec<u8>, String> {
 
 fn examples() -> Vec<ExampleSpec> {
     vec![
-        ExampleSpec::raw("An HTTP request on the TLS port", http_bytes, Expect::UntilClose)
-            .request("`GET / HTTP/1.1` — the most common thing a TLS port is sent by mistake")
-            .response(
-                "The connection is closed. A fatal alert first is nicer but optional: the peer \
+        ExampleSpec::raw(
+            "An HTTP request on the TLS port",
+            http_bytes,
+            Expect::UntilClose,
+        )
+        .malformed()
+        .request("`GET / HTTP/1.1` — the most common thing a TLS port is sent by mistake")
+        .response(
+            "The connection is closed. A fatal alert first is nicer but optional: the peer \
                  is not speaking TLS and will not understand it either way.",
-            )
-            .note(
-                "`G` is 0x47, which is not a content type TLS defines. That is enough to decide, \
+        )
+        .note(
+            "`G` is 0x47, which is not a content type TLS defines. That is enough to decide, \
                  on the very first byte, that this is not a TLS stream.",
-            ),
+        ),
         ExampleSpec::raw(
             "And the same server, a moment later, with a real ClientHello",
             good_hello,

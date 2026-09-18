@@ -166,7 +166,11 @@ pub fn records(bytes: &[u8]) -> (Vec<FieldAnn>, bool) {
                 );
             }
             ContentType::Other(b) => {
-                walk.add(length, format!("{prefix}record.fragment"), format!("{length} bytes of a type {b} record"));
+                walk.add(
+                    length,
+                    format!("{prefix}record.fragment"),
+                    format!("{length} bytes of a type {b} record"),
+                );
             }
         }
         offset += 5 + length;
@@ -219,7 +223,9 @@ fn handshake_into(walk: &mut Walk, message: &HandshakeMessage, path: &str) {
     );
     let body_at = walk.at;
     let body = &message.body;
-    let ok = match message.msg_type {
+    // A body that will not decode simply stops being annotated; the walk still has to land
+    // on the right byte for whatever follows, which the line after the match takes care of.
+    let _ = match message.msg_type {
         HandshakeType::CLIENT_HELLO => hello_into(walk, body, path, true),
         HandshakeType::SERVER_HELLO => hello_into(walk, body, path, false),
         HandshakeType::ENCRYPTED_EXTENSIONS => encrypted_extensions_into(walk, body, path),
@@ -242,10 +248,7 @@ fn handshake_into(walk: &mut Walk, message: &HandshakeMessage, path: &str) {
                 walk.add(
                     1,
                     format!("{path}.request_update"),
-                    super::msg::KeyUpdate {
-                        request_update: *b,
-                    }
-                    .name(),
+                    super::msg::KeyUpdate { request_update: *b }.name(),
                 );
             }
             Ok(())
@@ -259,11 +262,9 @@ fn handshake_into(walk: &mut Walk, message: &HandshakeMessage, path: &str) {
             Ok(())
         }
     };
-    if ok.is_err() {
-        walk.at = body_at + body.len();
-    } else {
-        walk.at = body_at + body.len();
-    }
+    // Whatever the per-type walk did — including giving up half way through a body it could
+    // not decode — the next message starts after this one's declared length.
+    walk.at = body_at + body.len();
 }
 
 fn hello_into(walk: &mut Walk, body: &[u8], path: &str, client: bool) -> TlsResult<()> {
@@ -286,7 +287,11 @@ fn hello_into(walk: &mut Walk, body: &[u8], path: &str, client: bool) -> TlsResu
         format!("{}{note}", hex(random)),
     );
     let session = r.vec8("legacy_session_id")?;
-    walk.add(1, format!("{path}.legacy_session_id.length"), format!("{}", session.len()));
+    walk.add(
+        1,
+        format!("{path}.legacy_session_id.length"),
+        format!("{}", session.len()),
+    );
     if !session.is_empty() {
         walk.add_varying(
             session.len(),
@@ -375,11 +380,7 @@ fn extensions_into(walk: &mut Walk, bytes: &[u8], path: &str, client: bool) -> T
         let data = r.vec16("extension_data")?;
         let base = format!("{path}.extensions[{index}]");
         walk.add(2, format!("{base}.extension_type"), ext_name(ext_type));
-        walk.add(
-            2,
-            format!("{base}.length"),
-            format!("{} bytes", data.len()),
-        );
+        walk.add(2, format!("{base}.length"), format!("{} bytes", data.len()));
         let before = walk.at;
         extension_body_into(walk, ext_type, data, &base, client);
         walk.at = before + data.len();
@@ -418,7 +419,11 @@ fn extension_body_into(walk: &mut Walk, ext_type: u16, data: &[u8], base: &str, 
             if data.len() < 2 {
                 return;
             }
-            walk.add(2, format!("{base}.named_group_list.length"), format!("{} bytes", data.len() - 2));
+            walk.add(
+                2,
+                format!("{base}.named_group_list.length"),
+                format!("{} bytes", data.len() - 2),
+            );
             for (i, pair) in data[2..].chunks(2).enumerate() {
                 if pair.len() == 2 {
                     walk.add(
@@ -433,7 +438,11 @@ fn extension_body_into(walk: &mut Walk, ext_type: u16, data: &[u8], base: &str, 
             if data.len() < 2 {
                 return;
             }
-            walk.add(2, format!("{base}.supported_signature_algorithms.length"), format!("{} bytes", data.len() - 2));
+            walk.add(
+                2,
+                format!("{base}.supported_signature_algorithms.length"),
+                format!("{} bytes", data.len() - 2),
+            );
             for (i, pair) in data[2..].chunks(2).enumerate() {
                 if pair.len() == 2 {
                     walk.add(
@@ -448,7 +457,11 @@ fn extension_body_into(walk: &mut Walk, ext_type: u16, data: &[u8], base: &str, 
             if data.len() < 2 {
                 return;
             }
-            walk.add(2, format!("{base}.client_shares.length"), format!("{} bytes", data.len() - 2));
+            walk.add(
+                2,
+                format!("{base}.client_shares.length"),
+                format!("{} bytes", data.len() - 2),
+            );
             let mut r = Reader::new(&data[2..], base);
             let mut i = 0;
             while !r.done() {
@@ -456,12 +469,23 @@ fn extension_body_into(walk: &mut Walk, ext_type: u16, data: &[u8], base: &str, 
                 let Ok(share) = r.vec16("key_exchange") else {
                     break;
                 };
-                walk.add(2, format!("{base}.client_shares[{i}].group"), group_name(group));
-                walk.add(2, format!("{base}.client_shares[{i}].key_exchange.length"), format!("{}", share.len()));
+                walk.add(
+                    2,
+                    format!("{base}.client_shares[{i}].group"),
+                    group_name(group),
+                );
+                walk.add(
+                    2,
+                    format!("{base}.client_shares[{i}].key_exchange.length"),
+                    format!("{}", share.len()),
+                );
                 walk.add_varying(
                     share.len(),
                     format!("{base}.client_shares[{i}].key_exchange"),
-                    format!("{} — the client's ephemeral public key", super::hex_prefix(share, 8)),
+                    format!(
+                        "{} — the client's ephemeral public key",
+                        super::hex_prefix(share, 8)
+                    ),
                 );
                 i += 1;
             }
@@ -487,7 +511,11 @@ fn extension_body_into(walk: &mut Walk, ext_type: u16, data: &[u8], base: &str, 
                 group_name(u16::from_be_bytes([data[0], data[1]])),
             );
             let len = u16::from_be_bytes([data[2], data[3]]) as usize;
-            walk.add(2, format!("{base}.server_share.key_exchange.length"), format!("{len}"));
+            walk.add(
+                2,
+                format!("{base}.server_share.key_exchange.length"),
+                format!("{len}"),
+            );
             walk.add_varying(
                 len.min(data.len().saturating_sub(4)),
                 format!("{base}.server_share.key_exchange"),
@@ -501,10 +529,22 @@ fn extension_body_into(walk: &mut Walk, ext_type: u16, data: &[u8], base: &str, 
             if data.len() < 5 {
                 return;
             }
-            walk.add(2, format!("{base}.server_name_list.length"), format!("{} bytes", data.len() - 2));
-            walk.add(1, format!("{base}.server_name_list[0].name_type"), "host_name(0)".to_string());
+            walk.add(
+                2,
+                format!("{base}.server_name_list.length"),
+                format!("{} bytes", data.len() - 2),
+            );
+            walk.add(
+                1,
+                format!("{base}.server_name_list[0].name_type"),
+                "host_name(0)".to_string(),
+            );
             let len = u16::from_be_bytes([data[3], data[4]]) as usize;
-            walk.add(2, format!("{base}.server_name_list[0].host_name.length"), format!("{len}"));
+            walk.add(
+                2,
+                format!("{base}.server_name_list[0].host_name.length"),
+                format!("{len}"),
+            );
             walk.add(
                 len.min(data.len().saturating_sub(5)),
                 format!("{base}.server_name_list[0].host_name"),
@@ -515,12 +555,22 @@ fn extension_body_into(walk: &mut Walk, ext_type: u16, data: &[u8], base: &str, 
             if data.len() < 3 {
                 return;
             }
-            walk.add(2, format!("{base}.protocol_name_list.length"), format!("{} bytes", data.len() - 2));
+            walk.add(
+                2,
+                format!("{base}.protocol_name_list.length"),
+                format!("{} bytes", data.len() - 2),
+            );
             let mut r = Reader::new(&data[2..], base);
             let mut i = 0;
             while !r.done() {
-                let Ok(name) = r.vec8("protocol_name") else { break };
-                walk.add(1, format!("{base}.protocol_name_list[{i}].length"), format!("{}", name.len()));
+                let Ok(name) = r.vec8("protocol_name") else {
+                    break;
+                };
+                walk.add(
+                    1,
+                    format!("{base}.protocol_name_list[{i}].length"),
+                    format!("{}", name.len()),
+                );
                 walk.add(
                     name.len(),
                     format!("{base}.protocol_name_list[{i}]"),
@@ -533,11 +583,18 @@ fn extension_body_into(walk: &mut Walk, ext_type: u16, data: &[u8], base: &str, 
             if data.len() < 2 {
                 return;
             }
-            walk.add(2, format!("{base}.cookie.length"), format!("{}", data.len() - 2));
+            walk.add(
+                2,
+                format!("{base}.cookie.length"),
+                format!("{}", data.len() - 2),
+            );
             walk.add_varying(
                 data.len() - 2,
                 format!("{base}.cookie"),
-                format!("{} — echoed back in the second ClientHello", super::hex_prefix(&data[2..], 8)),
+                format!(
+                    "{} — echoed back in the second ClientHello",
+                    super::hex_prefix(&data[2..], 8)
+                ),
             );
         }
         EXT_PRE_SHARED_KEY if !client => {
@@ -592,8 +649,12 @@ fn certificate_into(walk: &mut Walk, body: &[u8], path: &str) -> TlsResult<()> {
     let mut lr = Reader::new(list, path);
     let mut i = 0;
     while !lr.done() {
-        let Ok(cert) = lr.vec24("cert_data") else { break };
-        let Ok(exts) = lr.vec16("extensions") else { break };
+        let Ok(cert) = lr.vec24("cert_data") else {
+            break;
+        };
+        let Ok(exts) = lr.vec16("extensions") else {
+            break;
+        };
         walk.add(
             3,
             format!("{path}.certificate_list[{i}].cert_data.length"),
@@ -662,18 +723,29 @@ fn new_session_ticket_into(walk: &mut Walk, body: &[u8], path: &str) -> TlsResul
         format!("0x{age_add:08x} — added to the client's ticket age so it cannot be correlated"),
     );
     let nonce = r.vec8("ticket_nonce")?;
-    walk.add(1, format!("{path}.ticket_nonce.length"), format!("{}", nonce.len()));
+    walk.add(
+        1,
+        format!("{path}.ticket_nonce.length"),
+        format!("{}", nonce.len()),
+    );
     walk.add(
         nonce.len(),
         format!("{path}.ticket_nonce"),
         format!("{} — the PSK is HKDF-Expand-Label(resumption_master_secret, \"resumption\", this, Hash.length)", hex(nonce)),
     );
     let ticket = r.vec16("ticket")?;
-    walk.add(2, format!("{path}.ticket.length"), format!("{} bytes", ticket.len()));
+    walk.add(
+        2,
+        format!("{path}.ticket.length"),
+        format!("{} bytes", ticket.len()),
+    );
     walk.add_varying(
         ticket.len(),
         format!("{path}.ticket"),
-        format!("{} — opaque to the client; it becomes the PSK identity", super::hex_prefix(ticket, 8)),
+        format!(
+            "{} — opaque to the client; it becomes the PSK identity",
+            super::hex_prefix(ticket, 8)
+        ),
     );
     let exts = r.vec16("extensions")?;
     walk.add(

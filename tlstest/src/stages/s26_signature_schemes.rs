@@ -7,9 +7,7 @@ use crate::examples::{ExampleEnv, ExampleSpec, Part};
 use crate::stages::{Stage, Test};
 use crate::tls::client::ClientConfig;
 use crate::tls::sig::{self, server_signed_content, PublicKey};
-use crate::tls::{
-    sig_name, SIG_ECDSA_SECP256R1_SHA256, SIG_ED25519, SIG_RSA_PSS_RSAE_SHA256,
-};
+use crate::tls::{sig_name, SIG_ECDSA_SECP256R1_SHA256, SIG_ED25519, SIG_RSA_PSS_RSAE_SHA256};
 use crate::tls_test;
 
 fn rsa_server() -> ServerOptions {
@@ -37,7 +35,7 @@ pub fn stage() -> Stage {
             "Whatever the scheme, the content is the same 64 spaces + context + 0x00 + \
              transcript hash",
         ],
-        examples: examples,
+        examples,
         tests: vec![
             Test::new(
                 "an ECDSA P-256 signature verifies and is DER-encoded",
@@ -47,11 +45,8 @@ pub fn stage() -> Stage {
                 .with_server(rsa_server),
             Test::new("an Ed25519 signature verifies and is 64 bytes", ed25519)
                 .with_server(ed25519_server),
-            Test::new(
-                "the RSA signature is PSS, not PKCS#1 v1.5",
-                rsa_is_pss,
-            )
-            .with_server(rsa_server),
+            Test::new("the RSA signature is PSS, not PKCS#1 v1.5", rsa_is_pss)
+                .with_server(rsa_server),
             Test::new(
                 "the Ed25519 signature is over the content, not its hash",
                 ed25519_is_pure,
@@ -98,12 +93,19 @@ tls_test!(ecdsa, |ctx| {
     c.block("certificate_verify", &bytes);
     c.keying(&hash, "Transcript-Hash(CH..Certificate)");
     c.eq("certificate.public_key", "ECDSA P-256", key.algorithm());
-    c.eq("certificate_verify.algorithm", SIG_ECDSA_SECP256R1_SHA256, scheme);
+    c.eq(
+        "certificate_verify.algorithm",
+        SIG_ECDSA_SECP256R1_SHA256,
+        scheme,
+    );
     c.that(
         "certificate_verify.signature",
         "a DER SEQUENCE (starts with 0x30)",
         signature.first() == Some(&0x30),
-        format!("starts with 0x{:02x}", signature.first().copied().unwrap_or(0)),
+        format!(
+            "starts with 0x{:02x}",
+            signature.first().copied().unwrap_or(0)
+        ),
     );
     c.that(
         "certificate_verify.signature.len()",
@@ -126,7 +128,11 @@ tls_test!(rsa, |ctx| {
     c.block("certificate_verify", &bytes);
     c.keying(&hash, "Transcript-Hash(CH..Certificate)");
     c.eq("certificate.public_key", "RSA", key.algorithm());
-    c.eq("certificate_verify.algorithm", SIG_RSA_PSS_RSAE_SHA256, scheme);
+    c.eq(
+        "certificate_verify.algorithm",
+        SIG_RSA_PSS_RSAE_SHA256,
+        scheme,
+    );
     c.eq(
         "certificate_verify.signature.len()",
         256usize,
@@ -149,7 +155,11 @@ tls_test!(ed25519, |ctx| {
     c.keying(&hash, "Transcript-Hash(CH..Certificate)");
     c.eq("certificate.public_key", "Ed25519", key.algorithm());
     c.eq("certificate_verify.algorithm", SIG_ED25519, scheme);
-    c.eq("certificate_verify.signature.len()", 64usize, signature.len());
+    c.eq(
+        "certificate_verify.signature.len()",
+        64usize,
+        signature.len(),
+    );
     c.note("Ed25519 signatures are a fixed 64 bytes: R (32) and S (32), with no DER around them.");
     c.that(
         "certificate_verify.signature",
@@ -165,7 +175,11 @@ tls_test!(rsa_is_pss, |ctx| {
     let content = server_signed_content(&hash);
     let mut c = Check::new("that the RSA signature is PSS and not PKCS#1 v1.5");
     c.block("certificate_verify", &bytes);
-    c.eq("certificate_verify.algorithm", SIG_RSA_PSS_RSAE_SHA256, scheme);
+    c.eq(
+        "certificate_verify.algorithm",
+        SIG_RSA_PSS_RSAE_SHA256,
+        scheme,
+    );
     c.that(
         "the signature as RSA-PSS",
         "verifies",
@@ -175,13 +189,7 @@ tls_test!(rsa_is_pss, |ctx| {
     c.that(
         "the signature as PKCS#1 v1.5",
         "does not verify — the two schemes are not interchangeable",
-        sig::verify_content(
-            &key,
-            crate::tls::SIG_RSA_PKCS1_SHA256,
-            &signature,
-            &content,
-        )
-        .is_err(),
+        sig::verify_content(&key, crate::tls::SIG_RSA_PKCS1_SHA256, &signature, &content).is_err(),
         "it verified under PKCS#1 v1.5, which cannot happen for a PSS signature",
     );
     c.note(

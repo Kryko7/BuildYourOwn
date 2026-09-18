@@ -25,7 +25,7 @@ pub fn stage() -> Stage {
             "Reject an all-zero x25519 result: it means the peer sent a small-order point \
              (RFC 8446 section 7.4.2, RFC 7748 section 6.1)",
         ],
-        examples: examples,
+        examples,
         tests: vec![
             Test::new("a hello sharing only x25519 completes", x25519_only),
             Test::new("a hello sharing only secp256r1 completes", p256_only),
@@ -37,10 +37,7 @@ pub fn stage() -> Stage {
                 "the server's key_share names a group the client shared",
                 share_is_offered,
             ),
-            Test::new(
-                "an x25519 key_exchange is exactly 32 bytes",
-                x25519_length,
-            ),
+            Test::new("an x25519 key_exchange is exactly 32 bytes", x25519_length),
             Test::new(
                 "a secp256r1 key_exchange is a 65-byte uncompressed point",
                 p256_length,
@@ -199,7 +196,11 @@ tls_test!(shared_secret_length, |ctx| {
             32usize,
             client.shared_secret.len(),
         );
-        c.ne("(EC)DHE shared secret", vec![0u8; 32], client.shared_secret.clone());
+        c.ne(
+            "(EC)DHE shared secret",
+            vec![0u8; 32],
+            client.shared_secret.clone(),
+        );
         c.finish()?;
     }
     Ok(())

@@ -42,12 +42,17 @@ pub fn hello_struct(config: &ClientConfig) -> Result<ClientHello, Failure> {
 /// connection, so every robustness test asks this question rather than demanding one of
 /// the two.
 pub async fn provoke(conn: &mut TlsConn, bytes: &[u8]) -> Reaction {
+    provoke_within(conn, bytes, REACTION_MS).await
+}
+
+/// [`provoke`] with an explicit window, for tests that do this hundreds of times.
+pub async fn provoke_within(conn: &mut TlsConn, bytes: &[u8], ms: u64) -> Reaction {
     match conn.write_raw(bytes).await {
         Ok(()) => {}
         Err(TlsError::Closed) | Err(TlsError::Io(_)) => return Reaction::Closed,
         Err(e) => return Reaction::Error(e.to_string()),
     }
-    conn.reaction(Duration::from_millis(REACTION_MS)).await
+    conn.reaction(Duration::from_millis(ms)).await
 }
 
 /// Read until the server does something other than hand over a session ticket.

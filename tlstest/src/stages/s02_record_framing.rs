@@ -25,7 +25,7 @@ pub fn stage() -> Stage {
             "The server's own records carry 0x0303; the real version is negotiated inside \
              the ServerHello's supported_versions extension",
         ],
-        examples: examples,
+        examples,
         tests: vec![
             Test::new(
                 "the ClientHello is answered when its record says 0x0303",
@@ -66,17 +66,16 @@ async fn hello_with_record_version(
     version: u16,
 ) -> Result<Record, crate::assert::Failure> {
     let config = ctx.config();
-    let message =
-        crate::stages::hello_message(&config).map_err(|e| crate::stages::harness(e))?;
+    let message = crate::stages::hello_message(&config).map_err(crate::stages::harness)?;
     let mut conn = ctx.connect().await?;
     conn.write_raw(&Record::build(22, version, &message))
         .await
         .map_err(crate::assert::Failure::tls)?;
-    conn.read_record()
-        .await
-        .map_err(|e| crate::assert::Failure::tls(e).note(format!(
+    conn.read_record().await.map_err(|e| {
+        crate::assert::Failure::tls(e).note(format!(
             "after a ClientHello in a record whose legacy_record_version was 0x{version:04x}"
-        )))
+        ))
+    })
 }
 
 tls_test!(version_0303, |ctx| {
@@ -138,9 +137,33 @@ tls_test!(server_record_version, |ctx| {
 });
 
 tls_test!(server_record_length, |ctx| {
-    let client = ctx.handshake().await?;
+    // Read every record the server volunteers in answer to one ClientHello, without
+    // requiring the handshake to complete: a record that is too long is too long whether or
+    // not anything after it works yet.
+    let config = ctx.config();
+    let message = crate::stages::hello_message(&config).map_err(crate::stages::harness)?;
+    let mut conn = ctx.connect().await?;
+    conn.write_raw(&Record::build(22, LEGACY_VERSION_TLS12, &message))
+        .await
+        .map_err(crate::assert::Failure::tls)?;
+    let mut records = Vec::new();
+    for _ in 0..8 {
+        match conn
+            .read_record_within(std::time::Duration::from_millis(500))
+            .await
+        {
+            Ok(record) => records.push(record),
+            Err(_) => break,
+        }
+    }
     let mut c = Check::new("the length of every record the server sent");
-    for (i, record) in client.conn.records_in.iter().enumerate() {
+    c.that(
+        "the server's answer",
+        "at least one record",
+        !records.is_empty(),
+        "nothing came back",
+    );
+    for (i, record) in records.iter().enumerate() {
         let limit = if record.content_type == ContentType::ApplicationData {
             crate::tls::MAX_CIPHERTEXT
         } else {
@@ -152,7 +175,7 @@ tls_test!(server_record_length, |ctx| {
             record.fragment.len(),
         );
     }
-    c.observe("records.count", client.conn.records_in.len());
+    c.observe("records.count", records.len());
     c.finish()
 });
 

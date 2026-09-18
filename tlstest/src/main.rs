@@ -201,7 +201,7 @@ fn run() -> Result<bool> {
     }
 
     let picked = select(&cli, &all_stages)?;
-    let wanted = |t: &stages::Test| {
+    let wanted = |st: &Stage, t: &stages::Test| {
         cli.only
             .as_ref()
             .is_none_or(|s| t.name.contains(s.as_str()))
@@ -209,7 +209,7 @@ fn run() -> Result<bool> {
                 .tag
                 .as_ref()
                 .is_none_or(|tag| t.tags.contains(&tag.as_str()))
-            && !(cli.skip_ext && t.is_ext())
+            && !(cli.skip_ext && st.test_is_ext(t))
     };
 
     let reporter = report::Reporter {
@@ -229,7 +229,7 @@ fn run() -> Result<bool> {
         let mut all: Vec<(&Stage, Vec<runner::TestResult>)> = Vec::new();
         let mut index: u64 = 0;
         for st in &picked {
-            let tests: Vec<&stages::Test> = st.tests.iter().filter(|t| wanted(t)).collect();
+            let tests: Vec<&stages::Test> = st.tests.iter().filter(|t| wanted(st, t)).collect();
             if tests.is_empty() {
                 continue;
             }

@@ -31,7 +31,7 @@ pub fn stage() -> Stage {
             "The certificate is sent encrypted, under the server handshake traffic keys, so \
              it is not visible to a passive observer",
         ],
-        examples: examples,
+        examples,
         tests: vec![
             Test::new(
                 "certificate_request_context is empty",
@@ -94,7 +94,11 @@ tls_test!(has_a_leaf, |ctx| {
         .ok_or_else(|| crate::stages::harness("no Certificate message"))?;
     let mut c = Check::new("the certificate list");
     c.block("certificate", &client.certificate_bytes);
-    c.at_least("certificate.certificate_list.len()", 1usize, cert.entries.len());
+    c.at_least(
+        "certificate.certificate_list.len()",
+        1usize,
+        cert.entries.len(),
+    );
     c.observe("certificate.certificate_list.len()", cert.entries.len());
     c.finish()
 });
@@ -110,7 +114,11 @@ tls_test!(leaf_parses, |ctx| {
     c.block("certificate", &client.certificate_bytes);
     match x509_parser::certificate::X509Certificate::from_der(leaf) {
         Ok((rest, parsed)) => {
-            c.eq("cert_data: bytes left over after the DER", 0usize, rest.len());
+            c.eq(
+                "cert_data: bytes left over after the DER",
+                0usize,
+                rest.len(),
+            );
             c.observe("certificate.subject", parsed.subject().to_string());
             c.observe("certificate.issuer", parsed.issuer().to_string());
             c.that(
@@ -119,7 +127,8 @@ tls_test!(leaf_parses, |ctx| {
                 parsed.validity().is_valid(),
                 format!(
                     "not_before {} not_after {}",
-                    parsed.validity().not_before, parsed.validity().not_after
+                    parsed.validity().not_before,
+                    parsed.validity().not_after
                 ),
             );
         }
@@ -154,7 +163,10 @@ tls_test!(leaf_key_matches, |ctx| {
         "This is the whole point of the Certificate message: the signature in \
          CertificateVerify has to check out against the key in entry 0, and no other entry.",
     );
-    c.observe("certificate.certificate_list[0].public_key", key.algorithm());
+    c.observe(
+        "certificate.certificate_list[0].public_key",
+        key.algorithm(),
+    );
     c.that(
         "certificate_verify.algorithm",
         "usable with the key in the leaf certificate",
@@ -223,8 +235,12 @@ tls_test!(lengths_agree, |ctx| {
     if bytes.len() >= 8 {
         let body = u32::from_be_bytes([0, bytes[1], bytes[2], bytes[3]]) as usize;
         let context = bytes[4] as usize;
-        let list = u32::from_be_bytes([0, bytes[5 + context], bytes[6 + context], bytes[7 + context]])
-            as usize;
+        let list = u32::from_be_bytes([
+            0,
+            bytes[5 + context],
+            bytes[6 + context],
+            bytes[7 + context],
+        ]) as usize;
         c.mark(1..4);
         c.eq("certificate.length", bytes.len() - 4, body);
         c.eq(
@@ -261,10 +277,9 @@ tls_test!(chain_order, |ctx| {
     let mut subjects = Vec::new();
     for (i, (der, _)) in cert.entries.iter().enumerate() {
         match x509_parser::certificate::X509Certificate::from_der(der) {
-            Ok((_, parsed)) => subjects.push((
-                parsed.subject().to_string(),
-                parsed.issuer().to_string(),
-            )),
+            Ok((_, parsed)) => {
+                subjects.push((parsed.subject().to_string(), parsed.issuer().to_string()))
+            }
             Err(e) => {
                 c.that(
                     &format!("certificate.certificate_list[{i}].cert_data"),

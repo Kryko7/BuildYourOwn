@@ -5,9 +5,7 @@ use crate::examples::{ExampleEnv, ExampleSpec, Part};
 use crate::stages::{Stage, Test};
 use crate::tls::client::{negotiated_version, ClientConfig};
 use crate::tls::msg::find_extension;
-use crate::tls::{
-    ext_name, EXT_SUPPORTED_VERSIONS, LEGACY_VERSION_TLS12, TLS13_VERSION,
-};
+use crate::tls::{ext_name, EXT_SUPPORTED_VERSIONS, LEGACY_VERSION_TLS12, TLS13_VERSION};
 use crate::tls_test;
 
 /// Stage definition.
@@ -27,7 +25,7 @@ pub fn stage() -> Stage {
             "A ClientHello with no supported_versions extension is a pre-1.3 client; a \
              1.3-only server answers protocol_version(70)",
         ],
-        examples: examples,
+        examples,
         tests: vec![
             Test::new(
                 "the ClientHello's legacy_version is 0x0303 and is ignored",
@@ -108,7 +106,10 @@ tls_test!(server_supported_versions, |ctx| {
     let mut c = Check::new("the ServerHello's supported_versions extension");
     c.block("server_hello", &client.server_hello_bytes);
     c.that(
-        &format!("server_hello.extensions[{}]", ext_name(EXT_SUPPORTED_VERSIONS)),
+        &format!(
+            "server_hello.extensions[{}]",
+            ext_name(EXT_SUPPORTED_VERSIONS)
+        ),
         "present",
         find_extension(&hello.extensions, EXT_SUPPORTED_VERSIONS).is_some(),
         "missing — without it a client cannot tell 1.3 from 1.2",
@@ -137,7 +138,11 @@ tls_test!(supported_versions_shape, |ctx| {
         "A client sends a *list* here (one length byte, then the versions); a server sends a \
          single uint16 with no list around it.",
     );
-    c.eq("server_hello.supported_versions.length", 2usize, e.data.len());
+    c.eq(
+        "server_hello.supported_versions.length",
+        2usize,
+        e.data.len(),
+    );
     c.finish()
 });
 
@@ -225,9 +230,7 @@ fn examples() -> Vec<ExampleSpec> {
                 "ClientHello: extension_data is a one-byte count followed by that many uint16 \
                  versions — `02 03 04` for a 1.3-only client.",
             )
-            .response(
-                "ServerHello: extension_data is a bare uint16 — `03 04`. No list, no count.",
-            )
+            .response("ServerHello: extension_data is a bare uint16 — `03 04`. No list, no count.")
             .note(
                 "The same extension code point, two different bodies, depending on which \
                  message it is in. That asymmetry is real and it is easy to miss.",

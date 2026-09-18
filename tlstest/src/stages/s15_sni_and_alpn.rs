@@ -25,7 +25,7 @@ pub fn stage() -> Stage {
             "A client that offers ALPN and a server that has no protocols configured is not \
              an error: send no ALPN extension and carry on",
         ],
-        examples: examples,
+        examples,
         tests: vec![
             Test::new("a hello with SNI completes", sni_present),
             Test::new("a hello with no SNI completes", sni_absent),
@@ -34,10 +34,7 @@ pub fn stage() -> Stage {
                 sni_not_echoed,
             ),
             Test::new("an unusual but legal host name is accepted", odd_host_name),
-            Test::new(
-                "a hello offering ALPN completes either way",
-                alpn_offered,
-            ),
+            Test::new("a hello offering ALPN completes either way", alpn_offered),
             Test::new(
                 "if ALPN is selected it is one the client offered",
                 alpn_selection,
@@ -46,10 +43,7 @@ pub fn stage() -> Stage {
                 "ALPN, if present in EncryptedExtensions, names exactly one protocol",
                 alpn_single,
             ),
-            Test::new(
-                "a hello with neither SNI nor ALPN completes",
-                neither,
-            ),
+            Test::new("a hello with neither SNI nor ALPN completes", neither),
         ],
     }
 }
@@ -102,7 +96,11 @@ tls_test!(sni_not_echoed, |ctx| {
     );
     match find_extension(&client.encrypted_extensions, EXT_SERVER_NAME) {
         Some(e) => {
-            c.eq("encrypted_extensions.server_name.length", 0usize, e.data.len());
+            c.eq(
+                "encrypted_extensions.server_name.length",
+                0usize,
+                e.data.len(),
+            );
         }
         None => {
             c.note("the server sent no server_name extension at all, which is also correct");
@@ -169,7 +167,9 @@ tls_test!(alpn_selection, |ctx| {
             );
         }
         None => {
-            c.note("no ALPN extension came back, which is correct for a server with none configured");
+            c.note(
+                "no ALPN extension came back, which is correct for a server with none configured",
+            );
         }
     }
     c.finish()
@@ -206,7 +206,9 @@ tls_test!(alpn_single, |ctx| {
             );
         }
         None => {
-            c.note("no ALPN extension came back, which is correct for a server with none configured");
+            c.note(
+                "no ALPN extension came back, which is correct for a server with none configured",
+            );
         }
     }
     c.finish()

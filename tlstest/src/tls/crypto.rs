@@ -63,14 +63,18 @@ impl HashAlg {
     pub fn hmac(self, key: &[u8], data: &[u8]) -> Vec<u8> {
         match self {
             HashAlg::Sha256 => {
-                let mut m = <Hmac<Sha256> as Mac>::new_from_slice(key)
-                    .unwrap_or_else(|_| <Hmac<Sha256> as Mac>::new_from_slice(&[]).unwrap_or_else(|_| unreachable!("HMAC-SHA256 accepts any key length")));
+                let mut m = <Hmac<Sha256> as Mac>::new_from_slice(key).unwrap_or_else(|_| {
+                    <Hmac<Sha256> as Mac>::new_from_slice(&[])
+                        .unwrap_or_else(|_| unreachable!("HMAC-SHA256 accepts any key length"))
+                });
                 m.update(data);
                 m.finalize().into_bytes().to_vec()
             }
             HashAlg::Sha384 => {
-                let mut m = <Hmac<Sha384> as Mac>::new_from_slice(key)
-                    .unwrap_or_else(|_| <Hmac<Sha384> as Mac>::new_from_slice(&[]).unwrap_or_else(|_| unreachable!("HMAC-SHA384 accepts any key length")));
+                let mut m = <Hmac<Sha384> as Mac>::new_from_slice(key).unwrap_or_else(|_| {
+                    <Hmac<Sha384> as Mac>::new_from_slice(&[])
+                        .unwrap_or_else(|_| unreachable!("HMAC-SHA384 accepts any key length"))
+                });
                 m.update(data);
                 m.finalize().into_bytes().to_vec()
             }
@@ -209,7 +213,13 @@ impl AeadAlg {
     }
 
     /// Encrypt, returning ciphertext with the tag appended.
-    pub fn seal(self, key: &[u8], nonce: &[u8], aad: &[u8], plaintext: &[u8]) -> TlsResult<Vec<u8>> {
+    pub fn seal(
+        self,
+        key: &[u8],
+        nonce: &[u8],
+        aad: &[u8],
+        plaintext: &[u8],
+    ) -> TlsResult<Vec<u8>> {
         let payload = Payload {
             msg: plaintext,
             aad,
@@ -553,7 +563,11 @@ impl KeySchedule {
 
     /// `Handshake Secret = HKDF-Extract(Derive-Secret(Early Secret, "derived", ""), ECDHE)`
     /// and the two handshake traffic secrets over `ClientHello..ServerHello`.
-    pub fn enter_handshake(&mut self, shared_secret: &[u8], transcript_hash: &[u8]) -> TlsResult<()> {
+    pub fn enter_handshake(
+        &mut self,
+        shared_secret: &[u8],
+        transcript_hash: &[u8],
+    ) -> TlsResult<()> {
         let hash = self.suite.hash;
         let empty = hash.empty_hash();
         let derived = derive_secret(hash, &self.early_secret, "derived", &empty)?;
@@ -644,10 +658,9 @@ impl KeySchedule {
     /// The PSK a ticket stands for:
     /// `PSK = HKDF-Expand-Label(resumption_master_secret, "resumption", ticket_nonce, Hash.length)`.
     pub fn resumption_psk(&self, ticket_nonce: &[u8]) -> TlsResult<Vec<u8>> {
-        let rms = self
-            .resumption_master
-            .as_ref()
-            .ok_or_else(|| TlsError::Crypto("no resumption_master_secret has been derived".into()))?;
+        let rms = self.resumption_master.as_ref().ok_or_else(|| {
+            TlsError::Crypto("no resumption_master_secret has been derived".into())
+        })?;
         hkdf_expand_label(
             self.suite.hash,
             rms,
@@ -732,7 +745,11 @@ mod tests {
             aead: AeadAlg::Aes128Gcm,
             hash: HashAlg::Sha256,
         };
-        assert_eq!(keys.nonce(0), vec![0xaa; 12], "sequence 0 leaves the IV alone");
+        assert_eq!(
+            keys.nonce(0),
+            vec![0xaa; 12],
+            "sequence 0 leaves the IV alone"
+        );
         let n1 = keys.nonce(1);
         assert_eq!(&n1[..11], &[0xaa; 11], "only the last eight bytes change");
         assert_eq!(n1[11], 0xab);

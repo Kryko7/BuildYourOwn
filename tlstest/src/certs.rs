@@ -20,8 +20,8 @@
 
 use anyhow::{Context, Result};
 use rcgen::{
-    BasicConstraints, CertificateParams, DnType, IsCa, KeyPair, KeyUsagePurpose, PKCS_ECDSA_P256_SHA256,
-    PKCS_ED25519, PKCS_RSA_SHA256,
+    BasicConstraints, CertificateParams, DnType, IsCa, KeyPair, KeyUsagePurpose,
+    PKCS_ECDSA_P256_SHA256, PKCS_ED25519, PKCS_RSA_SHA256,
 };
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
@@ -144,8 +144,9 @@ pub struct CertStore {
 impl CertStore {
     /// A store that writes into `dir`.
     pub fn new(dir: &Path) -> Result<CertStore> {
-        std::fs::create_dir_all(dir)
-            .with_context(|| format!("cannot create the certificate directory {}", dir.display()))?;
+        std::fs::create_dir_all(dir).with_context(|| {
+            format!("cannot create the certificate directory {}", dir.display())
+        })?;
         Ok(CertStore {
             dir: dir.to_path_buf(),
             cache: Mutex::new(BTreeMap::new()),
@@ -387,7 +388,10 @@ mod tests {
         use x509_parser::prelude::FromDer;
         let (_, cert) =
             x509_parser::certificate::X509Certificate::from_der(m.leaf_der()).expect("der");
-        assert!(!cert.validity().is_valid(), "the certificate must be expired");
+        assert!(
+            !cert.validity().is_valid(),
+            "the certificate must be expired"
+        );
     }
 
     #[test]

@@ -24,7 +24,7 @@ pub fn stage() -> Stage {
             "key_share, pre_shared_key and supported_versions belong in the ServerHello; \
              sending them here is unsupported_extension(110)",
         ],
-        examples: examples,
+        examples,
         tests: vec![
             Test::new(
                 "EncryptedExtensions is sent on every handshake",

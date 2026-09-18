@@ -103,7 +103,7 @@ pub fn build(stages: &[Stage], generated_at: String, captured: &CapturedFile) ->
                     .iter()
                     .map(|t| CatalogTest {
                         name: t.name.to_string(),
-                        ext: t.is_ext(),
+                        ext: s.test_is_ext(t),
                         tags: t
                             .tags
                             .iter()

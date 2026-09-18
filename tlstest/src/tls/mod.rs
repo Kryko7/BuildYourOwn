@@ -205,6 +205,10 @@ impl AlertDescription {
     pub const UNSUPPORTED_EXTENSION: AlertDescription = AlertDescription(110);
     /// `unrecognized_name(112)`
     pub const UNRECOGNIZED_NAME: AlertDescription = AlertDescription(112);
+    /// `no_renegotiation(100)`, a TLS 1.2 alert a server may still answer with.
+    pub const NO_RENEGOTIATION: AlertDescription = AlertDescription(100);
+    /// `certificate_required(116)`
+    pub const CERTIFICATE_REQUIRED: AlertDescription = AlertDescription(116);
     /// `no_application_protocol(120)`
     pub const NO_APPLICATION_PROTOCOL: AlertDescription = AlertDescription(120);
 
@@ -232,6 +236,7 @@ impl AlertDescription {
             80 => "internal_error",
             86 => "inappropriate_fallback",
             90 => "user_canceled",
+            100 => "no_renegotiation_RESERVED",
             109 => "missing_extension",
             110 => "unsupported_extension",
             112 => "unrecognized_name",
@@ -554,7 +559,10 @@ mod tests {
         assert_eq!(group_name(0x001d), "x25519(0x001d)");
         assert_eq!(sig_name(0x0804), "rsa_pss_rsae_sha256(0x0804)");
         assert_eq!(ext_name(51), "key_share(51)");
-        assert_eq!(AlertDescription::BAD_RECORD_MAC.name(), "bad_record_mac(20)");
+        assert_eq!(
+            AlertDescription::BAD_RECORD_MAC.name(),
+            "bad_record_mac(20)"
+        );
         assert_eq!(HandshakeType::FINISHED.name(), "finished(20)");
         assert_eq!(ContentType::from_u8(23).name(), "application_data(23)");
     }

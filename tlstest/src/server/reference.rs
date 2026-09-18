@@ -33,7 +33,10 @@ pub fn openssl_path() -> Result<PathBuf> {
         if p.is_file() {
             return Ok(p);
         }
-        anyhow::bail!("{OPENSSL_ENV} points at {}, which is not a file", p.display());
+        anyhow::bail!(
+            "{OPENSSL_ENV} points at {}, which is not a file",
+            p.display()
+        );
     }
     which("openssl").context(
         "cannot find `openssl` on PATH; the reference server is the system OpenSSL 3.x \
@@ -76,7 +79,7 @@ pub fn supports_flag(flag: &str) -> bool {
         String::from_utf8_lossy(&out.stderr)
     );
     text.lines()
-        .any(|l| l.trim_start().split_whitespace().next() == Some(flag))
+        .any(|l| l.split_whitespace().next() == Some(flag))
 }
 
 /// The `s_client` command line an interop stage runs, as words.
@@ -121,7 +124,8 @@ mod tests {
     fn the_reference_is_pinned_to_tls_1_3_and_kept_quiet() {
         let flags = extra_flags(&ServerOptions::default());
         assert_eq!(flags, vec!["-tls1_3".to_string(), "-quiet".to_string()]);
-        let flags = extra_flags(&ServerOptions::default().with_reference_args(&["-num_tickets", "0"]));
+        let flags =
+            extra_flags(&ServerOptions::default().with_reference_args(&["-num_tickets", "0"]));
         assert_eq!(&flags[2..], &["-num_tickets".to_string(), "0".to_string()]);
     }
 
@@ -131,7 +135,10 @@ mod tests {
             eprintln!("skipping: no openssl on PATH");
             return;
         };
-        assert!(v.starts_with("OpenSSL 3"), "the reference must be OpenSSL 3.x, got {v}");
+        assert!(
+            v.starts_with("OpenSSL 3"),
+            "the reference must be OpenSSL 3.x, got {v}"
+        );
         for flag in ["-rev", "-naccept", "-tls1_3"] {
             assert!(supports_flag(flag), "this openssl has no {flag}: {v}");
         }

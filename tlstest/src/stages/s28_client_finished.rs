@@ -24,7 +24,7 @@ pub fn stage() -> Stage {
             "Only after this message is the handshake complete: application data written \
              before it is early data, and that is a different feature",
         ],
-        examples: examples,
+        examples,
         tests: vec![
             Test::new("a correct Finished is accepted", accepted),
             Test::new(
@@ -43,10 +43,7 @@ pub fn stage() -> Stage {
                 "the server's own verify_data echoed back is rejected",
                 echoed_server_verify_data,
             ),
-            Test::new(
-                "a Finished of the wrong length is rejected",
-                wrong_length,
-            ),
+            Test::new("a Finished of the wrong length is rejected", wrong_length),
             Test::new(
                 "the server still serves a new connection after refusing one",
                 still_serving,

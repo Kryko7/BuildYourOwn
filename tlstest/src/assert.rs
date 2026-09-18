@@ -274,8 +274,10 @@ impl Check {
     /// byte is really a wrong transcript or a wrong label, and the two lines here are
     /// usually the answer.
     pub fn keying(&mut self, transcript_hash: &[u8], label: &str) -> &mut Self {
-        self.notes
-            .push(format!("transcript hash in force: {}", hex(transcript_hash)));
+        self.notes.push(format!(
+            "transcript hash in force: {}",
+            hex(transcript_hash)
+        ));
         self.notes
             .push(format!("key schedule step in force: {label}"));
         self
@@ -335,7 +337,8 @@ impl Check {
         if actual < min {
             self.failures
                 .push(format!("{path}: expected at least {min:?}, got {actual:?}"));
-            self.expected.push((path.to_string(), format!(">= {min:?}")));
+            self.expected
+                .push((path.to_string(), format!(">= {min:?}")));
             self.actual.push((path.to_string(), format!("{actual:?}")));
             self.mark_value(&actual);
         }
@@ -350,7 +353,8 @@ impl Check {
         if actual > max {
             self.failures
                 .push(format!("{path}: expected at most {max:?}, got {actual:?}"));
-            self.expected.push((path.to_string(), format!("<= {max:?}")));
+            self.expected
+                .push((path.to_string(), format!("<= {max:?}")));
             self.actual.push((path.to_string(), format!("{actual:?}")));
             self.mark_value(&actual);
         }
@@ -383,15 +387,19 @@ impl Check {
             ));
             self.expected.push((path.to_string(), hex(expected)));
             self.actual.push((path.to_string(), hex(actual)));
+            let mark = std::ops::Range {
+                start: at,
+                end: at + 1,
+            };
             self.blocks.push(HexBlock {
                 title: format!("{path}: expected"),
                 bytes: expected.to_vec(),
-                marks: vec![at..at + 1],
+                marks: vec![mark.clone()],
             });
             self.blocks.push(HexBlock {
                 title: format!("{path}: actual"),
                 bytes: actual.to_vec(),
-                marks: vec![at..at + 1],
+                marks: vec![mark],
             });
         }
         self
@@ -550,7 +558,10 @@ mod tests {
         c.keying(&[0xab; 4], "s hs traffic → server_handshake_traffic_secret");
         c.eq("finished.verify_data", 1u16, 2u16);
         let f = c.finish().expect_err("must fail");
-        assert!(f.notes.iter().any(|n| n.contains("transcript hash in force: abababab")));
+        assert!(f
+            .notes
+            .iter()
+            .any(|n| n.contains("transcript hash in force: abababab")));
         assert!(f.notes.iter().any(|n| n.contains("s hs traffic")));
     }
 
@@ -559,7 +570,11 @@ mod tests {
         let mut c = Check::new("verify_data");
         c.bytes_eq("finished.verify_data", &[1, 2, 3], &[1, 9, 3]);
         let f = c.finish().expect_err("must fail");
-        assert!(f.messages[0].contains("first difference at byte 1"), "{:?}", f.messages);
+        assert!(
+            f.messages[0].contains("first difference at byte 1"),
+            "{:?}",
+            f.messages
+        );
         assert_eq!(f.blocks.len(), 2);
         assert_eq!(f.blocks[0].marks, vec![1..2]);
     }

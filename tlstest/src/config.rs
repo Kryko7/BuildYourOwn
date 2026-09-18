@@ -193,8 +193,8 @@ pub fn resolve_server(spec: &str, servers: &BTreeMap<String, ServerDef>) -> Resu
             known.join(", ")
         );
     }
-    let abs =
-        std::fs::canonicalize(path).with_context(|| format!("cannot resolve server path {spec}"))?;
+    let abs = std::fs::canonicalize(path)
+        .with_context(|| format!("cannot resolve server path {spec}"))?;
     let name = abs
         .file_name()
         .map(|s| s.to_string_lossy().to_string())

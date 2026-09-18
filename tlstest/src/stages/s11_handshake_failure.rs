@@ -24,7 +24,7 @@ pub fn stage() -> Stage {
              never got past the hello",
             "Close the connection after a fatal alert; there is no state left worth keeping",
         ],
-        examples: examples,
+        examples,
         tests: vec![
             Test::new(
                 "a hello offering only TLS 1.2 suite numbers is refused",
@@ -165,7 +165,7 @@ tls_test!(still_serving, |ctx| {
     let mut conn = ctx.connect().await?;
     let _ = provoke(&mut conn, &Record::build(22, LEGACY_VERSION_TLS12, &hello)).await;
     drop(conn);
-    ctx.expect_still_serving("a hello with no common cipher suite")
+    ctx.expect_still_answering("a hello with no common cipher suite")
         .await
 });
 

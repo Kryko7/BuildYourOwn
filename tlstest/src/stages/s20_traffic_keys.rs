@@ -25,7 +25,7 @@ pub fn stage() -> Stage {
             "Every TLS 1.3 AEAD uses a 12-byte nonce and a 16-byte tag; only the key length \
              changes between suites",
         ],
-        examples: examples,
+        examples,
         tests: vec![
             Test::new(
                 "key and iv have the lengths the suite dictates",
@@ -35,10 +35,7 @@ pub fn stage() -> Stage {
                 "key and iv are HKDF-Expand-Label of the traffic secret",
                 derived_from_secret,
             ),
-            Test::new(
-                "the nonce is the IV XOR the sequence number",
-                nonce_rule,
-            ),
+            Test::new("the nonce is the IV XOR the sequence number", nonce_rule),
             Test::new(
                 "the server's first encrypted record opens with the derived keys",
                 opens_first_record,
@@ -51,17 +48,16 @@ pub fn stage() -> Stage {
                 "the client's and server's keys are different",
                 directions_differ,
             ),
-            Test::new(
-                "every suite's keys open that suite's records",
-                all_suites,
-            ),
+            Test::new("every suite's keys open that suite's records", all_suites),
         ],
     }
 }
 
 tls_test!(key_lengths, |ctx| {
     for suite in ALL_SUITES {
-        let client = ctx.handshake_with(ctx.config().with_suites(&[suite])).await?;
+        let client = ctx
+            .handshake_with(ctx.config().with_suites(&[suite]))
+            .await?;
         let schedule = client
             .schedule
             .as_ref()
@@ -102,13 +98,21 @@ tls_test!(derived_from_secret, |ctx| {
         .as_ref()
         .ok_or_else(|| crate::stages::harness("no server handshake keys"))?;
     let hash = schedule.suite.hash;
-    let want_key = hkdf_expand_label(hash, &keys.secret, "key", &[], schedule.suite.aead.key_len())
-        .map_err(crate::assert::Failure::tls)?;
+    let want_key = hkdf_expand_label(
+        hash,
+        &keys.secret,
+        "key",
+        &[],
+        schedule.suite.aead.key_len(),
+    )
+    .map_err(crate::assert::Failure::tls)?;
     let want_iv = hkdf_expand_label(hash, &keys.secret, "iv", &[], 12)
         .map_err(crate::assert::Failure::tls)?;
     let mut c = Check::new("key and iv as HKDF-Expand-Label of the traffic secret");
     c.keying(&client.hash_after_server_hello, "s hs traffic → key / iv");
-    c.note("The context argument is empty for both: the transcript is already baked into the secret.");
+    c.note(
+        "The context argument is empty for both: the transcript is already baked into the secret.",
+    );
     c.bytes_eq("server_write_key", &want_key, &keys.key);
     c.bytes_eq("server_write_iv", &want_iv, &keys.iv);
     c.finish()
@@ -148,7 +152,10 @@ tls_test!(opens_first_record, |ctx| {
         .send_client_hello()
         .await
         .map_err(crate::assert::Failure::tls)?;
-    client.maybe_send_ccs().await.map_err(crate::assert::Failure::tls)?;
+    client
+        .maybe_send_ccs()
+        .await
+        .map_err(crate::assert::Failure::tls)?;
     if let Err(e) = client.read_server_hello().await {
         return Err(crate::stages::handshake_failure(e, &client));
     }
@@ -175,9 +182,9 @@ tls_test!(opens_first_record, |ctx| {
     }
     let mut layer = RecordLayer::new();
     layer.set_read(keys.clone());
-    let opened = layer
-        .open(&record)
-        .map_err(|e| crate::assert::Failure::tls(e).note("opening the first encrypted record by hand"))?;
+    let opened = layer.open(&record).map_err(|e| {
+        crate::assert::Failure::tls(e).note("opening the first encrypted record by hand")
+    })?;
     let mut c = Check::new("the server's first encrypted record, opened by hand");
     c.block("the record as it arrived", &record.raw);
     c.block("what it decrypted to", &opened.content);
@@ -214,17 +221,17 @@ tls_test!(additional_data, |ctx| {
          *ciphertext* length — content plus the type byte plus padding plus the 16-byte tag.",
     );
     c.eq("additional_data[0]", 23u8, aad[0]);
-    c.eq("additional_data[1..3]", 0x0303u16, u16::from_be_bytes([aad[1], aad[2]]));
+    c.eq(
+        "additional_data[1..3]",
+        0x0303u16,
+        u16::from_be_bytes([aad[1], aad[2]]),
+    );
     c.eq(
         "additional_data[3..5]",
         record.fragment.len(),
         u16::from_be_bytes([aad[3], aad[4]]) as usize,
     );
-    c.at_least(
-        "the ciphertext length",
-        17usize,
-        record.fragment.len(),
-        );
+    c.at_least("the ciphertext length", 17usize, record.fragment.len());
     c.finish()
 });
 
@@ -268,7 +275,9 @@ tls_test!(directions_differ, |ctx| {
 
 tls_test!(all_suites, |ctx| {
     for suite in ALL_SUITES {
-        let mut client = ctx.handshake_with(ctx.config().with_suites(&[suite])).await?;
+        let mut client = ctx
+            .handshake_with(ctx.config().with_suites(&[suite]))
+            .await?;
         let line = format!("keys{:x}", suite & 0xff);
         let answer = client.echo_line(&line).await.map_err(|e| {
             crate::stages::handshake_failure(e, &client)

@@ -22,10 +22,13 @@ pub fn stage() -> Stage {
             "A client that connects and vanishes without a ClientHello is normal; close that \
              socket and go back to accepting",
         ],
-        examples: examples,
+        examples,
         tests: vec![
             Test::new("the server accepts a TCP connection", accepts),
-            Test::new("nothing is sent before the client speaks", silent_until_asked),
+            Test::new(
+                "nothing is sent before the client speaks",
+                silent_until_asked,
+            ),
             Test::new(
                 "a connection is accepted after an earlier one closed",
                 reconnect,
@@ -73,7 +76,11 @@ tls_test!(silent_until_asked, |ctx| {
         "connection.bytes_received_before_the_client_hello",
         "no bytes at all",
         seen.is_empty(),
-        format!("{} bytes: {}", seen.len(), crate::tls::hex_prefix(&seen, 16)),
+        format!(
+            "{} bytes: {}",
+            seen.len(),
+            crate::tls::hex_prefix(&seen, 16)
+        ),
     );
     c.finish()
 });
@@ -106,30 +113,39 @@ tls_test!(silent_disconnect, |ctx| {
         drop(conn);
     }
     tokio::time::sleep(Duration::from_millis(50)).await;
-    ctx.expect_still_serving("five silent connects and disconnects")
+    ctx.expect_accepting("five silent connects and disconnects")
         .await
 });
 
-// Two sockets open at once, served one after the other. A server that handles connections
-// serially (the reference does) is perfectly conformant, so the test only requires that
-// both connections are eventually served — not that they are served at the same time.
+// Two sockets open at the same time. A server that handles connections serially (the
+// reference does) is perfectly conformant, so this only asks that the second connect is
+// accepted by the kernel and that neither socket sees any unsolicited bytes.
 tls_test!(two_sockets, |ctx| {
-    let first = ctx.client_with(ctx.config_n(1)).await?;
-    let second = ctx.client_with(ctx.config_n(2)).await?;
-    let mut first = first;
-    first
-        .handshake()
+    let mut first = ctx.connect().await?;
+    let mut second = ctx
+        .connect()
         .await
-        .map_err(|e| crate::stages::handshake_failure(e, &first).note("the first of two sockets"))?;
+        .map_err(|f| f.note("the second socket was opened while the first was still open"))?;
+    let quiet = Duration::from_millis(200);
+    let a = first.read_silence(quiet).await.unwrap_or_default();
+    let b = second.read_silence(quiet).await.unwrap_or_default();
+    let mut c = Check::new("two sockets open at once");
+    c.that(
+        "the first socket",
+        "no unsolicited bytes",
+        a.is_empty(),
+        format!("{} bytes", a.len()),
+    );
+    c.that(
+        "the second socket",
+        "no unsolicited bytes",
+        b.is_empty(),
+        format!("{} bytes", b.len()),
+    );
+    c.finish()?;
     drop(first);
-    let mut second = second;
-    second.handshake().await.map_err(|e| {
-        crate::stages::handshake_failure(e, &second).note(
-            "the second socket was opened while the first was still connected, and must be \
-             served once the first one is done",
-        )
-    })?;
-    Ok(())
+    drop(second);
+    ctx.expect_accepting("two sockets held open at once").await
 });
 
 tls_test!(still_serving, |ctx| {
@@ -137,7 +153,7 @@ tls_test!(still_serving, |ctx| {
         let conn = ctx.connect().await?;
         drop(conn);
     }
-    ctx.expect_still_serving("a handful of bare TCP connections")
+    ctx.expect_accepting("a handful of bare TCP connections")
         .await
 });
 

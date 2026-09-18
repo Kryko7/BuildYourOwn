@@ -26,7 +26,7 @@ pub fn stage() -> Stage {
             "Only the handshake bytes go into the transcript — never the five-byte record \
              headers, however the message was fragmented",
         ],
-        examples: examples,
+        examples,
         tests: vec![
             Test::new(
                 "a ClientHello written one byte at a time is answered",
@@ -57,10 +57,7 @@ pub fn stage() -> Stage {
 }
 
 /// Write a ClientHello as `chunks` records and read the first record that comes back.
-async fn fragmented_hello(
-    ctx: &crate::stages::Ctx,
-    records: usize,
-) -> Result<Record, Failure> {
+async fn fragmented_hello(ctx: &crate::stages::Ctx, records: usize) -> Result<Record, Failure> {
     let message = hello_message(&ctx.config()).map_err(crate::stages::harness)?;
     let mut conn = ctx.connect().await?;
     let per = message.len().div_ceil(records.max(1));
@@ -86,9 +83,10 @@ tls_test!(byte_at_a_time, |ctx| {
             .await
             .map_err(Failure::tls)?;
     }
-    let answer = conn.read_record().await.map_err(|e| {
-        Failure::tls(e).note("after a ClientHello written one byte per TCP write")
-    })?;
+    let answer = conn
+        .read_record()
+        .await
+        .map_err(|e| Failure::tls(e).note("after a ClientHello written one byte per TCP write"))?;
     let mut c = Check::new("the answer to a hello written one byte at a time");
     c.block("the server's first record", &answer.raw);
     c.note(format!("{} separate write() calls", record.len()));
@@ -105,9 +103,13 @@ tls_test!(two_writes, |ctx| {
     let record = Record::build(22, LEGACY_VERSION_TLS12, &message);
     let split = record.len() / 2;
     let mut conn = ctx.connect().await?;
-    conn.write_raw(&record[..split]).await.map_err(Failure::tls)?;
+    conn.write_raw(&record[..split])
+        .await
+        .map_err(Failure::tls)?;
     tokio::time::sleep(Duration::from_millis(20)).await;
-    conn.write_raw(&record[split..]).await.map_err(Failure::tls)?;
+    conn.write_raw(&record[split..])
+        .await
+        .map_err(Failure::tls)?;
     let answer = conn
         .read_record()
         .await

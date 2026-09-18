@@ -75,6 +75,9 @@ pub struct ClientConfig {
     pub psk: Option<PskOffer>,
     /// Offer `early_data` alongside the PSK.
     pub offer_early_data: bool,
+    /// Flip a bit of the PSK binder before sending it, so a test can prove the server
+    /// really checks it.
+    pub corrupt_psk_binder: bool,
 }
 
 impl Default for ClientConfig {
@@ -95,6 +98,7 @@ impl Default for ClientConfig {
             entropy: [0x2c; 32],
             psk: None,
             offer_early_data: false,
+            corrupt_psk_binder: false,
         }
     }
 }
@@ -105,7 +109,9 @@ impl ClientConfig {
         let material = super::crypto::HashAlg::Sha256.digest(&seed.to_be_bytes());
         let mut entropy = [0u8; 32];
         entropy.copy_from_slice(&material);
-        let mut session_id = super::crypto::HashAlg::Sha256.digest(b"session-id").to_vec();
+        let mut session_id = super::crypto::HashAlg::Sha256
+            .digest(b"session-id")
+            .to_vec();
         for (i, b) in session_id.iter_mut().enumerate() {
             *b ^= entropy[i % 32];
         }
@@ -175,6 +181,13 @@ impl ClientConfig {
     /// Offer this resumption PSK.
     pub fn with_psk(mut self, psk: PskOffer) -> ClientConfig {
         self.psk = Some(psk);
+        self
+    }
+
+    /// Offer this resumption PSK with a deliberately wrong binder.
+    pub fn with_broken_psk(mut self, psk: PskOffer) -> ClientConfig {
+        self.psk = Some(psk);
+        self.corrupt_psk_binder = true;
         self
     }
 
@@ -434,6 +447,9 @@ impl Client {
         let mut out = full;
         let start = truncated_len + 3; // the binder list length (2) and the binder length (1)
         out[start..start + binder_len].copy_from_slice(&binder);
+        if self.config.corrupt_psk_binder {
+            out[start] ^= 0x01;
+        }
         self.schedule = Some(schedule);
         Ok(out)
     }
@@ -648,9 +664,7 @@ impl Client {
                 HandshakeType::CERTIFICATE_VERIFY => {
                     let cv = CertificateVerifyMsg::parse(&message.body)?;
                     let key = self.server_public_key.as_ref().ok_or_else(|| {
-                        TlsError::Protocol(
-                            "certificate_verify arrived before certificate".into(),
-                        )
+                        TlsError::Protocol("certificate_verify arrived before certificate".into())
                     })?;
                     sig::verify(
                         key,

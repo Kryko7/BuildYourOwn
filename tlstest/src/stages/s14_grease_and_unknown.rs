@@ -5,9 +5,7 @@ use crate::examples::{ExampleEnv, ExampleSpec, Part};
 use crate::stages::{handshake_edited, Stage, Test};
 use crate::tls::client::ClientConfig;
 use crate::tls::msg::{client_key_share_extension, Extension};
-use crate::tls::{
-    ext_name, grease_values, is_grease, ALL_SUITES, GROUP_X25519, TLS13_VERSION,
-};
+use crate::tls::{ext_name, grease_values, is_grease, ALL_SUITES, GROUP_X25519, TLS13_VERSION};
 use crate::tls_test;
 
 /// Stage definition.
@@ -27,7 +25,7 @@ pub fn stage() -> Stage {
             "Never echo an extension back that the client did not send, and never send one in \
              a ServerHello that RFC 8446 section 4.1.3 does not allow there",
         ],
-        examples: examples,
+        examples,
         tests: vec![
             Test::new(
                 "a GREASE extension in the hello is ignored",
@@ -113,7 +111,9 @@ tls_test!(many_grease_extensions, |ctx| {
 tls_test!(grease_suite, |ctx| {
     let mut suites = vec![grease_values()[2]];
     suites.extend_from_slice(&ALL_SUITES);
-    let client = ctx.handshake_with(ctx.config().with_suites(&suites)).await?;
+    let client = ctx
+        .handshake_with(ctx.config().with_suites(&suites))
+        .await?;
     let hello = client
         .server_hello
         .as_ref()

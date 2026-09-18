@@ -28,7 +28,7 @@ pub fn stage() -> Stage {
             "TLS 1.2 suite numbers may appear in the list; ignore them rather than choking on \
              them",
         ],
-        examples: examples,
+        examples,
         tests: vec![
             Test::new(
                 "TLS_AES_128_GCM_SHA256 alone is negotiated and works",
@@ -87,7 +87,9 @@ async fn one_suite(
     c.block("server_hello", &client.server_hello_bytes);
     c.eq("server_hello.cipher_suite", suite, chosen);
     c.eq("echo", crate::stages::reversed(line), answer);
-    let expected = Suite::from_code(suite).map(|s| s.hash.name()).unwrap_or("?");
+    let expected = Suite::from_code(suite)
+        .map(|s| s.hash.name())
+        .unwrap_or("?");
     c.observe("key schedule hash", expected);
     c.finish()
 }
@@ -107,7 +109,9 @@ tls_test!(chacha, |ctx| {
 tls_test!(chosen_is_offered, |ctx| {
     // Offer two of the three, in the least likely order, and see what comes back.
     let offered = [TLS_CHACHA20_POLY1305_SHA256, TLS_AES_128_GCM_SHA256];
-    let client = ctx.handshake_with(ctx.config().with_suites(&offered)).await?;
+    let client = ctx
+        .handshake_with(ctx.config().with_suites(&offered))
+        .await?;
     let hello = client
         .server_hello
         .as_ref()
@@ -137,7 +141,11 @@ tls_test!(sha384_schedule, |ctx| {
         .ok_or_else(|| crate::stages::harness("no key schedule"))?;
     let mut c = Check::new("the key schedule under a SHA-384 suite");
     c.note_all(client.schedule_lines());
-    c.eq("suite.hash", HashAlg::Sha384.name(), schedule.suite.hash.name());
+    c.eq(
+        "suite.hash",
+        HashAlg::Sha384.name(),
+        schedule.suite.hash.name(),
+    );
     c.eq("Early Secret length", 48usize, schedule.early_secret.len());
     c.eq(
         "Handshake Secret length",
@@ -168,7 +176,9 @@ tls_test!(tls12_suites_ignored, |ctx| {
         0x00ff, // TLS_EMPTY_RENEGOTIATION_INFO_SCSV
     ];
     suites.extend_from_slice(&ALL_SUITES);
-    let client = ctx.handshake_with(ctx.config().with_suites(&suites)).await?;
+    let client = ctx
+        .handshake_with(ctx.config().with_suites(&suites))
+        .await?;
     let hello = client
         .server_hello
         .as_ref()
@@ -194,7 +204,9 @@ tls_test!(duplicate_suite, |ctx| {
         TLS_AES_128_GCM_SHA256,
         TLS_AES_128_GCM_SHA256,
     ];
-    let client = ctx.handshake_with(ctx.config().with_suites(&suites)).await?;
+    let client = ctx
+        .handshake_with(ctx.config().with_suites(&suites))
+        .await?;
     let hello = client
         .server_hello
         .as_ref()
@@ -236,7 +248,12 @@ tls_test!(single_uint16, |ctx| {
             bytes.get(at + 2).copied().unwrap_or(0xff),
         );
     } else {
-        c.that("server_hello", "long enough to hold a cipher suite", false, bytes.len());
+        c.that(
+            "server_hello",
+            "long enough to hold a cipher suite",
+            false,
+            bytes.len(),
+        );
     }
     c.finish()
 });

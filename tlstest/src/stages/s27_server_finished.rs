@@ -24,13 +24,10 @@ pub fn stage() -> Stage {
             "Finished is the last message of the server's flight, and the transcript it \
              covers is the one right after CertificateVerify",
         ],
-        examples: examples,
+        examples,
         tests: vec![
             Test::new("verify_data is Hash.length bytes", length),
-            Test::new(
-                "verify_data is the HMAC the RFC describes",
-                verify_data,
-            ),
+            Test::new("verify_data is the HMAC the RFC describes", verify_data),
             Test::new(
                 "the finished key comes from the handshake traffic secret",
                 finished_key,
@@ -43,10 +40,7 @@ pub fn stage() -> Stage {
                 "a Finished over the wrong transcript does not match",
                 wrong_transcript,
             ),
-            Test::new(
-                "the body is the verify_data and nothing else",
-                body_is_bare,
-            ),
+            Test::new("the body is the verify_data and nothing else", body_is_bare),
             Test::new("it works under every cipher suite", every_suite),
         ],
     }
@@ -126,7 +120,11 @@ tls_test!(finished_key, |ctx| {
     );
     c.bytes_eq("finished_key", &want, &have);
     c.eq("finished_key.len()", hash.len(), have.len());
-    c.ne("finished_key vs server_write_key", hex(&keys.key), hex(&have));
+    c.ne(
+        "finished_key vs server_write_key",
+        hex(&keys.key),
+        hex(&have),
+    );
     c.finish()
 });
 
@@ -220,7 +218,9 @@ tls_test!(body_is_bare, |ctx| {
 
 tls_test!(every_suite, |ctx| {
     for suite in ALL_SUITES {
-        let client = ctx.handshake_with(ctx.config().with_suites(&[suite])).await?;
+        let client = ctx
+            .handshake_with(ctx.config().with_suites(&[suite]))
+            .await?;
         let schedule = client
             .schedule
             .as_ref()

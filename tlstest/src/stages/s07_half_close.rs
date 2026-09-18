@@ -25,7 +25,7 @@ pub fn stage() -> Stage {
             "A write to a socket the peer has closed is EPIPE or ECONNRESET; handle it where \
              it happens rather than letting it end the process",
         ],
-        examples: examples,
+        examples,
         tests: vec![
             Test::new(
                 "a client that half-closes before the ClientHello is survivable",
@@ -61,7 +61,7 @@ tls_test!(half_close_before_hello, |ctx| {
     // Whatever the server says, it must not die.
     let _ = conn.read_silence(Duration::from_millis(300)).await;
     drop(conn);
-    ctx.expect_still_serving("a half-close before any TLS bytes")
+    ctx.expect_still_answering("a half-close before any TLS bytes")
         .await
 });
 
@@ -76,7 +76,7 @@ tls_test!(half_close_after_hello, |ctx| {
     // optional, surviving it is not.
     let _ = conn.read_silence(Duration::from_millis(400)).await;
     drop(conn);
-    ctx.expect_still_serving("a half-close straight after the ClientHello")
+    ctx.expect_still_answering("a half-close straight after the ClientHello")
         .await
 });
 
@@ -90,7 +90,7 @@ tls_test!(abandon_mid_handshake, |ctx| {
     // Walk away without ever sending Finished.
     drop(client);
     tokio::time::sleep(Duration::from_millis(50)).await;
-    ctx.expect_still_serving("a handshake abandoned after the ServerHello")
+    ctx.expect_still_answering("a handshake abandoned after the ServerHello")
         .await
 });
 
@@ -107,7 +107,7 @@ tls_test!(reset_after_server_hello, |ctx| {
         .await
         .map_err(Failure::tls)?;
     drop(client);
-    ctx.expect_still_serving("a truncated record and a reset")
+    ctx.expect_still_answering("a truncated record and a reset")
         .await
 });
 
@@ -124,7 +124,7 @@ tls_test!(ten_abandoned, |ctx| {
         drop(conn);
     }
     ctx.note("ten handshakes started and abandoned");
-    ctx.expect_still_serving("ten abandoned handshakes").await
+    ctx.expect_still_answering("ten abandoned handshakes").await
 });
 
 tls_test!(still_serving, |ctx| {

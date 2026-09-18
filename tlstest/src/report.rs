@@ -403,7 +403,14 @@ mod tests {
         ];
         let dir = tempfile::tempdir().expect("tempdir");
         let p = dir.path().join("r.json");
-        write_json(&p, "openssl", true, &[(&st, results)], Duration::from_secs(2)).expect("write");
+        write_json(
+            &p,
+            "openssl",
+            true,
+            &[(&st, results)],
+            Duration::from_secs(2),
+        )
+        .expect("write");
         let text = std::fs::read_to_string(&p).expect("read");
         let v: serde_json::Value = serde_json::from_str(&text).expect("parse");
         assert_eq!(v["target"], "openssl");
@@ -415,7 +422,10 @@ mod tests {
         assert_eq!(v["stages"][0]["tests"][1]["failure_kind"], "server_crash");
         assert_eq!(v["stages"][0]["tests"][1]["failures"][0], "boom");
         assert!(v.get("shell").is_none(), "tlstest reports `target`");
-        assert_eq!(v["stages"][0]["tests"][0]["notes"][0], "handshake took 4 ms");
+        assert_eq!(
+            v["stages"][0]["tests"][0]["notes"][0],
+            "handshake took 4 ms"
+        );
     }
 
     #[test]

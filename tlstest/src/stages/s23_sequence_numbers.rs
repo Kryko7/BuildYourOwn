@@ -23,7 +23,7 @@ pub fn stage() -> Stage {
             "A record that arrives out of order simply will not authenticate: the nonce is \
              wrong, so the tag is wrong, and that is bad_record_mac",
         ],
-        examples: examples,
+        examples,
         tests: vec![
             Test::new(
                 "the client's write counter is where it should be after the handshake",
@@ -33,10 +33,7 @@ pub fn stage() -> Stage {
                 "the counter resets when the handshake keys become application keys",
                 reset_on_key_change,
             ),
-            Test::new(
-                "many small records in a row all authenticate",
-                many_records,
-            ),
+            Test::new("many small records in a row all authenticate", many_records),
             Test::new(
                 "the counter advances by one per record, not per byte",
                 one_per_record,
@@ -60,8 +57,16 @@ tls_test!(counter_after_handshake, |ctx| {
         "The client wrote exactly one record under the handshake keys — its Finished — and \
          then installed the application keys, which set the counter back to zero.",
     );
-    c.eq("client write sequence number", 0u64, client.conn.layer.write_seq);
-    c.eq("server read sequence number", 0u64, client.conn.layer.read_seq);
+    c.eq(
+        "client write sequence number",
+        0u64,
+        client.conn.layer.write_seq,
+    );
+    c.eq(
+        "server read sequence number",
+        0u64,
+        client.conn.layer.read_seq,
+    );
     c.finish()
 });
 
@@ -100,8 +105,9 @@ tls_test!(many_records, |ctx| {
     for i in 0..20 {
         let line = format!("seq{i:02}");
         let answer = client.echo_line(&line).await.map_err(|e| {
-            crate::stages::handshake_failure(e, &client)
-                .note(format!("on record number {i}; the nonce for it is iv XOR {i}"))
+            crate::stages::handshake_failure(e, &client).note(format!(
+                "on record number {i}; the nonce for it is iv XOR {i}"
+            ))
         })?;
         lines.push((line, answer));
     }
@@ -117,7 +123,11 @@ tls_test!(many_records, |ctx| {
             answer.clone(),
         );
     }
-    c.at_least("client write sequence number", 20u64, client.conn.layer.write_seq);
+    c.at_least(
+        "client write sequence number",
+        20u64,
+        client.conn.layer.write_seq,
+    );
     c.finish()
 });
 
@@ -163,8 +173,16 @@ tls_test!(ccs_does_not_count, |ctx| {
         "If they had advanced the read counter, the first application record would have \
          decrypted with the wrong nonce and failed with bad_record_mac.",
     );
-    c.eq("read sequence number after the handshake", 0u64, before_read);
-    c.eq("write sequence number after the handshake", 0u64, before_write);
+    c.eq(
+        "read sequence number after the handshake",
+        0u64,
+        before_read,
+    );
+    c.eq(
+        "write sequence number after the handshake",
+        0u64,
+        before_write,
+    );
     c.eq("echo", "scc".to_string(), answer);
     c.finish()
 });

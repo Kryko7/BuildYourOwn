@@ -153,6 +153,9 @@ pub struct ExampleSpec {
     pub server: fn() -> ServerOptions,
     /// How the example is replayed.
     pub scenario: Scenario,
+    /// True when the bytes are deliberately not valid TLS, so the annotator is expected to
+    /// stop part way through them.
+    pub malformed: bool,
 }
 
 fn default_server() -> ServerOptions {
@@ -183,6 +186,7 @@ impl ExampleSpec {
             note: None,
             server: default_server,
             scenario: Scenario::Raw { build, expect },
+            malformed: false,
         }
     }
 
@@ -204,6 +208,7 @@ impl ExampleSpec {
                 request,
                 response,
             },
+            malformed: false,
         }
     }
 
@@ -216,6 +221,7 @@ impl ExampleSpec {
             note: None,
             server: default_server,
             scenario: Scenario::Echo { line },
+            malformed: false,
         }
     }
 
@@ -228,6 +234,7 @@ impl ExampleSpec {
             note: None,
             server: default_server,
             scenario: Scenario::Text,
+            malformed: false,
         }
     }
 
@@ -252,6 +259,16 @@ impl ExampleSpec {
     /// Start the server differently for this example.
     pub fn with_server(mut self, f: fn() -> ServerOptions) -> ExampleSpec {
         self.server = f;
+        self
+    }
+
+    /// Say that these bytes are deliberately not valid TLS.
+    ///
+    /// The capture normally refuses an example whose annotation walk does not land exactly
+    /// on the last byte — that check is what keeps the annotations honest. An example whose
+    /// whole point is that the bytes are wrong has to opt out of it.
+    pub fn malformed(mut self) -> ExampleSpec {
+        self.malformed = true;
         self
     }
 }

@@ -24,7 +24,7 @@ pub fn stage() -> Stage {
             "Sending one is optional both ways; a client that sends none, and a client that \
              sends three, must both get the same handshake",
         ],
-        examples: examples,
+        examples,
         tests: vec![
             Test::new("a client that sends no CCS completes", no_ccs),
             Test::new("a client that sends one CCS completes", one_ccs),
@@ -159,7 +159,11 @@ tls_test!(server_ccs_shape, |ctx| {
             ContentType::ChangeCipherSpec.as_u8(),
             record.content_type.as_u8(),
         );
-        c.eq(&format!("records[{i}].length"), 1usize, record.fragment.len());
+        c.eq(
+            &format!("records[{i}].length"),
+            1usize,
+            record.fragment.len(),
+        );
         c.eq(
             &format!("records[{i}].fragment[0]"),
             1u8,

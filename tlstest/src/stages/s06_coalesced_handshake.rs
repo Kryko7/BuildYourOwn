@@ -1,15 +1,15 @@
 //! Stage 06 — Two handshake messages coalesced in one record.
 
 use crate::assert::{Check, Failure};
+use crate::examples::Expect;
 use crate::examples::{ExampleEnv, ExampleSpec, Part};
+use crate::stages::{hello_message, provoke};
 use crate::stages::{Stage, Test};
 use crate::tls::client::ClientConfig;
 use crate::tls::msg::{encode_handshake, HandshakeMessage};
 use crate::tls::record::Record;
 use crate::tls::{ContentType, HandshakeType, LEGACY_VERSION_TLS12};
 use crate::tls_test;
-use crate::examples::Expect;
-use crate::stages::{hello_message, provoke};
 
 /// Stage definition.
 pub fn stage() -> Stage {
@@ -28,7 +28,7 @@ pub fn stage() -> Stage {
             "A record must never end in the middle of a message *and* start a new one — but a \
              message may start in one record and finish in the next",
         ],
-        examples: examples,
+        examples,
         tests: vec![
             Test::new(
                 "the server's encrypted flight is read whatever way it is packed",
@@ -148,7 +148,11 @@ tls_test!(trailing_bytes, |ctx| {
     // plus junk: the record ends mid-message, which RFC 8446 section 5.1 forbids.
     fragment.extend_from_slice(&[1u8, 0xff, 0xff, 0xff, 0x01, 0x02]);
     let mut conn = ctx.connect().await?;
-    let reaction = provoke(&mut conn, &Record::build(22, LEGACY_VERSION_TLS12, &fragment)).await;
+    let reaction = provoke(
+        &mut conn,
+        &Record::build(22, LEGACY_VERSION_TLS12, &fragment),
+    )
+    .await;
     let mut c = Check::new("a record holding a ClientHello and half of another message");
     c.note(
         "A server may refuse this outright, or wait for the rest of the second message. What \
@@ -162,7 +166,7 @@ tls_test!(trailing_bytes, |ctx| {
     );
     c.finish()?;
     drop(conn);
-    ctx.expect_still_serving("a record that ended mid-message")
+    ctx.expect_still_answering("a record that ended mid-message")
         .await
 });
 

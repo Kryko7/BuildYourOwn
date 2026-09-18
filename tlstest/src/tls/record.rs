@@ -338,7 +338,10 @@ mod tests {
             raw: Vec::new(),
         };
         assert!(plain.check_length(false).is_err());
-        assert!(plain.check_length(true).is_ok(), "2^14+1 is a legal ciphertext");
+        assert!(
+            plain.check_length(true).is_ok(),
+            "2^14+1 is a legal ciphertext"
+        );
         let big = Record {
             fragment: vec![0; MAX_CIPHERTEXT + 1],
             ..plain
@@ -391,8 +394,12 @@ mod tests {
         let mut back = RecordLayer::new();
         out.set_write(keys());
         back.set_read(keys());
-        let first = out.seal(ContentType::ApplicationData, b"one", 0).expect("seal");
-        let second = out.seal(ContentType::ApplicationData, b"two", 0).expect("seal");
+        let first = out
+            .seal(ContentType::ApplicationData, b"one", 0)
+            .expect("seal");
+        let second = out
+            .seal(ContentType::ApplicationData, b"two", 0)
+            .expect("seal");
         let (r2, _) = Record::parse(&second).expect("parse");
         assert!(
             back.open(&r2).is_err(),
@@ -421,6 +428,10 @@ mod tests {
         assert_eq!(parts.len(), 4);
         let joined: Vec<u8> = parts.concat();
         assert_eq!(joined, payload);
-        assert_eq!(fragment(&[], 10).len(), 1, "an empty record is still a record");
+        assert_eq!(
+            fragment(&[], 10).len(),
+            1,
+            "an empty record is still a record"
+        );
     }
 }
