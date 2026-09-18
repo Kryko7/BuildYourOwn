@@ -1,0 +1,30 @@
+# How to launch each runtime `wasmtest --runtime <name>` knows about.
+#
+# The harness appends the rest of the command line itself:
+#
+#   <command...> run --invoke <export> <module.wasm> [args...]
+#   <command...> run <module.wasm> [args...]
+#
+# so `command` is only the prefix — the program, plus any flags it needs before `run`.
+#
+# Placeholders substituted in `command`, `cwd` and `env`:
+#   {TMP}   the test's temporary directory, where the module under test is written
+
+runtimes:
+  # The reference runtime: downloaded once into ~/.cache/wasmtest (override with
+  # WASMTEST_CACHE), checked against a pinned SHA-256, and run straight from there.
+  # This is the `--validate` target.
+  wasmtime:
+    kind: reference
+    version: "48.0.2"
+
+  # The runtime you are building (track conventions).
+  my_runtime:
+    command: ["./your_program.sh"]
+    cwd: "."
+
+  # The deliberately broken example runtime shipped with the crate; used to show the red
+  # path. Build it with `cargo build --release --example broken_runtime`.
+  broken:
+    command: ["target/release/examples/broken_runtime"]
+    cwd: "."

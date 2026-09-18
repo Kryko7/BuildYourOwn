@@ -574,9 +574,9 @@ impl Elf {
     /// This is how a test reads back the value a relocation was supposed to write: find the
     /// `PT_LOAD` that maps the address, convert to a file offset, slice.
     pub fn read_at_vaddr(&self, addr: u64, len: u64) -> Result<&[u8], ElfError> {
-        let seg = self.segment_at(addr).ok_or_else(|| {
-            ElfError::new(format!("no PT_LOAD segment maps address 0x{addr:x}"))
-        })?;
+        let seg = self
+            .segment_at(addr)
+            .ok_or_else(|| ElfError::new(format!("no PT_LOAD segment maps address 0x{addr:x}")))?;
         let delta = addr - seg.vaddr;
         if delta + len > seg.filesz {
             return Err(ElfError::new(format!(
@@ -637,7 +637,8 @@ impl Elf {
 
     /// The `readelf -lW`-style table of program headers, for a failure block.
     pub fn program_header_table(&self) -> String {
-        let mut out = String::from("  Type       Offset     VirtAddr   FileSiz    MemSiz     Flg Align\n");
+        let mut out =
+            String::from("  Type       Offset     VirtAddr   FileSiz    MemSiz     Flg Align\n");
         for s in &self.segments {
             out.push_str(&format!(
                 "  {:<10} 0x{:08x} 0x{:08x} 0x{:08x} 0x{:08x} {} 0x{:x}\n",
@@ -704,7 +705,10 @@ mod tests {
         assert!(Elf::parse(&[0u8; 32]).is_err());
         let mut bad = vec![0u8; 128];
         bad[..4].copy_from_slice(b"\x7fELG");
-        assert!(Elf::parse(&bad).expect_err("bad magic").message.contains("magic"));
+        assert!(Elf::parse(&bad)
+            .expect_err("bad magic")
+            .message
+            .contains("magic"));
     }
 
     #[test]

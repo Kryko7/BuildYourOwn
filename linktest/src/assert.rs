@@ -208,7 +208,12 @@ impl Check {
     }
 
     /// Attach a hex dump with some ranges marked.
-    pub fn hex(&mut self, title: impl Into<String>, bytes: &[u8], marks: &[Range<usize>]) -> &mut Self {
+    pub fn hex(
+        &mut self,
+        title: impl Into<String>,
+        bytes: &[u8],
+        marks: &[Range<usize>],
+    ) -> &mut Self {
         self.block(title, hexdump(bytes, marks, 512))
     }
 
@@ -236,12 +241,12 @@ impl Check {
     /// Assert `actual == expected` for an address, printed in hex on both sides.
     pub fn addr_eq(&mut self, path: &str, expected: u64, actual: u64) -> &mut Self {
         if expected != actual {
-            self.failures.push(format!(
-                "{path}: expected 0x{expected:x}, got 0x{actual:x}"
-            ));
+            self.failures
+                .push(format!("{path}: expected 0x{expected:x}, got 0x{actual:x}"));
             self.expected
                 .push((path.to_string(), format!("0x{expected:x}")));
-            self.actual.push((path.to_string(), format!("0x{actual:x}")));
+            self.actual
+                .push((path.to_string(), format!("0x{actual:x}")));
         }
         self
     }
@@ -269,7 +274,8 @@ impl Check {
         if actual < min {
             self.failures
                 .push(format!("{path}: expected at least {min:?}, got {actual:?}"));
-            self.expected.push((path.to_string(), format!(">= {min:?}")));
+            self.expected
+                .push((path.to_string(), format!(">= {min:?}")));
             self.actual.push((path.to_string(), format!("{actual:?}")));
         }
         self
@@ -283,7 +289,8 @@ impl Check {
         if actual > max {
             self.failures
                 .push(format!("{path}: expected at most {max:?}, got {actual:?}"));
-            self.expected.push((path.to_string(), format!("<= {max:?}")));
+            self.expected
+                .push((path.to_string(), format!("<= {max:?}")));
             self.actual.push((path.to_string(), format!("{actual:?}")));
         }
         self
@@ -331,9 +338,8 @@ impl Check {
     /// names the thing the learner has to go and look at.
     pub fn mentions(&mut self, path: &str, needle: &str, haystack: &str) -> &mut Self {
         if !haystack.contains(needle) {
-            self.failures.push(format!(
-                "{path}: the diagnostic never mentions '{needle}'"
-            ));
+            self.failures
+                .push(format!("{path}: the diagnostic never mentions '{needle}'"));
             self.expected
                 .push((path.to_string(), format!("a message naming '{needle}'")));
             self.actual
@@ -399,7 +405,10 @@ mod tests {
         c.addr_eq("output.e_entry", 0x401000, 0);
         let f = c.finish().expect_err("must fail");
         assert_eq!(f.kind, FailureKind::Assertion);
-        assert_eq!(f.messages, vec!["output.e_entry: expected 0x401000, got 0x0"]);
+        assert_eq!(
+            f.messages,
+            vec!["output.e_entry: expected 0x401000, got 0x0"]
+        );
         assert!(f.notes[0].contains("the entry point"));
     }
 

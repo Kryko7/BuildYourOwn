@@ -184,7 +184,7 @@ pub fn hex_listing(bytes: &[u8], anns: &[Ann], max_bytes: usize) -> String {
     let mut out = String::new();
     let mut at = 0usize;
     let mut budget = max_bytes;
-    let mut row = |out: &mut String, from: usize, len: usize, field: &str, value: &str| {
+    let row = |out: &mut String, from: usize, len: usize, field: &str, value: &str| {
         let end = (from + len).min(bytes.len());
         let slice = &bytes[from.min(bytes.len())..end];
         let shown: String = slice
@@ -439,11 +439,7 @@ impl ValType {
 }
 
 fn types_text(ts: &[ValType]) -> String {
-    if ts.is_empty() {
-        "()".to_string()
-    } else {
-        ts.iter().map(|t| t.name()).collect::<Vec<_>>().join(" ")
-    }
+    ts.iter().map(|t| t.name()).collect::<Vec<_>>().join(" ")
 }
 
 /// A function type: what it takes and what it gives back.
@@ -466,7 +462,11 @@ pub fn ftype(params: &[ValType], results: &[ValType]) -> FuncType {
 impl FuncType {
     /// `(i32 i32) -> (i32)`, how every failure message writes a signature.
     pub fn text(&self) -> String {
-        format!("({}) -> ({})", types_text(&self.params), types_text(&self.results))
+        format!(
+            "({}) -> ({})",
+            types_text(&self.params),
+            types_text(&self.results)
+        )
     }
 
     fn encode(&self) -> Vec<u8> {
@@ -945,7 +945,12 @@ impl ModuleBuilder {
                     pos,
                     bytes.len(),
                     format!("import[{i}]"),
-                    format!("{}::{} — {}", imp.module, imp.name, import_text(&imp.kind, self)),
+                    format!(
+                        "{}::{} — {}",
+                        imp.module,
+                        imp.name,
+                        import_text(&imp.kind, self)
+                    ),
                 );
                 pos += bytes.len();
             }
@@ -1444,7 +1449,9 @@ mod tests {
     fn sleb_matches_the_spec_examples() {
         assert_eq!(sleb(0), vec![0x00]);
         assert_eq!(sleb(-1), vec![0x7f]);
-        assert_eq!(sleb(63), vec![0xbf, 0x00]);
+        // 63 still fits in the six value bits of one byte; 64 sets the sign bit, so it
+        // needs a second byte to say "positive".
+        assert_eq!(sleb(63), vec![0x3f]);
         assert_eq!(sleb(64), vec![0xc0, 0x00]);
         assert_eq!(sleb(-64), vec![0x40]);
         assert_eq!(sleb(-123_456), vec![0xc0, 0xbb, 0x78]);
@@ -1525,7 +1532,12 @@ mod tests {
     #[test]
     fn a_lying_size_field_is_written_exactly_as_asked() {
         let mut e = Enc::with_header();
-        e.section_with_size(section::TYPE, &uleb(99), &[0x00], "99, but only 1 byte follows");
+        e.section_with_size(
+            section::TYPE,
+            &uleb(99),
+            &[0x00],
+            "99, but only 1 byte follows",
+        );
         let m = e.finish("liar");
         assert_eq!(m.bytes.len(), 8 + 1 + 1 + 1);
         assert_eq!(m.bytes[9], 99);

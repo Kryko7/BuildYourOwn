@@ -189,7 +189,11 @@ impl RuntimeHandle {
             def: def.clone(),
             argv0,
             cwd,
-            env: def.env.iter().map(|(k, v)| (k.clone(), v.clone())).collect(),
+            env: def
+                .env
+                .iter()
+                .map(|(k, v)| (k.clone(), v.clone()))
+                .collect(),
         })
     }
 
@@ -226,14 +230,7 @@ impl RuntimeHandle {
         // function and fails to parse it as a number. The module's own arguments follow the
         // path directly, which is what the contract says.
         argv.extend(args.iter().cloned());
-        run_capture(
-            &argv,
-            self.cwd.as_deref(),
-            &self.env,
-            stdin,
-            timeout,
-            tmp,
-        )
+        run_capture(&argv, self.cwd.as_deref(), &self.env, stdin, timeout, tmp)
     }
 }
 
@@ -354,11 +351,7 @@ mod tests {
     fn sh(script: &str, timeout_ms: u64) -> Run {
         let dir = tempfile::tempdir().expect("tempdir");
         run_capture(
-            &[
-                "/bin/sh".to_string(),
-                "-c".to_string(),
-                script.to_string(),
-            ],
+            &["/bin/sh".to_string(), "-c".to_string(), script.to_string()],
             None,
             &[],
             None,

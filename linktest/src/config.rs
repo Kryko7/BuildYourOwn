@@ -99,8 +99,8 @@ pub fn resolve_linker(spec: &str, linkers: &BTreeMap<String, LinkerDef>) -> Resu
             known.join(", ")
         );
     }
-    let abs =
-        std::fs::canonicalize(path).with_context(|| format!("cannot resolve linker path {spec}"))?;
+    let abs = std::fs::canonicalize(path)
+        .with_context(|| format!("cannot resolve linker path {spec}"))?;
     let name = abs
         .file_name()
         .map(|s| s.to_string_lossy().to_string())

@@ -84,7 +84,12 @@ impl LinkerHandle {
     }
 
     /// Run one link in `dir`, with `args` appended to the base arguments.
-    pub fn invoke(&self, dir: &Path, args: &[String], timeout: Duration) -> std::io::Result<exec::Output> {
+    pub fn invoke(
+        &self,
+        dir: &Path,
+        args: &[String],
+        timeout: Duration,
+    ) -> std::io::Result<exec::Output> {
         let ph = Placeholders {
             tmp: dir.to_path_buf(),
         };

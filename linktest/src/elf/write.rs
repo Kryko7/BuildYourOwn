@@ -571,17 +571,24 @@ impl<'a> Layout<'a> {
                 let shndx = self.section_index(&s.name)?;
                 syms.push((
                     s.name.clone(),
-                    sym_bytes(0, st_info(STB_LOCAL, STT_SECTION), STV_DEFAULT, shndx as u16, 0, 0),
+                    sym_bytes(
+                        0,
+                        st_info(STB_LOCAL, STT_SECTION),
+                        STV_DEFAULT,
+                        shndx as u16,
+                        0,
+                        0,
+                    ),
                 ));
                 section_sym_index.push((s.name.clone(), idx));
             }
         }
 
         let push_sym = |spec: &SymbolSpec,
-                            syms: &mut Vec<(String, Vec<u8>)>,
-                            sym_index: &mut Vec<(String, u32)>,
-                            strtab: &mut StrTab,
-                            this: &Layout|
+                        syms: &mut Vec<(String, Vec<u8>)>,
+                        sym_index: &mut Vec<(String, u32)>,
+                        strtab: &mut StrTab,
+                        this: &Layout|
          -> Result<(), String> {
             let shndx = match &spec.section {
                 SymSection::Undefined => SHN_UNDEF,
@@ -794,10 +801,15 @@ impl<'a> Layout<'a> {
         // `.shstrtab` holds every section name, itself included.
         let mut shstr = StrTab::new();
         let name_offsets: Vec<u32> = self.shdrs.iter().map(|s| shstr.add(&s.name)).collect();
-        if let Some(last) = self.shdrs.last_mut() {
-            last.data = shstr.bytes.clone();
-            last.size = shstr.bytes.len() as u64;
-        }
+        // Index by the entry `e_shstrndx` names, never by position: with `symtab_first` the
+        // string table is not the last entry in the table, and filling in the wrong one
+        // leaves every `sh_name` pointing into a section that holds no strings.
+        let shstrtab = self
+            .shdrs
+            .get_mut(shstrtab_index as usize)
+            .ok_or("internal: .shstrtab is not in the section header table")?;
+        shstrtab.data = shstr.bytes.clone();
+        shstrtab.size = shstr.bytes.len() as u64;
         // Stash the offsets in `entsize`-free space: emit() reads them from here.
         self.name_offsets = name_offsets;
         Ok(())
@@ -872,11 +884,7 @@ impl Layout<'_> {
         hdr.extend_from_slice(&0u16.to_le_bytes()); // e_phentsize
         hdr.extend_from_slice(&0u16.to_le_bytes()); // e_phnum
         hdr.extend_from_slice(&h.e_shentsize.unwrap_or(SHDR_SIZE).to_le_bytes());
-        hdr.extend_from_slice(
-            &h.e_shnum
-                .unwrap_or(self.shdrs.len() as u16)
-                .to_le_bytes(),
-        );
+        hdr.extend_from_slice(&h.e_shnum.unwrap_or(self.shdrs.len() as u16).to_le_bytes());
         hdr.extend_from_slice(&shstrndx.to_le_bytes());
         if hdr.len() != EHDR_SIZE as usize {
             return Err(format!(
@@ -903,4 +911,112 @@ fn sym_bytes(name: u32, info: u8, other: u8, shndx: u16, value: u64, size: u64) 
     b.extend_from_slice(&value.to_le_bytes());
     b.extend_from_slice(&size.to_le_bytes());
     b
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::elf::read::Elf;
+
+    /// Both alternative layouts have to stay *readable* — a fixture that no linker can parse
+    /// tests nothing. This is the regression test for the bug where `.shstrtab`'s contents
+    /// were written into whichever entry happened to be last.
+    #[test]
+    fn alternative_layouts_keep_their_section_names() {
+        for (what, builder) in [
+            ("default", ObjectBuilder::new()),
+            ("symtab_first", ObjectBuilder::new().symtab_first()),
+            (
+                "rela_before_target",
+                ObjectBuilder::new().rela_before_target(),
+            ),
+        ] {
+            let bytes = builder
+                .section(
+                    SectionSpec::text(".text", vec![0x90, 0xc3]).reloc(Reloc::sym(
+                        0,
+                        "target",
+                        R_X86_64_PC32,
+                        -4,
+                    )),
+                )
+                .section(SectionSpec::rodata(".rodata", b"hi".to_vec()))
+                .symbol(SymbolSpec::global("_start", ".text", 0))
+                .symbol(SymbolSpec::undefined("target"))
+                .build()
+                .unwrap_or_else(|e| panic!("{what}: {e}"));
+            let elf = Elf::parse(&bytes).unwrap_or_else(|e| panic!("{what}: {e}"));
+            assert!(
+                elf.section(".text").is_some(),
+                "{what}: .text lost its name"
+            );
+            assert!(
+                elf.section(".rodata").is_some(),
+                "{what}: .rodata lost its name"
+            );
+            assert!(
+                elf.section(".symtab").is_some(),
+                "{what}: .symtab lost its name"
+            );
+            assert_eq!(
+                elf.section_data(".rodata").unwrap_or_default(),
+                b"hi",
+                "{what}: .rodata's contents moved"
+            );
+            assert_eq!(elf.relocations.len(), 1, "{what}: the relocation vanished");
+            assert_eq!(
+                elf.sections
+                    .get(elf.shstrndx as usize)
+                    .map(|s| s.name.as_str()),
+                Some(".shstrtab"),
+                "{what}: e_shstrndx does not name .shstrtab"
+            );
+        }
+    }
+
+    #[test]
+    fn the_symbol_a_relocation_names_is_the_one_it_gets() {
+        let bytes = ObjectBuilder::new()
+            .section(
+                SectionSpec::text(".text", vec![0; 16])
+                    .reloc(Reloc::sym(0, "b", R_X86_64_PC32, -4))
+                    .reloc(Reloc::section(8, ".rodata", R_X86_64_64, 3)),
+            )
+            .section(SectionSpec::rodata(".rodata", b"xy".to_vec()))
+            .symbol(SymbolSpec::global("a", ".text", 0))
+            .symbol(SymbolSpec::undefined("b"))
+            .build()
+            .expect("build");
+        let elf = Elf::parse(&bytes).expect("parse");
+        let by_offset = |o: u64| {
+            elf.relocations
+                .iter()
+                .find(|r| r.offset == o)
+                .expect("relocation")
+        };
+        let first = by_offset(0);
+        assert_eq!(elf.symbols[first.sym as usize].name, "b");
+        let second = by_offset(8);
+        let section_sym = &elf.symbols[second.sym as usize];
+        assert_eq!(section_sym.stype, STT_SECTION);
+        assert_eq!(
+            elf.sections[section_sym.shndx as usize].name, ".rodata",
+            "a section relocation must name that section's symbol"
+        );
+        assert_eq!(second.addend, 3);
+    }
+
+    #[test]
+    fn a_relocation_against_a_symbol_that_was_never_declared_is_an_error() {
+        let err = ObjectBuilder::new()
+            .section(SectionSpec::text(".text", vec![0; 8]).reloc(Reloc::sym(
+                0,
+                "nowhere",
+                R_X86_64_PC32,
+                -4,
+            )))
+            .build()
+            .expect_err("the writer must refuse it");
+        assert!(err.contains("nowhere"), "{err}");
+    }
 }

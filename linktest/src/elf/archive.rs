@@ -263,7 +263,9 @@ pub fn parse(bytes: &[u8]) -> Result<(Vec<ParsedMember>, Option<ParsedIndex>), S
         if &header[58..60] != HEADER_TERMINATOR {
             return Err(format!("member header at {at} does not end with '`\\n'"));
         }
-        let raw_name = String::from_utf8_lossy(&header[..16]).trim_end().to_string();
+        let raw_name = String::from_utf8_lossy(&header[..16])
+            .trim_end()
+            .to_string();
         let size: usize = String::from_utf8_lossy(&header[48..58])
             .trim()
             .parse()
@@ -367,7 +369,11 @@ mod tests {
                 .iter()
                 .find(|m| m.header_offset == *offset as usize)
                 .unwrap_or_else(|| panic!("no member at offset {offset} for '{name}'"));
-            let expected = if name == "alpha" { "a.o" } else { "a_very_long_member_name.o" };
+            let expected = if name == "alpha" {
+                "a.o"
+            } else {
+                "a_very_long_member_name.o"
+            };
             assert_eq!(member.name, expected, "'{name}' points at the wrong member");
         }
     }

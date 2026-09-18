@@ -1,0 +1,27 @@
+# How to invoke each linker `linktest --linker <name>` knows about.
+#
+# The contract is the GNU ld flag subset, so the reference is literally /usr/bin/ld:
+#
+#   ./your_program.sh -o <out> [-e <entry>] [-L <dir>] [-l <name>] <input.o|input.a>...
+#
+# The harness writes the input objects into a fresh temporary directory, runs the linker
+# there, then executes the binary it produced and re-parses it.
+#
+# Placeholders substituted in `cwd` and `env`:
+#   {TMP}   the test's temporary directory, where the inputs are and the output goes
+
+linkers:
+  # The reference linker: GNU ld, already on the machine. `--validate` proves the suite
+  # against it and must be all green. Set $LD to point at another ld.
+  gnu_ld:
+    kind: reference
+
+  # The linker you are building (track conventions).
+  my_linker:
+    command: ["./your_program.sh"]
+    cwd: "."
+
+  # The deliberately broken example linker shipped with the crate; used to show the red path.
+  broken:
+    command: ["target/release/examples/broken_linker"]
+    cwd: "."

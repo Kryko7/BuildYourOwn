@@ -342,7 +342,10 @@ impl Expr {
         let mut b = vec![o.0];
         b.extend_from_slice(&uleb(align as u64));
         b.extend_from_slice(&uleb(offset as u64));
-        self.push(&b, format!("{} align={} offset={offset}", o.1, 1u32 << align))
+        self.push(
+            &b,
+            format!("{} align={} offset={offset}", o.1, 1u32 << align),
+        )
     }
 
     /// `i32.load` with the natural alignment and no offset.
@@ -524,7 +527,11 @@ impl Func {
     }
 
     /// A function body with raw local declarations and raw bytes.
-    pub fn raw_with_locals(locals: &[(u32, ValType)], body: &[u8], text: impl Into<String>) -> Func {
+    pub fn raw_with_locals(
+        locals: &[(u32, ValType)],
+        body: &[u8],
+        text: impl Into<String>,
+    ) -> Func {
         Func {
             locals: locals.to_vec(),
             body: body.to_vec(),

@@ -68,7 +68,9 @@ mod tests {
 
     #[test]
     fn marks_get_a_caret_line() {
-        let text = hexdump(b"\0asm\x01\x00\x00\x00", &[0..4], 64);
+        // Two ranges, so the caret line has to be built from the list rather than
+        // from a single hard-coded span.
+        let text = hexdump(b"\0asm\x01\x00\x00\x00", &[0..2, 2..4], 64);
         assert!(text.contains("^^ ^^ ^^ ^^"), "{text}");
     }
 

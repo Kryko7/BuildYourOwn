@@ -102,8 +102,8 @@ pub fn resolve_runtime(spec: &str, runtimes: &BTreeMap<String, RuntimeDef>) -> R
             known.join(", ")
         );
     }
-    let abs =
-        std::fs::canonicalize(path).with_context(|| format!("cannot resolve runtime path {spec}"))?;
+    let abs = std::fs::canonicalize(path)
+        .with_context(|| format!("cannot resolve runtime path {spec}"))?;
     let name = abs
         .file_name()
         .map(|s| s.to_string_lossy().to_string())

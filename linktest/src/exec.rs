@@ -259,7 +259,11 @@ mod tests {
     fn a_signal_is_reported_as_a_signal() {
         let out = sh("kill -SEGV $$", 5_000);
         assert_eq!(out.signal, Some(11));
-        assert!(out.status_line().contains("SIGSEGV"), "{}", out.status_line());
+        assert!(
+            out.status_line().contains("SIGSEGV"),
+            "{}",
+            out.status_line()
+        );
     }
 
     #[test]
@@ -279,7 +283,10 @@ mod tests {
     fn stdin_is_delivered_and_closed() {
         let out = sh("cat", 5_000);
         assert_eq!(out.stdout, "");
-        assert!(out.success(), "a child reading an empty stdin must still exit");
+        assert!(
+            out.success(),
+            "a child reading an empty stdin must still exit"
+        );
     }
 
     #[test]

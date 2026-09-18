@@ -380,7 +380,8 @@ mod tests {
 
     #[test]
     fn hexdump_marks_the_interesting_bytes() {
-        let dump = hexdump(&[0u8, 1, 2, 3], &[1..3], 64);
+        let mark = 1..3;
+        let dump = hexdump(&[0u8, 1, 2, 3], std::slice::from_ref(&mark), 64);
         assert!(dump.contains("0000  00 01 02 03"), "{dump}");
         assert!(dump.contains("^^"), "{dump}");
     }

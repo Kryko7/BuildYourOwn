@@ -249,7 +249,11 @@ impl Code {
     /// displacement to the address of the *next* instruction, four bytes further on.
     pub fn lea_rip(&mut self, r: Reg, target: &str, addend: i64) -> &mut Code {
         self.raw(&[REX_W, 0x8d, modrm_rip(r)]);
-        self.reloc_here(RelTarget::Symbol(target.to_string()), R_X86_64_PC32, -4 + addend);
+        self.reloc_here(
+            RelTarget::Symbol(target.to_string()),
+            R_X86_64_PC32,
+            -4 + addend,
+        );
         self.raw(&0u32.to_le_bytes())
     }
 
@@ -278,28 +282,44 @@ impl Code {
     /// `mov <r32>, [rip + <target>]` — `8b /r disp32`: load four bytes.
     pub fn mov_r32_rip(&mut self, r: Reg, target: &str, addend: i64) -> &mut Code {
         self.raw(&[0x8b, modrm_rip(r)]);
-        self.reloc_here(RelTarget::Symbol(target.to_string()), R_X86_64_PC32, -4 + addend);
+        self.reloc_here(
+            RelTarget::Symbol(target.to_string()),
+            R_X86_64_PC32,
+            -4 + addend,
+        );
         self.raw(&0u32.to_le_bytes())
     }
 
     /// `mov [rip + <target>], <r32>` — `89 /r disp32`: store four bytes.
     pub fn mov_rip_r32(&mut self, target: &str, r: Reg, addend: i64) -> &mut Code {
         self.raw(&[0x89, modrm_rip(r)]);
-        self.reloc_here(RelTarget::Symbol(target.to_string()), R_X86_64_PC32, -4 + addend);
+        self.reloc_here(
+            RelTarget::Symbol(target.to_string()),
+            R_X86_64_PC32,
+            -4 + addend,
+        );
         self.raw(&0u32.to_le_bytes())
     }
 
     /// `add <r32>, [rip + <target>]` — `03 /r disp32`.
     pub fn add_r32_rip(&mut self, r: Reg, target: &str, addend: i64) -> &mut Code {
         self.raw(&[0x03, modrm_rip(r)]);
-        self.reloc_here(RelTarget::Symbol(target.to_string()), R_X86_64_PC32, -4 + addend);
+        self.reloc_here(
+            RelTarget::Symbol(target.to_string()),
+            R_X86_64_PC32,
+            -4 + addend,
+        );
         self.raw(&0u32.to_le_bytes())
     }
 
     /// `movzx <r32>, byte [rip + <target>]` — `0f b6 /r disp32`: load one byte, zero-extended.
     pub fn movzx_r32_byte_rip(&mut self, r: Reg, target: &str, addend: i64) -> &mut Code {
         self.raw(&[0x0f, 0xb6, modrm_rip(r)]);
-        self.reloc_here(RelTarget::Symbol(target.to_string()), R_X86_64_PC32, -4 + addend);
+        self.reloc_here(
+            RelTarget::Symbol(target.to_string()),
+            R_X86_64_PC32,
+            -4 + addend,
+        );
         self.raw(&0u32.to_le_bytes())
     }
 
@@ -441,10 +461,7 @@ impl Code {
 /// An eight-byte absolute pointer to a symbol, for `.data`: eight zero bytes and an
 /// `R_X86_64_64` relocation that fills them in.
 pub fn pointer_to(symbol: &str, addend: i64) -> (Vec<u8>, Reloc) {
-    (
-        vec![0u8; 8],
-        Reloc::sym(0, symbol, R_X86_64_64, addend),
-    )
+    (vec![0u8; 8], Reloc::sym(0, symbol, R_X86_64_64, addend))
 }
 
 #[cfg(test)]
@@ -495,7 +512,10 @@ mod tests {
         let mut tail = Code::new();
         tail.call("f");
         head.append(&tail);
-        assert_eq!(head.relocs[0].offset, 3, "1 byte of call opcode after 2 nops");
+        assert_eq!(
+            head.relocs[0].offset, 3,
+            "1 byte of call opcode after 2 nops"
+        );
     }
 
     #[test]
