@@ -87,7 +87,14 @@
 <div class="wrap page" style="--accent:{accent}">
 	<header class="head">
 		<div class="titles">
-			<p class="eyebrow">{meta.tester} · {catalog.totals.stages} stages · {catalog.totals.tests || '—'} tests</p>
+			<p class="eyebrow">
+				{meta.tester} ·
+				{#if catalog.pending}
+					{catalog.totals.stages} placeholder waypoints · ≈{meta.plannedStages} stages planned
+				{:else}
+					{catalog.totals.stages} stages · {catalog.totals.tests || '—'} tests
+				{/if}
+			</p>
 			<h1>{meta.title}</h1>
 			<p class="lede">{meta.blurb}</p>
 			<div class="legend tiny">

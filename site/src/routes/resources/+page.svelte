@@ -140,8 +140,9 @@
 
 	{#if empty.length}
 		<p class="nolist tiny">
-			No reading curated yet for {empty.map((t) => tracks[t].short).join(', ')} — those testers are
-			still being written, and their lists land with them. Every other trail is covered.
+			No reading curated yet for {empty.map((t) => tracks[t].short).join(', ')} — those lists are
+			still being written and land in <code>src/lib/data/resources.&lt;track&gt;.json</code>. Every
+			other trail is covered, and a stage on those trails simply shows no reading section.
 		</p>
 	{/if}
 

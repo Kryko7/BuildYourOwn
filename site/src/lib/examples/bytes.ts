@@ -253,7 +253,10 @@ function normalizeBlocks(o: Record<string, unknown>, kind: string): ExampleBlock
 const LINE_KINDS: TranscriptLine['kind'][] = ['input', 'key', 'stdout', 'stderr', 'terminal', 'exit', 'note'];
 
 function pushLines(out: TranscriptLine[], kind: TranscriptLine['kind'], value: unknown) {
-	const body = text(value);
+	// A captured stdout ends with a newline; splitting on it verbatim would print a blank
+	// line the program never wrote. Only the *trailing* one is dropped — a blank line in
+	// the middle of the output is output.
+	const body = text(value).replace(/\r?\n$/, '');
 	if (body === '') return;
 	for (const line of body.split('\n')) out.push({ kind, text: line });
 }

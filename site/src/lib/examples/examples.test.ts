@@ -546,6 +546,16 @@ describe('the generic block shapes (every track past kafka)', () => {
 		]);
 	});
 
+	it('drops the trailing newline a captured stdout carries, but keeps a blank line inside', () => {
+		const ex = normalizeByteExample({ request: 'x', stdout: 'hi\nZZ\n' })!;
+		expect(ex.transcript).toEqual([
+			{ kind: 'stdout', text: 'hi' },
+			{ kind: 'stdout', text: 'ZZ' }
+		]);
+		const spaced = normalizeByteExample({ request: 'x', stdout: 'a\n\nb\n' })!;
+		expect(spaced.transcript.map((l) => l.text)).toEqual(['a', '', 'b']);
+	});
+
 	it('keeps an example that is only a transcript, and drops one that is nothing', () => {
 		expect(normalizeByteExample({ stdout: 'hello' })?.transcript).toHaveLength(1);
 		expect(normalizeByteExample({ note: 'just a note' })).toBeNull();
