@@ -219,7 +219,9 @@ impl Http {
         .map_err(|_| HttpError::Timeout(format!("POST {path}")))??;
         let head = tokio::time::timeout(timeout, read_head(&mut reader))
             .await
-            .map_err(|_| HttpError::Timeout(format!("waiting for the response head of {path}")))??;
+            .map_err(|_| {
+                HttpError::Timeout(format!("waiting for the response head of {path}"))
+            })??;
         let chunked = head
             .headers
             .iter()
@@ -437,17 +439,25 @@ async fn read_response(reader: &mut BufReader<TcpStream>) -> Result<HttpResponse
             .read_to_end(&mut resp.body)
             .await
             .map_err(|e| HttpError::Io(e.to_string()))?;
-        resp.headers
-            .push(("connection".into(), "close".into()));
+        resp.headers.push(("connection".into(), "close".into()));
     }
     Ok(resp)
+}
+
+/// The offset just past the blank line ending an HTTP head, when it has all arrived.
+fn find_head_end(buf: &[u8]) -> Option<usize> {
+    buf.windows(4).position(|w| w == b"\r\n\r\n").map(|i| i + 4)
 }
 
 /// A blocking one-shot `GET`, used while waiting for a node to come up.
 ///
 /// The runner is not inside a tokio runtime when it starts a node, and a readiness probe is
 /// the one place where blocking is simpler than being asynchronous.
-pub fn blocking_get(base_url: &str, path: &str, timeout: Duration) -> Result<(u16, String), String> {
+pub fn blocking_get(
+    base_url: &str,
+    path: &str,
+    timeout: Duration,
+) -> Result<(u16, String), String> {
     use std::io::{Read, Write};
     let host = base_url
         .strip_prefix("http://")
@@ -456,15 +466,42 @@ pub fn blocking_get(base_url: &str, path: &str, timeout: Duration) -> Result<(u1
     let addr: SocketAddr = host.parse().map_err(|e| format!("{host}: {e}"))?;
     let mut s = std::net::TcpStream::connect_timeout(&addr, timeout)
         .map_err(|e| format!("connect {addr}: {e}"))?;
-    s.set_read_timeout(Some(timeout)).map_err(|e| e.to_string())?;
+    s.set_read_timeout(Some(timeout))
+        .map_err(|e| e.to_string())?;
     s.set_write_timeout(Some(timeout))
         .map_err(|e| e.to_string())?;
     let req = format!(
         "GET {path} HTTP/1.1\r\nHost: {host}\r\nUser-Agent: disttest\r\nConnection: close\r\n\r\n"
     );
     s.write_all(req.as_bytes()).map_err(|e| e.to_string())?;
+    // Read until the body named by `Content-Length` has arrived, rather than until end of
+    // stream: a server is entitled to ignore `Connection: close` and hold the socket open,
+    // and a readiness probe that waited for EOF would then always time out.
     let mut text = Vec::new();
-    s.read_to_end(&mut text).map_err(|e| e.to_string())?;
+    let mut chunk = [0u8; 2048];
+    loop {
+        match s.read(&mut chunk) {
+            Ok(0) => break,
+            Ok(n) => {
+                text.extend_from_slice(&chunk[..n]);
+                if let Some(head_end) = find_head_end(&text) {
+                    let head = String::from_utf8_lossy(&text[..head_end]).to_ascii_lowercase();
+                    let length: Option<usize> = head
+                        .lines()
+                        .find_map(|l| l.strip_prefix("content-length:"))
+                        .and_then(|v| v.trim().parse().ok());
+                    match length {
+                        Some(len) if text.len() >= head_end + len => break,
+                        // No length at all: one read of the head is as much as a probe needs.
+                        None => break,
+                        _ => {}
+                    }
+                }
+            }
+            Err(e) if text.is_empty() => return Err(e.to_string()),
+            Err(_) => break,
+        }
+    }
     let text = String::from_utf8_lossy(&text).to_string();
     let status: u16 = text
         .lines()
@@ -472,7 +509,11 @@ pub fn blocking_get(base_url: &str, path: &str, timeout: Duration) -> Result<(u1
         .and_then(|l| l.split(' ').nth(1))
         .and_then(|c| c.parse().ok())
         .ok_or_else(|| format!("no status line in {:?}", &text[..text.len().min(60)]))?;
-    let body = text.split("\r\n\r\n").nth(1).unwrap_or_default().to_string();
+    let body = text
+        .split("\r\n\r\n")
+        .nth(1)
+        .unwrap_or_default()
+        .to_string();
     Ok((status, body))
 }
 
@@ -500,9 +541,15 @@ mod tests {
 
     #[tokio::test]
     async fn content_length_bodies_are_read_exactly() {
-        let url = serve(b"HTTP/1.1 200 OK\r\nContent-Length: 5\r\nContent-Type: application/json\r\n\r\nhello").await;
+        let url = serve(
+            b"HTTP/1.1 200 OK\r\nContent-Length: 5\r\nContent-Type: application/json\r\n\r\nhello",
+        )
+        .await;
         let http = Http::new(&url, Duration::from_secs(2)).expect("client");
-        let r = http.request("POST", "/v3/kv/put", Some(b"{}")).await.expect("request");
+        let r = http
+            .request("POST", "/v3/kv/put", Some(b"{}"))
+            .await
+            .expect("request");
         assert_eq!(r.status, 200);
         assert_eq!(r.text(), "hello");
         assert_eq!(r.header("content-type"), Some("application/json"));
@@ -516,7 +563,10 @@ mod tests {
         )
         .await;
         let http = Http::new(&url, Duration::from_secs(2)).expect("client");
-        let r = http.request("POST", "/x", Some(b"{}")).await.expect("request");
+        let r = http
+            .request("POST", "/x", Some(b"{}"))
+            .await
+            .expect("request");
         assert_eq!(r.text(), "abcde");
     }
 
@@ -540,14 +590,20 @@ mod tests {
             st.next_line(Duration::from_secs(2)).await.expect("line"),
             Some("{\"b\"}".to_string())
         );
-        assert_eq!(st.next_line(Duration::from_millis(200)).await.expect("end"), None);
+        assert_eq!(
+            st.next_line(Duration::from_millis(200)).await.expect("end"),
+            None
+        );
     }
 
     #[tokio::test]
     async fn a_reply_that_is_not_http_is_a_protocol_error() {
         let url = serve(b"I am not a web server\r\n\r\n").await;
         let http = Http::new(&url, Duration::from_secs(2)).expect("client");
-        let e = http.request("POST", "/x", Some(b"{}")).await.expect_err("must fail");
+        let e = http
+            .request("POST", "/x", Some(b"{}"))
+            .await
+            .expect_err("must fail");
         assert!(matches!(e, HttpError::Protocol(_)), "{e:?}");
     }
 
@@ -556,8 +612,12 @@ mod tests {
         let l = TcpListener::bind("127.0.0.1:0").await.expect("bind");
         let addr = l.local_addr().expect("addr");
         drop(l);
-        let http = Http::new(&format!("http://{addr}"), Duration::from_millis(500)).expect("client");
-        let e = http.request("POST", "/x", Some(b"{}")).await.expect_err("must fail");
+        let http =
+            Http::new(&format!("http://{addr}"), Duration::from_millis(500)).expect("client");
+        let e = http
+            .request("POST", "/x", Some(b"{}"))
+            .await
+            .expect_err("must fail");
         assert!(matches!(e, HttpError::Connect(_)), "{e:?}");
     }
 }

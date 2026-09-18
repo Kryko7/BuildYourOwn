@@ -15,6 +15,9 @@ disttest --list --json > catalog.json            # the stage catalog the site re
 Nothing here implements the thing you are building. This repository holds the harness, the
 suite, the oracles, the fault injector and the docs.
 
+**55 stages, 475 tests.** 20 stages on the primitives ladder, 15 on the node ladder, 20 on the
+cluster ladder; 268 of the tests are the core track and the rest are `[ext]`.
+
 ---
 
 ## 1. Three ladders
@@ -113,6 +116,9 @@ A process not mentioned in a clock counts as zero.
 | `locate <key>` | `{"node": "n1"}` |
 | `stats <count>` | `{"nodes": {"n1": k, ...}}` — where `key0..key<count-1>` land |
 
+`vnodes` in the answer may be this node's share or the ring's total; no test pins which, only
+that it is at least the number of points the node was given.
+
 #### `rendezvous` — highest random weight (stage 07)
 
 | command | answer |
@@ -155,7 +161,7 @@ not a quorum.
 
 | command | answer |
 |---|---|
-| `build <id> <leaf,leaf,...>` | `{"root": "<64 hex>", "leaves": n}` |
+| `build <id> <leaf,leaf,...>` | `{"root": "<64 hex>", "leaves": n}`; `build <id>` alone is the empty tree |
 | `root <id>` | `{"root": "<64 hex>"}` |
 | `node <id> <level> <index>` | `{"hash": "<64 hex>"}` — level 0 is the leaves |
 | `diff <a> <b>` | `{"ranges": [[lo, hi], ...], "compared": n}` |
@@ -369,9 +375,24 @@ HTTP 400
 {"code":11,"message":"etcdserver: mvcc: required revision has been compacted"}
 ```
 
-The codes the suite names: **3** invalid argument (bad base64, an impossible range), **5**
-not found (a lease that is gone), **8** resource exhausted (too large), **11** out of range
-(compacted), **14** unavailable (no quorum, no leader).
+The codes the suite names: **3** invalid argument (bad base64, a malformed body), **5** not
+found (a lease that is gone), **8** resource exhausted (too large), **11** out of range, **14**
+unavailable (no quorum, no leader). Code 11 covers both ends of the revision range: a read
+below what has been compacted away, and a read at a revision the store has not reached yet.
+
+A handful of other things real etcd does, which the suite therefore accepts:
+
+* `GET /health` answers `{"health":"true","reason":""}`, so a test reads the `health` field
+  rather than comparing the whole object.
+* A `GET` on a POST-only endpoint answers **501**, so the suite asks only that it is not a
+  success — 404 and 405 are equally defensible.
+* An over-large request comes back as HTTP **429** with code 8, not a 4xx in the 400s.
+* A lease TTL below two seconds is rounded up, so the lease stages ask for two and wait with
+  a poll rather than a sleep. Expiry is allowed to be late; it is never allowed to be early.
+* A `VALUE` comparison against a key that does not exist always fails, because etcd refuses
+  to equate a missing value with an empty one. The suite makes its "compares against zeros"
+  point with `VERSION`, `CREATE` and `MOD` instead.
+* A range whose `range_end` sorts before its `key` is an empty 200, not an error.
 
 A stream — `/v3/watch` and `/v3/lease/keepalive` — answers `Transfer-Encoding: chunked` with
 **one JSON object per line, each wrapped in `{"result": ...}`**:
@@ -390,7 +411,15 @@ An event with no `type` is a put, because `PUT` is the zero value of that enum. 
 request messages may be sent in one request body, one per line; that is how the suite creates
 a watch and then cancels it on the same stream.
 
-### 3.4 Durability
+### 3.4 A note on `/tmp`
+
+Each node preallocates a 64 MB write-ahead log the moment it starts, and a full run starts
+several hundred of them. The harness deletes every test's scratch directory as soon as the
+node or cluster that owned it is gone, and sweeps the leftovers of runs whose process no
+longer exists, so the steady state is a few hundred megabytes. If your `/tmp` is a small
+tmpfs and you are running several testers at once, point `TMPDIR` at real disk.
+
+### 3.5 Durability
 
 Stage 35 is the one that hurts. The harness runs a workload, `SIGKILL`s the process in the
 middle of it, starts it again from the same `--data-dir`, and demands that **every
@@ -439,6 +468,12 @@ every one of those processes. The answer is cached per source port. Where the lo
 work the connection is treated as "some peer" and only destination-wide faults apply, which
 is counted and reported rather than hidden.
 
+**When framing is decided.** A connection is either framed or not from the moment it is
+accepted, because starting to frame a stream halfway through would split it in the wrong
+place. A stage that wants duplication or reordering on a cluster that is already talking
+therefore cuts the links first, so the peers redial and the new connections come up in
+message mode.
+
 **Why duplication and reordering need framing.** Deleting or swapping *bytes* of a TCP stream
 corrupts it; it does not model a network. In message mode the proxy parses the dialer's
 direction as HTTP/1.1 requests — which is what a raft transport over HTTP sends — and
@@ -447,6 +482,27 @@ through untouched and counted, and the stage reports how many messages were actu
 rather than pretending.
 
 Everything is driven by `--seed`: which fault fires, when, and on which members.
+
+**What the injector does not promise.** The identification above is a heuristic about the
+kernel's view of a socket, not a guarantee. Cached answers are thrown away whenever the fault
+table changes, and the cache is keyed on both ports so a recycled ephemeral port cannot be
+mistaken for the connection that used to own it — but a cut that is held for tens of seconds
+is stressing the mechanism harder than it was built for. The cluster stages therefore keep
+their isolation windows to a few seconds, which is also what makes them quick, and assert on
+what the cluster *answered* rather than on how many packets the proxy stopped.
+
+**Three things about the reference that shaped the cluster stages.**
+
+* A member with no quorum answers a write with code 14 or code 4 (deadline exceeded), after
+  about seven seconds — etcd's own commit timeout. Both codes mean the same thing to a
+  client, and the suite accepts either.
+* A linearizable read taken in the instant a new leader takes over answers
+  `etcdserver: leader changed`. That says nothing about the data, so a read-back after a
+  failover retries rather than calling it a lost write.
+* A configuration change is refused with `etcdserver: unhealthy cluster` unless the leader
+  has been in continuous contact with every voting member for the last five seconds, which a
+  freshly started cluster has not been. The membership stages therefore re-offer the change
+  until it is accepted, which is most of what makes them the slowest two stages in the run.
 
 ### 4.3 The linearizability checker
 
@@ -557,9 +613,28 @@ a **suite bug**, because the reference is by definition right.
 disttest --target broken_node --stage 35
 ```
 
-`broken_node` speaks enough of the API to get through the early node stages and is then wrong
-in one specific, famous way: it acknowledges a write before the write is durable. Stage 35
-kills it mid-workload and the acknowledged write is gone.
+`broken_node` speaks enough of the API to get through the early node stages — puts, ranges,
+deletes, transactions, status — and is then wrong in one specific, famous way: it keeps the
+store in memory and flushes it on a lazy five-second timer, so it acknowledges a write before
+the write is durable. Stage 35 kills it mid-workload and the acknowledged write is gone:
+
+```
+Stage 35 Durability across SIGKILL [node]
+  ✘ an acknowledged write survives a kill FAIL (72 ms)
+      range.count: expected 1, got 0
+      range.kvs[0].value: expected "still here", got ""
+      range.header.revision: expected at least 2, got 1
+  ✘ a hundred acknowledged writes all survive FAIL (78 ms)
+      acknowledged writes that are missing: expected 0, got 100
+    ┌ the keys that were lost
+    │ t002/hundred/0000
+    │ ... and 90 more
+  …
+Stage 35  Durability across SIGKILL                         0/9 passed
+```
+
+It is not a cluster either — it ignores `--initial-cluster` and always claims to be its own
+leader — so the cluster ladder fails against it too, loudly.
 
 ---
 
@@ -625,7 +700,7 @@ at the top level.
       ]
     }
   ],
-  "passed": 431, "failed": 0, "skipped": 0, "elapsed_ms": 512340
+  "passed": 475, "failed": 0, "skipped": 0, "elapsed_ms": 1041236
 }
 ```
 

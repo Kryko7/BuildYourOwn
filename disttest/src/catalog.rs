@@ -196,7 +196,12 @@ pub fn plan_ticks(plan: &Path) -> BTreeMap<u32, bool> {
 }
 
 /// Print the `--list` table.
+///
+/// Every line goes out through one locked handle with its errors ignored, so piping the
+/// listing into `head` closes the pipe instead of panicking the process.
 pub fn list(stages: &[Stage], plan: &Path) {
+    use std::io::Write;
+    let mut out = std::io::stdout().lock();
     let ticks = plan_ticks(plan);
     for st in stages {
         let ext = st.tests.iter().filter(|t| t.is_ext()).count();
@@ -210,7 +215,8 @@ pub fn list(stages: &[Stage], plan: &Path) {
         } else {
             String::new()
         };
-        println!(
+        let _ = writeln!(
+            out,
             "{tick} Stage {:02}  {:<11} {:<48} {:<44} {} tests{ext_note}, {} examples",
             st.number,
             st.ladder.as_str(),
@@ -221,17 +227,18 @@ pub fn list(stages: &[Stage], plan: &Path) {
         );
     }
     let total: usize = stages.iter().map(|s| s.tests.len()).sum();
-    println!();
+    let _ = writeln!(out);
     for ladder in Ladder::ALL {
         let mine: Vec<&Stage> = stages.iter().filter(|s| s.ladder == ladder).collect();
         let tests: usize = mine.iter().map(|s| s.tests.len()).sum();
-        println!(
+        let _ = writeln!(
+            out,
             "{:<11} {:>2} stages, {tests:>3} tests",
             ladder.as_str(),
             mine.len()
         );
     }
-    println!("\n{} stages, {total} tests", stages.len());
+    let _ = writeln!(out, "\n{} stages, {total} tests", stages.len());
 }
 
 /// Write `catalog.json`.

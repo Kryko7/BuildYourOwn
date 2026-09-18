@@ -45,8 +45,9 @@ impl PrimProc {
         std::fs::create_dir_all(tmp)
             .map_err(|e| Failure::harness(format!("cannot create {}: {e}", tmp.display())))?;
         let stderr_path = tmp.join(format!("{topic}.stderr"));
-        let stderr = std::fs::File::create(&stderr_path)
-            .map_err(|e| Failure::harness(format!("cannot create {}: {e}", stderr_path.display())))?;
+        let stderr = std::fs::File::create(&stderr_path).map_err(|e| {
+            Failure::harness(format!("cannot create {}: {e}", stderr_path.display()))
+        })?;
         let mut cmd = tokio::process::Command::new(program);
         cmd.args(args)
             .arg(topic)
@@ -58,9 +59,8 @@ impl PrimProc {
         for (k, v) in env {
             cmd.env(k, v);
         }
-        let mut child = cmd.spawn().map_err(|e| {
-            Failure::harness(format!("cannot start '{program} {topic}': {e}"))
-        })?;
+        let mut child = spawn_retrying_on_etxtbsy(&mut cmd)
+            .map_err(|e| Failure::harness(format!("cannot start '{program} {topic}': {e}")))?;
         let stdin = child
             .stdin
             .take()
@@ -118,7 +118,9 @@ impl PrimProc {
             Ok(Err(e)) => {
                 self.transcript
                     .push((command.to_string(), format!("<read error: {e}>")));
-                Err(self.died(&format!("cannot read the answer to {command:?}: {e}")).await)
+                Err(self
+                    .died(&format!("cannot read the answer to {command:?}: {e}"))
+                    .await)
             }
             Ok(Ok(0)) => {
                 self.transcript
@@ -161,13 +163,15 @@ impl PrimProc {
     /// Read a named number out of an answer, or fail with the transcript.
     pub fn expect_i64(&self, v: &Value, command: &str, field: &str) -> Result<i64, Failure> {
         match v.get(field) {
-            Some(Value::Number(n)) => n.as_i64().ok_or_else(|| {
-                self.shape(command, &format!("{field} is not a whole number: {n}"))
-            }),
+            Some(Value::Number(n)) => n
+                .as_i64()
+                .ok_or_else(|| self.shape(command, &format!("{field} is not a whole number: {n}"))),
             Some(Value::String(s)) => s
                 .parse()
                 .map_err(|_| self.shape(command, &format!("{field} is not a number: {s:?}"))),
-            Some(other) => Err(self.shape(command, &format!("{field} should be a number, got {other}"))),
+            Some(other) => {
+                Err(self.shape(command, &format!("{field} should be a number, got {other}")))
+            }
             None => Err(self.shape(command, &format!("the answer has no {field:?} field"))),
         }
     }
@@ -176,7 +180,9 @@ impl PrimProc {
     pub fn expect_str(&self, v: &Value, command: &str, field: &str) -> Result<String, Failure> {
         match v.get(field) {
             Some(Value::String(s)) => Ok(s.clone()),
-            Some(other) => Err(self.shape(command, &format!("{field} should be a string, got {other}"))),
+            Some(other) => {
+                Err(self.shape(command, &format!("{field} should be a string, got {other}")))
+            }
             None => Err(self.shape(command, &format!("the answer has no {field:?} field"))),
         }
     }
@@ -185,23 +191,33 @@ impl PrimProc {
     pub fn expect_bool(&self, v: &Value, command: &str, field: &str) -> Result<bool, Failure> {
         match v.get(field) {
             Some(Value::Bool(b)) => Ok(*b),
-            Some(other) => Err(self.shape(command, &format!("{field} should be true or false, got {other}"))),
+            Some(other) => Err(self.shape(
+                command,
+                &format!("{field} should be true or false, got {other}"),
+            )),
             None => Err(self.shape(command, &format!("the answer has no {field:?} field"))),
         }
     }
 
     /// Read a named array of strings out of an answer.
-    pub fn expect_strs(&self, v: &Value, command: &str, field: &str) -> Result<Vec<String>, Failure> {
+    pub fn expect_strs(
+        &self,
+        v: &Value,
+        command: &str,
+        field: &str,
+    ) -> Result<Vec<String>, Failure> {
         match v.get(field) {
             Some(Value::Array(items)) => items
                 .iter()
                 .map(|x| {
-                    x.as_str()
-                        .map(str::to_string)
-                        .ok_or_else(|| self.shape(command, &format!("{field} holds {x}, not a string")))
+                    x.as_str().map(str::to_string).ok_or_else(|| {
+                        self.shape(command, &format!("{field} holds {x}, not a string"))
+                    })
                 })
                 .collect(),
-            Some(other) => Err(self.shape(command, &format!("{field} should be an array, got {other}"))),
+            Some(other) => {
+                Err(self.shape(command, &format!("{field} should be an array, got {other}")))
+            }
             None => Err(self.shape(command, &format!("the answer has no {field:?} field"))),
         }
     }
@@ -215,7 +231,9 @@ impl PrimProc {
             Some(Value::String(s)) => s
                 .parse()
                 .map_err(|_| self.shape(command, &format!("{field} is not a number: {s:?}"))),
-            Some(other) => Err(self.shape(command, &format!("{field} should be a number, got {other}"))),
+            Some(other) => {
+                Err(self.shape(command, &format!("{field} should be a number, got {other}")))
+            }
             None => Err(self.shape(command, &format!("the answer has no {field:?} field"))),
         }
     }
@@ -294,6 +312,27 @@ impl Drop for PrimProc {
     }
 }
 
+/// Spawn, retrying briefly while the kernel says the program is still open for writing.
+///
+/// `ETXTBSY` is not a real failure: it means some process still holds a writable handle on
+/// the file being executed, which happens for a few milliseconds after anything writes a
+/// script — including the harness itself, when one thread is writing a wrapper while
+/// another forks. Giving up on it would turn an ordinary race into a mysterious red test.
+fn spawn_retrying_on_etxtbsy(cmd: &mut tokio::process::Command) -> std::io::Result<Child> {
+    let mut last = None;
+    for attempt in 0..10 {
+        match cmd.spawn() {
+            Ok(child) => return Ok(child),
+            Err(e) if e.raw_os_error() == Some(libc::ETXTBSY) => {
+                std::thread::sleep(Duration::from_millis(10 * (attempt + 1)));
+                last = Some(e);
+            }
+            Err(e) => return Err(e),
+        }
+    }
+    Err(last.unwrap_or_else(|| std::io::Error::other("the program could not be started")))
+}
+
 /// Format a JSON value the way a command line wants it: compact, no spaces.
 pub fn arg(v: &Value) -> String {
     serde_json::to_string(v).unwrap_or_else(|_| "null".into())
@@ -348,7 +387,9 @@ mod tests {
         let f = p.send("send a").await.expect_err("must fail");
         assert_eq!(f.kind, FailureKind::NodeCrash, "{:?}", f.messages);
         assert!(
-            f.blocks.iter().any(|(t, b)| t == "stderr" && b.contains("oops")),
+            f.blocks
+                .iter()
+                .any(|(t, b)| t == "stderr" && b.contains("oops")),
             "{:?}",
             f.blocks
         );
@@ -359,12 +400,17 @@ mod tests {
         let (_d, mut p) = echo_proc("#!/bin/sh\nwhile read -r l; do echo not json; done\n").await;
         let f = p.send("send a").await.expect_err("must fail");
         assert_eq!(f.kind, FailureKind::Protocol);
-        assert!(f.messages[0].contains("not one JSON object"), "{:?}", f.messages);
+        assert!(
+            f.messages[0].contains("not one JSON object"),
+            "{:?}",
+            f.messages
+        );
     }
 
     #[tokio::test]
     async fn missing_fields_name_themselves() {
-        let (_d, mut p) = echo_proc("#!/bin/sh\nwhile read -r l; do echo '{\"other\":1}'; done\n").await;
+        let (_d, mut p) =
+            echo_proc("#!/bin/sh\nwhile read -r l; do echo '{\"other\":1}'; done\n").await;
         let f = p.num("send a", "ts").await.expect_err("must fail");
         assert!(f.messages[0].contains("no \"ts\""), "{:?}", f.messages);
         p.close().await;
@@ -372,7 +418,8 @@ mod tests {
 
     #[tokio::test]
     async fn numbers_may_arrive_as_strings() {
-        let (_d, mut p) = echo_proc("#!/bin/sh\nwhile read -r l; do echo '{\"ts\":\"42\"}'; done\n").await;
+        let (_d, mut p) =
+            echo_proc("#!/bin/sh\nwhile read -r l; do echo '{\"ts\":\"42\"}'; done\n").await;
         assert_eq!(p.num("send a", "ts").await.expect("ts"), 42);
         p.close().await;
     }

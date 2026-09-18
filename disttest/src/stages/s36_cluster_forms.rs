@@ -78,12 +78,7 @@ dist_test!(every_member_answers, |ctx| {
                 c.at_least(&format!("{name}.header.revision"), 1, s.header.revision);
             }
             Err(e) => {
-                c.that(
-                    &format!("{name}.status"),
-                    "an answer",
-                    false,
-                    e.to_string(),
-                );
+                c.that(&format!("{name}.status"), "an answer", false, e.to_string());
             }
         }
     }
@@ -92,7 +87,9 @@ dist_test!(every_member_answers, |ctx| {
 
 dist_test!(one_leader, |ctx| {
     let cluster = ctx.cluster()?;
-    let leader = cluster.wait_for_leader(Duration::from_millis(15_000)).await?;
+    let leader = cluster
+        .wait_for_leader(Duration::from_millis(15_000))
+        .await?;
     let described = cluster.describe().await;
     ctx.note(format!("leader m{} — {described}", leader + 1));
     Ok(())
@@ -100,7 +97,9 @@ dist_test!(one_leader, |ctx| {
 
 dist_test!(leader_is_a_member, |ctx| {
     let cluster = ctx.cluster()?;
-    let leader = cluster.wait_for_leader(Duration::from_millis(15_000)).await?;
+    let leader = cluster
+        .wait_for_leader(Duration::from_millis(15_000))
+        .await?;
     let status = ok(cluster.client(leader).status().await, "the leader's status")?;
     let mut c = Check::new("the member the cluster named as leader");
     c.eq(
@@ -137,7 +136,11 @@ dist_test!(distinct_member_ids, |ctx| {
     let cluster = ctx.cluster()?;
     let mut ids = Vec::new();
     for i in 0..3 {
-        ids.push(ok(cluster.client(i).status().await, "a member's status")?.header.member_id);
+        ids.push(
+            ok(cluster.client(i).status().await, "a member's status")?
+                .header
+                .member_id,
+        );
     }
     let mut sorted = ids.clone();
     sorted.sort_unstable();
@@ -181,7 +184,9 @@ dist_test!(member_list, |ctx| {
 
 dist_test!(same_term, |ctx| {
     let cluster = ctx.cluster()?;
-    cluster.wait_for_leader(Duration::from_millis(15_000)).await?;
+    cluster
+        .wait_for_leader(Duration::from_millis(15_000))
+        .await?;
     let mut terms = Vec::new();
     for i in 0..3 {
         terms.push(ok(cluster.client(i).status().await, "a member's status")?.raft_term);
@@ -193,7 +198,7 @@ dist_test!(same_term, |ctx| {
     c.finish()
 });
 
-dist_test!(quorum_is_two, |ctx| {
+dist_test!(quorum_is_two, |_ctx| {
     // Not a property of the program: a check that the suite and the learner agree on what a
     // quorum of three is before stage 40 starts relying on it.
     let mut c = Check::new("the arithmetic the partition stages rest on");
@@ -204,7 +209,9 @@ dist_test!(quorum_is_two, |ctx| {
 
 dist_test!(leader_is_stable, |ctx| {
     let cluster = ctx.cluster()?;
-    let first = cluster.wait_for_leader(Duration::from_millis(15_000)).await?;
+    let first = cluster
+        .wait_for_leader(Duration::from_millis(15_000))
+        .await?;
     let mut seen = Vec::new();
     for _ in 0..5 {
         seen.push(cluster.leader_according_to(0).await);
@@ -222,14 +229,21 @@ dist_test!(leader_is_stable, |ctx| {
 
 dist_test!(five_members, |ctx| {
     let cluster = ctx.cluster()?;
-    let leader = cluster.wait_for_leader(Duration::from_millis(25_000)).await?;
+    let leader = cluster
+        .wait_for_leader(Duration::from_millis(25_000))
+        .await?;
     let list = ok(
         cluster.client(0).member_list().await,
         "/v3/cluster/member/list",
     )?;
     let mut c = Check::new("a five-member cluster");
     c.eq("member_list.members.len()", 5, list.members.len());
-    c.that("leader index", "one of the five members", leader < 5, leader);
+    c.that(
+        "leader index",
+        "one of the five members",
+        leader < 5,
+        leader,
+    );
     let described = cluster.describe().await;
     ctx.note(described);
     c.finish()

@@ -166,7 +166,12 @@ impl Cluster {
     }
 
     /// Start one member's process from a given cluster view.
-    fn spawn_member(&mut self, i: usize, initial_cluster: &str, state: &str) -> Result<(), Failure> {
+    fn spawn_member(
+        &mut self,
+        i: usize,
+        initial_cluster: &str,
+        state: &str,
+    ) -> Result<(), Failure> {
         let m = &self.members[i];
         let mut spec = spec_for(
             &self.def,
@@ -262,21 +267,23 @@ impl Cluster {
             for i in &running {
                 leaders.push(self.leader_according_to(*i).await);
             }
+            // A leader that has just been killed is still named by everyone for about a
+            // second, because nobody has missed a heartbeat yet. Handing that index back
+            // would send the next request to a closed port, so a leader is only agreed when
+            // it is also still running.
             let agreed = leaders
                 .first()
                 .copied()
                 .flatten()
-                .filter(|l| leaders.iter().all(|x| *x == Some(*l)));
+                .filter(|l| leaders.iter().all(|x| *x == Some(*l)))
+                .filter(|l| running.contains(l));
             if let Some(l) = agreed {
                 return Ok(l);
             }
             last = format!(
                 "members {:?} name leaders {:?}",
                 running.iter().map(|i| i + 1).collect::<Vec<_>>(),
-                leaders
-                    .iter()
-                    .map(|l| l.map(|x| x + 1))
-                    .collect::<Vec<_>>()
+                leaders.iter().map(|l| l.map(|x| x + 1)).collect::<Vec<_>>()
             );
             if Instant::now() >= deadline {
                 return Err(Failure::new(
@@ -294,14 +301,21 @@ impl Cluster {
     }
 
     /// Wait until every running member has caught up to `revision`.
-    pub async fn wait_for_revision(&mut self, revision: i64, within: Duration) -> Result<(), Failure> {
+    pub async fn wait_for_revision(
+        &mut self,
+        revision: i64,
+        within: Duration,
+    ) -> Result<(), Failure> {
         let deadline = Instant::now() + within;
         loop {
             let mut behind = Vec::new();
             for i in self.running() {
                 match self.members[i].client.status().await {
                     Ok(s) if s.header.revision >= revision => {}
-                    Ok(s) => behind.push(format!("{} at revision {}", self.members[i].name, s.header.revision)),
+                    Ok(s) => behind.push(format!(
+                        "{} at revision {}",
+                        self.members[i].name, s.header.revision
+                    )),
                     Err(e) => behind.push(format!("{}: {e}", self.members[i].name)),
                 }
             }
@@ -339,6 +353,8 @@ impl Cluster {
                 },
             );
         }
+        self.cut_unattributable();
+        self.forget_sources();
         self.reset_clients().await;
     }
 
@@ -368,13 +384,35 @@ impl Cluster {
                 ..Default::default()
             },
         );
+        self.forget_sources();
         self.reset_clients().await;
+    }
+
+    /// Refuse every connection whose dialer the harness could not identify.
+    ///
+    /// A member's own link stands for "somebody, we could not tell who". While the network
+    /// is whole that is harmless and the connection is waved through; while a partition
+    /// stands it is the one hole a cut could leak through, because an unattributable
+    /// connection might be crossing the cut. Refusing it is the conservative reading, and a
+    /// peer transport that loses a connection simply redials.
+    fn cut_unattributable(&self) {
+        for i in 0..self.members.len() {
+            self.faults.set(
+                i,
+                i,
+                LinkFault {
+                    cut: true,
+                    ..self.faults.get(i, i)
+                },
+            );
+        }
     }
 
     /// Put one fault on one link.
     pub async fn link_fault(&mut self, a: usize, b: usize, fault: LinkFault) {
         self.dirty = true;
         self.faults.set(a, b, fault);
+        self.forget_sources();
     }
 
     /// Put the same fault on every link.
@@ -385,11 +423,13 @@ impl Cluster {
                 self.faults.set(i, j, fault.clone());
             }
         }
+        self.forget_sources();
     }
 
     /// Remove every fault.
     pub async fn heal(&mut self) {
         self.faults.clear();
+        self.forget_sources();
         self.reset_clients().await;
     }
 
@@ -397,6 +437,16 @@ impl Cluster {
         for m in &self.members {
             m.client.reset().await;
         }
+    }
+
+    /// Throw away every cached "which member opened this connection" answer.
+    ///
+    /// Called whenever the fault table changes. The lookup is keyed on a pair of ports, and
+    /// a blocked link churns connections fast enough to recycle ephemeral ports, so a cache
+    /// that outlives a fault change is the one way a cut link could quietly let something
+    /// through. Re-identifying costs one `/proc` scan per new connection.
+    fn forget_sources(&self) {
+        self.sources.forget();
     }
 
     // -----------------------------------------------------------------------------------
@@ -446,15 +496,24 @@ impl Cluster {
         let url = self.members[i].advertised_peer_url();
         self.members[through]
             .client
-            .member_add(&[url.clone()])
+            .member_add(std::slice::from_ref(&url))
             .await
             .map_err(|e| {
-                Failure::new(FailureKind::Assertion, format!("member add failed: {e}"))
-                    .note(format!("adding {url} through {}", self.members[through].name))
+                Failure::new(FailureKind::Assertion, format!("member add failed: {e}")).note(
+                    format!("adding {url} through {}", self.members[through].name),
+                )
             })?;
+        // The joining member is told about every member the cluster was formed with, plus
+        // itself; anything else and its own view of the configuration would not match the
+        // one the leader just wrote.
         let mut view: Vec<String> = (0..self.initial_size)
-            .filter(|j| self.members[*j].node.is_some() || *j < self.initial_size)
-            .map(|j| format!("{}={}", self.members[j].name, self.members[j].advertised_peer_url()))
+            .map(|j| {
+                format!(
+                    "{}={}",
+                    self.members[j].name,
+                    self.members[j].advertised_peer_url()
+                )
+            })
             .collect();
         view.push(format!("{}={}", self.members[i].name, url));
         self.spawn_member(i, &view.join(","), "existing")?;
@@ -474,14 +533,12 @@ impl Cluster {
             .member_remove(id)
             .await
             .map_err(|e| {
-                Failure::new(
-                    FailureKind::Assertion,
-                    format!("member remove failed: {e}"),
+                Failure::new(FailureKind::Assertion, format!("member remove failed: {e}")).note(
+                    format!(
+                        "removing {} ({id:#x}) through {}",
+                        self.members[i].name, self.members[through].name
+                    ),
                 )
-                .note(format!(
-                    "removing {} ({id:#x}) through {}",
-                    self.members[i].name, self.members[through].name
-                ))
             })?;
         self.stop(i).await;
         Ok(())
@@ -589,7 +646,8 @@ mod tests {
             index: 0,
             name: "m1".into(),
             node: None,
-            client: Client::new("http://127.0.0.1:1", "m1", Duration::from_secs(1)).expect("client"),
+            client: Client::new("http://127.0.0.1:1", "m1", Duration::from_secs(1))
+                .expect("client"),
             client_port: 1,
             peer_port: 2,
             proxy_port: 3,

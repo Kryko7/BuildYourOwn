@@ -1,6 +1,6 @@
 //! `reference_primitives` — the reference for the **primitives** ladder.
 //!
-//! ⚠️ **Reading this file spoils ladder A.** It exists for one reason: so that
+//! **Reading this file spoils ladder A.** It exists for one reason: so that
 //! `disttest --target reference_primitives --validate --tag primitives` can prove the
 //! suite's own expectations are right, the way `broken_node` exists to prove the suite's
 //! red output is real. Nothing here is written for a learner to copy, and none of it is

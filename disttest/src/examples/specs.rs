@@ -17,11 +17,7 @@ pub fn empty_body() -> Value {
 }
 
 /// One request against a single reference node.
-pub fn node_example(
-    title: &'static str,
-    path: &'static str,
-    body: fn() -> Value,
-) -> ExampleSpec {
+pub fn node_example(title: &'static str, path: &'static str, body: fn() -> Value) -> ExampleSpec {
     ExampleSpec::new(
         title,
         ExampleBody::Node {

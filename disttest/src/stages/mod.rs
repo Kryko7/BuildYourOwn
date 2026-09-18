@@ -247,6 +247,9 @@ pub type TestFn = for<'a> fn(&'a mut Ctx) -> TestFuture<'a>;
 #[macro_export]
 macro_rules! dist_test {
     ($fn_name:ident, |$ctx:ident| $body:block) => {
+        // A handful of tests check something about the suite itself rather than about the
+        // program, and never touch the context; that is not a mistake worth a warning.
+        #[allow(unused_variables)]
         fn $fn_name<'a>($ctx: &'a mut $crate::stages::Ctx) -> $crate::stages::TestFuture<'a> {
             Box::pin(async move { $body })
         }
@@ -632,7 +635,10 @@ mod tests {
         let stages = all();
         assert_eq!(stages.len(), 55, "the plan is 55 stages");
         let tests: usize = stages.iter().map(|s| s.tests.len()).sum();
-        assert!(tests >= 400, "the plan is at least 400 tests, found {tests}");
+        assert!(
+            tests >= 400,
+            "the plan is at least 400 tests, found {tests}"
+        );
     }
 
     #[test]
@@ -680,11 +686,15 @@ mod tests {
             .position(|l| *l == Ladder::Cluster)
             .expect("a cluster stage");
         assert!(first_node < first_cluster);
-        assert!(ladders[..first_node].iter().all(|l| *l == Ladder::Primitives));
+        assert!(ladders[..first_node]
+            .iter()
+            .all(|l| *l == Ladder::Primitives));
         assert!(ladders[first_node..first_cluster]
             .iter()
             .all(|l| *l == Ladder::Node));
-        assert!(ladders[first_cluster..].iter().all(|l| *l == Ladder::Cluster));
+        assert!(ladders[first_cluster..]
+            .iter()
+            .all(|l| *l == Ladder::Cluster));
     }
 
     #[test]

@@ -114,7 +114,8 @@ impl Server {
     fn handle(&self, path: &str, body: &Value) -> (u16, Value) {
         match path {
             "/v3/kv/put" => {
-                let (Some(key), Some(value)) = (self.key_of(body, "key"), self.key_of(body, "value"))
+                let (Some(key), Some(value)) =
+                    (self.key_of(body, "key"), self.key_of(body, "value"))
                 else {
                     return (400, json!({"code": 3, "message": "bad key or value"}));
                 };
@@ -198,6 +199,80 @@ impl Server {
                     200,
                     json!({ "header": self.header(), "deleted": doomed.len().to_string() }),
                 )
+            }
+            "/v3/kv/txn" => {
+                // Enough of a transaction to get past stage 28: EQUAL comparisons over the
+                // four targets, and the three operations, applied one after another. There
+                // is nothing atomic about it, which is a second lie this node tells.
+                let empty = Vec::new();
+                let compares = body
+                    .get("compare")
+                    .and_then(Value::as_array)
+                    .unwrap_or(&empty);
+                let mut succeeded = true;
+                for cmp in compares {
+                    let Some(key) = self.key_of(cmp, "key") else {
+                        return (400, json!({"code": 3, "message": "bad compare key"}));
+                    };
+                    let store = match self.store.lock() {
+                        Ok(s) => s,
+                        Err(e) => e.into_inner(),
+                    };
+                    let pair = store.kv.get(&key).cloned().unwrap_or_default();
+                    let target = cmp.get("target").and_then(Value::as_str).unwrap_or("VALUE");
+                    let want_num = |field: &str| -> i64 {
+                        match cmp.get(field) {
+                            Some(Value::String(s)) => s.parse().unwrap_or(0),
+                            Some(Value::Number(n)) => n.as_i64().unwrap_or(0),
+                            _ => 0,
+                        }
+                    };
+                    let held = match target {
+                        "VERSION" => pair.version == want_num("version"),
+                        "CREATE" => pair.create_revision == want_num("create_revision"),
+                        "MOD" => pair.mod_revision == want_num("mod_revision"),
+                        _ => {
+                            let want = self.key_of(cmp, "value").unwrap_or_default();
+                            store.kv.contains_key(&key) && pair.value == want
+                        }
+                    };
+                    drop(store);
+                    if !held {
+                        succeeded = false;
+                        break;
+                    }
+                }
+                let branch = if succeeded { "success" } else { "failure" };
+                let ops = body
+                    .get(branch)
+                    .and_then(Value::as_array)
+                    .cloned()
+                    .unwrap_or_default();
+                let mut responses = Vec::new();
+                for op in ops {
+                    let (path, field) = if op.get("requestPut").is_some() {
+                        ("/v3/kv/put", "response_put")
+                    } else if op.get("requestRange").is_some() {
+                        ("/v3/kv/range", "response_range")
+                    } else if op.get("requestDeleteRange").is_some() {
+                        ("/v3/kv/deleterange", "response_delete_range")
+                    } else {
+                        continue;
+                    };
+                    let inner = op
+                        .get("requestPut")
+                        .or_else(|| op.get("requestRange"))
+                        .or_else(|| op.get("requestDeleteRange"))
+                        .cloned()
+                        .unwrap_or_else(|| json!({}));
+                    let (_, answer) = self.handle(path, &inner);
+                    responses.push(json!({ field: answer }));
+                }
+                let mut out = json!({ "header": self.header(), "responses": responses });
+                if succeeded {
+                    out["succeeded"] = json!(true);
+                }
+                (200, out)
             }
             "/v3/maintenance/status" => (
                 200,
@@ -318,6 +393,7 @@ fn serve(server: Arc<Server>, mut stream: TcpStream) {
         let method = parts.next().unwrap_or("").to_string();
         let path = parts.next().unwrap_or("").to_string();
         let mut length = 0usize;
+        let mut close = false;
         loop {
             let mut header = String::new();
             if reader.read_line(&mut header).unwrap_or(0) == 0 {
@@ -327,8 +403,12 @@ fn serve(server: Arc<Server>, mut stream: TcpStream) {
             if header.is_empty() {
                 break;
             }
-            if let Some(v) = header.to_ascii_lowercase().strip_prefix("content-length:") {
+            let lower = header.to_ascii_lowercase();
+            if let Some(v) = lower.strip_prefix("content-length:") {
                 length = v.trim().parse().unwrap_or(0);
+            }
+            if lower.starts_with("connection:") && lower.contains("close") {
+                close = true;
             }
         }
         let mut body_bytes = vec![0u8; length];
@@ -359,6 +439,9 @@ fn serve(server: Arc<Server>, mut stream: TcpStream) {
         if stream.write_all(response.as_bytes()).is_err() || stream.flush().is_err() {
             return;
         }
+        if close {
+            return;
+        }
     }
 }
 
@@ -379,7 +462,7 @@ fn main() {
         revision: AtomicI64::new(1),
         data_dir,
         member_id: seed | 1,
-        cluster_id: 0x_b0_0b_1e_5,
+        cluster_id: 0x0b00_b1e5,
     });
     server.load();
     // The lazy flush: five seconds of acknowledged writes can be lost at any moment.
@@ -394,7 +477,9 @@ fn main() {
         eprintln!("broken_node: cannot bind port {port}");
         std::process::exit(2);
     };
-    eprintln!("broken_node: listening on {client_url} (writes are acknowledged before they are durable)");
+    eprintln!(
+        "broken_node: listening on {client_url} (writes are acknowledged before they are durable)"
+    );
     for stream in listener.incoming().flatten() {
         let server = server.clone();
         std::thread::spawn(move || serve(server, stream));

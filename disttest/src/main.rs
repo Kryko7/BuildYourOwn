@@ -128,8 +128,7 @@ fn select<'a>(cli: &Cli, all: &'a [Stage]) -> Result<Vec<&'a Stage>> {
         .filter(|s| {
             // A ladder named with --tag selects whole stages, which keeps the run header
             // honest about what was skipped.
-            Ladder::parse(cli.tag.as_deref().unwrap_or_default())
-                .is_none_or(|l| s.ladder == l)
+            Ladder::parse(cli.tag.as_deref().unwrap_or_default()).is_none_or(|l| s.ladder == l)
         })
         .collect();
     if picked.is_empty() {
@@ -234,9 +233,10 @@ fn run() -> Result<bool> {
                 cli.only
                     .as_ref()
                     .is_none_or(|s| t.name.contains(s.as_str()))
-                    && cli.tag.as_ref().is_none_or(|tag| {
-                        t.all_tags(st.ladder).iter().any(|x| x == tag)
-                    })
+                    && cli
+                        .tag
+                        .as_ref()
+                        .is_none_or(|tag| t.all_tags(st.ladder).iter().any(|x| x == tag))
                     && !(cli.skip_ext && t.is_ext())
             };
             let tests: Vec<&stages::Test> = st.tests.iter().filter(|t| wanted(t)).collect();

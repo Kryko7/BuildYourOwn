@@ -71,10 +71,7 @@ pub fn compare_clocks(a: &Clock, b: &Clock) -> Relation {
 
 /// Build a clock from pairs.
 pub fn clock(pairs: &[(&str, i64)]) -> Clock {
-    pairs
-        .iter()
-        .map(|(k, v)| ((*k).to_string(), *v))
-        .collect()
+    pairs.iter().map(|(k, v)| ((*k).to_string(), *v)).collect()
 }
 
 /// Is a message with clock `msg` from `sender` deliverable at a process whose clock is
@@ -466,21 +463,23 @@ mod tests {
             !causally_deliverable(&local, "b", &clock(&[("a", 2), ("b", 1)])),
             "a dependency the receiver has not seen must hold the message back"
         );
-        assert!(causally_deliverable(&local, "b", &clock(&[("a", 1), ("b", 1)])));
+        assert!(causally_deliverable(
+            &local,
+            "b",
+            &clock(&[("a", 1), ("b", 1)])
+        ));
     }
 
     #[test]
     fn movement_notices_a_key_shuffled_between_survivors() {
-        let before: BTreeMap<String, String> =
-            [("k1", "n1"), ("k2", "n2"), ("k3", "n1")]
-                .into_iter()
-                .map(|(a, b)| (a.to_string(), b.to_string()))
-                .collect();
-        let after: BTreeMap<String, String> =
-            [("k1", "n1"), ("k2", "n3"), ("k3", "n2")]
-                .into_iter()
-                .map(|(a, b)| (a.to_string(), b.to_string()))
-                .collect();
+        let before: BTreeMap<String, String> = [("k1", "n1"), ("k2", "n2"), ("k3", "n1")]
+            .into_iter()
+            .map(|(a, b)| (a.to_string(), b.to_string()))
+            .collect();
+        let after: BTreeMap<String, String> = [("k1", "n1"), ("k2", "n3"), ("k3", "n2")]
+            .into_iter()
+            .map(|(a, b)| (a.to_string(), b.to_string()))
+            .collect();
         let nodes_before = vec!["n1".to_string(), "n2".to_string()];
         let nodes_after = vec!["n1".to_string(), "n2".to_string(), "n3".to_string()];
         let m = movement(&before, &after, &nodes_before, &nodes_after);
@@ -522,8 +521,14 @@ mod tests {
             merkle_leaf(b"a"),
             "022a6979e6dab7aa5ae4c3e5e45f7e977112a7e63593820dbec1ec738a24f93c"
         );
-        assert_ne!(merkle_leaf(b"ab"), merkle_node(&merkle_leaf(b"a"), &merkle_leaf(b"b")));
-        let leaves: Vec<Vec<u8>> = ["a", "b", "c"].iter().map(|s| s.as_bytes().to_vec()).collect();
+        assert_ne!(
+            merkle_leaf(b"ab"),
+            merkle_node(&merkle_leaf(b"a"), &merkle_leaf(b"b"))
+        );
+        let leaves: Vec<Vec<u8>> = ["a", "b", "c"]
+            .iter()
+            .map(|s| s.as_bytes().to_vec())
+            .collect();
         let levels = merkle_levels(&leaves);
         assert_eq!(levels[0].len(), 3);
         assert_eq!(levels[1].len(), 2, "the odd leaf is carried up");
@@ -548,7 +553,10 @@ mod tests {
     fn full_jitter_is_uniform_below_the_capped_ceiling() {
         assert!((full_jitter(100.0, 10_000.0, 0, 1.0) - 100.0).abs() < 1e-9);
         assert!((full_jitter(100.0, 10_000.0, 3, 1.0) - 800.0).abs() < 1e-9);
-        assert!((full_jitter(100.0, 500.0, 5, 1.0) - 500.0).abs() < 1e-9, "the cap wins");
+        assert!(
+            (full_jitter(100.0, 500.0, 5, 1.0) - 500.0).abs() < 1e-9,
+            "the cap wins"
+        );
         assert!((full_jitter(100.0, 10_000.0, 3, 0.5) - 400.0).abs() < 1e-9);
         assert_eq!(full_jitter(100.0, 10_000.0, 3, 0.0), 0.0);
     }

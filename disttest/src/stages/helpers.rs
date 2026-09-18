@@ -33,7 +33,10 @@ pub fn describe(e: EtcdError, what: &str) -> Failure {
 }
 
 /// Demand that a request failed, and hand back the error so the test can inspect it.
-pub fn expect_error<T: Debug>(result: Result<T, EtcdError>, what: &str) -> Result<EtcdError, Failure> {
+pub fn expect_error<T: Debug>(
+    result: Result<T, EtcdError>,
+    what: &str,
+) -> Result<EtcdError, Failure> {
     match result {
         Err(e) => Ok(e),
         Ok(v) => Err(Failure::new(
@@ -159,7 +162,11 @@ mod tests {
     fn ok_attaches_what_the_server_said() {
         let f = ok::<()>(Err(status_error(11)), "range at revision 2").expect_err("must fail");
         assert_eq!(f.kind, FailureKind::Assertion);
-        assert!(f.messages[0].starts_with("range at revision 2:"), "{:?}", f.messages);
+        assert!(
+            f.messages[0].starts_with("range at revision 2:"),
+            "{:?}",
+            f.messages
+        );
         assert!(f.blocks.iter().any(|(t, _)| t == "the server answered"));
     }
 
@@ -196,14 +203,20 @@ mod tests {
         assert!(f.messages[0].contains("error.code"), "{:?}", f.messages);
         let f = expect_code(Ok::<_, EtcdError>(7), 11, "a compacted read")
             .expect_err("a success must fail");
-        assert!(f.messages[0].contains("expected to fail"), "{:?}", f.messages);
+        assert!(
+            f.messages[0].contains("expected to fail"),
+            "{:?}",
+            f.messages
+        );
     }
 
     #[tokio::test]
     async fn wait_until_gives_up_with_a_useful_message() {
-        let f = wait_until("the leader to change", Duration::from_millis(120), || async {
-            false
-        })
+        let f = wait_until(
+            "the leader to change",
+            Duration::from_millis(120),
+            || async { false },
+        )
         .await
         .expect_err("must give up");
         assert!(
@@ -226,7 +239,11 @@ mod tests {
         let mut c = Check::new("revisions");
         check_strictly_increasing(&mut c, "revisions", &[1, 2, 2, 3]);
         let f = c.finish().expect_err("must fail");
-        assert!(f.messages[0].contains("revisions[1] < revisions[2]"), "{:?}", f.messages);
+        assert!(
+            f.messages[0].contains("revisions[1] < revisions[2]"),
+            "{:?}",
+            f.messages
+        );
 
         let mut c = Check::new("revisions");
         check_non_decreasing(&mut c, "revisions", &[1, 2, 2, 3]);

@@ -160,8 +160,8 @@ pub fn resolve_target(spec: &str, targets: &BTreeMap<String, TargetDef>) -> Resu
             known.join(", ")
         );
     }
-    let abs =
-        std::fs::canonicalize(path).with_context(|| format!("cannot resolve target path {spec}"))?;
+    let abs = std::fs::canonicalize(path)
+        .with_context(|| format!("cannot resolve target path {spec}"))?;
     let name = abs
         .file_name()
         .map(|s| s.to_string_lossy().to_string())

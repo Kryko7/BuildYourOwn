@@ -82,6 +82,9 @@ pub struct Runner {
     client: Option<Client>,
     cluster: Option<Cluster>,
     cluster_shape: Option<(usize, usize)>,
+    /// The scratch directory the live cluster's data lives in, which must outlive the test
+    /// that created it because the next test may reuse the cluster.
+    cluster_tmp: Option<PathBuf>,
     keep: Vec<PathBuf>,
     /// How many node processes have been started so far.
     pub starts: u32,
@@ -99,6 +102,7 @@ impl Runner {
         let tmp_root = std::env::temp_dir().join(format!("disttest-{}", std::process::id()));
         std::fs::create_dir_all(&tmp_root)
             .with_context(|| format!("cannot create {}", tmp_root.display()))?;
+        sweep_abandoned_scratch_dirs();
         Ok(Runner {
             targets,
             chosen,
@@ -111,6 +115,7 @@ impl Runner {
             client: None,
             cluster: None,
             cluster_shape: None,
+            cluster_tmp: None,
             keep: Vec::new(),
             starts: 0,
         })
@@ -181,6 +186,22 @@ impl Runner {
         dir
     }
 
+    /// Delete one test's scratch directory, unless `--keep-tmp` asked for it.
+    ///
+    /// This matters more than it looks: a node preallocates a 64 MB write-ahead log the
+    /// moment it starts, and a full run starts several hundred of them. Waiting until the
+    /// end of the run to clean up fills `/tmp` and the nodes start failing to boot, which
+    /// looks like a bug in the suite and is really a bug in the harness's housekeeping.
+    fn release_tmp(&self, dir: &std::path::Path) {
+        if self.opts.keep_tmp {
+            return;
+        }
+        if self.cluster_tmp.as_deref() == Some(dir) {
+            return; // still in use by the cluster the next test may reuse
+        }
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
     /// Temporary directories kept because of `--keep-tmp`.
     pub fn kept_dirs(&self) -> &[PathBuf] {
         &self.keep
@@ -211,6 +232,11 @@ impl Runner {
             c.shutdown();
         }
         self.cluster_shape = None;
+        if let Some(dir) = self.cluster_tmp.take() {
+            if !self.opts.keep_tmp {
+                let _ = std::fs::remove_dir_all(&dir);
+            }
+        }
     }
 
     /// The program's output for a report block.
@@ -349,13 +375,26 @@ impl Runner {
                 } else {
                     test.cluster_size
                 };
-                self.ensure_cluster(def, dist.as_deref(), &tmp, size, test.spare, test.fresh, timeout)
-                    .await?;
+                self.ensure_cluster(
+                    def,
+                    dist.as_deref(),
+                    &tmp,
+                    size,
+                    test.spare,
+                    test.fresh,
+                    timeout,
+                )
+                .await?;
                 ctx.cluster = self.cluster.take();
             }
         }
         if self.opts.verbose {
-            println!("      {} {} in {}", def.name, stage.ladder.as_str(), tmp.display());
+            println!(
+                "      {} {} in {}",
+                def.name,
+                stage.ladder.as_str(),
+                tmp.display()
+            );
         }
 
         let deadline = test.timeout(timeout);
@@ -397,6 +436,7 @@ impl Runner {
                 self.drop_cluster();
             }
         }
+        self.release_tmp(&tmp);
         outcome
     }
 
@@ -476,7 +516,38 @@ impl Runner {
         self.starts += size as u32;
         self.cluster = Some(cluster);
         self.cluster_shape = Some(want);
+        self.cluster_tmp = Some(tmp.to_path_buf());
         Ok(())
+    }
+}
+
+/// Delete the scratch directories of `disttest` runs that are no longer running.
+///
+/// A run that was killed with `SIGKILL` (or that ran out of `/tmp` and gave up) leaves its
+/// nodes' data directories behind, and each of those holds a preallocated 64 MB write-ahead
+/// log. Sweeping them at the start of the next run keeps one bad afternoon from making the
+/// machine unusable.
+fn sweep_abandoned_scratch_dirs() {
+    let Ok(entries) = std::fs::read_dir(std::env::temp_dir()) else {
+        return;
+    };
+    for entry in entries.flatten() {
+        let name = entry.file_name();
+        let Some(pid) = name
+            .to_string_lossy()
+            .strip_prefix("disttest-")
+            .and_then(|p| p.parse::<u32>().ok())
+        else {
+            continue;
+        };
+        if pid == std::process::id() {
+            continue;
+        }
+        // `/proc/<pid>` is the cheapest "is anyone still using this" there is.
+        if std::path::Path::new(&format!("/proc/{pid}")).exists() {
+            continue;
+        }
+        let _ = std::fs::remove_dir_all(entry.path());
     }
 }
 

@@ -97,8 +97,7 @@ impl NodeHandle {
         for (k, v) in &spec.env {
             cmd.env(k, v);
         }
-        let child = cmd
-            .spawn()
+        let child = spawn_retrying_on_etxtbsy(&mut cmd)
             .with_context(|| format!("cannot start node '{}': {program}", spec.name))?;
         let pgid = child.id() as i32;
         let addr: SocketAddr = format!("127.0.0.1:{}", spec.client_port)
@@ -314,6 +313,26 @@ impl Drop for NodeHandle {
     }
 }
 
+/// Spawn, retrying briefly while the kernel says the program is still open for writing.
+///
+/// `ETXTBSY` means some process still holds a writable handle on the file being executed,
+/// which happens for a few milliseconds after anything writes a wrapper script. It is a
+/// race, not a broken program, and failing on it would blame the learner for the harness.
+fn spawn_retrying_on_etxtbsy(cmd: &mut Command) -> std::io::Result<Child> {
+    let mut last = None;
+    for attempt in 0..10 {
+        match cmd.spawn() {
+            Ok(child) => return Ok(child),
+            Err(e) if e.raw_os_error() == Some(libc::ETXTBSY) => {
+                std::thread::sleep(Duration::from_millis(10 * (attempt + 1)));
+                last = Some(e);
+            }
+            Err(e) => return Err(e),
+        }
+    }
+    Err(last.unwrap_or_else(|| std::io::Error::other("the node could not be started")))
+}
+
 /// Human-readable exit status ("status 1", "signal 9").
 pub fn describe_status(status: &std::process::ExitStatus) -> String {
     use std::os::unix::process::ExitStatusExt;
@@ -368,12 +387,18 @@ pub fn node_argv(
     };
     push("--name", name.to_string());
     push("--data-dir", data_dir.to_string_lossy().to_string());
-    push("--listen-client-urls", format!("http://127.0.0.1:{client_port}"));
+    push(
+        "--listen-client-urls",
+        format!("http://127.0.0.1:{client_port}"),
+    );
     push(
         "--advertise-client-urls",
         format!("http://127.0.0.1:{client_port}"),
     );
-    push("--listen-peer-urls", format!("http://127.0.0.1:{peer_port}"));
+    push(
+        "--listen-peer-urls",
+        format!("http://127.0.0.1:{peer_port}"),
+    );
     push("--initial-advertise-peer-urls", advertise_peer.to_string());
     push("--initial-cluster", initial_cluster.to_string());
     argv

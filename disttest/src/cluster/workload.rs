@@ -128,7 +128,10 @@ impl FaultEvent {
                     .iter()
                     .map(|g| format!(
                         "{{{}}}",
-                        g.iter().map(|i| format!("m{}", i + 1)).collect::<Vec<_>>().join(",")
+                        g.iter()
+                            .map(|i| format!("m{}", i + 1))
+                            .collect::<Vec<_>>()
+                            .join(",")
                     ))
                     .collect::<Vec<_>>()
                     .join(" | ")
@@ -501,16 +504,10 @@ pub async fn verify_convergence(
             per_member.push(row);
         }
         let agreed = failed.is_none()
-            && per_member
-                .windows(2)
-                .all(|w| w.first() == w.get(1))
+            && per_member.windows(2).all(|w| w.first() == w.get(1))
             && !per_member.is_empty();
         if agreed {
-            return Ok(keys
-                .iter()
-                .cloned()
-                .zip(per_member[0].clone())
-                .collect());
+            return Ok(keys.iter().cloned().zip(per_member[0].clone()).collect());
         }
         if std::time::Instant::now() >= deadline {
             let mut f = Failure::new(
@@ -522,8 +519,7 @@ pub async fn verify_convergence(
                 ),
             );
             for (n, row) in running.iter().zip(per_member.iter()) {
-                f.notes
-                    .push(format!("m{} sees {:?}", n + 1, row));
+                f.notes.push(format!("m{} sees {:?}", n + 1, row));
             }
             if let Some(e) = failed {
                 f.notes.push(e);
@@ -549,7 +545,8 @@ mod tests {
         assert!(sorted.len() >= 6);
         let last_two: Vec<&FaultEvent> = sorted.iter().rev().take(2).map(|(_, e)| e).collect();
         assert!(
-            last_two.contains(&&FaultEvent::RestartStopped) && last_two.contains(&&FaultEvent::Heal),
+            last_two.contains(&&FaultEvent::RestartStopped)
+                && last_two.contains(&&FaultEvent::Heal),
             "a schedule must end healed, got {:?}",
             sorted.iter().map(|(_, e)| e.label()).collect::<Vec<_>>()
         );
@@ -561,7 +558,11 @@ mod tests {
             for (_, e) in FaultSchedule::random(seed, 5, Duration::from_millis(6_000)).events {
                 if let FaultEvent::Partition(groups) = e {
                     let sizes: Vec<usize> = groups.iter().map(Vec::len).collect();
-                    assert_eq!(sizes.iter().sum::<usize>(), 5, "every member is placed once");
+                    assert_eq!(
+                        sizes.iter().sum::<usize>(),
+                        5,
+                        "every member is placed once"
+                    );
                     assert!(
                         sizes.iter().any(|s| *s >= 3),
                         "one side must keep a quorum, got {sizes:?}"

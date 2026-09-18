@@ -258,8 +258,10 @@ impl Check {
                 .push(format!("{path}: the text differs from what was expected"));
             self.expected.push((path.to_string(), first_line(expected)));
             self.actual.push((path.to_string(), first_line(actual)));
-            self.blocks
-                .push((format!("{path} (- expected, + actual)"), diff(expected, actual)));
+            self.blocks.push((
+                format!("{path} (- expected, + actual)"),
+                diff(expected, actual),
+            ));
         }
         self
     }
@@ -369,10 +371,7 @@ mod tests {
         c.eq("put.header.revision", 3i64, 2i64);
         let f = c.finish().expect_err("must fail");
         assert_eq!(f.kind, FailureKind::Assertion);
-        assert_eq!(
-            f.messages,
-            vec!["put.header.revision: expected 3, got 2"]
-        );
+        assert_eq!(f.messages, vec!["put.header.revision: expected 3, got 2"]);
         assert!(f.notes[0].contains("the response header"));
     }
 
@@ -386,7 +385,11 @@ mod tests {
         assert_eq!(f.messages.len(), 3);
         assert!(f.messages[0].contains("at least 900"), "{:?}", f.messages);
         assert!(f.messages[1].contains("at most 1100"), "{:?}", f.messages);
-        assert!(f.messages[2].contains("between 0.0 and 0.05"), "{:?}", f.messages);
+        assert!(
+            f.messages[2].contains("between 0.0 and 0.05"),
+            "{:?}",
+            f.messages
+        );
     }
 
     #[test]

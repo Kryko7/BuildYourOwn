@@ -4,9 +4,7 @@
 //! One reference node, one three-member reference cluster and one primitives process per
 //! topic serve the whole capture, so the whole file is produced in a few seconds.
 
-use super::{
-    annotate_json, to_hex, CapturedFile, ClusterStep, Example, ExampleBody, ExampleSpec,
-};
+use super::{annotate_json, to_hex, CapturedFile, ClusterStep, Example, ExampleBody, ExampleSpec};
 use crate::cluster::workload::{FaultSchedule, WorkloadSpec};
 use crate::cluster::Cluster;
 use crate::config::{TargetDef, TargetKind};
@@ -47,45 +45,7 @@ pub async fn run(
     std::fs::create_dir_all(&tmp)?;
     let timeout = Duration::from_millis(opts.timeout_ms.max(5_000));
 
-    let mut needs_node = false;
-    let mut needs_cluster = false;
-    let mut topics: Vec<&'static str> = Vec::new();
-    for s in stages {
-        for e in (s.examples)() {
-            match &e.body {
-                ExampleBody::Node { .. } => needs_node = true,
-                ExampleBody::Cluster { .. } | ExampleBody::Workload { .. } => needs_cluster = true,
-                ExampleBody::Primitives { topic, .. } => {
-                    if !topics.contains(topic) {
-                        topics.push(topic);
-                    }
-                }
-            }
-        }
-    }
-
-    let mut single: Option<(NodeHandle, Client)> = None;
-    if needs_node {
-        single = Some(start_single(etcd, &dist, &tmp.join("node"), timeout)?);
-    }
     let mut cluster: Option<Cluster> = None;
-    if needs_cluster {
-        let mut c = Cluster::start(
-            etcd,
-            Some(&dist),
-            &tmp.join("cluster"),
-            3,
-            0,
-            timeout,
-            opts.seed,
-        )
-        .await
-        .map_err(|f| anyhow::anyhow!("cannot start the reference cluster: {}", f.messages.join("; ")))?;
-        c.wait_for_leader(Duration::from_millis(10_000))
-            .await
-            .map_err(|f| anyhow::anyhow!("the reference cluster has no leader: {}", f.messages.join("; ")))?;
-        cluster = Some(c);
-    }
 
     let prim_argv = vec![reference::example_binary(&prim_target.name)?
         .to_string_lossy()
@@ -99,19 +59,73 @@ pub async fn run(
         stages: BTreeMap::new(),
     };
 
+    let mut node_seq = 0usize;
     for stage in stages {
         let specs = (stage.examples)();
         if specs.is_empty() {
             continue;
         }
+        // The cluster is rebuilt once per stage that needs it, so a membership example
+        // cannot leave a four-member cluster behind for the next stage.
+        if specs.iter().any(|s| {
+            matches!(
+                s.body,
+                ExampleBody::Cluster { .. } | ExampleBody::Workload { .. }
+            )
+        }) {
+            if let Some(mut old) = cluster.take() {
+                old.shutdown();
+            }
+            for entry in std::fs::read_dir(&tmp).into_iter().flatten().flatten() {
+                if entry.file_name().to_string_lossy().starts_with("cluster") {
+                    let _ = std::fs::remove_dir_all(entry.path());
+                }
+            }
+            let mut c = Cluster::start(
+                etcd,
+                Some(&dist),
+                &tmp.join(format!("cluster{:02}", stage.number)),
+                3,
+                1,
+                timeout,
+                opts.seed,
+            )
+            .await
+            .map_err(|f| {
+                anyhow::anyhow!(
+                    "cannot start the reference cluster: {}",
+                    f.messages.join("; ")
+                )
+            })?;
+            c.wait_for_leader(Duration::from_millis(15_000))
+                .await
+                .map_err(|f| {
+                    anyhow::anyhow!(
+                        "the reference cluster has no leader: {}",
+                        f.messages.join("; ")
+                    )
+                })?;
+            cluster = Some(c);
+        }
         let mut captured = Vec::new();
         for spec in &specs {
             let example = match &spec.body {
                 ExampleBody::Node { setup, path, body } => {
-                    let (_, client) = single
-                        .as_ref()
-                        .context("a node example needs the reference node")?;
-                    capture_node(spec, client, setup, path, body).await?
+                    // A fresh node per example: a compaction or a lease expiry in one
+                    // example must not change what the next one sees.
+                    node_seq += 1;
+                    let (mut node, client) = start_single(
+                        etcd,
+                        &dist,
+                        &tmp.join(format!("node{node_seq:03}")),
+                        timeout,
+                    )?;
+                    let captured = capture_node(spec, &client, setup, path, body).await;
+                    node.stop();
+                    // Each node preallocates a 64 MB write-ahead log; a capture starts
+                    // dozens of them, so the directory goes as soon as the node does.
+                    let _ = std::fs::remove_dir_all(tmp.join(format!("node{node_seq:03}")));
+                    captured?
                 }
                 ExampleBody::Cluster { steps } => {
                     let c = cluster
@@ -127,8 +141,16 @@ pub async fn run(
                     let c = cluster
                         .as_mut()
                         .context("a workload example needs the reference cluster")?;
-                    capture_workload(spec, c, *duration_ms, *clients, *keys, opts.seed, stage.number)
-                        .await?
+                    capture_workload(
+                        spec,
+                        c,
+                        *duration_ms,
+                        *clients,
+                        *keys,
+                        opts.seed,
+                        stage.number,
+                    )
+                    .await?
                 }
                 ExampleBody::Primitives { topic, commands } => {
                     capture_prim(spec, &prim_argv, &cwd, topic, commands(), &tmp, timeout).await?
@@ -145,16 +167,17 @@ pub async fn run(
         file.stages.insert(stage.number.to_string(), captured);
     }
 
-    if let Some((mut n, _)) = single {
-        n.stop();
-    }
     if let Some(mut c) = cluster {
         c.shutdown();
     }
     let _ = std::fs::remove_dir_all(&tmp);
     std::fs::write(out, file.to_json()?)
         .with_context(|| format!("cannot write {}", out.display()))?;
-    println!("captured {} stages into {}", file.stages.len(), out.display());
+    println!(
+        "captured {} stages into {}",
+        file.stages.len(),
+        out.display()
+    );
     let _ = Ladder::ALL;
     Ok(())
 }
@@ -333,7 +356,12 @@ async fn capture_prim(
 ) -> Result<Example> {
     let mut proc = PrimProc::start(argv, cwd, &[], topic, &tmp.join("prim"), timeout)
         .await
-        .map_err(|f| anyhow::anyhow!("cannot start the primitives reference: {}", f.messages.join("; ")))?;
+        .map_err(|f| {
+            anyhow::anyhow!(
+                "cannot start the primitives reference: {}",
+                f.messages.join("; ")
+            )
+        })?;
     let mut asked = format!("./your_program.sh {topic}\n");
     let mut answered = String::new();
     for c in &commands {

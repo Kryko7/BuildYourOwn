@@ -15,7 +15,8 @@ use std::time::Duration;
 /// Default etcd version when `targets.yaml` does not pin one.
 pub const DEFAULT_VERSION: &str = "3.7.1";
 /// SHA-256 of `etcd-v3.7.1-linux-amd64.tar.gz` as published on the release page.
-const PINNED_SHA256_3_7_1: &str = "e8cd3fa8064c98137c5dbd78b76f969417ace84efb83c481041d7a52ffdd8fb9";
+const PINNED_SHA256_3_7_1: &str =
+    "e8cd3fa8064c98137c5dbd78b76f969417ace84efb83c481041d7a52ffdd8fb9";
 const RELEASES: &str = "https://github.com/etcd-io/etcd/releases/download";
 
 /// The cache directory holding the tarball and its unpacked tree.
@@ -269,7 +270,11 @@ pub fn crate_root() -> Result<PathBuf> {
 pub fn example_binary(name: &str) -> Result<PathBuf> {
     let root = crate_root()?;
     for profile in ["release", "debug"] {
-        let p = root.join("target").join(profile).join("examples").join(name);
+        let p = root
+            .join("target")
+            .join(profile)
+            .join("examples")
+            .join(name);
         if p.is_file() {
             return Ok(p);
         }
@@ -288,7 +293,10 @@ pub fn example_binary(name: &str) -> Result<PathBuf> {
     }
     let p = root.join("target/release/examples").join(name);
     if !p.is_file() {
-        bail!("cargo built the {name} example but {} is missing", p.display());
+        bail!(
+            "cargo built the {name} example but {} is missing",
+            p.display()
+        );
     }
     Ok(p)
 }

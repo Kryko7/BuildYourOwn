@@ -393,7 +393,10 @@ mod tests {
         let anns = annotate_json(text, "request.");
         assert_eq!(anns.len(), 2);
         assert_eq!(anns[0].field, "request.key");
-        assert_eq!(&text[anns[0].offset..anns[0].offset + anns[0].length], "\"key\"");
+        assert_eq!(
+            &text[anns[0].offset..anns[0].offset + anns[0].length],
+            "\"key\""
+        );
         assert!(!anns[0].varies);
         let anns = annotate_json(r#"{"header":{"revision":"2"}}"#, "response.");
         assert!(anns[0].varies, "a header changes from run to run");
@@ -463,15 +466,15 @@ mod tests {
                     !e.response.trim().is_empty(),
                     "{where_}: needs a one-line response summary"
                 );
-                let ok = match (s.ladder, e.body.kind()) {
-                    (stages::Ladder::Primitives, ExampleKind::Primitives) => true,
-                    (stages::Ladder::Node, ExampleKind::Node) => true,
-                    (
-                        stages::Ladder::Cluster,
-                        ExampleKind::Cluster | ExampleKind::Workload | ExampleKind::Node,
-                    ) => true,
-                    _ => false,
-                };
+                let ok = matches!(
+                    (s.ladder, e.body.kind()),
+                    (stages::Ladder::Primitives, ExampleKind::Primitives)
+                        | (stages::Ladder::Node, ExampleKind::Node)
+                        | (
+                            stages::Ladder::Cluster,
+                            ExampleKind::Cluster | ExampleKind::Workload | ExampleKind::Node
+                        )
+                );
                 assert!(
                     ok,
                     "{where_}: a {:?} stage cannot carry a {:?} example",

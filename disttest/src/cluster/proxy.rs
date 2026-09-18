@@ -25,6 +25,11 @@
 //! | `duplicate` | in message mode, sends a parsed peer message twice |
 //! | `reorder` | in message mode, holds a message back and sends it after the next one |
 //!
+//! Whether a connection is framed is decided when it is *accepted*, because starting to
+//! frame a stream halfway through would split it in the wrong place. A stage that wants
+//! duplication or reordering on a cluster that is already connected therefore cuts the links
+//! first, so the peers redial and the new connections come up in message mode.
+//!
 //! Duplication and reordering are the only two that need framing: deleting or swapping
 //! *bytes* of a TCP stream would corrupt it rather than model a network. In message mode the
 //! proxy parses the dialer's direction as HTTP/1.1 requests — which is what a raft transport
@@ -208,11 +213,16 @@ impl FaultTable {
 }
 
 /// Maps a connection's source port back to the member that opened it.
+///
+/// The cache is keyed on the *pair* of ports, not on the source alone: ephemeral ports are
+/// recycled within seconds, and a stale entry would attribute a fresh connection to the
+/// wrong member — which, on a cut link, means letting traffic through a partition. That is
+/// the kind of bug that shows up as one flaky run in ten and is never reproduced.
 #[derive(Debug, Default)]
 pub struct SourceMap {
     /// Member index → the pids that member may own (the wrapper and its children).
     roots: Mutex<Vec<(usize, u32)>>,
-    cache: Mutex<HashMap<u16, usize>>,
+    cache: Mutex<HashMap<(u16, u16), usize>>,
 }
 
 impl SourceMap {
@@ -236,8 +246,9 @@ impl SourceMap {
 
     /// Which member dialled from `source`, if the kernel still knows.
     pub fn owner(&self, source: SocketAddr, dest: SocketAddr) -> Option<usize> {
+        let key = (source.port(), dest.port());
         if let Ok(c) = self.cache.lock() {
-            if let Some(m) = c.get(&source.port()) {
+            if let Some(m) = c.get(&key) {
                 return Some(*m);
             }
         }
@@ -246,7 +257,7 @@ impl SourceMap {
         for (member, pid) in roots {
             if process_tree_owns(pid, inode, 0) {
                 if let Ok(mut c) = self.cache.lock() {
-                    c.insert(source.port(), member);
+                    c.insert(key, member);
                 }
                 return Some(member);
             }
@@ -284,7 +295,11 @@ fn hex_addr(a: SocketAddr) -> String {
             let o = v4.ip().octets();
             format!(
                 "{:02X}{:02X}{:02X}{:02X}:{:04X}",
-                o[3], o[2], o[1], o[0], v4.port()
+                o[3],
+                o[2],
+                o[1],
+                o[0],
+                v4.port()
             )
         }
         SocketAddr::V6(v6) => format!(":{:04X}", v6.port()),
@@ -314,8 +329,8 @@ fn process_tree_owns(pid: u32, inode: u64, depth: usize) -> bool {
             }
         }
     }
-    let children = std::fs::read_to_string(format!("/proc/{pid}/task/{pid}/children"))
-        .unwrap_or_default();
+    let children =
+        std::fs::read_to_string(format!("/proc/{pid}/task/{pid}/children")).unwrap_or_default();
     children
         .split_whitespace()
         .filter_map(|c| c.parse::<u32>().ok())
@@ -364,8 +379,10 @@ impl PeerProxy {
                 let stats = stats.clone();
                 let seed = seed ^ conn_id.wrapping_mul(0x9e37_79b9_7f4a_7c15);
                 tokio::spawn(async move {
-                    handle(client, peer, listen, forward, member, faults, sources, stats, seed)
-                        .await;
+                    handle(
+                        client, peer, listen, forward, member, faults, sources, stats, seed,
+                    )
+                    .await;
                 });
             }
         });
@@ -487,10 +504,7 @@ async fn pump(
         if !fault.delay.is_zero() {
             stats.delayed.fetch_add(1, Ordering::Relaxed);
             tokio::time::sleep(fault.delay).await;
-            if faults
-                .get(source.unwrap_or(member), member)
-                .cut
-            {
+            if faults.get(source.unwrap_or(member), member).cut {
                 return;
             }
         }
@@ -570,9 +584,7 @@ pub fn http_message_len(buf: &[u8]) -> Option<usize> {
 }
 
 fn find(haystack: &[u8], needle: &[u8]) -> Option<usize> {
-    haystack
-        .windows(needle.len())
-        .position(|w| w == needle)
+    haystack.windows(needle.len()).position(|w| w == needle)
 }
 
 /// Members a partition puts on the same side.
@@ -732,7 +744,9 @@ mod tests {
         .expect("proxy");
         assert_eq!(proxy.member, 0);
 
-        let mut c = TcpStream::connect(("127.0.0.1", port)).await.expect("connect");
+        let mut c = TcpStream::connect(("127.0.0.1", port))
+            .await
+            .expect("connect");
         c.write_all(b"ping").await.expect("write");
         let mut b = [0u8; 4];
         c.read_exact(&mut b).await.expect("read");
@@ -748,7 +762,9 @@ mod tests {
                 ..Default::default()
             },
         );
-        let mut c2 = TcpStream::connect(("127.0.0.1", port)).await.expect("connect");
+        let mut c2 = TcpStream::connect(("127.0.0.1", port))
+            .await
+            .expect("connect");
         let mut b2 = [0u8; 4];
         let _ = c2.write_all(b"ping").await;
         let read = tokio::time::timeout(Duration::from_millis(400), c2.read_exact(&mut b2)).await;

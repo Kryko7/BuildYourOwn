@@ -394,7 +394,10 @@ fn check_one_key(key: &str, entries: &[Entry], budget: u64) -> Verdict {
     Verdict::NotLinearizable(Box::new(Violation {
         key: key.to_string(),
         entries: by_return.clone(),
-        culprit: by_return.last().cloned().unwrap_or_else(|| entries[0].clone()),
+        culprit: by_return
+            .last()
+            .cloned()
+            .unwrap_or_else(|| entries[0].clone()),
         best_attempt: search.best_attempt.clone(),
         best_state: search.best_state.clone().flatten(),
         states: search.states,
@@ -481,11 +484,10 @@ impl<'a> Search<'a> {
             .map(|(_, e)| e.ret_ns)
             .min()
             .unwrap_or(u64::MAX);
-        for i in 0..entries.len() {
+        for (i, e) in entries.iter().enumerate() {
             if !self.remaining[i] {
                 continue;
             }
-            let e = &entries[i];
             if e.call_ns > min_ret {
                 continue;
             }
@@ -646,7 +648,11 @@ mod tests {
         };
         assert_eq!(viol.key, "k");
         assert_eq!(viol.entries.len(), 2);
-        assert!(viol.render().contains("no linearization exists"), "{}", viol.render());
+        assert!(
+            viol.render().contains("no linearization exists"),
+            "{}",
+            viol.render()
+        );
     }
 
     #[test]
@@ -919,7 +925,14 @@ mod tests {
         for i in 0..40 {
             entries.push(e(i, i % 8, w(&format!("v{i}")), Outcome::Ok, 0, 10_000));
         }
-        entries.push(e(40, 0, Op::Read, read(Some("nothing-like-this")), 20_000, 20_010));
+        entries.push(e(
+            40,
+            0,
+            Op::Read,
+            read(Some("nothing-like-this")),
+            20_000,
+            20_010,
+        ));
         match check_with_budget(&history(entries), 500) {
             Verdict::Inconclusive { key, states } => {
                 assert_eq!(key, "k");

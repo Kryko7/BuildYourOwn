@@ -42,18 +42,22 @@ pub fn stage() -> Stage {
 
 fn examples() -> Vec<ExampleSpec> {
     vec![
-        node_example("A put and the header it answers with", "/v3/kv/put", || {
-            json!({ "key": b64(b"foo"), "value": b64(b"bar") })
-        })
+        node_example(
+            "A put and the header it answers with",
+            "/v3/kv/put",
+            || json!({ "key": b64(b"foo"), "value": b64(b"bar") }),
+        )
         .request("`foo` set to `bar`, both base64")
         .response("a header whose revision is the store's clock after the write")
         .note(
             "There is no body beyond the header: a put tells you when it happened, not what \
              it wrote. Ask for `prev_kv` when you want the value that was there before.",
         ),
-        node_example("Reading the write back", "/v3/kv/range", || {
-            json!({ "key": b64(b"foo") })
-        })
+        node_example(
+            "Reading the write back",
+            "/v3/kv/range",
+            || json!({ "key": b64(b"foo") }),
+        )
         .request("a point read of the same key")
         .response("one kv with create_revision, mod_revision and version, and count 1")
         .note(
@@ -142,7 +146,12 @@ dist_test!(rewriting_moves_the_revision, |ctx| {
     );
     let Some(kv_pair) = read.one() else {
         return c
-            .that("range.kvs[0]", "the key that was just written twice", false, ())
+            .that(
+                "range.kvs[0]",
+                "the key that was just written twice",
+                false,
+                (),
+            )
             .finish();
     };
     c.eq("range.kvs[0].value", "two".to_string(), kv_pair.value_str());
@@ -238,9 +247,12 @@ dist_test!(many_writes, |ctx| {
     for i in 0..20 {
         let key = ctx.key(&format!("seq{i:02}"));
         revisions.push(
-            ok(kv.put(&key, format!("v{i}").as_bytes()).await, "put in a loop")?
-                .header
-                .revision,
+            ok(
+                kv.put(&key, format!("v{i}").as_bytes()).await,
+                "put in a loop",
+            )?
+            .header
+            .revision,
         );
     }
     let mut c = Check::new("twenty writes in a row");

@@ -737,10 +737,7 @@ impl Client {
             let parsed: Value = serde_json::from_str(&text).unwrap_or(Value::Null);
             return Err(EtcdError::Status {
                 status: resp.status,
-                code: parsed
-                    .get("code")
-                    .and_then(Value::as_i64)
-                    .unwrap_or(-1),
+                code: parsed.get("code").and_then(Value::as_i64).unwrap_or(-1),
                 message: parsed
                     .get("message")
                     .and_then(Value::as_str)
@@ -755,7 +752,11 @@ impl Client {
         })
     }
 
-    fn decode<T>(what: &str, body: &Value, f: impl FnOnce(&Value) -> Result<T, String>) -> Result<T, EtcdError> {
+    fn decode<T>(
+        what: &str,
+        body: &Value,
+        f: impl FnOnce(&Value) -> Result<T, String>,
+    ) -> Result<T, EtcdError> {
         f(body).map_err(|e| EtcdError::Decode {
             what: format!("{what}: {e}"),
             body: body.to_string(),
@@ -827,7 +828,7 @@ impl Client {
     ) -> Result<TxnResponse, EtcdError> {
         let body = json!({ "compare": compare, "success": success, "failure": failure });
         let v = self.post("/v3/kv/txn", &body).await?;
-        Client::decode("the txn response", &v, |v| decode_txn(v))
+        Client::decode("the txn response", &v, decode_txn)
     }
 
     /// `/v3/kv/compaction`.
@@ -840,7 +841,10 @@ impl Client {
     /// `/v3/lease/grant`.
     pub async fn lease_grant(&self, ttl_secs: i64) -> Result<LeaseResponse, EtcdError> {
         let v = self
-            .post("/v3/lease/grant", &json!({ "TTL": ttl_secs.to_string(), "ID": "0" }))
+            .post(
+                "/v3/lease/grant",
+                &json!({ "TTL": ttl_secs.to_string(), "ID": "0" }),
+            )
             .await?;
         Ok(decode_lease(&v))
     }
@@ -887,7 +891,8 @@ impl Client {
             leader: as_u64(&v, "leader"),
             raft_index: as_u64(&v, "raftIndex").max(as_u64(&v, "raft_index")),
             raft_term: as_u64(&v, "raftTerm").max(as_u64(&v, "raft_term")),
-            raft_applied_index: as_u64(&v, "raftAppliedIndex").max(as_u64(&v, "raft_applied_index")),
+            raft_applied_index: as_u64(&v, "raftAppliedIndex")
+                .max(as_u64(&v, "raft_applied_index")),
             errors: v
                 .get("errors")
                 .and_then(Value::as_array)
@@ -915,7 +920,10 @@ impl Client {
     /// `/v3/cluster/member/remove`.
     pub async fn member_remove(&self, id: u64) -> Result<MemberListResponse, EtcdError> {
         let v = self
-            .post("/v3/cluster/member/remove", &json!({ "ID": id.to_string() }))
+            .post(
+                "/v3/cluster/member/remove",
+                &json!({ "ID": id.to_string() }),
+            )
             .await?;
         Ok(decode_members(&v))
     }
@@ -1163,7 +1171,10 @@ mod tests {
         assert_eq!(as_i64(&v, "b"), 7);
         assert_eq!(as_i64(&v, "c"), 0);
         assert_eq!(as_i64(&v, "missing"), 0);
-        assert_eq!(as_u64(&json!({"id":"15985099378392235387"}), "id"), 15_985_099_378_392_235_387);
+        assert_eq!(
+            as_u64(&json!({"id":"15985099378392235387"}), "id"),
+            15_985_099_378_392_235_387
+        );
     }
 
     #[test]
@@ -1233,7 +1244,10 @@ mod tests {
 
     #[test]
     fn range_requests_build_the_documented_body() {
-        let b = RangeRequest::prefix(b"k").limit(2).sort("DESCEND", "KEY").body();
+        let b = RangeRequest::prefix(b"k")
+            .limit(2)
+            .sort("DESCEND", "KEY")
+            .body();
         assert_eq!(b["key"], json!("aw=="));
         assert_eq!(b["range_end"], json!("bA=="));
         assert_eq!(b["limit"], json!("2"));
