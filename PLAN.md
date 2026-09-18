@@ -429,3 +429,133 @@ and localStorage remain only as a fallback when no API is present (static hostin
 "not connected to byo — run `byo site`" banner; they are not the primary path. Live updates: the site
 polls `/api/runs/latest?track=` (or `/api/progress`) every 2 s while a run is in progress, so the map
 turns green as `byo test` finishes.
+
+---
+
+## Part 5 — Three more tracks (added 2026-09-18)
+
+Requirements added by the user:
+
+1. No third-party course branding anywhere in the repo (done: the vocabulary is now
+   "core track" for the base stages and `[ext]` for everything past them).
+2. More challenges — and deliberately **not** the usual ones. No Redis, no Git, no HTTP
+   server, no DNS, no SQLite reader, no BitTorrent, no toy interpreter. Each new track has
+   to be something a learner cannot get as a polished guided course today.
+3. Every tester stays **Rust**, black-box, and comprehensive: real formats, real protocols,
+   real reference implementations — never a simplified re-imagining of the thing.
+4. The repo is a git repository; work is committed in steps.
+5. The journey owner's name lives in the git-ignored `.env`, never in the source.
+
+### 5.1 The three tracks
+
+| Dir | Track id | You build | Reference for `--validate` |
+|---|---|---|---|
+| `wasmtest/` | `wasm` | a WebAssembly runtime (binary decoder + validator + interpreter + WASI preview1) | `wasmtime` 48.0.2, downloaded and cached in `~/.cache/wasmtest` |
+| `tlstest/` | `tls` | a TLS 1.3 server (RFC 8446) | `openssl s_server` from the system OpenSSL 3.x |
+| `linktest/` | `link` | a static ELF64 linker for x86-64 | `/usr/bin/ld` (GNU ld) |
+
+Why these three: each is a real, specified, byte-exact artefact with a production reference
+that is either installed or pinned-downloadable, and the three cover different muscles —
+**decode + execute** (wasm), **crypto + state machine** (tls), **emit a binary that the
+kernel actually runs** (link). None of them is a tutorial-shaped toy.
+
+The suite self-check is the same contract as the two existing testers: pointing the tester
+at the real implementation must be **all green**. `wasmtest --runtime wasmtime --validate`,
+`tlstest --server openssl --validate`, `linktest --linker gnu_ld --validate`.
+
+### 5.2 Shared contracts (every tester, old and new)
+
+- **CLI parity**: `--stage N --until N --from N --all --only SUBSTR --tag T --skip-ext
+  --verbose --keep-tmp --timeout-ms MS --validate --list [--json] --no-color --seed N`
+  plus one target flag per track (`--shell`, `--broker`, `--runtime`, `--server`, `--linker`).
+- **`--list --json`** emits the catalog schema kafkatest already emits (`track`, `generatedAt`,
+  `sections[]`, `stages[]{number,slug,name,ext,file,hints[],tests[],examples[]}`), committed as
+  `<tester>/catalog.json` with a cargo test asserting it is current.
+- **`--json report.json`** emits the `JsonReport` schema (`target`, `validate`, `stages[]`,
+  `passed/failed/skipped/elapsed_ms`, per-test `status/ext/duration_ms/failures/actual/
+  failure_kind/notes`) — byo ingests it unchanged.
+- **Examples**: every stage carries worked examples (`title`, `note`, and either a byte-level
+  request/response pair with per-field annotations, or a transcript) so the site can show
+  "what to expect" without the learner running anything.
+- Deterministic (`--seed`), fresh tmp dir per test, target stdout/stderr captured and shown on
+  failure, crash-of-target is its own failure kind, `clippy -D warnings` and `cargo fmt` clean,
+  no `unwrap()` on I/O or decode paths.
+
+### 5.3 wasmtest — build your own WebAssembly runtime
+
+Program contract (a subset of wasmtime's CLI, so the reference is literally wasmtime):
+
+```
+./your_program.sh run --invoke <export> <module.wasm> [args...]   # prints one result per line
+./your_program.sh run <module.wasm> [--] [args...]                # runs _start (WASI command)
+```
+Traps exit non-zero with `wasm trap: <canonical reason>` on stderr; a module that fails to
+decode or validate exits non-zero before executing anything. Canonical reasons are the spec's
+own strings ("integer divide by zero", "out of bounds memory access", "unreachable", …).
+
+The tester **builds every module itself** with its own encoder (no wabt, no .wat files), so
+tests are real binaries with exact bytes, and failures can print the module's hex.
+
+Sections (~45 stages): A binary format & decoding · B validation & type checking ·
+C numeric instructions & traps · D control flow · E memory & bulk operations ·
+F tables, globals, indirect calls · G WASI preview1 · H robustness (fuzz, soak, interop).
+
+### 5.4 tlstest — build your own TLS 1.3 server
+
+Program contract (the `openssl s_server` flag subset, so the reference is the real thing):
+
+```
+./your_program.sh -accept <port> -cert <cert.pem> -key <key.pem> -rev [-naccept <n>]
+```
+`-rev` is the application layer: every line received is echoed back reversed, which makes the
+data path deterministic and testable. Certificates and keys are generated per test run
+(RSA-2048, ECDSA P-256, Ed25519) by the harness.
+
+The tester is a **raw TLS 1.3 client written for this suite** — X25519, HKDF, transcript
+hashes, AEAD and record framing done explicitly — so every failure can show the exact
+handshake message bytes, the derived secrets' labels and the transcript it hashed.
+
+Sections (~45 stages): A TCP & record layer · B ClientHello, extensions, negotiation ·
+C key schedule & handshake encryption · D authentication (Certificate, CertificateVerify,
+Finished) · E application data & AEAD · F alerts, errors, robustness · G advanced
+(HelloRetryRequest, KeyUpdate, tickets/resumption, early-data rejection, real-client interop).
+
+### 5.5 linktest — build your own ELF linker
+
+Program contract (the GNU ld flag subset, so the reference is `/usr/bin/ld`):
+
+```
+./your_program.sh -o <out> [-e <entry>] [-L <dir>] [-l <name>] <input.o|input.a>...
+```
+The tester **writes the input objects itself** with its own ELF64 writer (no dependency on
+binutils at test time), links them with the program under test, then **runs the output** and
+checks its stdout and exit status, and re-parses the produced ELF with its own reader.
+
+Sections (~42 stages): A reading relocatable objects · B emitting a runnable executable ·
+C symbol resolution (weak, common, COMDAT, visibility) · D relocations and overflow ·
+E archives and link order · F real multi-object programs, fuzz, soak.
+
+### 5.6 Everything else becomes track-agnostic
+
+- `byo`: `Track` stops being a two-value enum and becomes a registry entry (id, tester binary,
+  target flag, data files, blurb, colour). `byo init <track>`, `byo test`, `byo status`,
+  `byo doctor` and the API work for any registered track with no per-track branches left.
+- `install.sh`: builds and installs all five testers plus `byo`, copies every track's data
+  files and catalogs, sources the repo-root `.env`.
+- `site/`: the track list comes from the catalogs on disk; `params/track.ts`, the home page,
+  the nav, the map, resources, conventions and the lab all iterate the registry. Each track
+  gets its own accent palette, garden mascot and conventions list.
+- Resources: `resources.wasm.json`, `resources.tls.json`, `resources.link.json`, same schema,
+  ≥ 30 verified links each (spec sections, RFCs, psABI, papers, reference implementations).
+
+### 5.7 Execution
+
+Phase 1 (parallel, one agent each): **W1** wasmtest · **T1** tlstest · **L1** linktest ·
+**B2** byo track registry + install.sh · **S1** site N-track generalization on placeholder
+catalogs. Phase 2: **R2** resources + conventions for the new tracks · per-track lab tools ·
+catalog resync. Phase 3: verification — every `--validate` green, `cargo test`, clippy, site
+build/check/test, a real browser walkthrough against `byo site`, delivery report.
+
+Agent rules: work only inside your own directory; never edit the root `PLAN.md`; never run
+`git`; never write runtime/server/linker implementation code for the learner; leave the repo
+buildable at every step.
