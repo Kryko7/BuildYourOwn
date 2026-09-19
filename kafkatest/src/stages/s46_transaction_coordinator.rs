@@ -18,31 +18,22 @@
 //! attempts from then on is refused. Two instances of the same job cannot both be writing,
 //! and neither of them needs to find out which one is the zombie.
 
-use crate::assert::{Check, Failure};
+use crate::assert::Check;
 use crate::examples::ExampleSpec;
 use crate::fixtures::{FixtureSpec, TopicSpec};
 use crate::kafka_test;
 use crate::stages::group_protocol::{
     find_coordinator_request, FIND_COORDINATOR_KEY, FIND_COORDINATOR_V4,
 };
+use crate::stages::transactions::{
+    find_coordinator, init_resuming, init_transactional, txn_id, INIT_PRODUCER_ID_V4,
+    TRANSACTION_TIMEOUT_MS,
+};
 use crate::stages::{
-    api_versions, error_label, expect_still_serving, proto_fail, require_api, Ctx, Stage, Test,
+    api_versions, error_label, expect_still_serving, require_api, Stage, Test,
     INIT_PRODUCER_ID_KEY, INVALID_PRODUCER_EPOCH, NONE, PRODUCER_FENCED,
 };
 use kafka_protocol::messages::InitProducerIdRequest;
-
-/// The version of InitProducerId this stage asks for.
-const INIT_PRODUCER_ID_V4: i16 = 4;
-
-/// Answers that mean "ask again", not "you are wrong".
-///
-/// 14 and 15 are the coordinator still coming up; 16 NOT_COORDINATOR is the broker saying
-/// it is not the coordinator for this id *yet* — a real client answers that by re-running
-/// FindCoordinator and retrying, which is what this suite does too.
-const RETRIABLE: &[i16] = &[7, 14, 15, 16, 51];
-
-/// How long a transaction may stay open before the coordinator aborts it for us.
-const TRANSACTION_TIMEOUT_MS: i32 = 60_000;
 
 /// Stage definition.
 pub fn stage() -> Stage {
@@ -58,8 +49,9 @@ pub fn stage() -> Stage {
              request with a null one: it is coordinator state that outlives the connection",
             "Asking twice for the same transactional id must return the same producer id with a \
              higher epoch — that bump is the entire fencing mechanism",
-            "A produce stamped with a superseded epoch is refused with INVALID_PRODUCER_EPOCH \
-             (47) and must append nothing",
+            "Fencing happens at the coordinator: a superseded instance resuming its session is \
+             refused with INVALID_PRODUCER_EPOCH (47) or PRODUCER_FENCED (90), while the live \
+             instance presenting the epoch it holds is let through",
         ],
         examples,
         tests: vec![
@@ -136,11 +128,7 @@ fn examples() -> Vec<ExampleSpec> {
         ),
         ExampleSpec::wire("InitProducerId with a transactional id", |env| {
             let mut req = InitProducerIdRequest::default();
-            req.transactional_id = Some(kafka_protocol::messages::TransactionalId(
-                kafka_protocol::protocol::StrBytes::from_string(
-                    "kafkatest-example-txn".to_string(),
-                ),
-            ));
+            req.transactional_id = Some(txn_id("kafkatest-example-txn"));
             req.transaction_timeout_ms = TRANSACTION_TIMEOUT_MS;
             req.producer_id = kafka_protocol::messages::ProducerId(-1);
             req.producer_epoch = -1;
@@ -165,111 +153,6 @@ fn examples() -> Vec<ExampleSpec> {
 }
 
 // ---------------------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------------------
-
-/// Find the transaction coordinator for an id, retrying while the broker brings the
-/// internal `__transaction_state` topic into existence.
-///
-/// The retry is not politeness: a broker that has never seen a transaction has no such
-/// topic, creates it on the first lookup, and answers COORDINATOR_NOT_AVAILABLE until its
-/// partitions have leaders. Every real client retries this, and a suite that does not would
-/// be testing the broker's start-up timing rather than its protocol.
-async fn find_coordinator(ctx: &Ctx, id: &str) -> Result<(i16, i32, String), Failure> {
-    let mut conn = ctx.connect().await?;
-    let versions = api_versions(&mut conn).await?;
-    let (_, max) = require_api(&versions, FIND_COORDINATOR_KEY, "FindCoordinator", &conn)?;
-    let version = max.min(FIND_COORDINATOR_V4);
-    let req = find_coordinator_request(&[id], 1);
-    let deadline = tokio::time::Instant::now() + ctx.timeout;
-    loop {
-        let resp = conn
-            .request(version, &req)
-            .await
-            .map_err(|e| proto_fail(e, &conn))?;
-        let entry = resp.coordinators.first();
-        let code = entry.map(|c| c.error_code).unwrap_or(-1);
-        if !RETRIABLE.contains(&code) || tokio::time::Instant::now() >= deadline {
-            return Ok((
-                code,
-                entry.map(|c| c.node_id.0).unwrap_or(-1),
-                entry.map(|c| c.host.to_string()).unwrap_or_default(),
-            ));
-        }
-        tokio::time::sleep(std::time::Duration::from_millis(200)).await;
-    }
-}
-
-/// `InitProducerId` for a transactional id, retrying while the coordinator loads.
-async fn init_transactional(ctx: &Ctx, id: &str) -> Result<(i64, i16), Failure> {
-    // Establish that the coordinator exists before asking it for anything, exactly as a
-    // client does: InitProducerId for a transactional id is a request to one specific
-    // broker, and asking any other gets NOT_COORDINATOR.
-    find_coordinator(ctx, id).await?;
-    let mut conn = ctx.connect().await?;
-    let versions = api_versions(&mut conn).await?;
-    let (_, max) = require_api(&versions, INIT_PRODUCER_ID_KEY, "InitProducerId", &conn)?;
-    let version = max.min(INIT_PRODUCER_ID_V4);
-    let mut req = InitProducerIdRequest::default();
-    req.transactional_id = Some(kafka_protocol::messages::TransactionalId(
-        kafka_protocol::protocol::StrBytes::from_string(id.to_string()),
-    ));
-    req.transaction_timeout_ms = TRANSACTION_TIMEOUT_MS;
-    let mut resp = conn
-        .request(version, &req)
-        .await
-        .map_err(|e| proto_fail(e, &conn))?;
-    let deadline = tokio::time::Instant::now() + ctx.timeout;
-    while RETRIABLE.contains(&resp.error_code) && tokio::time::Instant::now() < deadline {
-        tokio::time::sleep(std::time::Duration::from_millis(200)).await;
-        // Re-find the coordinator each time round, which is what makes NOT_COORDINATOR a
-        // retriable answer rather than a fatal one.
-        find_coordinator(ctx, id).await?;
-        resp = conn
-            .request(version, &req)
-            .await
-            .map_err(|e| proto_fail(e, &conn))?;
-    }
-    let mut c = Check::new(format!("InitProducerId v{version} for {id:?}"), &conn);
-    c.note(
-        "a transactional id makes this a coordinator operation: the answer is state the \
-         broker keeps under that id, not a number minted for this connection",
-    );
-    c.that(
-        "response.error_code",
-        &error_label(NONE),
-        resp.error_code == NONE,
-        error_label(resp.error_code),
-    );
-    c.at_least("response.producer_id", 0i64, resp.producer_id.0);
-    c.at_least("response.producer_epoch", 0i16, resp.producer_epoch);
-    c.finish()?;
-    Ok((resp.producer_id.0, resp.producer_epoch))
-}
-
-/// `InitProducerId` presenting an existing producer id and epoch, as a client does when it
-/// resumes a session rather than starting one. Returns the error code without asserting.
-async fn init_resuming(ctx: &Ctx, id: &str, pid: i64, epoch: i16) -> Result<i16, Failure> {
-    find_coordinator(ctx, id).await?;
-    let mut conn = ctx.connect().await?;
-    let versions = api_versions(&mut conn).await?;
-    let (_, max) = require_api(&versions, INIT_PRODUCER_ID_KEY, "InitProducerId", &conn)?;
-    let version = max.min(INIT_PRODUCER_ID_V4);
-    let mut req = InitProducerIdRequest::default();
-    req.transactional_id = Some(kafka_protocol::messages::TransactionalId(
-        kafka_protocol::protocol::StrBytes::from_string(id.to_string()),
-    ));
-    req.transaction_timeout_ms = TRANSACTION_TIMEOUT_MS;
-    req.producer_id = kafka_protocol::messages::ProducerId(pid);
-    req.producer_epoch = epoch;
-    let resp = conn
-        .request(version, &req)
-        .await
-        .map_err(|e| proto_fail(e, &conn))?;
-    Ok(resp.error_code)
-}
-
-// ---------------------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------------------
 
@@ -290,7 +173,7 @@ kafka_test!(advertises_the_apis, |ctx| {
 });
 
 kafka_test!(finds_a_transaction_coordinator, |ctx| {
-    let (code, node_id, host) = find_coordinator(ctx, "kafkatest-txn-id").await?;
+    let found = find_coordinator(ctx, "kafkatest-txn-id").await?;
     let conn = ctx.connect().await?;
     let mut c = Check::new("FindCoordinator with key_type 1", &conn);
     c.note(
@@ -305,15 +188,15 @@ kafka_test!(finds_a_transaction_coordinator, |ctx| {
     c.that(
         "response.coordinators[0].error_code",
         &error_label(NONE),
-        code == NONE,
-        error_label(code),
+        found.error_code == NONE,
+        error_label(found.error_code),
     );
-    c.at_least("response.coordinators[0].node_id", 0i32, node_id);
+    c.at_least("response.coordinators[0].node_id", 0i32, found.node_id);
     c.that(
         "response.coordinators[0].host",
         "a non-empty host",
-        !host.is_empty(),
-        host.clone(),
+        !found.host.is_empty(),
+        found.host.clone(),
     );
     c.finish()
 });
@@ -321,8 +204,7 @@ kafka_test!(finds_a_transaction_coordinator, |ctx| {
 kafka_test!(the_mapping_is_stable, |ctx| {
     let mut nodes = Vec::new();
     for _ in 0..3 {
-        let (_, node_id, _) = find_coordinator(ctx, "kafkatest-stable-id").await?;
-        nodes.push(node_id);
+        nodes.push(find_coordinator(ctx, "kafkatest-stable-id").await?.node_id);
     }
     let conn = ctx.connect().await?;
     let mut c = Check::new("the same id, asked three times", &conn);
@@ -336,7 +218,7 @@ kafka_test!(the_mapping_is_stable, |ctx| {
 });
 
 kafka_test!(init_with_a_transactional_id, |ctx| {
-    let (pid, epoch) = init_transactional(ctx, "kafkatest-init-id").await?;
+    let producer = init_transactional(ctx, "kafkatest-init-id").await?;
     let conn = ctx.connect().await?;
     let mut c = Check::new("what the coordinator handed back", &conn);
     c.note(
@@ -344,15 +226,15 @@ kafka_test!(init_with_a_transactional_id, |ctx| {
          changed is that the coordinator remembers which transactional id it belongs to, so \
          the next process to use that id inherits it.",
     );
-    c.at_least("producer_id", 0i64, pid);
-    c.at_least("producer_epoch", 0i16, epoch);
+    c.at_least("producer_id", 0i64, producer.id);
+    c.at_least("producer_epoch", 0i16, producer.epoch);
     c.finish()
 });
 
 kafka_test!(asking_again_bumps_the_epoch, |ctx| {
     let id = "kafkatest-fence-id";
-    let (_, first) = init_transactional(ctx, id).await?;
-    let (_, second) = init_transactional(ctx, id).await?;
+    let first = init_transactional(ctx, id).await?.epoch;
+    let second = init_transactional(ctx, id).await?.epoch;
     let conn = ctx.connect().await?;
     let mut c = Check::new("two InitProducerId calls for one transactional id", &conn);
     c.note(
@@ -371,8 +253,8 @@ kafka_test!(asking_again_bumps_the_epoch, |ctx| {
 
 kafka_test!(the_producer_id_is_stable, |ctx| {
     let id = "kafkatest-stable-pid";
-    let (first_pid, _) = init_transactional(ctx, id).await?;
-    let (second_pid, _) = init_transactional(ctx, id).await?;
+    let first_pid = init_transactional(ctx, id).await?.id;
+    let second_pid = init_transactional(ctx, id).await?.id;
     let conn = ctx.connect().await?;
     let mut c = Check::new("the producer id across two sessions", &conn);
     c.note(
@@ -386,11 +268,11 @@ kafka_test!(the_producer_id_is_stable, |ctx| {
 
 kafka_test!(the_old_epoch_is_fenced, |ctx| {
     let id = "kafkatest-zombie-id";
-    let (pid, old_epoch) = init_transactional(ctx, id).await?;
+    let zombie = init_transactional(ctx, id).await?;
     // A second instance starts under the same id and takes a higher epoch. The first is now
     // a zombie, and resuming its session is where it finds out.
-    let (_, new_epoch) = init_transactional(ctx, id).await?;
-    let code = init_resuming(ctx, id, pid, old_epoch).await?;
+    let live = init_transactional(ctx, id).await?;
+    let code = init_resuming(ctx, id, zombie).await?;
     let conn = ctx.connect().await?;
     let mut c = Check::new("the superseded instance, presenting its epoch", &conn);
     c.note(
@@ -399,7 +281,10 @@ kafka_test!(the_old_epoch_is_fenced, |ctx| {
          because only the coordinator saw the second InitProducerId — and it refuses.",
     );
     c.that(
-        &format!("resuming with epoch {old_epoch} (current is {new_epoch})"),
+        &format!(
+            "resuming with epoch {} (current is {})",
+            zombie.epoch, live.epoch
+        ),
         "a fencing error: INVALID_PRODUCER_EPOCH (47) or PRODUCER_FENCED (90)",
         code == INVALID_PRODUCER_EPOCH || code == PRODUCER_FENCED,
         error_label(code),
@@ -409,8 +294,8 @@ kafka_test!(the_old_epoch_is_fenced, |ctx| {
 
 kafka_test!(the_current_epoch_is_accepted, |ctx| {
     let id = "kafkatest-resume-id";
-    let (pid, epoch) = init_transactional(ctx, id).await?;
-    let code = init_resuming(ctx, id, pid, epoch).await?;
+    let producer = init_transactional(ctx, id).await?;
+    let code = init_resuming(ctx, id, producer).await?;
     let conn = ctx.connect().await?;
     let mut c = Check::new("the live instance, presenting its epoch", &conn);
     c.note(
@@ -419,7 +304,7 @@ kafka_test!(the_current_epoch_is_accepted, |ctx| {
          or nothing could recover from a dropped connection.",
     );
     c.that(
-        &format!("resuming with the current epoch {epoch}"),
+        &format!("resuming with the current epoch {}", producer.epoch),
         "accepted",
         code == NONE,
         error_label(code),
@@ -428,8 +313,8 @@ kafka_test!(the_current_epoch_is_accepted, |ctx| {
 });
 
 kafka_test!(different_ids_are_different_producers, |ctx| {
-    let (pid_a, _) = init_transactional(ctx, "kafkatest-id-a").await?;
-    let (pid_b, _) = init_transactional(ctx, "kafkatest-id-b").await?;
+    let pid_a = init_transactional(ctx, "kafkatest-id-a").await?.id;
+    let pid_b = init_transactional(ctx, "kafkatest-id-b").await?.id;
     let conn = ctx.connect().await?;
     let mut c = Check::new("two transactional ids", &conn);
     c.note(

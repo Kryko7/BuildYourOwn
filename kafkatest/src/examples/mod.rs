@@ -340,6 +340,11 @@ pub struct Example {
     /// The fixture topics the bytes refer to, so the request can be rebuilt offline.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub env: Option<ExampleEnv>,
+    /// `(offset, length)` of every broker-minted value in the response, the ones inside
+    /// array elements past the first included. Known only to the capture that produced
+    /// the bytes; never written, because the annotations already say which fields vary.
+    #[serde(skip)]
+    pub minted_response: Vec<(usize, usize)>,
 }
 
 /// `examples/captured.json`.
@@ -354,6 +359,171 @@ pub struct CapturedFile {
     pub broker_version: Option<String>,
     /// Stage number (as a string, so the file is a plain JSON object) → its examples.
     pub stages: BTreeMap<String, Vec<Example>>,
+}
+
+impl Example {
+    /// True when `other` is the same example with only broker-minted values changed.
+    ///
+    /// Every boot mints fresh topic ids, producer ids, timestamps and CRCs, and each of
+    /// those is already annotated `varies`. Two captures that differ only inside those
+    /// fields describe the same behaviour, so a recapture keeps the committed one and the
+    /// diff shows only what the broker really answered differently.
+    pub fn same_but_for_minted(&self, other: &Example) -> bool {
+        self.title == other.title
+            && self.kind == other.kind
+            && self.request == other.request
+            && self.response == other.response
+            && self.note == other.note
+            && same_fields(&self.request_fields, &other.request_fields)
+            && same_fields(&self.response_fields, &other.response_fields)
+            && same_env(self.env.as_ref(), other.env.as_ref())
+            && self.masked_request() == other.masked_request()
+            && self.masked_response(&other.minted_response)
+                == other.masked_response(&self.minted_response)
+    }
+
+    /// The request bytes with every minted value zeroed.
+    fn masked_request(&self) -> Option<Vec<u8>> {
+        let mut bytes = from_hex(&self.request_hex)?;
+        mask_fields(&mut bytes, &self.request_fields, &[]);
+        mask_topic_ids(&mut bytes, self.env.as_ref());
+        Some(bytes)
+    }
+
+    /// The response bytes with every minted value zeroed.
+    ///
+    /// The annotated `varies` fields cover the first element of every array; the walker's
+    /// minted ranges cover the rest. Both captures' ranges are applied to both, because a
+    /// committed example has none: they are only meaningful when the layouts agree, and
+    /// when they do not the bytes differ anyway.
+    fn masked_response(&self, also: &[(usize, usize)]) -> Option<Vec<u8>> {
+        let mut bytes = from_hex(&self.response_hex)?;
+        mask_fields(&mut bytes, &self.response_fields, &self.minted_response);
+        mask_fields(&mut bytes, &[], also);
+        mask_topic_ids(&mut bytes, self.env.as_ref());
+        Some(bytes)
+    }
+}
+
+/// Zero every varying annotated field, every extra minted range, and the CRC and
+/// timestamps of every record batch inside a `records` blob.
+fn mask_fields(bytes: &mut [u8], fields: &[FieldAnn], minted: &[(usize, usize)]) {
+    let varying = fields
+        .iter()
+        .filter(|f| f.varies)
+        .map(|f| (f.offset, f.length));
+    for (offset, length) in varying.chain(minted.iter().copied()) {
+        zero(bytes, offset, length);
+    }
+    for f in fields.iter().filter(|f| f.field.ends_with(".records")) {
+        // The annotation covers the length prefix and the blob; the value says how long
+        // the blob is, so the blob is the tail of the range.
+        let Some(len) = f
+            .value
+            .strip_suffix(" bytes")
+            .and_then(|n| n.parse::<usize>().ok())
+        else {
+            continue;
+        };
+        let start = (f.offset + f.length).saturating_sub(len);
+        mask_record_batches(bytes, start, f.offset + f.length);
+    }
+}
+
+/// Zero the CRC, base timestamp and max timestamp of each v2 record batch in
+/// `bytes[start..end]`: the fixtures are written at capture time, so the timestamps are
+/// the capture's, and the CRC covers them.
+fn mask_record_batches(bytes: &mut [u8], start: usize, end: usize) {
+    let end = end.min(bytes.len());
+    let mut at = start;
+    while at + 12 <= end {
+        let len = &bytes[at + 8..at + 12];
+        let batch_len = i32::from_be_bytes([len[0], len[1], len[2], len[3]]);
+        let total = 12usize.saturating_add(batch_len.max(0) as usize);
+        if batch_len <= 0 || at + total > end {
+            return;
+        }
+        // base_offset(8) length(4) leader_epoch(4) magic(1) | crc(4) attributes(2)
+        // last_offset_delta(4) | base_timestamp(8) max_timestamp(8)
+        zero(bytes, at + 17, 4);
+        zero(bytes, at + 27, 16);
+        at += total;
+    }
+}
+
+/// Zero every occurrence of a fixture topic's id: a request naming two topics carries the
+/// second id in an element no annotation describes.
+fn mask_topic_ids(bytes: &mut [u8], env: Option<&ExampleEnv>) {
+    let Some(env) = env else { return };
+    for id in env
+        .topics
+        .values()
+        .filter_map(|t| uuid::Uuid::parse_str(&t.id).ok())
+    {
+        let needle = id.as_bytes();
+        let mut at = 0;
+        while at + needle.len() <= bytes.len() {
+            if &bytes[at..at + needle.len()] == needle {
+                zero(bytes, at, needle.len());
+                at += needle.len();
+            } else {
+                at += 1;
+            }
+        }
+    }
+}
+
+fn zero(bytes: &mut [u8], offset: usize, length: usize) {
+    let end = offset.saturating_add(length).min(bytes.len());
+    for b in &mut bytes[offset.min(end)..end] {
+        *b = 0;
+    }
+}
+
+/// Annotation for annotation, ignoring the value of every field that varies.
+fn same_fields(a: &[FieldAnn], b: &[FieldAnn]) -> bool {
+    a.len() == b.len()
+        && a.iter().zip(b).all(|(x, y)| {
+            x.offset == y.offset
+                && x.length == y.length
+                && x.field == y.field
+                && x.varies == y.varies
+                && (x.varies || x.value == y.value)
+        })
+}
+
+/// The same fixtures — the ids they were given are the point of the comparison.
+fn same_env(a: Option<&ExampleEnv>, b: Option<&ExampleEnv>) -> bool {
+    match (a, b) {
+        (None, None) => true,
+        (Some(a), Some(b)) => {
+            a.group == b.group
+                && a.topics.len() == b.topics.len()
+                && a.topics.iter().zip(&b.topics).all(|((ka, ta), (kb, tb))| {
+                    ka == kb && ta.name == tb.name && ta.partitions == tb.partitions
+                })
+        }
+        _ => false,
+    }
+}
+
+impl CapturedFile {
+    /// Keep the committed example wherever a fresh one differs only in minted values.
+    ///
+    /// Returns how many of `fresh` were replaced by their committed twin.
+    pub fn keep_unchanged(&self, number: u32, fresh: &mut [Example]) -> usize {
+        let Some(old) = self.stage(number) else {
+            return 0;
+        };
+        let mut kept = 0;
+        for (new, prev) in fresh.iter_mut().zip(old) {
+            if prev.same_but_for_minted(new) {
+                *new = prev.clone();
+                kept += 1;
+            }
+        }
+        kept
+    }
 }
 
 impl CapturedFile {
@@ -404,6 +574,7 @@ pub fn merge(spec: &ExampleSpec, captured: Option<&Example>) -> Example {
             .map(|c| c.response_fields.clone())
             .unwrap_or_default(),
         env: captured.and_then(|c| c.env.clone()),
+        minted_response: Vec::new(),
     }
 }
 
@@ -454,6 +625,80 @@ mod tests {
         assert_eq!(from_hex("0012ff7f"), Some(b));
         assert_eq!(from_hex("abc"), None);
         assert_eq!(from_hex("zz"), None);
+    }
+
+    fn ann(offset: usize, field: &str, value: &str, varies: bool) -> FieldAnn {
+        FieldAnn {
+            offset,
+            length: 1,
+            field: field.to_string(),
+            value: value.to_string(),
+            varies,
+        }
+    }
+
+    fn example(response_hex: &str, fields: Vec<FieldAnn>) -> Example {
+        Example {
+            title: "t".into(),
+            kind: "wire".into(),
+            request: "r".into(),
+            request_hex: "0102".into(),
+            response: "s".into(),
+            response_hex: response_hex.into(),
+            note: None,
+            request_fields: Vec::new(),
+            response_fields: fields,
+            env: None,
+            minted_response: Vec::new(),
+        }
+    }
+
+    #[test]
+    fn a_recapture_that_differs_only_in_minted_values_is_the_same_example() {
+        let old = example(
+            "aa11",
+            vec![ann(0, "x", "170", false), ann(1, "topic_id", "17", true)],
+        );
+        let new = example(
+            "aa22",
+            vec![ann(0, "x", "170", false), ann(1, "topic_id", "34", true)],
+        );
+        assert!(old.same_but_for_minted(&new));
+
+        let changed = example(
+            "bb22",
+            vec![ann(0, "x", "187", false), ann(1, "topic_id", "34", true)],
+        );
+        assert!(!old.same_but_for_minted(&changed), "a stable byte moved");
+
+        let longer = example(
+            "aa2200",
+            vec![ann(0, "x", "170", false), ann(1, "topic_id", "34", true)],
+        );
+        assert!(!old.same_but_for_minted(&longer), "the response grew");
+
+        let renamed = example(
+            "aa22",
+            vec![ann(0, "y", "170", false), ann(1, "topic_id", "34", true)],
+        );
+        assert!(!old.same_but_for_minted(&renamed), "an annotation changed");
+    }
+
+    #[test]
+    fn keep_unchanged_swaps_in_the_committed_twin() {
+        let old = example("aa11", vec![ann(1, "topic_id", "17", true)]);
+        let mut file = CapturedFile::default();
+        file.stages.insert("5".into(), vec![old.clone()]);
+        let mut fresh = vec![example("aa22", vec![ann(1, "topic_id", "34", true)])];
+        assert_eq!(file.keep_unchanged(5, &mut fresh), 1);
+        assert_eq!(fresh[0], old);
+        let mut other = vec![example("bb22", vec![ann(1, "topic_id", "34", true)])];
+        assert_eq!(file.keep_unchanged(5, &mut other), 0);
+        assert_eq!(
+            file.keep_unchanged(6, &mut other),
+            0,
+            "a stage with no capture yet"
+        );
     }
 
     #[test]

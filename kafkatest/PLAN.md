@@ -260,9 +260,9 @@ the coordinator hands out with it is what stops two instances of the same job bo
   - `FindCoordinator` with `key_type` 1 asks for a *transaction* coordinator; the same request with 0 asks for a consumer group's, and the two are different lookups
   - `InitProducerId` with a transactional id is a different operation from the same request with a null one: it is coordinator state that outlives the connection
   - Asking twice for the same transactional id must return the same producer id with a higher epoch — that bump is the entire fencing mechanism
-  - A produce stamped with a superseded epoch is refused with INVALID_PRODUCER_EPOCH (47) and must append nothing
+  - Fencing happens at the coordinator: a superseded instance resuming its session is refused with INVALID_PRODUCER_EPOCH (47) or PRODUCER_FENCED (90), while the live instance presenting the epoch it holds is let through
 - [ ] **Stage 47** — A transaction, end to end **[ext]** (`src/stages/s47_transactional_writes.rs`, 9 tests)
   - `AddPartitionsToTxn` (24) comes before the first write to a partition: the coordinator must know where to put markers if the transaction aborts
-  - A transactional batch sets bit 4 of the record batch attributes as well as carrying the producer id and epoch
+  - A transactional batch sets bit 4 of the record batch attributes as well as carrying the producer id and epoch, and the Produce request names the transactional id too
   - `EndTxn` (26) with `committed` true or false makes the coordinator write a control record into every partition the transaction touched — a real record at a real offset
   - A consumer at isolation_level 1 reads nothing past the last stable offset and is given the aborted transactions to filter; at level 0 it sees everything immediately

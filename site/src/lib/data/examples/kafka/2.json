@@ -122,7 +122,7 @@
 				"offset": 526,
 				"length": 264,
 				"field": "body.tagged_fields",
-				"value": "3 tagged fields: tag 0 (143 bytes), tag 1 (8 bytes), tag 2 (105 bytes)"
+				"value": "3 tagged fields: supported_features (143 bytes), finalized_features_epoch (8 bytes), finalized_features (105 bytes)"
 			}
 		]
 	},
@@ -249,7 +249,7 @@
 				"offset": 526,
 				"length": 264,
 				"field": "body.tagged_fields",
-				"value": "3 tagged fields: tag 0 (143 bytes), tag 1 (8 bytes), tag 2 (105 bytes)"
+				"value": "3 tagged fields: supported_features (143 bytes), finalized_features_epoch (8 bytes), finalized_features (105 bytes)"
 			}
 		]
 	}

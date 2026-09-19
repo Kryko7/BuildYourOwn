@@ -24,24 +24,18 @@ use crate::assert::{Check, Failure};
 use crate::examples::ExampleSpec;
 use crate::fixtures::{FixtureSpec, TopicInfo, TopicSpec};
 use crate::kafka_test;
-use crate::proto::records::{RecordBatch, RecordItem};
+use crate::proto::records::RecordBatch;
+use crate::proto::ProtoError;
+use crate::stages::transactions::{
+    add_partition, await_stable_offset, end_txn, expect_ok, init_transactional,
+    produce_transactional, txn_id, Producer, ADD_PARTITIONS_TO_TXN_KEY, ADD_PARTITIONS_TO_TXN_V3,
+    END_TXN_KEY,
+};
 use crate::stages::{
-    api_versions, error_label, expect_still_serving, fetch_request, produce_request, proto_fail,
-    require_api, Ctx, Stage, Test, FETCH_V16, NONE, PRODUCE_V11,
+    api_versions, error_label, expect_still_serving, fetch_request, proto_fail, require_api, Ctx,
+    Stage, Test, FETCH_V16, NONE,
 };
-use kafka_protocol::messages::{
-    AddPartitionsToTxnRequest, EndTxnRequest, InitProducerIdRequest, ProducerId, TransactionalId,
-};
-use kafka_protocol::protocol::StrBytes;
-
-const INIT_PRODUCER_ID_V4: i16 = 4;
-const ADD_PARTITIONS_KEY: i16 = 24;
-const END_TXN_KEY: i16 = 26;
-const TRANSACTION_TIMEOUT_MS: i32 = 60_000;
-const RETRIABLE: &[i16] = &[7, 14, 15, 16, 51];
-
-/// The batch attribute bit that says "this batch belongs to a transaction".
-const TRANSACTIONAL_BIT: i16 = 1 << 4;
+use kafka_protocol::messages::{AddPartitionsToTxnRequest, ProducerId};
 
 /// Stage definition.
 pub fn stage() -> Stage {
@@ -54,7 +48,7 @@ pub fn stage() -> Stage {
             "`AddPartitionsToTxn` (24) comes before the first write to a partition: the \
              coordinator must know where to put markers if the transaction aborts",
             "A transactional batch sets bit 4 of the record batch attributes as well as carrying \
-             the producer id and epoch",
+             the producer id and epoch, and the Produce request names the transactional id too",
             "`EndTxn` (26) with `committed` true or false makes the coordinator write a control \
              record into every partition the transaction touched — a real record at a real offset",
             "A consumer at isolation_level 1 reads nothing past the last stable offset and is \
@@ -95,7 +89,7 @@ pub fn stage() -> Stage {
             .ext()
             .with_fixtures(fixtures),
             Test::new(
-                "read_committed reports the aborted transaction so a consumer can drop it",
+                "the aborted transaction is reported from the offset it began at",
                 aborted_transactions_are_listed,
             )
             .ext()
@@ -124,7 +118,7 @@ fn examples() -> Vec<ExampleSpec> {
             req.v3_and_below_transactional_id = txn_id("kafkatest-example-txn");
             req.v3_and_below_producer_id = ProducerId(90_000);
             req.v3_and_below_producer_epoch = 0;
-            env.request(3, 471, &req)
+            env.request(ADD_PARTITIONS_TO_TXN_V3, 471, &req)
         })
         .request(
             "AddPartitionsToTxn (api_key 24) v3, correlation id 471: the transactional id, the \
@@ -145,209 +139,87 @@ fn examples() -> Vec<ExampleSpec> {
 // The transactional flow
 // ---------------------------------------------------------------------------------------
 
-fn txn_id(s: &str) -> TransactionalId {
-    TransactionalId(StrBytes::from_string(s.to_string()))
-}
-
-/// Find the coordinator for an id, retrying while `__transaction_state` comes up.
-async fn find_coordinator(ctx: &Ctx, id: &str) -> Result<(), Failure> {
-    use crate::stages::group_protocol::{
-        find_coordinator_request, FIND_COORDINATOR_KEY, FIND_COORDINATOR_V4,
-    };
-    let mut conn = ctx.connect().await?;
-    let versions = api_versions(&mut conn).await?;
-    let (_, max) = require_api(&versions, FIND_COORDINATOR_KEY, "FindCoordinator", &conn)?;
-    let version = max.min(FIND_COORDINATOR_V4);
-    let req = find_coordinator_request(&[id], 1);
-    let deadline = tokio::time::Instant::now() + ctx.timeout;
-    loop {
-        let resp = conn
-            .request(version, &req)
-            .await
-            .map_err(|e| proto_fail(e, &conn))?;
-        let code = resp
-            .coordinators
-            .first()
-            .map(|c| c.error_code)
-            .unwrap_or(-1);
-        if !RETRIABLE.contains(&code) || tokio::time::Instant::now() >= deadline {
-            return Ok(());
-        }
-        tokio::time::sleep(std::time::Duration::from_millis(200)).await;
-    }
-}
-
-/// Begin a producer session for a transactional id.
-async fn begin_producer(ctx: &Ctx, id: &str) -> Result<(i64, i16), Failure> {
-    find_coordinator(ctx, id).await?;
-    let mut conn = ctx.connect().await?;
-    let versions = api_versions(&mut conn).await?;
-    let (_, max) = require_api(
-        &versions,
-        crate::stages::INIT_PRODUCER_ID_KEY,
-        "InitProducerId",
-        &conn,
-    )?;
-    let version = max.min(INIT_PRODUCER_ID_V4);
-    let mut req = InitProducerIdRequest::default();
-    req.transactional_id = Some(txn_id(id));
-    req.transaction_timeout_ms = TRANSACTION_TIMEOUT_MS;
-    let mut resp = conn
-        .request(version, &req)
-        .await
-        .map_err(|e| proto_fail(e, &conn))?;
-    let deadline = tokio::time::Instant::now() + ctx.timeout;
-    while RETRIABLE.contains(&resp.error_code) && tokio::time::Instant::now() < deadline {
-        tokio::time::sleep(std::time::Duration::from_millis(200)).await;
-        find_coordinator(ctx, id).await?;
-        resp = conn
-            .request(version, &req)
-            .await
-            .map_err(|e| proto_fail(e, &conn))?;
-    }
-    if resp.error_code != NONE {
-        return Err(Failure::harness(format!(
-            "InitProducerId for {id:?} answered {}",
-            error_label(resp.error_code)
-        )));
-    }
-    Ok((resp.producer_id.0, resp.producer_epoch))
-}
-
-/// `AddPartitionsToTxn` for one partition, returning the error code.
-async fn add_partition(
-    ctx: &Ctx,
-    id: &str,
-    pid: i64,
-    epoch: i16,
-    topic: &str,
-) -> Result<i16, Failure> {
-    use kafka_protocol::messages::add_partitions_to_txn_request::AddPartitionsToTxnTopic;
-    let mut conn = ctx.connect().await?;
-    let versions = api_versions(&mut conn).await?;
-    let (_, max) = require_api(&versions, ADD_PARTITIONS_KEY, "AddPartitionsToTxn", &conn)?;
-    let version = max.min(3);
-    let mut t = AddPartitionsToTxnTopic::default();
-    t.name = kafka_protocol::messages::TopicName(StrBytes::from_string(topic.to_string()));
-    t.partitions = vec![0];
-    let mut req = AddPartitionsToTxnRequest::default();
-    req.v3_and_below_transactional_id = txn_id(id);
-    req.v3_and_below_producer_id = ProducerId(pid);
-    req.v3_and_below_producer_epoch = epoch;
-    req.v3_and_below_topics = vec![t];
-    let resp = conn
-        .request(version, &req)
-        .await
-        .map_err(|e| proto_fail(e, &conn))?;
-    Ok(resp
-        .results_by_topic_v3_and_below
-        .first()
-        .and_then(|t| {
-            t.results_by_partition
-                .first()
-                .map(|p| p.partition_error_code)
-        })
-        .unwrap_or(-1))
-}
-
-/// Produce one transactional batch, returning `(error_code, base_offset)`.
-async fn produce_transactional(
-    ctx: &Ctx,
-    id: &str,
-    topic: &str,
-    pid: i64,
-    epoch: i16,
-    values: &[&str],
-) -> Result<(i16, i64), Failure> {
-    let mut batch = RecordBatch::of(
-        0,
-        1_700_000_000_000,
-        values.iter().map(|v| RecordItem::value(*v)).collect(),
-    );
-    batch.producer_id = pid;
-    batch.producer_epoch = epoch;
-    batch.base_sequence = 0;
-    batch.attributes |= TRANSACTIONAL_BIT;
-    let mut conn = ctx.connect().await?;
-    let mut req = produce_request(&[(topic.to_string(), 0, batch.encode())], -1);
-    // A Produce carrying transactional batches must name the transaction on the request as
-    // well as in the batch header: without it the broker sees a batch claiming to be
-    // transactional from a producer that has declared no transaction, and answers
-    // INVALID_TXN_STATE (53).
-    req.transactional_id = Some(txn_id(id));
-    let resp = conn
-        .request(PRODUCE_V11, &req)
-        .await
-        .map_err(|e| proto_fail(e, &conn))?;
-    let p = resp
-        .responses
-        .first()
-        .and_then(|t| t.partition_responses.first());
-    Ok((
-        p.map(|p| p.error_code).unwrap_or(-1),
-        p.map(|p| p.base_offset).unwrap_or(-1),
-    ))
-}
-
-/// `EndTxn` with commit or abort.
-async fn end_txn(ctx: &Ctx, id: &str, pid: i64, epoch: i16, commit: bool) -> Result<i16, Failure> {
-    let mut conn = ctx.connect().await?;
-    let versions = api_versions(&mut conn).await?;
-    let (_, max) = require_api(&versions, END_TXN_KEY, "EndTxn", &conn)?;
-    let version = max.min(3);
-    let mut req = EndTxnRequest::default();
-    req.transactional_id = txn_id(id);
-    req.producer_id = ProducerId(pid);
-    req.producer_epoch = epoch;
-    req.committed = commit;
-    let resp = conn
-        .request(version, &req)
-        .await
-        .map_err(|e| proto_fail(e, &conn))?;
-    Ok(resp.error_code)
-}
-
-/// One whole transaction: add the partition, write the values, commit or abort.
+/// One whole transaction: add the partition, write the values, commit or abort, and wait
+/// for the control record to land. Returns the producer and the records' base offset.
 async fn run_transaction(
     ctx: &Ctx,
     id: &str,
-    topic: &str,
+    topic: &TopicInfo,
     values: &[&str],
     commit: bool,
-) -> Result<i64, Failure> {
-    let (pid, epoch) = begin_producer(ctx, id).await?;
-    let added = add_partition(ctx, id, pid, epoch, topic).await?;
-    if added != NONE {
-        return Err(Failure::harness(format!(
-            "AddPartitionsToTxn answered {}",
-            error_label(added)
-        )));
-    }
-    let (code, base) = produce_transactional(ctx, id, topic, pid, epoch, values).await?;
-    if code != NONE {
-        return Err(Failure::harness(format!(
-            "the transactional produce answered {}",
-            error_label(code)
-        )));
-    }
-    let ended = end_txn(ctx, id, pid, epoch, commit).await?;
-    if ended != NONE {
-        return Err(Failure::harness(format!(
-            "EndTxn answered {}",
-            error_label(ended)
-        )));
-    }
-    Ok(base)
+) -> Result<(Producer, i64), Failure> {
+    let producer = init_transactional(ctx, id).await?;
+    expect_ok(
+        "AddPartitionsToTxn",
+        add_partition(ctx, id, producer, &topic.name).await?,
+    )?;
+    let (code, base) = produce_transactional(ctx, id, &topic.name, producer, values).await?;
+    expect_ok("the transactional Produce", code)?;
+    expect_ok(
+        if commit {
+            "EndTxn (commit)"
+        } else {
+            "EndTxn (abort)"
+        },
+        end_txn(ctx, id, producer, commit).await?,
+    )?;
+    // The records, then the marker.
+    await_stable_offset(ctx, topic, base + values.len() as i64 + 1).await?;
+    Ok((producer, base))
 }
 
-/// Fetch at an isolation level, returning `(records, high_watermark, last_stable_offset,
-/// aborted producer ids)`.
+/// One aborted transaction as a read_committed fetch reports it: `(producer_id, first_offset)`.
+type Aborted = (i64, i64);
+
+/// One data batch as a consumer sees it: whose it is, where it starts, what it holds.
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct DataBatch {
+    producer_id: i64,
+    base_offset: i64,
+    values: Vec<String>,
+}
+
+/// What one Fetch at an isolation level returned.
+struct Fetched {
+    batches: Vec<DataBatch>,
+    high_watermark: i64,
+    last_stable_offset: i64,
+    aborted: Vec<Aborted>,
+}
+
+impl Fetched {
+    /// Every record value, in log order, markers skipped.
+    fn values(&self) -> Vec<String> {
+        self.batches.iter().flat_map(|b| b.values.clone()).collect()
+    }
+
+    /// The consumer's half of read_committed: drop every batch that belongs to a producer
+    /// whose aborted transaction began at or before the batch.
+    ///
+    /// This is exactly the rule a real consumer applies. The aborted list is keyed by
+    /// producer id and first offset because one producer can have committed a transaction
+    /// on this partition and then aborted the next; only the batches from the aborted one
+    /// onwards go.
+    fn committed_values(&self) -> Vec<String> {
+        self.batches
+            .iter()
+            .filter(|b| {
+                !self.aborted.iter().any(|&(producer_id, first_offset)| {
+                    producer_id == b.producer_id && first_offset <= b.base_offset
+                })
+            })
+            .flat_map(|b| b.values.clone())
+            .collect()
+    }
+}
+
+/// Fetch partition 0 from `offset` at an isolation level.
 async fn fetch_at(
     ctx: &Ctx,
     topic: &TopicInfo,
     offset: i64,
     isolation: i8,
-) -> Result<(Vec<String>, i64, i64, Vec<i64>), Failure> {
+) -> Result<Fetched, Failure> {
     let mut conn = ctx.connect().await?;
     let mut req = fetch_request(&[(topic.id, 0, offset)], 1_000);
     req.isolation_level = isolation;
@@ -359,25 +231,46 @@ async fn fetch_at(
         return Err(Failure::harness("the Fetch returned no partition entry"));
     };
     let bytes = p.records.clone().unwrap_or_default();
+    let batches = RecordBatch::decode_all(&bytes).map_err(|e| {
+        Failure::proto(
+            ProtoError::Decode(format!("record batches: {e:#}")),
+            Some(&conn),
+        )
+    })?;
     // Control records (the commit and abort markers) carry the control bit and are not
     // application data, so they are skipped the way a consumer skips them.
-    let values: Vec<String> = RecordBatch::decode_all(&bytes)
-        .unwrap_or_default()
+    let batches = batches
         .into_iter()
         .filter(|b| !b.is_control())
-        .flat_map(|b| {
-            b.records
+        .map(|b| DataBatch {
+            producer_id: b.producer_id,
+            base_offset: b.base_offset,
+            values: b
+                .records
                 .into_iter()
                 .filter_map(|r| r.value.map(|v| String::from_utf8_lossy(&v).to_string()))
-                .collect::<Vec<_>>()
+                .collect(),
         })
         .collect();
     let aborted = p
         .aborted_transactions
         .as_ref()
-        .map(|list| list.iter().map(|a| a.producer_id.0).collect::<Vec<_>>())
+        .map(|list| {
+            list.iter()
+                .map(|a| (a.producer_id.0, a.first_offset))
+                .collect()
+        })
         .unwrap_or_default();
-    Ok((values, p.high_watermark, p.last_stable_offset, aborted))
+    Ok(Fetched {
+        batches,
+        high_watermark: p.high_watermark,
+        last_stable_offset: p.last_stable_offset,
+        aborted,
+    })
+}
+
+fn strings(values: &[&str]) -> Vec<String> {
+    values.iter().map(|v| v.to_string()).collect()
 }
 
 // ---------------------------------------------------------------------------------------
@@ -387,7 +280,12 @@ async fn fetch_at(
 kafka_test!(advertises_the_apis, |ctx| {
     let mut conn = ctx.connect().await?;
     let versions = api_versions(&mut conn).await?;
-    let (_, add) = require_api(&versions, ADD_PARTITIONS_KEY, "AddPartitionsToTxn", &conn)?;
+    let (_, add) = require_api(
+        &versions,
+        ADD_PARTITIONS_TO_TXN_KEY,
+        "AddPartitionsToTxn",
+        &conn,
+    )?;
     let (_, end) = require_api(&versions, END_TXN_KEY, "EndTxn", &conn)?;
     let mut c = Check::new("the two APIs a transaction is bracketed by", &conn);
     c.at_least("ApiVersions.AddPartitionsToTxn.max_version", 0i16, add);
@@ -398,8 +296,8 @@ kafka_test!(advertises_the_apis, |ctx| {
 kafka_test!(add_a_partition, |ctx| {
     let topic = ctx.topic("txn")?.name.clone();
     let id = "kafkatest-add-id";
-    let (pid, epoch) = begin_producer(ctx, id).await?;
-    let code = add_partition(ctx, id, pid, epoch, &topic).await?;
+    let producer = init_transactional(ctx, id).await?;
+    let code = add_partition(ctx, id, producer, &topic).await?;
     let conn = ctx.connect().await?;
     let mut c = Check::new("AddPartitionsToTxn for one partition", &conn);
     c.note(
@@ -417,34 +315,28 @@ kafka_test!(add_a_partition, |ctx| {
 });
 
 kafka_test!(commit_is_visible, |ctx| {
-    let topic_info = ctx.topic("txn")?.clone();
-    let base = run_transaction(
-        ctx,
-        "kafkatest-commit-id",
-        &topic_info.name,
-        &["a", "b"],
-        true,
-    )
-    .await?;
-    let (values, _, _, _) = fetch_at(ctx, &topic_info, base, 1).await?;
+    let topic = ctx.topic("txn")?.clone();
+    let (_, base) = run_transaction(ctx, "kafkatest-commit-id", &topic, &["a", "b"], true).await?;
+    let fetched = fetch_at(ctx, &topic, base, 1).await?;
     let conn = ctx.connect().await?;
     let mut c = Check::new("a committed transaction, read at read_committed", &conn);
     c.note(
         "The whole flow in one test: add the partition, write with the transactional bit \
          set, commit, and read back at the isolation level a real consumer uses.",
     );
+    c.eq("the records", strings(&["a", "b"]), fetched.values());
     c.eq(
-        "the records",
-        vec!["a".to_string(), "b".to_string()],
-        values,
+        "aborted_transactions",
+        Vec::<Aborted>::new(),
+        fetched.aborted,
     );
     c.finish()
 });
 
 kafka_test!(the_control_record, |ctx| {
-    let topic_info = ctx.topic("txn")?.clone();
-    let base = run_transaction(ctx, "kafkatest-marker-id", &topic_info.name, &["x"], true).await?;
-    let (_, high_watermark, _, _) = fetch_at(ctx, &topic_info, base, 1).await?;
+    let topic = ctx.topic("txn")?.clone();
+    let (_, base) = run_transaction(ctx, "kafkatest-marker-id", &topic, &["x"], true).await?;
+    let fetched = fetch_at(ctx, &topic, base, 1).await?;
     let conn = ctx.connect().await?;
     let mut c = Check::new("the offsets a one-record transaction occupies", &conn);
     c.note(
@@ -456,22 +348,20 @@ kafka_test!(the_control_record, |ctx| {
     c.eq(
         "the high watermark, relative to where the transaction began",
         base + 2,
-        high_watermark,
+        fetched.high_watermark,
+    );
+    c.eq(
+        "the last stable offset, now that nothing is open",
+        fetched.high_watermark,
+        fetched.last_stable_offset,
     );
     c.finish()
 });
 
 kafka_test!(abort_is_in_the_log, |ctx| {
-    let topic_info = ctx.topic("txn")?.clone();
-    let base = run_transaction(
-        ctx,
-        "kafkatest-abort-id",
-        &topic_info.name,
-        &["doomed"],
-        false,
-    )
-    .await?;
-    let (values, _, _, _) = fetch_at(ctx, &topic_info, base, 0).await?;
+    let topic = ctx.topic("txn")?.clone();
+    let (_, base) = run_transaction(ctx, "kafkatest-abort-id", &topic, &["doomed"], false).await?;
+    let fetched = fetch_at(ctx, &topic, base, 0).await?;
     let conn = ctx.connect().await?;
     let mut c = Check::new("an aborted transaction, read at read_uncommitted", &conn);
     c.note(
@@ -479,19 +369,20 @@ kafka_test!(abort_is_in_the_log, |ctx| {
          produced and they are still there; what the abort wrote is a marker saying they \
          should be ignored. A consumer at isolation_level 0 has asked to see them anyway.",
     );
-    c.eq("the records", vec!["doomed".to_string()], values);
+    c.eq("the records", strings(&["doomed"]), fetched.values());
+    c.eq(
+        "the high watermark, relative to where the transaction began",
+        base + 2,
+        fetched.high_watermark,
+    );
     c.finish()
 });
 
 kafka_test!(abort_is_filtered, |ctx| {
-    let topic_info = ctx.topic("txn")?.clone();
-    let id = "kafkatest-abort-filter-id";
-    let (pid, epoch) = begin_producer(ctx, id).await?;
-    add_partition(ctx, id, pid, epoch, &topic_info.name).await?;
-    let (_, base) =
-        produce_transactional(ctx, id, &topic_info.name, pid, epoch, &["doomed"]).await?;
-    end_txn(ctx, id, pid, epoch, false).await?;
-    let (values, _, _, aborted) = fetch_at(ctx, &topic_info, base, 1).await?;
+    let topic = ctx.topic("txn")?.clone();
+    let (producer, base) =
+        run_transaction(ctx, "kafkatest-abort-filter-id", &topic, &["doomed"], false).await?;
+    let fetched = fetch_at(ctx, &topic, base, 1).await?;
     let conn = ctx.connect().await?;
     let mut c = Check::new("who actually does the filtering at read_committed", &conn);
     c.note(
@@ -504,65 +395,71 @@ kafka_test!(abort_is_filtered, |ctx| {
     );
     c.eq(
         "the broker still returns the bytes",
-        vec!["doomed".to_string()],
-        values.clone(),
+        strings(&["doomed"]),
+        fetched.values(),
     );
     c.that(
         "and names the producer that aborted",
-        &format!("a list containing producer id {pid}"),
-        aborted.contains(&pid),
-        format!("{aborted:?}"),
+        &format!("a list containing producer id {}", producer.id),
+        fetched.aborted.iter().any(|&(pid, _)| pid == producer.id),
+        format!("{:?}", fetched.aborted),
     );
-    // What a consumer does with that list.
-    let kept: Vec<String> = if aborted.contains(&pid) {
-        Vec::new()
-    } else {
-        values.clone()
-    };
     c.eq(
-        "so a consumer that uses the list keeps nothing",
+        "the batch carries that producer id, which is what the consumer matches on",
+        vec![producer.id],
+        fetched
+            .batches
+            .iter()
+            .map(|b| b.producer_id)
+            .collect::<Vec<_>>(),
+    );
+    // The consumer's half: drop the batches the list names.
+    c.eq(
+        "so a consumer applying the list keeps nothing",
         Vec::<String>::new(),
-        kept,
+        fetched.committed_values(),
     );
     c.finish()
 });
 
 kafka_test!(aborted_transactions_are_listed, |ctx| {
-    let topic_info = ctx.topic("txn")?.clone();
-    let base = run_transaction(
-        ctx,
-        "kafkatest-abort-list-id",
-        &topic_info.name,
-        &["doomed"],
-        false,
-    )
-    .await?;
-    let (_, _, _, aborted) = fetch_at(ctx, &topic_info, base, 1).await?;
+    let topic = ctx.topic("txn")?.clone();
+    let (producer, base) =
+        run_transaction(ctx, "kafkatest-abort-list-id", &topic, &["doomed"], false).await?;
+    let fetched = fetch_at(ctx, &topic, base, 1).await?;
     let conn = ctx.connect().await?;
     let mut c = Check::new(
         "what a read_committed fetch reports alongside the records",
         &conn,
     );
     c.note(
-        "The broker tells the consumer which producer ids had an aborted transaction open \
-         and from which offset, so a consumer reading a batch that spans the abort can drop \
-         exactly the right records. A broker that filters silently and reports nothing \
-         leaves a client with no way to do the same.",
+        "The broker tells the consumer which producer id had an aborted transaction and the \
+         offset it began at, so a consumer reading a batch that spans the abort can drop \
+         exactly the right records and keep the ones that producer committed earlier. A \
+         broker that filters silently and reports nothing leaves a client with no way to do \
+         the same.",
     );
-    c.at_least("aborted_transactions", 1, aborted.len());
+    c.eq(
+        "aborted_transactions",
+        vec![(producer.id, base)],
+        fetched.aborted,
+    );
     c.finish()
 });
 
 kafka_test!(an_open_transaction_holds_the_lso, |ctx| {
-    let topic_info = ctx.topic("txn")?.clone();
+    let topic = ctx.topic("txn")?.clone();
     let id = "kafkatest-open-id";
-    let (pid, epoch) = begin_producer(ctx, id).await?;
-    add_partition(ctx, id, pid, epoch, &topic_info.name).await?;
-    let (_, base) =
-        produce_transactional(ctx, id, &topic_info.name, pid, epoch, &["pending"]).await?;
-    let (values, high_watermark, lso, _) = fetch_at(ctx, &topic_info, base, 1).await?;
+    let producer = init_transactional(ctx, id).await?;
+    expect_ok(
+        "AddPartitionsToTxn",
+        add_partition(ctx, id, producer, &topic.name).await?,
+    )?;
+    let (code, base) = produce_transactional(ctx, id, &topic.name, producer, &["pending"]).await?;
+    expect_ok("the transactional Produce", code)?;
+    let fetched = fetch_at(ctx, &topic, base, 1).await?;
     // Leave nothing open behind us.
-    end_txn(ctx, id, pid, epoch, true).await?;
+    end_txn(ctx, id, producer, true).await?;
     let conn = ctx.connect().await?;
     let mut c = Check::new("a transaction that has written but not ended", &conn);
     c.note(
@@ -574,16 +471,20 @@ kafka_test!(an_open_transaction_holds_the_lso, |ctx| {
     c.that(
         "the high watermark has moved past the record",
         &format!("greater than {base}"),
-        high_watermark > base,
-        high_watermark,
+        fetched.high_watermark > base,
+        fetched.high_watermark,
     );
     c.that(
         "the last stable offset has not",
         &format!("no greater than {base}"),
-        lso <= base,
-        lso,
+        fetched.last_stable_offset <= base,
+        fetched.last_stable_offset,
     );
-    c.eq("and nothing is returned", Vec::<String>::new(), values);
+    c.eq(
+        "and nothing is returned",
+        Vec::<String>::new(),
+        fetched.values(),
+    );
     c.finish()
 });
 

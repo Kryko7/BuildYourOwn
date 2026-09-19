@@ -40,7 +40,17 @@ pub fn api_versions_response(w: &mut Walk<'_>, version: i16) {
         w.i32("throttle_time_ms");
     }
     if version >= 3 {
-        w.tags("tagged_fields");
+        // KIP-584 feature versioning. The epoch is the metadata log offset the finalized
+        // features were read at, so it is different on every boot.
+        w.tags_known(
+            "tagged_fields",
+            &[
+                (0, "supported_features", false),
+                (1, "finalized_features_epoch", true),
+                (2, "finalized_features", false),
+                (3, "zk_migration_ready", false),
+            ],
+        );
     }
 }
 

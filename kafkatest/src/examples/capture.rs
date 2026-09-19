@@ -37,6 +37,9 @@ pub async fn run(def: BrokerDef, opts: RunOptions, stages: &[Stage], out: &Path)
         warm_up(addr, timeout).await;
     }
 
+    // The committed capture, so an example whose bytes differ only in what the broker
+    // minted this boot keeps its committed form and the diff shows real changes only.
+    let previous = CapturedFile::load_or_empty(out);
     let mut file = CapturedFile {
         generated_at: now_iso8601(),
         broker: def.name.clone(),
@@ -45,6 +48,7 @@ pub async fn run(def: BrokerDef, opts: RunOptions, stages: &[Stage], out: &Path)
     };
     let mut problems: Vec<String> = Vec::new();
     let mut total = 0usize;
+    let mut unchanged = 0usize;
 
     for stage in stages {
         let specs = (stage.examples)();
@@ -54,12 +58,21 @@ pub async fn run(def: BrokerDef, opts: RunOptions, stages: &[Stage], out: &Path)
             captured.push(ex);
             total += 1;
         }
+        let kept = previous.keep_unchanged(stage.number, &mut captured);
+        unchanged += kept;
         println!(
-            "  stage {:02} {:<48} {} example{}",
+            "  stage {:02} {:<48} {} example{}{}",
             stage.number,
             stage.name,
             specs.len(),
-            if specs.len() == 1 { "" } else { "s" }
+            if specs.len() == 1 { "" } else { "s" },
+            if kept == specs.len() {
+                ", unchanged".to_string()
+            } else if kept > 0 {
+                format!(", {kept} unchanged")
+            } else {
+                String::new()
+            }
         );
         file.stages.insert(stage.number.to_string(), captured);
     }
@@ -73,7 +86,8 @@ pub async fn run(def: BrokerDef, opts: RunOptions, stages: &[Stage], out: &Path)
     std::fs::write(out, file.to_json()?)
         .with_context(|| format!("cannot write {}", out.display()))?;
     println!(
-        "\n{total} examples captured from '{}' over {} stages, written to {}",
+        "\n{total} examples captured from '{}' over {} stages, written to {} ({unchanged} \
+         unchanged but for broker-minted values, kept as committed)",
         def.name,
         stages.len(),
         out.display()
@@ -184,6 +198,7 @@ async fn one(
         } else {
             Some(env.clone())
         },
+        minted_response: Vec::new(),
     };
     let Some(build) = spec.build else {
         return Ok(example);
@@ -197,7 +212,11 @@ async fn one(
             a.1 = v;
         }
     }
-    let (request_fields, clean) = annotate::annotate_request(&bytes);
+    let annotate::Annotated {
+        fields: request_fields,
+        clean,
+        ..
+    } = annotate::annotate_request(&bytes);
     // A `Wire::Raw` example is deliberately malformed (stages 9 and 44): the annotation
     // is best-effort there, and stopping early is the point rather than a bug.
     let deliberate = matches!(wire, super::Wire::Raw(_));
@@ -272,7 +291,11 @@ fn finish(
     if response.is_empty() {
         return example;
     }
-    let (fields, clean) = annotate::annotate_response(&response, apis);
+    let annotate::Annotated {
+        fields,
+        clean,
+        minted,
+    } = annotate::annotate_response(&response, apis);
     if !clean {
         problems.push(format!(
             "{where_}: the response walk did not consume the whole frame"
@@ -280,5 +303,6 @@ fn finish(
     }
     example.response_hex = super::to_hex(&response);
     example.response_fields = fields;
+    example.minted_response = minted;
     example
 }

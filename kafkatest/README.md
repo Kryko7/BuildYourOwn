@@ -291,7 +291,11 @@ Correlation ids are fixed per example (`stage number × 10 + index`), the client
 `kafkatest`, and fixture topic names are derived from the stage (`t1-ex231`), so a recapture
 changes as little as possible. Topic ids, cluster ids, member ids, producer ids, timestamps
 and CRCs *do* change on every boot: those annotations carry `"varies": true` so the site can
-say so instead of pretending the value is fixed.
+say so instead of pretending the value is fixed. A recapture compares each fresh example with
+the committed one with every such value masked — the annotated ones, the same values inside
+array elements past the first, and the CRC and timestamps of every record batch — and keeps
+the committed example wherever nothing else moved. So a recapture's diff shows only what the
+broker really answered differently, and running it twice in a row changes nothing.
 
 ### The JSON the site reads
 

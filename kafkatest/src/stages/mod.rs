@@ -18,6 +18,7 @@ use std::time::Duration;
 
 pub(crate) mod group_protocol;
 mod helpers;
+pub(crate) mod transactions;
 pub use helpers::*;
 
 // ---------------------------------------------------------------------------------------

@@ -27,6 +27,22 @@ pub struct Walk<'a> {
     truncated: bool,
     /// True while walking a request, where the harness chose every byte.
     request_side: bool,
+    /// Byte ranges of every value the broker minted — including the ones inside array
+    /// elements past the first, which get no annotation of their own.
+    minted: Vec<(usize, usize)>,
+}
+
+/// What a walk over a byte string produced.
+#[derive(Debug, Default)]
+pub struct Annotated {
+    /// The annotations, first array element only.
+    pub fields: Vec<FieldAnn>,
+    /// Whether every frame was walked to its last byte; `false` means the schema in this
+    /// module and the bytes disagree, which is a suite bug.
+    pub clean: bool,
+    /// `(offset, length)` of every broker-minted value, annotated or not, so two captures
+    /// can be compared with those bytes masked.
+    pub minted: Vec<(usize, usize)>,
 }
 
 impl<'a> Walk<'a> {
@@ -41,6 +57,7 @@ impl<'a> Walk<'a> {
             out: Vec::new(),
             truncated: false,
             request_side: false,
+            minted: Vec::new(),
         }
     }
 
@@ -75,6 +92,11 @@ impl<'a> Walk<'a> {
         self.out
     }
 
+    /// The annotations and the minted ranges gathered so far.
+    pub fn into_parts(self) -> (Vec<FieldAnn>, Vec<(usize, usize)>) {
+        (self.out, self.minted)
+    }
+
     /// Push a path segment (an array element, a nested struct).
     pub fn enter(&mut self, segment: impl Into<String>) {
         self.path.push(segment.into());
@@ -96,12 +118,15 @@ impl<'a> Walk<'a> {
 
     /// Record one annotation, unless emitting is suppressed (array elements past the first).
     pub fn ann(&mut self, offset: usize, length: usize, name: &str, value: impl Into<String>) {
-        if !self.emit {
-            return;
-        }
         let field = self.path_of(name);
         let value = value.into();
         let varies = self.resolve_varies(&field, varies(&field, &value));
+        if varies {
+            self.minted.push((offset, length));
+        }
+        if !self.emit {
+            return;
+        }
         self.out.push(FieldAnn {
             offset,
             length,
@@ -120,11 +145,14 @@ impl<'a> Walk<'a> {
         value: impl Into<String>,
         varies: bool,
     ) {
+        let field = self.path_of(name);
+        let varies = self.resolve_varies(&field, varies);
+        if varies {
+            self.minted.push((offset, length));
+        }
         if !self.emit {
             return;
         }
-        let field = self.path_of(name);
-        let varies = self.resolve_varies(&field, varies);
         self.out.push(FieldAnn {
             offset,
             length,
@@ -405,6 +433,12 @@ impl<'a> Walk<'a> {
 
     /// A tagged-field section: the count and then every tag, as one annotation.
     pub fn tags(&mut self, name: &str) {
+        self.tags_known(name, &[]);
+    }
+
+    /// Tagged fields whose tags this schema knows: each is named in the summary, and a
+    /// tag marked minted (an epoch, an id) is masked when two captures are compared.
+    pub fn tags_known(&mut self, name: &str, known: &[(u32, &str, bool)]) {
         let at = self.pos;
         let Some((n, _, _)) = self.uvarint_raw() else {
             return;
@@ -417,10 +451,19 @@ impl<'a> Walk<'a> {
             let Some((size, _, _)) = self.uvarint_raw() else {
                 return;
             };
+            let start = self.pos;
             if self.take(size as usize).is_none() {
                 return;
             }
-            described.push(format!("tag {tag} ({size} bytes)"));
+            match known.iter().find(|(t, _, _)| u64::from(*t) == tag) {
+                Some((_, label, minted)) => {
+                    if *minted && !self.request_side {
+                        self.minted.push((start, size as usize));
+                    }
+                    described.push(format!("{label} ({size} bytes)"));
+                }
+                None => described.push(format!("tag {tag} ({size} bytes)")),
+            }
         }
         let value = if n == 0 {
             "0 tagged fields".to_string()
@@ -661,11 +704,9 @@ pub fn request_apis(bytes: &[u8]) -> Vec<(i16, i16)> {
 }
 
 /// Annotate a request byte string (size prefixes included).
-///
-/// Returns the annotations and whether every frame was walked to its last byte; a `false`
-/// there means the schema in this module and the bytes disagree, which is a suite bug.
-pub fn annotate_request(bytes: &[u8]) -> (Vec<FieldAnn>, bool) {
+pub fn annotate_request(bytes: &[u8]) -> Annotated {
     let mut out = Vec::new();
+    let mut minted = Vec::new();
     let mut clean = true;
     let mut at = 0usize;
     let frames = count_frames(bytes);
@@ -688,16 +729,23 @@ pub fn annotate_request(bytes: &[u8]) -> (Vec<FieldAnn>, bool) {
             Err(_) => w.rest("body", "an api key this harness does not know"),
         }
         clean &= w.consumed_everything();
-        out.extend(w.into_anns());
+        let (anns, ranges) = w.into_parts();
+        out.extend(anns);
+        minted.extend(ranges);
         at = body_end;
         index += 1;
     }
-    (out, clean)
+    Annotated {
+        fields: out,
+        clean,
+        minted,
+    }
 }
 
 /// Annotate a response byte string, given the `(api key, version)` of each request frame.
-pub fn annotate_response(bytes: &[u8], apis: &[(i16, i16)]) -> (Vec<FieldAnn>, bool) {
+pub fn annotate_response(bytes: &[u8], apis: &[(i16, i16)]) -> Annotated {
     let mut out = Vec::new();
+    let mut minted = Vec::new();
     let mut clean = true;
     let mut at = 0usize;
     let frames = count_frames(bytes);
@@ -731,11 +779,17 @@ pub fn annotate_response(bytes: &[u8], apis: &[(i16, i16)]) -> (Vec<FieldAnn>, b
             Err(_) => w.rest("body", "an api key this harness does not know"),
         }
         clean &= w.consumed_everything();
-        out.extend(w.into_anns());
+        let (anns, ranges) = w.into_parts();
+        out.extend(anns);
+        minted.extend(ranges);
         at = body_end;
         index += 1;
     }
-    (out, clean)
+    Annotated {
+        fields: out,
+        clean,
+        minted,
+    }
 }
 
 fn count_frames(bytes: &[u8]) -> usize {
@@ -910,7 +964,11 @@ mod tests {
             .request(API_VERSIONS_V4, 7, &api_versions_request())
             .expect("encode");
         let bytes = wire.bytes();
-        let (anns, clean) = annotate_request(&bytes);
+        let Annotated {
+            fields: anns,
+            clean,
+            ..
+        } = annotate_request(&bytes);
         assert!(
             clean,
             "the ApiVersions v4 request schema must consume it all"
@@ -935,7 +993,11 @@ mod tests {
     #[test]
     fn a_short_frame_is_annotated_rather_than_guessed() {
         let bytes = vec![0, 0, 0, 100, 1, 2, 3];
-        let (anns, clean) = annotate_request(&bytes);
+        let Annotated {
+            fields: anns,
+            clean,
+            ..
+        } = annotate_request(&bytes);
         assert!(!clean);
         assert!(anns[0].value.contains("only 3 bytes follow"), "{anns:?}");
     }
