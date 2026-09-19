@@ -94,6 +94,17 @@ pub fn open(path: &Path) -> Result<Connection> {
     Ok(conn)
 }
 
+/// Open an existing database without creating or migrating anything.
+///
+/// `byo doctor` has to be able to *look* at the database without bringing one into being:
+/// a diagnostic that creates state in the user's home reports on a world it just made up,
+/// which is how `doctor` used to say "data dir does not exist" and "database ok" in the
+/// same breath. Returns an error if the file is not there.
+pub fn open_readonly(path: &Path) -> Result<Connection> {
+    Connection::open_with_flags(path, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY)
+        .with_context(|| format!("cannot read the database at {}", path.display()))
+}
+
 /// Open an in-memory database (used by the tests).
 #[cfg(test)]
 pub fn open_memory() -> Result<Connection> {

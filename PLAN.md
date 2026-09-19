@@ -446,7 +446,7 @@ Requirements added by the user:
 4. The repo is a git repository; work is committed in steps.
 5. The journey owner's name lives in the git-ignored `.env`, never in the source.
 
-### 5.1 The three tracks
+### 5.1 The four tracks
 
 | Dir | Track id | You build | Reference for `--validate` |
 |---|---|---|---|

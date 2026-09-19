@@ -341,7 +341,17 @@ fn data_dir_check(paths: &Paths) -> Check {
 
 fn db_check(paths: &Paths) -> Check {
     let p = paths.db();
-    match db::open(&p) {
+    if !p.is_file() {
+        return check(
+            Level::Warn,
+            "database",
+            format!(
+                "{} does not exist yet — ./install.sh creates it",
+                p.display()
+            ),
+        );
+    }
+    match db::open_readonly(&p) {
         Err(e) => check(Level::Bad, "database", format!("{}: {e:#}", p.display())),
         Ok(conn) => {
             let v = db::schema_version(&conn).unwrap_or(0);
@@ -495,6 +505,18 @@ mod tests {
     }
 
     #[test]
+    fn diagnosing_creates_nothing_in_the_users_home() {
+        // A diagnostic that writes is a diagnostic that lies: `doctor` used to call
+        // `db::open`, which creates the data directory and the database, and then reported
+        // on the world it had just made.
+        let d = tempfile::tempdir().unwrap();
+        let home = d.path().join("never-created");
+        let paths = Paths { home: home.clone() };
+        let _ = collect(&paths);
+        assert!(!home.exists(), "doctor created {}", home.display());
+    }
+
+    #[test]
     fn a_missing_track_never_fails_the_others() {
         let d = tempfile::tempdir().unwrap();
         std::fs::create_dir_all(d.path().join("tests/stages")).unwrap();
@@ -513,7 +535,10 @@ mod tests {
         assert_eq!(level_of(&checks, "data dir"), Some(Level::Ok));
         assert_eq!(level_of(&checks, "shell data"), Some(Level::Ok));
         assert_eq!(level_of(&checks, "shell catalog"), Some(Level::Ok));
-        assert_eq!(level_of(&checks, "database"), Some(Level::Ok));
+        // No install has run in this temp home, so there is no database — and `doctor`
+        // must say so rather than conjuring one while it looks.
+        assert_eq!(level_of(&checks, "database"), Some(Level::Warn));
+        assert!(!paths.db().exists(), "doctor must not create the database");
         // wasm/tls/link are absent from this data dir; that is a warning, not a failure.
         assert_eq!(level_of(&checks, "wasm"), Some(Level::Warn));
         assert_eq!(level_of(&checks, "tls"), Some(Level::Warn));
