@@ -105,7 +105,7 @@ describe('the track registry', () => {
 
 	it('puts every dist section on exactly one ladder, and no other track on any', () => {
 		const dist = tracks.dist;
-		expect(dist.ladders?.map((l) => l.id)).toEqual(['primitives', 'node', 'cluster']);
+		expect(dist.ladders?.map((l) => l.id)).toEqual(['primitives', 'algorithms', 'node', 'cluster']);
 		for (const section of catalogs.dist.sections) {
 			const ladder = ladderOfSection('dist', section.id);
 			expect(ladder, `dist section ${section.id}`).not.toBeNull();

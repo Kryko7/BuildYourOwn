@@ -4,8 +4,8 @@
 		"kind": "node",
 		"request": "an empty object, because status takes no arguments\n\nPOST /v3/maintenance/status\n{}",
 		"request_hex": "7b7d",
-		"response": "the header every endpoint carries, plus the server's own version and sizes\n\nHTTP 200 OK\n{\n  \"dbSize\": \"28672\",\n  \"dbSizeInUse\": \"24576\",\n  \"dbSizeQuota\": \"2147483648\",\n  \"downgradeInfo\": {},\n  \"header\": {\n    \"cluster_id\": \"8601719746434642579\",\n    \"member_id\": \"12121846401917809168\",\n    \"raft_term\": \"2\",\n    \"revision\": \"1\"\n  },\n  \"leader\": \"12121846401917809168\",\n  \"raftAppliedIndex\": \"4\",\n  \"raftIndex\": \"4\",\n  \"raftTerm\": \"2\",\n  \"storageVersion\": \"3.7.0\",\n  \"version\": \"3.7.1\"\n}",
-		"response_hex": "7b22686561646572223a7b22636c75737465725f6964223a2238363031373139373436343334363432353739222c226d656d6265725f6964223a223132313231383436343031393137383039313638222c227265766973696f6e223a2231222c22726166745f7465726d223a2232227d2c2276657273696f6e223a22332e372e31222c22646253697a65223a223238363732222c226c6561646572223a223132313231383436343031393137383039313638222c2272616674496e646578223a2234222c22726166745465726d223a2232222c22726166744170706c696564496e646578223a2234222c22646253697a65496e557365223a223234353736222c2273746f7261676556657273696f6e223a22332e372e30222c22646253697a6551756f7461223a2232313437343833363438222c22646f776e6772616465496e666f223a7b7d7d",
+		"response": "the header every endpoint carries, plus the server's own version and sizes\n\nHTTP 200 OK\n{\n  \"dbSize\": \"28672\",\n  \"dbSizeInUse\": \"28672\",\n  \"dbSizeQuota\": \"2147483648\",\n  \"downgradeInfo\": {},\n  \"header\": {\n    \"cluster_id\": \"7259173788625807763\",\n    \"member_id\": \"14791908393849053773\",\n    \"raft_term\": \"2\",\n    \"revision\": \"1\"\n  },\n  \"leader\": \"14791908393849053773\",\n  \"raftAppliedIndex\": \"4\",\n  \"raftIndex\": \"4\",\n  \"raftTerm\": \"2\",\n  \"storageVersion\": \"3.7.0\",\n  \"version\": \"3.7.1\"\n}",
+		"response_hex": "7b22686561646572223a7b22636c75737465725f6964223a2237323539313733373838363235383037373633222c226d656d6265725f6964223a223134373931393038333933383439303533373733222c227265766973696f6e223a2231222c22726166745f7465726d223a2232227d2c2276657273696f6e223a22332e372e31222c22646253697a65223a223238363732222c226c6561646572223a223134373931393038333933383439303533373733222c2272616674496e646578223a2234222c22726166745465726d223a2232222c22726166744170706c696564496e646578223a2234222c22646253697a65496e557365223a223238363732222c2273746f7261676556657273696f6e223a22332e372e30222c22646253697a6551756f7461223a2232313437343833363438222c22646f776e6772616465496e666f223a7b7d7d",
 		"note": "The revision in the header is the store's clock and is at least 1 on an empty store, because bringing the cluster up is itself a write. member_id identifies the server that answered and is never zero.",
 		"request_fields": [],
 		"response_fields": [
@@ -13,7 +13,7 @@
 				"offset": 1,
 				"length": 8,
 				"field": "response.header",
-				"value": "{\"cluster_id\":\"8601719746434642579\",\"member_id\":\"12121846401917809168\",\"raft_term\":\"2\",\"revision\":\"1\"}",
+				"value": "{\"cluster_id\":\"7259173788625807763\",\"member_id\":\"14791908393849053773\",\"raft_term\":\"2\",\"revision\":\"1\"}",
 				"varies": true
 			},
 			{
@@ -33,7 +33,7 @@
 				"offset": 148,
 				"length": 8,
 				"field": "response.leader",
-				"value": "\"12121846401917809168\"",
+				"value": "\"14791908393849053773\"",
 				"varies": true
 			},
 			{
@@ -61,7 +61,7 @@
 				"offset": 234,
 				"length": 13,
 				"field": "response.dbSizeInUse",
-				"value": "\"24576\"",
+				"value": "\"28672\"",
 				"varies": true
 			},
 			{

@@ -1,0 +1,35 @@
+[
+	{
+		"title": "One prepare, then slot after slot",
+		"kind": "primitives",
+		"request": "a proposal before phase one, then a prepare, then the same proposal again\n\n./your_program.sh multi-paxos\ninit 3\nphase 1\npropose 1 alpha\nprepare 4\nphase 1\nphase 900\npropose 1 alpha",
+		"request_hex": "2e2f796f75725f70726f6772616d2e7368206d756c74692d7061786f730a696e697420330a706861736520310a70726f706f7365203120616c7068610a7072657061726520340a706861736520310a7068617365203930300a70726f706f7365203120616c706861",
+		"response": "two round trips and a refusal, then `accept` for every slot and one round trip\n\n{\"acceptors\":3,\"majority\":2,\"ok\":true}\n{\"phase\":\"prepare\",\"reason\":\"no leader\"}\n{\"error\":\"phase one has to run first: this proposer is not the leader\",\"ok\":false,\"phase\":\"prepare\",\"round_trips\":2}\n{\"leader\":true,\"n\":4,\"promised\":3}\n{\"phase\":\"accept\",\"reason\":\"stable leader\"}\n{\"phase\":\"accept\",\"reason\":\"stable leader\"}\n{\"error\":null,\"ok\":true,\"phase\":\"accept\",\"round_trips\":1}",
+		"response_hex": "7b226163636570746f7273223a332c226d616a6f72697479223a322c226f6b223a747275657d0a7b227068617365223a2270726570617265222c22726561736f6e223a226e6f206c6561646572227d0a7b226572726f72223a227068617365206f6e652068617320746f2072756e2066697273743a20746869732070726f706f736572206973206e6f7420746865206c6561646572222c226f6b223a66616c73652c227068617365223a2270726570617265222c22726f756e645f7472697073223a327d0a7b226c6561646572223a747275652c226e223a342c2270726f6d69736564223a337d0a7b227068617365223a22616363657074222c22726561736f6e223a22737461626c65206c6561646572227d0a7b227068617365223a22616363657074222c22726561736f6e223a22737461626c65206c6561646572227d0a7b226572726f72223a6e756c6c2c226f6b223a747275652c227068617365223a22616363657074222c22726f756e645f7472697073223a317d",
+		"note": "`phase 900` is the point of the whole stage: a single prepare at ballot 4 covers slots nobody has thought of yet, because the promise an acceptor makes is about the ballot, not about any one decree. That is what turns Paxos from two round trips per value into one.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "A gap the state machine cannot cross",
+		"kind": "primitives",
+		"request": "slots 1 and 3 chosen, with slot 2 left open\n\n./your_program.sh multi-paxos\ninit 3\nprepare 1\npropose 1 alpha\naccepted 1 a1\naccepted 1 a2\npropose 3 gamma\naccepted 3 a1\naccepted 3 a2\napplied",
+		"request_hex": "2e2f796f75725f70726f6772616d2e7368206d756c74692d7061786f730a696e697420330a7072657061726520310a70726f706f7365203120616c7068610a616363657074656420312061310a616363657074656420312061320a70726f706f736520332067616d6d610a616363657074656420332061310a616363657074656420332061320a6170706c696564",
+		"response": "`applied` is 1, with slot 2 named as the gap\n\n{\"acceptors\":3,\"majority\":2,\"ok\":true}\n{\"leader\":true,\"n\":1,\"promised\":3}\n{\"error\":null,\"ok\":true,\"phase\":\"accept\",\"round_trips\":1}\n{\"chosen\":false,\"count\":1,\"value\":\"alpha\"}\n{\"chosen\":true,\"count\":2,\"value\":\"alpha\"}\n{\"error\":null,\"ok\":true,\"phase\":\"accept\",\"round_trips\":1}\n{\"chosen\":false,\"count\":1,\"value\":\"gamma\"}\n{\"chosen\":true,\"count\":2,\"value\":\"gamma\"}\n{\"gaps\":[2],\"index\":1}",
+		"response_hex": "7b226163636570746f7273223a332c226d616a6f72697479223a322c226f6b223a747275657d0a7b226c6561646572223a747275652c226e223a312c2270726f6d69736564223a337d0a7b226572726f72223a6e756c6c2c226f6b223a747275652c227068617365223a22616363657074222c22726f756e645f7472697073223a317d0a7b2263686f73656e223a66616c73652c22636f756e74223a312c2276616c7565223a22616c706861227d0a7b2263686f73656e223a747275652c22636f756e74223a322c2276616c7565223a22616c706861227d0a7b226572726f72223a6e756c6c2c226f6b223a747275652c227068617365223a22616363657074222c22726f756e645f7472697073223a317d0a7b2263686f73656e223a66616c73652c22636f756e74223a312c2276616c7565223a2267616d6d61227d0a7b2263686f73656e223a747275652c22636f756e74223a322c2276616c7565223a2267616d6d61227d0a7b2267617073223a5b325d2c22696e646578223a317d",
+		"note": "Multi-Paxos chooses slots independently, so holes are normal and a leader has to go back and fill them before anything above can be applied. Raft's AppendEntries consistency check removes the problem by making a hole impossible in the first place, which is most of why Raft is easier to hold in your head.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "Preemption doubles the cost again",
+		"kind": "primitives",
+		"request": "a leader at ballot 5, then a rival's ballot 9, then another proposal\n\n./your_program.sh multi-paxos\ninit 3\nprepare 5\npropose 1 alpha\npreempt 9\nphase 2\npropose 2 beta",
+		"request_hex": "2e2f796f75725f70726f6772616d2e7368206d756c74692d7061786f730a696e697420330a7072657061726520350a70726f706f7365203120616c7068610a707265656d707420390a706861736520320a70726f706f736520322062657461",
+		"response": "leadership lost, the slot back in `prepare`, and two round trips again\n\n{\"acceptors\":3,\"majority\":2,\"ok\":true}\n{\"leader\":true,\"n\":5,\"promised\":3}\n{\"error\":null,\"ok\":true,\"phase\":\"accept\",\"round_trips\":1}\n{\"leader\":false,\"promised_n\":9}\n{\"phase\":\"prepare\",\"reason\":\"preempted\"}\n{\"error\":\"phase one has to run first: this proposer is not the leader\",\"ok\":false,\"phase\":\"prepare\",\"round_trips\":2}",
+		"response_hex": "7b226163636570746f7273223a332c226d616a6f72697479223a322c226f6b223a747275657d0a7b226c6561646572223a747275652c226e223a352c2270726f6d69736564223a337d0a7b226572726f72223a6e756c6c2c226f6b223a747275652c227068617365223a22616363657074222c22726f756e645f7472697073223a317d0a7b226c6561646572223a66616c73652c2270726f6d697365645f6e223a397d0a7b227068617365223a2270726570617265222c22726561736f6e223a22707265656d70746564227d0a7b226572726f72223a227068617365206f6e652068617320746f2072756e2066697273743a20746869732070726f706f736572206973206e6f7420746865206c6561646572222c226f6b223a66616c73652c227068617365223a2270726570617265222c22726f756e645f7472697073223a327d",
+		"note": "Nothing was corrupted and nothing was un-chosen — the only casualty is latency. A system whose leader is preempted repeatedly is correct and slow, which is exactly the failure mode that makes leader stability a production concern rather than a theoretical one.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

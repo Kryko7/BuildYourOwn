@@ -1,0 +1,24 @@
+[
+	{
+		"title": "One fast request and one slow one",
+		"kind": "primitives",
+		"request": "a client that hedges anything still outstanding after fifty milliseconds\n\n./your_program.sh hedging\ninit 50\nrequest a [20,5]\nrequest b [900,8]\nstats",
+		"request_hex": "2e2f796f75725f70726f6772616d2e73682068656467696e670a696e69742035300a726571756573742061205b32302c355d0a726571756573742062205b3930302c385d0a7374617473",
+		"response": "the fast request costs one message; the slow one costs two and answers in 58\n\n{\"hedge_after_ms\":50,\"messages\":0,\"requests\":0}\n{\"inflight\":0,\"latency\":20,\"messages\":1,\"winner\":\"primary\"}\n{\"inflight\":0,\"latency\":58,\"messages\":2,\"winner\":\"hedge\"}\n{\"extra_load_pct\":50,\"max\":58,\"messages\":3,\"p50\":20,\"p99\":58,\"requests\":2}",
+		"response_hex": "7b2268656467655f61667465725f6d73223a35302c226d65737361676573223a302c227265717565737473223a307d0a7b22696e666c69676874223a302c226c6174656e6379223a32302c226d65737361676573223a312c2277696e6e6572223a227072696d617279227d0a7b22696e666c69676874223a302c226c6174656e6379223a35382c226d65737361676573223a322c2277696e6e6572223a226865646765227d0a7b2265787472615f6c6f61645f706374223a35302c226d6178223a35382c226d65737361676573223a332c22703530223a32302c22703939223a35382c227265717565737473223a327d",
+		"note": "The hedge does not start until the threshold, so its 8 milliseconds of service time become 58 on the wire. Hedging cannot make a request faster than the threshold — it can only stop one being very much slower.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "A hedge that was never going to help",
+		"kind": "primitives",
+		"request": "a request whose second replica would have been slower than the first\n\n./your_program.sh hedging\ninit 50\nrequest c [200,500]\nstats",
+		"request_hex": "2e2f796f75725f70726f6772616d2e73682068656467696e670a696e69742035300a726571756573742063205b3230302c3530305d0a7374617473",
+		"response": "the primary still wins at 200, and the cluster served two requests for one\n\n{\"hedge_after_ms\":50,\"messages\":0,\"requests\":0}\n{\"inflight\":0,\"latency\":200,\"messages\":2,\"winner\":\"primary\"}\n{\"extra_load_pct\":100,\"max\":200,\"messages\":2,\"p50\":200,\"p99\":200,\"requests\":1}",
+		"response_hex": "7b2268656467655f61667465725f6d73223a35302c226d65737361676573223a302c227265717565737473223a307d0a7b22696e666c69676874223a302c226c6174656e6379223a3230302c226d65737361676573223a322c2277696e6e6572223a227072696d617279227d0a7b2265787472615f6c6f61645f706374223a3130302c226d6178223a3230302c226d65737361676573223a322c22703530223a3230302c22703939223a3230302c227265717565737473223a317d",
+		"note": "This is the case that decides whether hedging is worth it at all. If the second replica is as slow as the first, every hedge is pure extra load and nothing is gained; hedging pays only when the tail is much worse than the median, which is why the threshold is usually set near the 95th percentile.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

@@ -1,0 +1,24 @@
+[
+	{
+		"title": "A failure two steps in",
+		"kind": "primitives",
+		"request": "the chain started, one step acknowledged, the next failed\n\n./your_program.sh saga-choreo\ninit [\"reserve\",\"charge\",\"ship\"]\nevent start\nevent reserve.ok\nevent charge.fail\nevent reserve.undone\nledger\noutcome",
+		"request_hex": "2e2f796f75725f70726f6772616d2e736820736167612d63686f72656f0a696e6974205b2272657365727665222c22636861726765222c2273686970225d0a6576656e742073746172740a6576656e7420726573657276652e6f6b0a6576656e74206368617267652e6661696c0a6576656e7420726573657276652e756e646f6e650a6c65646765720a6f7574636f6d65",
+		"response": "each event emits exactly one, and the ledger ends with undo:reserve\n\n{\"names\":[\"reserve\",\"charge\",\"ship\"],\"steps\":3}\n{\"duplicate\":false,\"emitted\":[\"reserve.do\"],\"ledger\":[\"do:reserve\"]}\n{\"duplicate\":false,\"emitted\":[\"charge.do\"],\"ledger\":[\"do:reserve\",\"do:charge\"]}\n{\"duplicate\":false,\"emitted\":[\"reserve.undo\"],\"ledger\":[\"do:reserve\",\"do:charge\"]}\n{\"duplicate\":false,\"emitted\":[],\"ledger\":[\"do:reserve\",\"do:charge\",\"undo:reserve\"]}\n{\"entries\":[\"do:reserve\",\"do:charge\",\"undo:reserve\"]}\n{\"inflight\":0,\"outcome\":\"compensated\"}",
+		"response_hex": "7b226e616d6573223a5b2272657365727665222c22636861726765222c2273686970225d2c227374657073223a337d0a7b226475706c6963617465223a66616c73652c22656d6974746564223a5b22726573657276652e646f225d2c226c6564676572223a5b22646f3a72657365727665225d7d0a7b226475706c6963617465223a66616c73652c22656d6974746564223a5b226368617267652e646f225d2c226c6564676572223a5b22646f3a72657365727665222c22646f3a636861726765225d7d0a7b226475706c6963617465223a66616c73652c22656d6974746564223a5b22726573657276652e756e646f225d2c226c6564676572223a5b22646f3a72657365727665222c22646f3a636861726765225d7d0a7b226475706c6963617465223a66616c73652c22656d6974746564223a5b5d2c226c6564676572223a5b22646f3a72657365727665222c22646f3a636861726765222c22756e646f3a72657365727665225d7d0a7b22656e7472696573223a5b22646f3a72657365727665222c22646f3a636861726765222c22756e646f3a72657365727665225d7d0a7b22696e666c69676874223a302c226f7574636f6d65223a22636f6d70656e7361746564227d",
+		"note": "Nothing here decides anything: `charge.fail` emits `reserve.undo` because that is the rule the reserve service subscribes to, and the chain stops when it runs out of earlier steps. The order is the reverse of the forward chain for the same reason it is in an orchestrated saga — each undo is triggered by the one after it.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "A bus that delivers the same event twice",
+		"kind": "primitives",
+		"request": "one acknowledgement, delivered twice\n\n./your_program.sh saga-choreo\ninit [\"reserve\",\"charge\",\"ship\"]\nevent start\nevent reserve.ok\nevent reserve.ok\nledger",
+		"request_hex": "2e2f796f75725f70726f6772616d2e736820736167612d63686f72656f0a696e6974205b2272657365727665222c22636861726765222c2273686970225d0a6576656e742073746172740a6576656e7420726573657276652e6f6b0a6576656e7420726573657276652e6f6b0a6c6564676572",
+		"response": "the first emits charge.do; the second emits nothing and says so\n\n{\"names\":[\"reserve\",\"charge\",\"ship\"],\"steps\":3}\n{\"duplicate\":false,\"emitted\":[\"reserve.do\"],\"ledger\":[\"do:reserve\"]}\n{\"duplicate\":false,\"emitted\":[\"charge.do\"],\"ledger\":[\"do:reserve\",\"do:charge\"]}\n{\"duplicate\":true,\"emitted\":[],\"ledger\":[\"do:reserve\",\"do:charge\"]}\n{\"entries\":[\"do:reserve\",\"do:charge\"]}",
+		"response_hex": "7b226e616d6573223a5b2272657365727665222c22636861726765222c2273686970225d2c227374657073223a337d0a7b226475706c6963617465223a66616c73652c22656d6974746564223a5b22726573657276652e646f225d2c226c6564676572223a5b22646f3a72657365727665225d7d0a7b226475706c6963617465223a66616c73652c22656d6974746564223a5b226368617267652e646f225d2c226c6564676572223a5b22646f3a72657365727665222c22646f3a636861726765225d7d0a7b226475706c6963617465223a747275652c22656d6974746564223a5b5d2c226c6564676572223a5b22646f3a72657365727665222c22646f3a636861726765225d7d0a7b22656e7472696573223a5b22646f3a72657365727665222c22646f3a636861726765225d7d",
+		"note": "At-least-once is the only delivery a broker can really offer, so the second copy is not an error — it is the normal case. A handler that is not idempotent per event charges the card twice here, and no amount of care further down the chain undoes that.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

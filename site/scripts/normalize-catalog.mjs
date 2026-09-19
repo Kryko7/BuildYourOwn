@@ -207,3 +207,18 @@ function sectionForNumber(raw, number) {
 	if (number <= 42) return 'E';
 	return 'F';
 }
+
+/**
+ * Two rendered catalogs that differ only in `generatedAt`. `npm run sync` uses this to leave a
+ * committed catalog alone when nothing about the tester changed, so a sync does not show up as
+ * six touched files.
+ */
+export function sameButForTimestamp(a, b) {
+	if (a === b) return true;
+	try {
+		const strip = (text) => JSON.stringify({ ...JSON.parse(text), generatedAt: '' });
+		return strip(a) === strip(b);
+	} catch {
+		return false;
+	}
+}

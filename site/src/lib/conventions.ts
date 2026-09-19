@@ -284,8 +284,8 @@ const link: Convention[] = [
 const dist: Convention[] = [
 	{
 		id: 'ladders',
-		topic: 'Three ladders',
-		rule: 'The trail climbs in three: the **primitives** (clocks, quorums, probabilistic structures, CRDTs, failure detection), then a **durable node**, then a **cluster**. Each rung assumes the one below it works.',
+		topic: 'Four ladders',
+		rule: 'The trail climbs in four: the **primitives** (clocks, quorums, probabilistic structures, CRDTs, failure detection), then the **algorithms** (Raft, Paxos, atomic commit, sagas, fencing tokens, circuit breakers) as exercises in their own right, then a **durable node**, then a **cluster**. Each rung assumes the one below it works. The algorithms rung is numbered 56–77 because it was appended after the first three were cited; `--tag algorithms` and the stage’s `ladder` field are what place it, never its number.',
 		stages: [],
 		source: 'the dist track'
 	},

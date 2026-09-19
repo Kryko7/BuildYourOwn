@@ -453,7 +453,7 @@ Requirements added by the user:
 | `wasmtest/` | `wasm` | a WebAssembly runtime (binary decoder + validator + interpreter + WASI preview1) | `wasmtime` 48.0.2, downloaded and cached in `~/.cache/wasmtest` |
 | `tlstest/` | `tls` | a TLS 1.3 server (RFC 8446) | `openssl s_server` from the system OpenSSL 3.x |
 | `linktest/` | `link` | a static ELF64 linker for x86-64 | `/usr/bin/ld` (GNU ld) |
-| `disttest/` | `dist` | a distributed system, in three ladders: algorithms → a durable node → a replicated cluster | `etcd` 3.7.1, cached in `~/.cache/disttest` (ladders B/C) and `examples/reference_primitives` (ladder A) |
+| `disttest/` | `dist` | a distributed system, in four ladders: primitives → algorithms → a durable node → a replicated cluster | `etcd` 3.7.1, cached in `~/.cache/disttest` (node, cluster) and this crate's own `reference_primitives` / `reference_algorithms` examples (primitives, algorithms) |
 
 Why these four: each is a real, specified artefact with a production reference that is either
 installed or pinned-downloadable, and they cover different muscles — **decode + execute**
@@ -548,11 +548,20 @@ small integrations in the same place. Every stage is tagged with its ladder:
   by replaying every permutation of the delivery order, Chandy–Lamport snapshots, causal
   broadcast, token/leaky buckets, backoff jitter distributions, phi-accrual and SWIM.
   The oracle is the tester's own brute-force specification, never a second implementation.
-- **Ladder B — a durable node** (`node`): a server speaking a subset of the **etcd v3 HTTP/JSON
+- **Ladder B — algorithms and integration patterns** (`algorithms`): the same line-oriented CLI,
+  one topic per classic algorithm. Not another server: these are the named algorithms as
+  exercises. Raft (election, replication, the Figure 8 commitment rule, snapshots, membership
+  change), single-decree and Multi-Paxos, two- and three-phase commit with coordinator-crash
+  recovery, orchestrated and choreographed sagas with compensations, the transactional outbox,
+  idempotent consumers and idempotency keys, distributed locks with fencing tokens, leader
+  leases under clock skew, read repair, hinted handoff, gossip, circuit breakers, hedged
+  requests, bulkheads and load shedding. Each stage's oracle is the tester's own model of the
+  published rules, written out beside the tests that use it.
+- **Ladder C — a durable node** (`node`): a server speaking a subset of the **etcd v3 HTTP/JSON
   API** — `kv/put`, `kv/range`, `kv/deleterange`, `kv/txn`, `kv/compaction`, leases, watches,
   `maintenance/status`. MVCC revisions, compare-and-swap transactions, lease expiry, watch
   delivery, and durability proved by `SIGKILL` mid-workload followed by restart.
-- **Ladder C — a cluster** (`cluster`): 3- and 5-node clusters with a userspace TCP proxy in
+- **Ladder D — a cluster** (`cluster`): 3- and 5-node clusters with a userspace TCP proxy in
   front of every peer link, so partitions, delays, drops, duplicates and reordering are injected
   without privileges. Leader election, replication, linearizable reads, minority-partition write
   refusal, failover with no acknowledged write lost, snapshot catch-up, membership change,
@@ -560,8 +569,15 @@ small integrations in the same place. Every stage is tagged with its ladder:
   randomized concurrent workloads with a seeded fault schedule, printing the minimal offending
   sub-history when it fails.
 
-The etcd subset is what makes `--validate` possible: real etcd is the reference for ladders B
-and C, so the suite self-checks against a production consensus implementation.
+The etcd subset is what makes `--validate` possible: real etcd is the reference for the node and
+cluster ladders, so the suite self-checks against a production consensus implementation. The two
+CLI ladders are checked against this crate's own `reference_primitives` and
+`reference_algorithms` examples, which exist only so the suite can prove itself — reading either
+spoils its ladder.
+
+The algorithms ladder is numbered 56–77 rather than 21–42: stages 1–55 were already cited by the
+resource library and by work in flight, so it was appended rather than inserted. `--tag` and the
+`ladder` field say where a stage belongs; its number never does.
 
 ### 5.7 Everything else becomes track-agnostic
 
@@ -596,14 +612,15 @@ buildable at every step.
 | `wasm` | 45 / 347 | wasmtime 48.0.2 | 16 s |
 | `tls` | 45 / 321 | `openssl s_server` 3.6.4 | 73 s (1 documented skip) |
 | `link` | 42 / 341 | GNU ld 2.47 | 4 s |
-| `dist` A | 20 / 183 | `examples/reference_primitives` | 5 s |
-| `dist` B | 15 / 128 | etcd 3.7.1 | 108 s |
-| `dist` C | 20 / 164 | etcd 3.7.1 | 859 s |
+| `dist` primitives | 20 / 183 | `examples/reference_primitives` | 5 s |
+| `dist` algorithms | 22 / 245 | `examples/reference_algorithms` | 0.5 s |
+| `dist` node | 15 / 128 | etcd 3.7.1 | 108 s |
+| `dist` cluster | 20 / 164 | etcd 3.7.1 | 859 s |
 
-With shell (57/428) and kafka (45/296) that is **2 208 tests over six tracks**, every one of
-them green against the real implementation. `byo` carries a six-entry registry (97 tests), the
-site renders six trails from those catalogs (270 tests, 289 stage pages prerendered), and
-`install.sh` builds and installs all of it.
+With shell (57/428) and kafka (45/296) that is **2 453 tests over six tracks**, every one of
+them green against the real implementation. `byo` carries a six-entry registry (98 tests), the
+site renders six trails from those catalogs (311 stage pages prerendered), and `install.sh`
+builds and installs all of it.
 
 Verified after the build, in a sandbox `BYO_HOME`: `install.sh --skip-site` → `byo tracks`
 (six installed) → `byo init wasm --runtime wasmtime` → `byo test --until 3` (24/24, recorded as

@@ -1,0 +1,24 @@
+[
+	{
+		"title": "The same retry, with and without a key",
+		"kind": "primitives",
+		"request": "one purchase retried once, first with no key and then with one\n\n./your_program.sh idempotency-key\ninit\nnaive-charge 100\nnaive-charge 100\ncharge k1 100\nlost-answer k1\ncharge k1 100\nstate",
+		"request_hex": "2e2f796f75725f70726f6772616d2e7368206964656d706f74656e63792d6b65790a696e69740a6e616976652d636861726765203130300a6e616976652d636861726765203130300a636861726765206b31203130300a6c6f73742d616e73776572206b310a636861726765206b31203130300a7374617465",
+		"response": "the naive pair leaves 200 on the balance; the keyed pair adds only 100\n\n{\"balance\":0,\"charges\":0}\n{\"balance\":100,\"charge_id\":\"c1\"}\n{\"balance\":200,\"charge_id\":\"c2\"}\n{\"amount\":100,\"balance\":300,\"charge_id\":\"c3\",\"ok\":true,\"replayed\":false}\n{\"ok\":true}\n{\"amount\":100,\"balance\":300,\"charge_id\":\"c3\",\"ok\":true,\"replayed\":true}\n{\"balance\":300,\"keys\":{\"k1\":{\"amount\":100,\"charge_id\":\"c3\",\"state\":\"done\"}}}",
+		"response_hex": "7b2262616c616e6365223a302c2263686172676573223a307d0a7b2262616c616e6365223a3130302c226368617267655f6964223a226331227d0a7b2262616c616e6365223a3230302c226368617267655f6964223a226332227d0a7b22616d6f756e74223a3130302c2262616c616e6365223a3330302c226368617267655f6964223a226333222c226f6b223a747275652c227265706c61796564223a66616c73657d0a7b226f6b223a747275657d0a7b22616d6f756e74223a3130302c2262616c616e6365223a3330302c226368617267655f6964223a226333222c226f6b223a747275652c227265706c61796564223a747275657d0a7b2262616c616e6365223a3330302c226b657973223a7b226b31223a7b22616d6f756e74223a3130302c226368617267655f6964223a226333222c227374617465223a22646f6e65227d7d7d",
+		"note": "The two requests are byte for byte identical in both halves. The only difference is that the second pair names the attempt, which turns 'charge this card' into 'make sure this particular charge has happened' — an instruction that is safe to repeat.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "A key reused for a different request",
+		"kind": "primitives",
+		"request": "a key that has already answered, sent again with a different amount\n\n./your_program.sh idempotency-key\ninit\ncharge k1 100\ncharge k1 200\nstate",
+		"request_hex": "2e2f796f75725f70726f6772616d2e7368206964656d706f74656e63792d6b65790a696e69740a636861726765206b31203130300a636861726765206b31203230300a7374617465",
+		"response": "refused, and the balance does not move\n\n{\"balance\":0,\"charges\":0}\n{\"amount\":100,\"balance\":100,\"charge_id\":\"c1\",\"ok\":true,\"replayed\":false}\n{\"balance\":100,\"error\":\"key k1 was used for 100, not 200\",\"ok\":false}\n{\"balance\":100,\"keys\":{\"k1\":{\"amount\":100,\"charge_id\":\"c1\",\"state\":\"done\"}}}",
+		"response_hex": "7b2262616c616e6365223a302c2263686172676573223a307d0a7b22616d6f756e74223a3130302c2262616c616e6365223a3130302c226368617267655f6964223a226331222c226f6b223a747275652c227265706c61796564223a66616c73657d0a7b2262616c616e6365223a3130302c226572726f72223a226b6579206b3120776173207573656420666f72203130302c206e6f7420323030222c226f6b223a66616c73657d0a7b2262616c616e6365223a3130302c226b657973223a7b226b31223a7b22616d6f756e74223a3130302c226368617267655f6964223a226331222c227374617465223a22646f6e65227d7d7d",
+		"note": "Replaying the stored answer here would be worse than double charging: the client would be told its 200 succeeded and would be shown a receipt for 100. A key that has been reused is a client bug, and the only safe response is to say so rather than to guess which request was meant.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

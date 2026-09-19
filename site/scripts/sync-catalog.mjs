@@ -22,7 +22,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parse as parseYaml } from 'yaml';
 import { parsePlan, buildCatalog, auditCounts } from './parse-catalog.mjs';
-import { normalizeCatalog, mergePlannedStages } from './normalize-catalog.mjs';
+import { normalizeCatalog, mergePlannedStages, sameButForTimestamp } from './normalize-catalog.mjs';
 import { placeholderPlan, sectionTitles } from './placeholders.mjs';
 import { parseTesterPlan } from './parse-tester-plan.mjs';
 import { trackIds, tracks } from '../src/lib/tracks.ts';
@@ -34,9 +34,21 @@ const repo = resolve(root, '..');
 
 const log = (...a) => console.log('[sync]', ...a);
 
+/**
+ * Writes only when something other than `generatedAt` changed, so a sync that found nothing
+ * new leaves the committed catalogs alone instead of touching all six with a fresh timestamp.
+ */
 async function writeJson(name, value) {
 	await mkdir(outDir, { recursive: true });
-	await writeFile(join(outDir, name), JSON.stringify(value, null, '\t') + '\n');
+	const path = join(outDir, name);
+	const next = JSON.stringify(value, null, '\t') + '\n';
+	try {
+		if (sameButForTimestamp(await readFile(path, 'utf8'), next)) return false;
+	} catch {
+		/* no committed copy yet */
+	}
+	await writeFile(path, next);
+	return true;
 }
 
 /**

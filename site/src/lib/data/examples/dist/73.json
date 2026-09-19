@@ -1,0 +1,24 @@
+[
+	{
+		"title": "A read that repairs one replica",
+		"kind": "primitives",
+		"request": "three replicas, two of them behind, and the same read issued twice\n\n./your_program.sh anti-entropy\ninit [\"r1\",\"r2\",\"r3\"]\nput r1 k new 5\nput r2 k old 2\nread k\nread k",
+		"request_hex": "2e2f796f75725f70726f6772616d2e736820616e74692d656e74726f70790a696e6974205b227231222c227232222c227233225d0a707574207231206b206e657720350a707574207232206b206f6c6420320a72656164206b0a72656164206b",
+		"response": "the first read repairs r2 and r3; the second finds nothing to do\n\n{\"replicas\":[\"r1\",\"r2\",\"r3\"]}\n{\"ok\":true,\"version\":5}\n{\"ok\":true,\"version\":2}\n{\"repaired\":[\"r2\",\"r3\"],\"stale\":[\"r2\",\"r3\"],\"value\":\"new\",\"version\":5}\n{\"repaired\":[],\"stale\":[],\"value\":\"new\",\"version\":5}",
+		"response_hex": "7b227265706c69636173223a5b227231222c227232222c227233225d7d0a7b226f6b223a747275652c2276657273696f6e223a357d0a7b226f6b223a747275652c2276657273696f6e223a327d0a7b227265706169726564223a5b227232222c227233225d2c227374616c65223a5b227232222c227233225d2c2276616c7565223a226e6577222c2276657273696f6e223a357d0a7b227265706169726564223a5b5d2c227374616c65223a5b5d2c2276616c7565223a226e6577222c2276657273696f6e223a357d",
+		"note": "The repair list must be the stale list and nothing more. Writing the winning value back to every replica works, costs three writes instead of two, and hides the very thing the field is there to show you: how far out of step the replicas had drifted.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "A hint that outlives its holder",
+		"kind": "primitives",
+		"request": "a write while r3 is away, then the stand-in holding its hint dies too\n\n./your_program.sh anti-entropy\ninit [\"r1\",\"r2\",\"r3\"]\ndown r3\nwrite k v 1\ndown r1\nup r3\nhandoff\nsync r2 r3",
+		"request_hex": "2e2f796f75725f70726f6772616d2e736820616e74692d656e74726f70790a696e6974205b227231222c227232222c227233225d0a646f776e2072330a7772697465206b207620310a646f776e2072310a75702072330a68616e646f66660a73796e63207232207233",
+		"response": "the handoff delivers nothing; the sync is what finally repairs r3\n\n{\"replicas\":[\"r1\",\"r2\",\"r3\"]}\n{\"down\":[\"r3\"],\"up\":[\"r1\",\"r2\"]}\n{\"hinted\":[{\"for\":\"r3\",\"on\":\"r1\"}],\"stored\":[\"r1\",\"r2\"]}\n{\"down\":[\"r1\",\"r3\"],\"up\":[\"r2\"]}\n{\"down\":[\"r1\"],\"up\":[\"r2\",\"r3\"]}\n{\"delivered\":0,\"remaining\":1}\n{\"keys\":[\"k\"],\"transferred\":1}",
+		"response_hex": "7b227265706c69636173223a5b227231222c227232222c227233225d7d0a7b22646f776e223a5b227233225d2c227570223a5b227231222c227232225d7d0a7b2268696e746564223a5b7b22666f72223a227233222c226f6e223a227231227d5d2c2273746f726564223a5b227231222c227232225d7d0a7b22646f776e223a5b227231222c227233225d2c227570223a5b227232225d7d0a7b22646f776e223a5b227231225d2c227570223a5b227232222c227233225d7d0a7b2264656c697665726564223a302c2272656d61696e696e67223a317d0a7b226b657973223a5b226b225d2c227472616e73666572726564223a317d",
+		"note": "Hinted handoff is a latency optimisation wearing the costume of a durability mechanism. The hint is one more copy on one more machine, and when that machine goes, so does it. Only a full comparison between two replicas is a guarantee.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

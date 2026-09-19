@@ -1,0 +1,35 @@
+[
+	{
+		"title": "A round that chooses a value",
+		"kind": "primitives",
+		"request": "three acceptors, a prepare to two of them, and then an accept to each\n\n./your_program.sh paxos\ninit 3\nprepare a1 1\nprepare a2 1\naccept a1 1 red\nlearn\naccept a2 1 red\nlearn",
+		"request_hex": "2e2f796f75725f70726f6772616d2e7368207061786f730a696e697420330a7072657061726520613120310a7072657061726520613220310a6163636570742061312031207265640a6c6561726e0a6163636570742061322031207265640a6c6561726e",
+		"response": "nothing is chosen after one accept, and `red` is chosen after the second\n\n{\"acceptors\":3,\"majority\":2,\"ok\":true}\n{\"last_n\":null,\"last_value\":null,\"promised\":true,\"promised_n\":1}\n{\"last_n\":null,\"last_value\":null,\"promised\":true,\"promised_n\":1}\n{\"accepted\":true,\"promised_n\":1}\n{\"chosen\":false,\"count\":0,\"value\":null}\n{\"accepted\":true,\"promised_n\":1}\n{\"chosen\":true,\"count\":2,\"value\":\"red\"}",
+		"response_hex": "7b226163636570746f7273223a332c226d616a6f72697479223a322c226f6b223a747275657d0a7b226c6173745f6e223a6e756c6c2c226c6173745f76616c7565223a6e756c6c2c2270726f6d69736564223a747275652c2270726f6d697365645f6e223a317d0a7b226c6173745f6e223a6e756c6c2c226c6173745f76616c7565223a6e756c6c2c2270726f6d69736564223a747275652c2270726f6d697365645f6e223a317d0a7b226163636570746564223a747275652c2270726f6d697365645f6e223a317d0a7b2263686f73656e223a66616c73652c22636f756e74223a302c2276616c7565223a6e756c6c7d0a7b226163636570746564223a747275652c2270726f6d697365645f6e223a317d0a7b2263686f73656e223a747275652c22636f756e74223a322c2276616c7565223a22726564227d",
+		"note": "Choosing is not something a proposer does; it is a fact about the acceptors that may be true before anybody has noticed. The proposer here never learns the outcome — a separate learner has to go and look, which is why `learn` is a command of its own.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "A proposer forced to abandon its value",
+		"kind": "primitives",
+		"request": "a proposer that wants `blue`, and two promises, the second reporting `red`\n\n./your_program.sh paxos\ninit 3\naccept a1 2 red\npropose 5 blue\npromise a2 -1 -\npromise a1 2 red\nproposer",
+		"request_hex": "2e2f796f75725f70726f6772616d2e7368207061786f730a696e697420330a6163636570742061312032207265640a70726f706f7365203520626c75650a70726f6d697365206132202d31202d0a70726f6d6973652061312032207265640a70726f706f736572",
+		"response": "the proposer's value becomes `red` as soon as that promise arrives\n\n{\"acceptors\":3,\"majority\":2,\"ok\":true}\n{\"accepted\":true,\"promised_n\":2}\n{\"n\":5,\"phase\":\"prepare\",\"value\":\"blue\"}\n{\"promises\":1,\"ready\":false,\"value\":\"blue\"}\n{\"promises\":2,\"ready\":true,\"value\":\"red\"}\n{\"n\":5,\"phase\":\"accept\",\"promises\":2,\"ready\":true,\"value\":\"red\"}",
+		"response_hex": "7b226163636570746f7273223a332c226d616a6f72697479223a322c226f6b223a747275657d0a7b226163636570746564223a747275652c2270726f6d697365645f6e223a327d0a7b226e223a352c227068617365223a2270726570617265222c2276616c7565223a22626c7565227d0a7b2270726f6d69736573223a312c227265616479223a66616c73652c2276616c7565223a22626c7565227d0a7b2270726f6d69736573223a322c227265616479223a747275652c2276616c7565223a22726564227d0a7b226e223a352c227068617365223a22616363657074222c2270726f6d69736573223a322c227265616479223a747275652c2276616c7565223a22726564227d",
+		"note": "This one rule is the whole of Paxos safety. A proposer that keeps its own value, or that keeps whichever promise arrived last, can choose a second value for a decree that was already decided — and nothing downstream will ever notice, because both rounds look perfectly legal from the outside.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "Two proposers preempting each other",
+		"kind": "primitives",
+		"request": "one proposer's prepares, a rival's higher prepares, then the first's accepts\n\n./your_program.sh paxos\ninit 3\nprepare a1 1\nprepare a2 1\nprepare a1 2\nprepare a2 2\naccept a1 1 red\naccept a2 1 red\nlearn",
+		"request_hex": "2e2f796f75725f70726f6772616d2e7368207061786f730a696e697420330a7072657061726520613120310a7072657061726520613220310a7072657061726520613120320a7072657061726520613220320a6163636570742061312031207265640a6163636570742061322031207265640a6c6561726e",
+		"response": "both accepts refused, and nothing chosen\n\n{\"acceptors\":3,\"majority\":2,\"ok\":true}\n{\"last_n\":null,\"last_value\":null,\"promised\":true,\"promised_n\":1}\n{\"last_n\":null,\"last_value\":null,\"promised\":true,\"promised_n\":1}\n{\"last_n\":null,\"last_value\":null,\"promised\":true,\"promised_n\":2}\n{\"last_n\":null,\"last_value\":null,\"promised\":true,\"promised_n\":2}\n{\"accepted\":false,\"promised_n\":2}\n{\"accepted\":false,\"promised_n\":2}\n{\"chosen\":false,\"count\":0,\"value\":null}",
+		"response_hex": "7b226163636570746f7273223a332c226d616a6f72697479223a322c226f6b223a747275657d0a7b226c6173745f6e223a6e756c6c2c226c6173745f76616c7565223a6e756c6c2c2270726f6d69736564223a747275652c2270726f6d697365645f6e223a317d0a7b226c6173745f6e223a6e756c6c2c226c6173745f76616c7565223a6e756c6c2c2270726f6d69736564223a747275652c2270726f6d697365645f6e223a317d0a7b226c6173745f6e223a6e756c6c2c226c6173745f76616c7565223a6e756c6c2c2270726f6d69736564223a747275652c2270726f6d697365645f6e223a327d0a7b226c6173745f6e223a6e756c6c2c226c6173745f76616c7565223a6e756c6c2c2270726f6d69736564223a747275652c2270726f6d697365645f6e223a327d0a7b226163636570746564223a66616c73652c2270726f6d697365645f6e223a327d0a7b226163636570746564223a66616c73652c2270726f6d697365645f6e223a327d0a7b2263686f73656e223a66616c73652c22636f756e74223a302c2276616c7565223a6e756c6c7d",
+		"note": "Repeat this and neither proposer ever finishes: Paxos is safe under duelling proposers but not live. The cure is a distinguished proposer, which is exactly what Multi-Paxos and Raft both build in.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

@@ -1,0 +1,24 @@
+[
+	{
+		"title": "A prefix the leader has already sent",
+		"kind": "primitives",
+		"request": "a four-entry log, a retransmitted prefix, then a genuinely conflicting entry\n\n./your_program.sh raft-log\ninit [1,1,2,2]\nappend 2 1 1 0 [1,2]\nlog\nappend 2 2 1 0 [3]\nlog",
+		"request_hex": "2e2f796f75725f70726f6772616d2e736820726166742d6c6f670a696e6974205b312c312c322c325d0a617070656e642032203120312030205b312c325d0a6c6f670a617070656e642032203220312030205b335d0a6c6f67",
+		"response": "the first append leaves all four entries; the second leaves three\n\n{\"commit_index\":0,\"last_index\":4,\"last_term\":2,\"term\":2}\n{\"commit_index\":0,\"conflict_index\":0,\"last_index\":4,\"last_term\":2,\"success\":true,\"term\":2}\n{\"commit_index\":0,\"last_index\":4,\"last_term\":2,\"term\":2,\"terms\":[1,1,2,2]}\n{\"commit_index\":0,\"conflict_index\":0,\"last_index\":3,\"last_term\":3,\"success\":true,\"term\":2}\n{\"commit_index\":0,\"last_index\":3,\"last_term\":3,\"term\":2,\"terms\":[1,1,3]}",
+		"response_hex": "7b22636f6d6d69745f696e646578223a302c226c6173745f696e646578223a342c226c6173745f7465726d223a322c227465726d223a327d0a7b22636f6d6d69745f696e646578223a302c22636f6e666c6963745f696e646578223a302c226c6173745f696e646578223a342c226c6173745f7465726d223a322c2273756363657373223a747275652c227465726d223a327d0a7b22636f6d6d69745f696e646578223a302c226c6173745f696e646578223a342c226c6173745f7465726d223a322c227465726d223a322c227465726d73223a5b312c312c322c325d7d0a7b22636f6d6d69745f696e646578223a302c22636f6e666c6963745f696e646578223a302c226c6173745f696e646578223a332c226c6173745f7465726d223a332c2273756363657373223a747275652c227465726d223a327d0a7b22636f6d6d69745f696e646578223a302c226c6173745f696e646578223a332c226c6173745f7465726d223a332c227465726d223a322c227465726d73223a5b312c312c335d7d",
+		"note": "Both appends pass the consistency check at index 1 and 2, and both overlap entries the follower already has. Only the second one disagrees about a term, and only it is allowed to truncate. Deleting from prev_index + 1 unconditionally would throw away indexes 3 and 4 on the first message, and they may already be committed.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "A follower that is missing entries",
+		"kind": "primitives",
+		"request": "two appends the follower cannot accept: one past its end, one disagreeing\n\n./your_program.sh raft-log\ninit [1,1]\nappend 3 5 2 0 [3]\nappend 3 2 9 0 [3]",
+		"request_hex": "2e2f796f75725f70726f6772616d2e736820726166742d6c6f670a696e6974205b312c315d0a617070656e642033203520322030205b335d0a617070656e642033203220392030205b335d",
+		"response": "success false both times, with conflict_index 3 and then 1\n\n{\"commit_index\":0,\"last_index\":2,\"last_term\":1,\"term\":1}\n{\"commit_index\":0,\"conflict_index\":3,\"last_index\":2,\"last_term\":1,\"success\":false,\"term\":3}\n{\"commit_index\":0,\"conflict_index\":1,\"last_index\":2,\"last_term\":1,\"success\":false,\"term\":3}",
+		"response_hex": "7b22636f6d6d69745f696e646578223a302c226c6173745f696e646578223a322c226c6173745f7465726d223a312c227465726d223a317d0a7b22636f6d6d69745f696e646578223a302c22636f6e666c6963745f696e646578223a332c226c6173745f696e646578223a322c226c6173745f7465726d223a312c2273756363657373223a66616c73652c227465726d223a337d0a7b22636f6d6d69745f696e646578223a302c22636f6e666c6963745f696e646578223a312c226c6173745f696e646578223a322c226c6173745f7465726d223a312c2273756363657373223a66616c73652c227465726d223a337d",
+		"note": "The conflict index is what saves the leader from backing up one entry per round trip. Past the end it is the first index the follower lacks; on a term mismatch it is the first index of the run holding the wrong term, so the leader skips the whole term in one go.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

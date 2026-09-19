@@ -1,0 +1,24 @@
+[
+	{
+		"title": "One message, delivered twice",
+		"kind": "primitives",
+		"request": "an unbounded table, one id delivered twice and another once\n\n./your_program.sh dedup\ninit 0\ndeliver m1 100\ndeliver m1 100\ndeliver m2 5\nstate",
+		"request_hex": "2e2f796f75725f70726f6772616d2e73682064656475700a696e697420300a64656c69766572206d31203130300a64656c69766572206d31203130300a64656c69766572206d3220350a7374617465",
+		"response": "the second copy applies nothing and the total stays at 100, then 105\n\n{\"seen\":0,\"total\":0,\"window\":0}\n{\"applied\":true,\"duplicate\":false,\"seen\":1,\"total\":100}\n{\"applied\":false,\"duplicate\":true,\"seen\":1,\"total\":100}\n{\"applied\":true,\"duplicate\":false,\"seen\":2,\"total\":105}\n{\"applied\":2,\"ids\":[\"m1\",\"m2\"],\"seen\":2,\"total\":105}",
+		"response_hex": "7b227365656e223a302c22746f74616c223a302c2277696e646f77223a307d0a7b226170706c696564223a747275652c226475706c6963617465223a66616c73652c227365656e223a312c22746f74616c223a3130307d0a7b226170706c696564223a66616c73652c226475706c6963617465223a747275652c227365656e223a312c22746f74616c223a3130307d0a7b226170706c696564223a747275652c226475706c6963617465223a66616c73652c227365656e223a322c22746f74616c223a3130357d0a7b226170706c696564223a322c22696473223a5b226d31222c226d32225d2c227365656e223a322c22746f74616c223a3130357d",
+		"note": "The lookup has to happen before the effect and in the same transaction as it, or a crash between the two turns the dedup table into a second copy of the original problem. Recording the id afterwards is the most common way to get this wrong and the hardest to notice.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "The window running out",
+		"kind": "primitives",
+		"request": "a table of three ids, and a fifth delivery of an id it has evicted\n\n./your_program.sh dedup\ninit 3\ndeliver m1 10\ndeliver m2 10\ndeliver m3 10\ndeliver m4 10\ndeliver m1 10\nguarantee",
+		"request_hex": "2e2f796f75725f70726f6772616d2e73682064656475700a696e697420330a64656c69766572206d312031300a64656c69766572206d322031300a64656c69766572206d332031300a64656c69766572206d342031300a64656c69766572206d312031300a67756172616e746565",
+		"response": "m1 is applied a second time and the guarantee reports itself broken\n\n{\"seen\":0,\"total\":0,\"window\":3}\n{\"applied\":true,\"duplicate\":false,\"seen\":1,\"total\":10}\n{\"applied\":true,\"duplicate\":false,\"seen\":2,\"total\":20}\n{\"applied\":true,\"duplicate\":false,\"seen\":3,\"total\":30}\n{\"applied\":true,\"duplicate\":false,\"seen\":3,\"total\":40}\n{\"applied\":true,\"duplicate\":false,\"seen\":3,\"total\":50}\n{\"exactly_once\":false,\"reason\":\"a delivered id has been forgotten\"}",
+		"response_hex": "7b227365656e223a302c22746f74616c223a302c2277696e646f77223a337d0a7b226170706c696564223a747275652c226475706c6963617465223a66616c73652c227365656e223a312c22746f74616c223a31307d0a7b226170706c696564223a747275652c226475706c6963617465223a66616c73652c227365656e223a322c22746f74616c223a32307d0a7b226170706c696564223a747275652c226475706c6963617465223a66616c73652c227365656e223a332c22746f74616c223a33307d0a7b226170706c696564223a747275652c226475706c6963617465223a66616c73652c227365656e223a332c22746f74616c223a34307d0a7b226170706c696564223a747275652c226475706c6963617465223a66616c73652c227365656e223a332c22746f74616c223a35307d0a7b2265786163746c795f6f6e6365223a66616c73652c22726561736f6e223a22612064656c69766572656420696420686173206265656e20666f72676f7474656e227d",
+		"note": "Nothing is wrong with the consumer here: it is doing exactly what it was built to do. The guarantee is simply bounded by how long the table remembers, so the window has to outlive the broker's retry horizon. This is why 'exactly-once' is a property of a system's configuration and not of a protocol.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

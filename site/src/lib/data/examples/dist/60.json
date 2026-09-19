@@ -1,0 +1,24 @@
+[
+	{
+		"title": "Two majorities that never meet",
+		"kind": "primitives",
+		"request": "a cluster moving from {s1,s2,s3} to {s3,s4,s5}, and three sets of voters\n\n./your_program.sh raft-membership\ninit [\"s1\",\"s2\",\"s3\"]\njoint [\"s3\",\"s4\",\"s5\"]\nagree [\"s1\",\"s2\"]\nagree [\"s4\",\"s5\"]\nagree [\"s1\",\"s2\",\"s3\",\"s4\"]",
+		"request_hex": "2e2f796f75725f70726f6772616d2e736820726166742d6d656d626572736869700a696e6974205b227331222c227332222c227333225d0a6a6f696e74205b227333222c227334222c227335225d0a6167726565205b227331222c227332225d0a6167726565205b227334222c227335225d0a6167726565205b227331222c227332222c227333222c227334225d",
+		"response": "old only, new only, and finally old and new\n\n{\"members\":[\"s1\",\"s2\",\"s3\"],\"phase\":\"stable\",\"quorum\":2}\n{\"new\":[\"s3\",\"s4\",\"s5\"],\"ok\":true,\"old\":[\"s1\",\"s2\",\"s3\"],\"phase\":\"joint\",\"quorum_new\":2,\"quorum_old\":2}\n{\"ok\":false,\"reason\":\"old only\"}\n{\"ok\":false,\"reason\":\"new only\"}\n{\"ok\":true,\"reason\":\"old and new\"}",
+		"response_hex": "7b226d656d62657273223a5b227331222c227332222c227333225d2c227068617365223a22737461626c65222c2271756f72756d223a327d0a7b226e6577223a5b227333222c227334222c227335225d2c226f6b223a747275652c226f6c64223a5b227331222c227332222c227333225d2c227068617365223a226a6f696e74222c2271756f72756d5f6e6577223a322c2271756f72756d5f6f6c64223a327d0a7b226f6b223a66616c73652c22726561736f6e223a226f6c64206f6e6c79227d0a7b226f6b223a66616c73652c22726561736f6e223a226e6577206f6e6c79227d0a7b226f6b223a747275652c22726561736f6e223a226f6c6420616e64206e6577227d",
+		"note": "{s1,s2} is a majority of the old configuration and {s4,s5} of the new, and the two sets are disjoint. Switch directly from C_old to C_new and both could elect a leader in the same term, which is the one thing Raft promises cannot happen. In the joint phase neither carries the decision, so neither can.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "One change at a time",
+		"kind": "primitives",
+		"request": "two single-server additions, the second attempted before the first commits\n\n./your_program.sh raft-membership\ninit [\"s1\",\"s2\",\"s3\"]\nadd s4\nstate\nadd s5\ncommit-change\nadd s5\nstate",
+		"request_hex": "2e2f796f75725f70726f6772616d2e736820726166742d6d656d626572736869700a696e6974205b227331222c227332222c227333225d0a6164642073340a73746174650a6164642073350a636f6d6d69742d6368616e67650a6164642073350a7374617465",
+		"response": "the second is refused; after commit-change it is accepted\n\n{\"members\":[\"s1\",\"s2\",\"s3\"],\"phase\":\"stable\",\"quorum\":2}\n{\"members\":[\"s1\",\"s2\",\"s3\",\"s4\"],\"ok\":true,\"phase\":\"pending\",\"quorum\":3}\n{\"members\":[\"s1\",\"s2\",\"s3\",\"s4\"],\"phase\":\"pending\",\"quorum\":3}\n{\"error\":\"a configuration change is already in flight\",\"members\":[\"s1\",\"s2\",\"s3\",\"s4\"],\"ok\":false,\"phase\":\"pending\",\"quorum\":3}\n{\"members\":[\"s1\",\"s2\",\"s3\",\"s4\"],\"ok\":true,\"phase\":\"stable\",\"quorum\":3}\n{\"members\":[\"s1\",\"s2\",\"s3\",\"s4\",\"s5\"],\"ok\":true,\"phase\":\"pending\",\"quorum\":3}\n{\"members\":[\"s1\",\"s2\",\"s3\",\"s4\",\"s5\"],\"phase\":\"pending\",\"quorum\":3}",
+		"response_hex": "7b226d656d62657273223a5b227331222c227332222c227333225d2c227068617365223a22737461626c65222c2271756f72756d223a327d0a7b226d656d62657273223a5b227331222c227332222c227333222c227334225d2c226f6b223a747275652c227068617365223a2270656e64696e67222c2271756f72756d223a337d0a7b226d656d62657273223a5b227331222c227332222c227333222c227334225d2c227068617365223a2270656e64696e67222c2271756f72756d223a337d0a7b226572726f72223a226120636f6e66696775726174696f6e206368616e676520697320616c726561647920696e20666c69676874222c226d656d62657273223a5b227331222c227332222c227333222c227334225d2c226f6b223a66616c73652c227068617365223a2270656e64696e67222c2271756f72756d223a337d0a7b226d656d62657273223a5b227331222c227332222c227333222c227334225d2c226f6b223a747275652c227068617365223a22737461626c65222c2271756f72756d223a337d0a7b226d656d62657273223a5b227331222c227332222c227333222c227334222c227335225d2c226f6b223a747275652c227068617365223a2270656e64696e67222c2271756f72756d223a337d0a7b226d656d62657273223a5b227331222c227332222c227333222c227334222c227335225d2c227068617365223a2270656e64696e67222c2271756f72756d223a337d",
+		"note": "A single-server change is safe on its own because the old and new majorities always overlap — three of four still contains two of three. Two overlapping changes give that up: {s1,s2,s3} to {s1,s2,s3,s4} to {s1,s2,s3,s4,s5} has {s1,s2} deciding for the first and {s3,s4,s5} for the last, and they are disjoint again.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

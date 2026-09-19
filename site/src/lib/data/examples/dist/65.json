@@ -1,0 +1,24 @@
+[
+	{
+		"title": "A participant that crashed while prepared",
+		"kind": "primitives",
+		"request": "a yes vote, a crash, and then a restart\n\n./your_program.sh commit-recovery\ninit p1\nbegin tx1\nprepare tx1 yes\ncrash\noutcome tx1\nrecover\noutcome tx1",
+		"request_hex": "2e2f796f75725f70726f6772616d2e736820636f6d6d69742d7265636f766572790a696e69742070310a626567696e207478310a7072657061726520747831207965730a63726173680a6f7574636f6d65207478310a7265636f7665720a6f7574636f6d6520747831",
+		"response": "unknown while it is down, and prepared once it has read its own log back\n\n{\"log\":[],\"ok\":true}\n{\"state\":\"working\"}\n{\"logged\":\"prepared\",\"state\":\"prepared\",\"vote\":\"yes\"}\n{\"lost\":\"volatile state\",\"ok\":true}\n{\"applied\":false,\"state\":\"unknown\"}\n{\"actions\":{\"tx1\":\"ask-coordinator\"},\"decided\":[],\"pending\":[\"tx1\"]}\n{\"applied\":false,\"state\":\"prepared\"}",
+		"response_hex": "7b226c6f67223a5b5d2c226f6b223a747275657d0a7b227374617465223a22776f726b696e67227d0a7b226c6f67676564223a227072657061726564222c227374617465223a227072657061726564222c22766f7465223a22796573227d0a7b226c6f7374223a22766f6c6174696c65207374617465222c226f6b223a747275657d0a7b226170706c696564223a66616c73652c227374617465223a22756e6b6e6f776e227d0a7b22616374696f6e73223a7b22747831223a2261736b2d636f6f7264696e61746f72227d2c2264656369646564223a5b5d2c2270656e64696e67223a5b22747831225d7d0a7b226170706c696564223a66616c73652c227374617465223a227072657061726564227d",
+		"note": "The crash took everything the process believed and left the log untouched. `prepared` is the honest answer and the only safe one: the coordinator may have committed, and it may have aborted, and nothing on this machine can tell which.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "A commit whose effect never landed",
+		"kind": "primitives",
+		"request": "a decision written to the log, and a crash before the store was touched\n\n./your_program.sh commit-recovery\ninit p1\nbegin tx1\nprepare tx1 yes\ndecide tx1 commit\ncrash\nrecover\noutcome tx1",
+		"request_hex": "2e2f796f75725f70726f6772616d2e736820636f6d6d69742d7265636f766572790a696e69742070310a626567696e207478310a7072657061726520747831207965730a6465636964652074783120636f6d6d69740a63726173680a7265636f7665720a6f7574636f6d6520747831",
+		"response": "committed with applied false, and an action of redo\n\n{\"log\":[],\"ok\":true}\n{\"state\":\"working\"}\n{\"logged\":\"prepared\",\"state\":\"prepared\",\"vote\":\"yes\"}\n{\"logged\":\"commit\",\"state\":\"committed\"}\n{\"lost\":\"volatile state\",\"ok\":true}\n{\"actions\":{\"tx1\":\"redo\"},\"decided\":[\"tx1\"],\"pending\":[]}\n{\"applied\":false,\"state\":\"committed\"}",
+		"response_hex": "7b226c6f67223a5b5d2c226f6b223a747275657d0a7b227374617465223a22776f726b696e67227d0a7b226c6f67676564223a227072657061726564222c227374617465223a227072657061726564222c22766f7465223a22796573227d0a7b226c6f67676564223a22636f6d6d6974222c227374617465223a22636f6d6d6974746564227d0a7b226c6f7374223a22766f6c6174696c65207374617465222c226f6b223a747275657d0a7b22616374696f6e73223a7b22747831223a227265646f227d2c2264656369646564223a5b22747831225d2c2270656e64696e67223a5b5d7d0a7b226170706c696564223a66616c73652c227374617465223a22636f6d6d6974746564227d",
+		"note": "Logging the decision before applying it is what makes this recoverable at all. Recovery redoes the effect from the record; because redo is idempotent, doing it again after a second crash costs nothing.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

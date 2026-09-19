@@ -1,0 +1,24 @@
+[
+	{
+		"title": "A paused holder, fenced out",
+		"kind": "primitives",
+		"request": "c1 takes the lock and stalls, the lease expires, c2 takes it and writes\n\n./your_program.sh fencing\nacquire c1\nexpire\nacquire c2\nwrite c2 2 v2\nwrite c1 1 v1\nstate",
+		"request_hex": "2e2f796f75725f70726f6772616d2e73682066656e63696e670a616371756972652063310a6578706972650a616371756972652063320a777269746520633220322076320a777269746520633120312076310a7374617465",
+		"response": "c2's write is accepted and raises the fence to 2; c1's write is refused\n\n{\"granted\":true,\"holder\":\"c1\",\"token\":1}\n{\"expired\":\"c1\",\"holder\":null}\n{\"granted\":true,\"holder\":\"c2\",\"token\":2}\n{\"fence\":2,\"ok\":true,\"reason\":\"accepted\",\"value\":\"v2\"}\n{\"fence\":2,\"ok\":false,\"reason\":\"stale token\",\"value\":\"v2\"}\n{\"fence\":2,\"holder\":\"c2\",\"token\":2,\"value\":\"v2\",\"writes\":[\"c2:v2\"]}",
+		"response_hex": "7b226772616e746564223a747275652c22686f6c646572223a226331222c22746f6b656e223a317d0a7b2265787069726564223a226331222c22686f6c646572223a6e756c6c7d0a7b226772616e746564223a747275652c22686f6c646572223a226332222c22746f6b656e223a327d0a7b2266656e6365223a322c226f6b223a747275652c22726561736f6e223a226163636570746564222c2276616c7565223a227632227d0a7b2266656e6365223a322c226f6b223a66616c73652c22726561736f6e223a227374616c6520746f6b656e222c2276616c7565223a227632227d0a7b2266656e6365223a322c22686f6c646572223a226332222c22746f6b656e223a322c2276616c7565223a227632222c22777269746573223a5b2263323a7632225d7d",
+		"note": "c1 is not misbehaving: from its own point of view it holds the lock and is writing exactly once. Nothing it can check tells it otherwise, because the pause happened after the check. Only the resource, comparing token 1 against a fence of 2, is in a position to notice.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "The same story with no fence",
+		"kind": "primitives",
+		"request": "the identical sequence against a resource that does not check tokens\n\n./your_program.sh fencing\nacquire c1\nexpire\nacquire c2\nwrite-unfenced c2 v2\nwrite-unfenced c1 v1\nstate",
+		"request_hex": "2e2f796f75725f70726f6772616d2e73682066656e63696e670a616371756972652063310a6578706972650a616371756972652063320a77726974652d756e66656e6365642063322076320a77726974652d756e66656e6365642063312076310a7374617465",
+		"response": "c1's stale write lands last and the resource holds v1\n\n{\"granted\":true,\"holder\":\"c1\",\"token\":1}\n{\"expired\":\"c1\",\"holder\":null}\n{\"granted\":true,\"holder\":\"c2\",\"token\":2}\n{\"ok\":true,\"value\":\"v2\"}\n{\"ok\":true,\"value\":\"v1\"}\n{\"fence\":0,\"holder\":\"c2\",\"token\":2,\"value\":\"v1\",\"writes\":[\"c2:v2\",\"c1:v1\"]}",
+		"response_hex": "7b226772616e746564223a747275652c22686f6c646572223a226331222c22746f6b656e223a317d0a7b2265787069726564223a226331222c22686f6c646572223a6e756c6c7d0a7b226772616e746564223a747275652c22686f6c646572223a226332222c22746f6b656e223a327d0a7b226f6b223a747275652c2276616c7565223a227632227d0a7b226f6b223a747275652c2276616c7565223a227631227d0a7b2266656e6365223a302c22686f6c646572223a226332222c22746f6b656e223a322c2276616c7565223a227631222c22777269746573223a5b2263323a7632222c2263313a7631225d7d",
+		"note": "This is the failure the pattern exists to prevent, and it is silent: no error is reported anywhere, the lock service behaved correctly throughout, and the data is simply wrong afterwards.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

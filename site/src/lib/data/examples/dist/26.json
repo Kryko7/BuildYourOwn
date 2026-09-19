@@ -4,8 +4,8 @@
 		"kind": "node",
 		"request": "the key `mv` as the store held it at revision 2\n\nPOST /v3/kv/range\n{\n  \"key\": \"bXY=\",\n  \"revision\": \"2\"\n}",
 		"request_hex": "7b226b6579223a226258593d222c227265766973696f6e223a2232227d",
-		"response": "the first value, alongside a header whose revision is the current one\n\nHTTP 200 OK\n{\n  \"count\": \"1\",\n  \"header\": {\n    \"cluster_id\": \"5362496128757657102\",\n    \"member_id\": \"10309688420055604722\",\n    \"raft_term\": \"2\",\n    \"revision\": \"3\"\n  },\n  \"kvs\": [\n    {\n      \"create_revision\": \"2\",\n      \"key\": \"bXY=\",\n      \"mod_revision\": \"2\",\n      \"value\": \"b25l\",\n      \"version\": \"1\"\n    }\n  ]\n}",
-		"response_hex": "7b22686561646572223a7b22636c75737465725f6964223a2235333632343936313238373537363537313032222c226d656d6265725f6964223a223130333039363838343230303535363034373232222c227265766973696f6e223a2233222c22726166745f7465726d223a2232227d2c226b7673223a5b7b226b6579223a226258593d222c226372656174655f7265766973696f6e223a2232222c226d6f645f7265766973696f6e223a2232222c2276657273696f6e223a2231222c2276616c7565223a226232356c227d5d2c22636f756e74223a2231227d",
+		"response": "the first value, alongside a header whose revision is the current one\n\nHTTP 200 OK\n{\n  \"count\": \"1\",\n  \"header\": {\n    \"cluster_id\": \"6173834820641950006\",\n    \"member_id\": \"10622250156504501620\",\n    \"raft_term\": \"2\",\n    \"revision\": \"3\"\n  },\n  \"kvs\": [\n    {\n      \"create_revision\": \"2\",\n      \"key\": \"bXY=\",\n      \"mod_revision\": \"2\",\n      \"value\": \"b25l\",\n      \"version\": \"1\"\n    }\n  ]\n}",
+		"response_hex": "7b22686561646572223a7b22636c75737465725f6964223a2236313733383334383230363431393530303036222c226d656d6265725f6964223a223130363232323530313536353034353031363230222c227265766973696f6e223a2233222c22726166745f7465726d223a2232227d2c226b7673223a5b7b226b6579223a226258593d222c226372656174655f7265766973696f6e223a2232222c226d6f645f7265766973696f6e223a2232222c2276657273696f6e223a2231222c2276616c7565223a226232356c227d5d2c22636f756e74223a2231227d",
 		"note": "The kv carries the revisions it had then — mod_revision 2, version 1 — while the header carries the store's clock now. Nothing about a historical read rewinds the header.",
 		"request_fields": [
 			{
@@ -27,7 +27,7 @@
 				"offset": 1,
 				"length": 8,
 				"field": "response.header",
-				"value": "{\"cluster_id\":\"5362496128757657102\",\"member_id\":\"10309688420055604722\",\"raft_term\":\"2\",\"revision\":\"3\"}",
+				"value": "{\"cluster_id\":\"6173834820641950006\",\"member_id\":\"10622250156504501620\",\"raft_term\":\"2\",\"revision\":\"3\"}",
 				"varies": true
 			},
 			{

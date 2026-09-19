@@ -1,0 +1,24 @@
+[
+	{
+		"title": "A lease and the margin at its end",
+		"kind": "primitives",
+		"request": "a one-second lease with a hundred milliseconds of clock error\n\n./your_program.sh leases\ninit 1000 100\ngrant n1 0\nread n1 899\nread n1 900\nread n1 1000",
+		"request_hex": "2e2f796f75725f70726f6772616d2e7368206c65617365730a696e69742031303030203130300a6772616e74206e3120300a72656164206e31203839390a72656164206e31203930300a72656164206e312031303030",
+		"response": "served until 899, then refused inside the margin, then expired\n\n{\"clock_error_ms\":100,\"lease_ms\":1000}\n{\"expires_at\":1000,\"holder\":\"n1\",\"ok\":true,\"safe_until\":900}\n{\"reason\":\"holds the lease\",\"served\":true}\n{\"reason\":\"inside the clock-error margin\",\"served\":false}\n{\"reason\":\"the lease has expired\",\"served\":false}",
+		"response_hex": "7b22636c6f636b5f6572726f725f6d73223a3130302c226c656173655f6d73223a313030307d0a7b22657870697265735f6174223a313030302c22686f6c646572223a226e31222c226f6b223a747275652c22736166655f756e74696c223a3930307d0a7b22726561736f6e223a22686f6c647320746865206c65617365222c22736572766564223a747275657d0a7b22726561736f6e223a22696e736964652074686520636c6f636b2d6572726f72206d617267696e222c22736572766564223a66616c73657d0a7b22726561736f6e223a22746865206c65617365206861732065787069726564222c22736572766564223a66616c73657d",
+		"note": "The lease runs to 1000 but the leader stops serving at 900. The hundred milliseconds it gives up are not waste: they are the amount by which its own clock might be behind, and serving into them is how two leaders end up answering reads in the same instant.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "The window at the other end",
+		"kind": "primitives",
+		"request": "a second node asking for the lease at and after the nominal expiry\n\n./your_program.sh leases\ninit 1000 100\ngrant n1 0\ngrant n2 1000\ngrant n2 1099\ngrant n2 1100",
+		"request_hex": "2e2f796f75725f70726f6772616d2e7368206c65617365730a696e69742031303030203130300a6772616e74206e3120300a6772616e74206e3220313030300a6772616e74206e3220313039390a6772616e74206e322031313030",
+		"response": "refused at 1000 and 1099, granted at 1100\n\n{\"clock_error_ms\":100,\"lease_ms\":1000}\n{\"expires_at\":1000,\"holder\":\"n1\",\"ok\":true,\"safe_until\":900}\n{\"error\":\"the previous lease may still be live\",\"expires_at\":1000,\"holder\":\"n1\",\"ok\":false,\"safe_until\":900}\n{\"error\":\"the previous lease may still be live\",\"expires_at\":1000,\"holder\":\"n1\",\"ok\":false,\"safe_until\":900}\n{\"expires_at\":2100,\"holder\":\"n2\",\"ok\":true,\"safe_until\":2000}",
+		"response_hex": "7b22636c6f636b5f6572726f725f6d73223a3130302c226c656173655f6d73223a313030307d0a7b22657870697265735f6174223a313030302c22686f6c646572223a226e31222c226f6b223a747275652c22736166655f756e74696c223a3930307d0a7b226572726f72223a227468652070726576696f7573206c65617365206d6179207374696c6c206265206c697665222c22657870697265735f6174223a313030302c22686f6c646572223a226e31222c226f6b223a66616c73652c22736166655f756e74696c223a3930307d0a7b226572726f72223a227468652070726576696f7573206c65617365206d6179207374696c6c206265206c697665222c22657870697265735f6174223a313030302c22686f6c646572223a226e31222c226f6b223a66616c73652c22736166655f756e74696c223a3930307d0a7b22657870697265735f6174223a323130302c22686f6c646572223a226e32222c226f6b223a747275652c22736166655f756e74696c223a323030307d",
+		"note": "Granting at 1000 looks obviously safe and is not: the old holder's clock may be running a hundred milliseconds slow, so it can still believe the lease is live. The error budget is spent twice — once shortening the holder's window and once lengthening the granter's wait.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

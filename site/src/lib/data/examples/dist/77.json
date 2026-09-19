@@ -1,0 +1,24 @@
+[
+	{
+		"title": "Two pools, one of them saturated",
+		"kind": "primitives",
+		"request": "a pool per dependency, and a third call to the one that is already full\n\n./your_program.sh bulkhead\ninit {\"a\":2,\"b\":2}\ncall a x1 0\ncall a x2 0\ncall a x3 0\ncall b y1 0\nstats",
+		"request_hex": "2e2f796f75725f70726f6772616d2e73682062756c6b686561640a696e6974207b2261223a322c2262223a327d0a63616c6c206120783120300a63616c6c206120783220300a63616c6c206120783320300a63616c6c206220793120300a7374617473",
+		"response": "a rejects its third call while b admits its first without noticing\n\n{\"pools\":{\"a\":{\"limit\":2},\"b\":{\"limit\":2}}}\n{\"admitted\":true,\"inflight\":1,\"pool\":\"a\",\"reason\":\"admitted\",\"rejected\":0}\n{\"admitted\":true,\"inflight\":2,\"pool\":\"a\",\"reason\":\"admitted\",\"rejected\":0}\n{\"admitted\":false,\"inflight\":2,\"pool\":\"a\",\"reason\":\"pool is full\",\"rejected\":1}\n{\"admitted\":true,\"inflight\":1,\"pool\":\"b\",\"reason\":\"admitted\",\"rejected\":0}\n{\"pools\":{\"a\":{\"admitted\":2,\"inflight\":2,\"rejected\":1,\"shed\":0},\"b\":{\"admitted\":1,\"inflight\":1,\"rejected\":0,\"shed\":0}},\"total_rejected\":1}",
+		"response_hex": "7b22706f6f6c73223a7b2261223a7b226c696d6974223a327d2c2262223a7b226c696d6974223a327d7d7d0a7b2261646d6974746564223a747275652c22696e666c69676874223a312c22706f6f6c223a2261222c22726561736f6e223a2261646d6974746564222c2272656a6563746564223a307d0a7b2261646d6974746564223a747275652c22696e666c69676874223a322c22706f6f6c223a2261222c22726561736f6e223a2261646d6974746564222c2272656a6563746564223a307d0a7b2261646d6974746564223a66616c73652c22696e666c69676874223a322c22706f6f6c223a2261222c22726561736f6e223a22706f6f6c2069732066756c6c222c2272656a6563746564223a317d0a7b2261646d6974746564223a747275652c22696e666c69676874223a312c22706f6f6c223a2262222c22726561736f6e223a2261646d6974746564222c2272656a6563746564223a307d0a7b22706f6f6c73223a7b2261223a7b2261646d6974746564223a322c22696e666c69676874223a322c2272656a6563746564223a312c2273686564223a307d2c2262223a7b2261646d6974746564223a312c22696e666c69676874223a312c2272656a6563746564223a302c2273686564223a307d7d2c22746f74616c5f72656a6563746564223a317d",
+		"note": "The rejection is the feature. Queueing x3 instead would hold a caller, a connection and a timeout's worth of latency on a dependency that has already shown it cannot keep up, and it is the queue — not the slow dependency — that eventually takes the whole service down.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "The same traffic with no bulkhead",
+		"kind": "primitives",
+		"request": "the identical four calls against one pool shared by both dependencies\n\n./your_program.sh bulkhead\ninit-shared 2\ncall shared x1 0\ncall shared x2 0\ncall shared y1 0\nstats",
+		"request_hex": "2e2f796f75725f70726f6772616d2e73682062756c6b686561640a696e69742d73686172656420320a63616c6c2073686172656420783120300a63616c6c2073686172656420783220300a63616c6c2073686172656420793120300a7374617473",
+		"response": "y1 is rejected, although nothing is wrong with the dependency it was for\n\n{\"pools\":{\"shared\":{\"limit\":2}}}\n{\"admitted\":true,\"inflight\":1,\"pool\":\"shared\",\"reason\":\"admitted\",\"rejected\":0}\n{\"admitted\":true,\"inflight\":2,\"pool\":\"shared\",\"reason\":\"admitted\",\"rejected\":0}\n{\"admitted\":false,\"inflight\":2,\"pool\":\"shared\",\"reason\":\"pool is full\",\"rejected\":1}\n{\"pools\":{\"shared\":{\"admitted\":2,\"inflight\":2,\"rejected\":1,\"shed\":0}},\"total_rejected\":1}",
+		"response_hex": "7b22706f6f6c73223a7b22736861726564223a7b226c696d6974223a327d7d7d0a7b2261646d6974746564223a747275652c22696e666c69676874223a312c22706f6f6c223a22736861726564222c22726561736f6e223a2261646d6974746564222c2272656a6563746564223a307d0a7b2261646d6974746564223a747275652c22696e666c69676874223a322c22706f6f6c223a22736861726564222c22726561736f6e223a2261646d6974746564222c2272656a6563746564223a307d0a7b2261646d6974746564223a66616c73652c22696e666c69676874223a322c22706f6f6c223a22736861726564222c22726561736f6e223a22706f6f6c2069732066756c6c222c2272656a6563746564223a317d0a7b22706f6f6c73223a7b22736861726564223a7b2261646d6974746564223a322c22696e666c69676874223a322c2272656a6563746564223a312c2273686564223a307d7d2c22746f74616c5f72656a6563746564223a317d",
+		"note": "Nothing here is broken and nothing is misconfigured. One dependency simply got there first, and the caller that is refused is the one that would have succeeded. This is the failure the whole pattern exists to prevent.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

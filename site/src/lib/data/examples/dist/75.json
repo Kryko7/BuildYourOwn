@@ -1,0 +1,24 @@
+[
+	{
+		"title": "Three failures and the window that follows",
+		"kind": "primitives",
+		"request": "a breaker that gives up after three failures and stays open for a second\n\n./your_program.sh circuit-breaker\ninit 3 1000 2\ncall 0 fail\ncall 10 fail\ncall 20 fail\ncall 500 fail\nstate 500",
+		"request_hex": "2e2f796f75725f70726f6772616d2e736820636972637569742d627265616b65720a696e69742033203130303020320a63616c6c2030206661696c0a63616c6c203130206661696c0a63616c6c203230206661696c0a63616c6c20353030206661696c0a737461746520353030",
+		"response": "the third failure opens it; the fourth call is refused without being sent\n\n{\"failures\":0,\"state\":\"closed\",\"successes\":0}\n{\"allowed\":true,\"failures\":1,\"reason\":\"attempted\",\"state\":\"closed\",\"successes\":0}\n{\"allowed\":true,\"failures\":2,\"reason\":\"attempted\",\"state\":\"closed\",\"successes\":0}\n{\"allowed\":true,\"failures\":3,\"reason\":\"attempted\",\"state\":\"open\",\"successes\":0}\n{\"allowed\":false,\"failures\":3,\"reason\":\"rejected while open\",\"state\":\"open\",\"successes\":0}\n{\"failures\":3,\"opened_at\":20,\"retry_at\":1020,\"state\":\"open\",\"successes\":0}",
+		"response_hex": "7b226661696c75726573223a302c227374617465223a22636c6f736564222c22737563636573736573223a307d0a7b22616c6c6f776564223a747275652c226661696c75726573223a312c22726561736f6e223a22617474656d70746564222c227374617465223a22636c6f736564222c22737563636573736573223a307d0a7b22616c6c6f776564223a747275652c226661696c75726573223a322c22726561736f6e223a22617474656d70746564222c227374617465223a22636c6f736564222c22737563636573736573223a307d0a7b22616c6c6f776564223a747275652c226661696c75726573223a332c22726561736f6e223a22617474656d70746564222c227374617465223a226f70656e222c22737563636573736573223a307d0a7b22616c6c6f776564223a66616c73652c226661696c75726573223a332c22726561736f6e223a2272656a6563746564207768696c65206f70656e222c227374617465223a226f70656e222c22737563636573736573223a307d0a7b226661696c75726573223a332c226f70656e65645f6174223a32302c2272657472795f6174223a313032302c227374617465223a226f70656e222c22737563636573736573223a307d",
+		"note": "Look at `failures` in the last two answers: it is 3 both times. The refused call never reached the dependency, so counting it as a failure would be counting the breaker's own traffic as evidence and would hold the circuit open for as long as anyone kept calling.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "The trial at the edge of the window",
+		"kind": "primitives",
+		"request": "a breaker opened at zero, probed one millisecond early and then on time\n\n./your_program.sh circuit-breaker\ninit 1 1000 2\ncall 0 fail\ncall 999 ok\nstate 1000\ncall 1000 ok\ncall 1010 ok",
+		"request_hex": "2e2f796f75725f70726f6772616d2e736820636972637569742d627265616b65720a696e69742031203130303020320a63616c6c2030206661696c0a63616c6c20393939206f6b0a737461746520313030300a63616c6c2031303030206f6b0a63616c6c2031303130206f6b",
+		"response": "refused at 999, half-open at 1000, and closed again after two good trials\n\n{\"failures\":0,\"state\":\"closed\",\"successes\":0}\n{\"allowed\":true,\"failures\":1,\"reason\":\"attempted\",\"state\":\"open\",\"successes\":0}\n{\"allowed\":false,\"failures\":1,\"reason\":\"rejected while open\",\"state\":\"open\",\"successes\":0}\n{\"failures\":1,\"opened_at\":0,\"retry_at\":1000,\"state\":\"half-open\",\"successes\":0}\n{\"allowed\":true,\"failures\":1,\"reason\":\"trial\",\"state\":\"half-open\",\"successes\":1}\n{\"allowed\":true,\"failures\":0,\"reason\":\"trial\",\"state\":\"closed\",\"successes\":0}",
+		"response_hex": "7b226661696c75726573223a302c227374617465223a22636c6f736564222c22737563636573736573223a307d0a7b22616c6c6f776564223a747275652c226661696c75726573223a312c22726561736f6e223a22617474656d70746564222c227374617465223a226f70656e222c22737563636573736573223a307d0a7b22616c6c6f776564223a66616c73652c226661696c75726573223a312c22726561736f6e223a2272656a6563746564207768696c65206f70656e222c227374617465223a226f70656e222c22737563636573736573223a307d0a7b226661696c75726573223a312c226f70656e65645f6174223a302c2272657472795f6174223a313030302c227374617465223a2268616c662d6f70656e222c22737563636573736573223a307d0a7b22616c6c6f776564223a747275652c226661696c75726573223a312c22726561736f6e223a22747269616c222c227374617465223a2268616c662d6f70656e222c22737563636573736573223a317d0a7b22616c6c6f776564223a747275652c226661696c75726573223a302c22726561736f6e223a22747269616c222c227374617465223a22636c6f736564222c22737563636573736573223a307d",
+		"note": "Half-open is not a timer that fires; it is the state the breaker is in when the next call arrives after the window. Nothing happens at 1000 until somebody calls, which is what makes the whole thing free when there is no traffic.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

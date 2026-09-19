@@ -1,0 +1,24 @@
+[
+	{
+		"title": "Eight nodes, fanout one",
+		"kind": "primitives",
+		"request": "a rumour starting at node 0 in a cluster of eight, told to one peer a round\n\n./your_program.sh gossip\ninit 8 1\nround\nround\nround\ninfected",
+		"request_hex": "2e2f796f75725f70726f6772616d2e736820676f737369700a696e6974203820310a726f756e640a726f756e640a726f756e640a696e666563746564",
+		"response": "one, two then four new nodes a round: 1, 2, 4, 8 infected after three rounds\n\n{\"fanout\":1,\"infected\":1,\"nodes\":8,\"round\":0}\n{\"infected\":2,\"messages\":1,\"new\":1,\"round\":1}\n{\"infected\":4,\"messages\":3,\"new\":2,\"round\":2}\n{\"infected\":8,\"messages\":7,\"new\":4,\"round\":3}\n{\"count\":8,\"nodes\":[0,1,2,3,4,5,6,7]}",
+		"response_hex": "7b2266616e6f7574223a312c22696e666563746564223a312c226e6f646573223a382c22726f756e64223a307d0a7b22696e666563746564223a322c226d65737361676573223a312c226e6577223a312c22726f756e64223a317d0a7b22696e666563746564223a342c226d65737361676573223a332c226e6577223a322c22726f756e64223a327d0a7b22696e666563746564223a382c226d65737361676573223a372c226e6577223a342c22726f756e64223a337d0a7b22636f756e74223a382c226e6f646573223a5b302c312c322c332c342c352c362c375d7d",
+		"note": "Three rounds for eight nodes, and it would be ten for a thousand. That growth is the whole reason gossip is used for cluster-wide state: the round count barely notices the cluster getting bigger.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "What a wider fanout costs",
+		"kind": "primitives",
+		"request": "the same thirty-two nodes converged at fanout one and at fanout four\n\n./your_program.sh gossip\ninit 32 1\nconverge\ninit 32 4\nconverge",
+		"request_hex": "2e2f796f75725f70726f6772616d2e736820676f737369700a696e697420333220310a636f6e76657267650a696e697420333220340a636f6e7665726765",
+		"response": "five rounds and 31 messages, against three rounds and 124 messages\n\n{\"fanout\":1,\"infected\":1,\"nodes\":32,\"round\":0}\n{\"infected\":32,\"messages\":31,\"rounds\":5}\n{\"fanout\":4,\"infected\":1,\"nodes\":32,\"round\":0}\n{\"infected\":32,\"messages\":124,\"rounds\":3}",
+		"response_hex": "7b2266616e6f7574223a312c22696e666563746564223a312c226e6f646573223a33322c22726f756e64223a307d0a7b22696e666563746564223a33322c226d65737361676573223a33312c22726f756e6473223a357d0a7b2266616e6f7574223a342c22696e666563746564223a312c226e6f646573223a33322c22726f756e64223a307d0a7b22696e666563746564223a33322c226d65737361676573223a3132342c22726f756e6473223a337d",
+		"note": "Two rounds saved for four times the traffic. The fanout is not a free tuning knob: past a point the extra copies land on nodes that already knew, and the message count keeps climbing while the round count stops falling.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

@@ -5,7 +5,12 @@ import { join, resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parse as parseYaml } from 'yaml';
 import { parsePlan, buildCatalog, testsFromYaml, slugFromFile, auditCounts } from './parse-catalog.mjs';
-import { normalizeCatalog, normalizeKafkaCatalog, mergePlannedStages } from './normalize-catalog.mjs';
+import {
+	normalizeCatalog,
+	normalizeKafkaCatalog,
+	mergePlannedStages,
+	sameButForTimestamp
+} from './normalize-catalog.mjs';
 import { parseTesterPlan as parseKafkaPlan } from './parse-tester-plan.mjs';
 import { kafkaPlaceholderPlan } from './kafka-placeholder.mjs';
 import { placeholderPlan, sectionTitles } from './placeholders.mjs';
@@ -591,5 +596,26 @@ describe('the generated catalogs on disk', () => {
 				expect(JSON.parse(await readFile(file, 'utf8'))).toHaveLength(stage.exampleCount);
 			}
 		}
+	});
+});
+
+describe('rewriting a catalog only when it changed', () => {
+	const at = (stamp, tests = 3) =>
+		JSON.stringify({ track: 'dist', generatedAt: stamp, totals: { tests } }, null, '\t') + '\n';
+
+	it('treats a fresh timestamp over identical content as no change', () => {
+		expect(sameButForTimestamp(at('2026-09-19T05:05:20.894Z'), at('2026-09-19T06:08:03.028Z'))).toBe(
+			true
+		);
+	});
+
+	it('still sees a real change, timestamp or not', () => {
+		expect(sameButForTimestamp(at('2026-09-19T05:05:20.894Z'), at('2026-09-19T05:05:20.894Z', 4))).toBe(
+			false
+		);
+	});
+
+	it('says nothing is the same as unparseable', () => {
+		expect(sameButForTimestamp('{ not json', at('2026-09-19T05:05:20.894Z'))).toBe(false);
 	});
 });

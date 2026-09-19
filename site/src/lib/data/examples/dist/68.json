@@ -1,0 +1,24 @@
+[
+	{
+		"title": "The window the pattern exists to close",
+		"kind": "primitives",
+		"request": "a row committed, the event published separately, and a crash in between\n\n./your_program.sh outbox\ninit\nnaive-write k1 v1 e1\ncrash after-row\nrecover\nstate",
+		"request_hex": "2e2f796f75725f70726f6772616d2e7368206f7574626f780a696e69740a6e616976652d7772697465206b312076312065310a63726173682061667465722d726f770a7265636f7665720a7374617465",
+		"response": "the row is there and the event is gone: lost 1\n\n{\"outbox\":0,\"published\":0,\"rows\":0}\n{\"ok\":true,\"published\":1,\"rows\":1}\n{\"lost\":\"the event, which was never in a transaction\",\"ok\":true}\n{\"lost\":1,\"outbox\":0,\"published\":0,\"rows\":1}\n{\"lost\":[\"e1\"],\"outbox\":[],\"published\":[],\"rows\":{\"k1\":\"v1\"}}",
+		"response_hex": "7b226f7574626f78223a302c227075626c6973686564223a302c22726f7773223a307d0a7b226f6b223a747275652c227075626c6973686564223a312c22726f7773223a317d0a7b226c6f7374223a22746865206576656e742c20776869636820776173206e6576657220696e2061207472616e73616374696f6e222c226f6b223a747275657d0a7b226c6f7374223a312c226f7574626f78223a302c227075626c6973686564223a302c22726f7773223a317d0a7b226c6f7374223a5b226531225d2c226f7574626f78223a5b5d2c227075626c6973686564223a5b5d2c22726f7773223a7b226b31223a227631227d7d",
+		"note": "Nothing was retried badly and no message was dropped by the broker. The row simply committed, and the process died before the publish call was made. Every 'write to the database, then publish' handler has this window, and it is only ever as narrow as the two operations are close together.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "The same crash with an outbox",
+		"kind": "primitives",
+		"request": "a row and its event record committed together, then the same crash\n\n./your_program.sh outbox\ninit\nwrite k1 v1 e1\ncrash after-row\nrecover\npublish",
+		"request_hex": "2e2f796f75725f70726f6772616d2e7368206f7574626f780a696e69740a7772697465206b312076312065310a63726173682061667465722d726f770a7265636f7665720a7075626c697368",
+		"response": "lost 0: the record survived, and the relay publishes it on recovery\n\n{\"outbox\":0,\"published\":0,\"rows\":0}\n{\"ok\":true,\"outbox\":1,\"rows\":1}\n{\"lost\":\"nothing: the row and the record committed together\",\"ok\":true}\n{\"lost\":0,\"outbox\":1,\"published\":0,\"rows\":1}\n{\"outbox\":1,\"published\":[\"e1\"],\"unacked\":1}",
+		"response_hex": "7b226f7574626f78223a302c227075626c6973686564223a302c22726f7773223a307d0a7b226f6b223a747275652c226f7574626f78223a312c22726f7773223a317d0a7b226c6f7374223a226e6f7468696e673a2074686520726f7720616e6420746865207265636f726420636f6d6d697474656420746f676574686572222c226f6b223a747275657d0a7b226c6f7374223a302c226f7574626f78223a312c227075626c6973686564223a302c22726f7773223a317d0a7b226f7574626f78223a312c227075626c6973686564223a5b226531225d2c22756e61636b6564223a317d",
+		"note": "The event is not published by the writer at all, which is the trick — there is no second system to fail against, only another table in the one transaction. The publish becomes someone else's problem, and that someone can retry for as long as it likes.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

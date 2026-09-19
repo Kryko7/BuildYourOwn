@@ -18,7 +18,12 @@ import { kafkaPlaceholderPlan } from './kafka-placeholder.mjs';
 
 /** Which ladder a section sits on, for tracks that have ladders (`dist`). */
 const LADDERS = {
-	dist: { A: 'primitives', B: 'primitives', C: 'primitives', D: 'node', E: 'node', F: 'cluster', G: 'cluster', H: 'cluster' }
+	dist: {
+		A: 'primitives', B: 'primitives', C: 'primitives',
+		D: 'node', E: 'node',
+		F: 'cluster', G: 'cluster', H: 'cluster',
+		I: 'algorithms', J: 'algorithms', K: 'algorithms', L: 'algorithms'
+	}
 };
 
 /** [sectionId, title, ...what the section is expected to cover] */
@@ -119,7 +124,23 @@ const SECTIONS = {
 		['H', 'Cluster: linearizability under fault injection',
 			'A randomized concurrent workload recorded as a history',
 			'Faults on a seeded schedule: partitions, delays, drops, duplicates, reordering',
-			'The history checked against a linearizability model, minimal counter-example printed']
+			'The history checked against a linearizability model, minimal counter-example printed'],
+		['I', 'Algorithms: consensus',
+			'Raft leader election, log replication, and the Figure 8 commitment rule',
+			'Snapshots, log compaction and joint-consensus membership change',
+			'Single-decree Paxos, then Multi-Paxos with a stable leader'],
+		['J', 'Algorithms: atomic commit',
+			'Two-phase commit, including what a coordinator crash does to a prepared participant',
+			'Three-phase commit and the non-blocking property it buys',
+			'Recovering a decision from the log rather than from memory'],
+		['K', 'Algorithms: sagas and messaging',
+			'Orchestrated and choreographed sagas, with compensations that actually run',
+			'The transactional outbox: one commit for the state and the message',
+			'Idempotent consumers, deduplication, and retry under an idempotency key'],
+		['L', 'Algorithms: coordination and resilience',
+			'Distributed locks that are only safe with a fencing token, and leases under clock skew',
+			'Anti-entropy: read repair, hinted handoff and gossip dissemination',
+			'Circuit breakers, hedged requests, bulkheads and load shedding']
 	],
 	link: [
 		['A', 'Reading relocatable objects',

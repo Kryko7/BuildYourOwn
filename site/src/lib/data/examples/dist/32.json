@@ -4,8 +4,8 @@
 		"kind": "node",
 		"request": "the id of a lease that was granted a moment ago\n\nPOST /v3/lease/keepalive\n{\n  \"ID\": \"4343\"\n}",
 		"request_hex": "7b224944223a2234333433227d",
-		"response": "one chunked line: `{\"result\": {header, ID, TTL}}`, and the TTL is full again\n\nHTTP 200 OK\n{\n  \"result\": {\n    \"ID\": \"4343\",\n    \"TTL\": \"30\",\n    \"header\": {\n      \"cluster_id\": \"12309131010920064716\",\n      \"member_id\": \"2292353758981974205\",\n      \"raft_term\": \"2\",\n      \"revision\": \"1\"\n    }\n  }\n}",
-		"response_hex": "7b22726573756c74223a7b22686561646572223a7b22636c75737465725f6964223a223132333039313331303130393230303634373136222c226d656d6265725f6964223a2232323932333533373538393831393734323035222c227265766973696f6e223a2231222c22726166745f7465726d223a2232227d2c224944223a2234333433222c2254544c223a223330227d7d0a",
+		"response": "one chunked line: `{\"result\": {header, ID, TTL}}`, and the TTL is full again\n\nHTTP 200 OK\n{\n  \"result\": {\n    \"ID\": \"4343\",\n    \"TTL\": \"30\",\n    \"header\": {\n      \"cluster_id\": \"8137740350860542885\",\n      \"member_id\": \"3387491749164607754\",\n      \"raft_term\": \"2\",\n      \"revision\": \"1\"\n    }\n  }\n}",
+		"response_hex": "7b22726573756c74223a7b22686561646572223a7b22636c75737465725f6964223a2238313337373430333530383630353432383835222c226d656d6265725f6964223a2233333837343931373439313634363037373534222c227265766973696f6e223a2231222c22726166745f7465726d223a2232227d2c224944223a2234333433222c2254544c223a223330227d7d0a",
 		"note": "This is a stream, not a plain request: `Transfer-Encoding: chunked`, one JSON object per line, and every one of them wrapped in `result`. A client that writes several ids down this one body gets one answer per id.",
 		"request_fields": [
 			{
@@ -21,7 +21,7 @@
 				"offset": 1,
 				"length": 8,
 				"field": "response.result",
-				"value": "{\"ID\":\"4343\",\"TTL\":\"30\",\"header\":{\"cluster_id\":\"12309131010920064716\",\"member_id\":\"2292353758981974205\",\"raft_term\":\"2\",…"
+				"value": "{\"ID\":\"4343\",\"TTL\":\"30\",\"header\":{\"cluster_id\":\"8137740350860542885\",\"member_id\":\"3387491749164607754\",\"raft_term\":\"2\",\"…"
 			}
 		]
 	},
@@ -30,8 +30,8 @@
 		"kind": "node",
 		"request": "an id that was never granted — or was, and has since expired\n\nPOST /v3/lease/keepalive\n{\n  \"ID\": \"999999\"\n}",
 		"request_hex": "7b224944223a22393939393939227d",
-		"response": "the same shape, carrying the id and no TTL at all\n\nHTTP 200 OK\n{\n  \"result\": {\n    \"ID\": \"999999\",\n    \"header\": {\n      \"cluster_id\": \"16928094051860459107\",\n      \"member_id\": \"11629086798250354370\",\n      \"raft_term\": \"2\",\n      \"revision\": \"1\"\n    }\n  }\n}",
-		"response_hex": "7b22726573756c74223a7b22686561646572223a7b22636c75737465725f6964223a223136393238303934303531383630343539313037222c226d656d6265725f6964223a223131363239303836373938323530333534333730222c227265766973696f6e223a2231222c22726166745f7465726d223a2232227d2c224944223a22393939393939227d7d0a",
+		"response": "the same shape, carrying the id and no TTL at all\n\nHTTP 200 OK\n{\n  \"result\": {\n    \"ID\": \"999999\",\n    \"header\": {\n      \"cluster_id\": \"11001114916623679344\",\n      \"member_id\": \"8208438672193156567\",\n      \"raft_term\": \"2\",\n      \"revision\": \"1\"\n    }\n  }\n}",
+		"response_hex": "7b22726573756c74223a7b22686561646572223a7b22636c75737465725f6964223a223131303031313134393136363233363739333434222c226d656d6265725f6964223a2238323038343338363732313933313536353637222c227265766973696f6e223a2231222c22726166745f7465726d223a2232227d2c224944223a22393939393939227d7d0a",
 		"note": "No error, and no TTL field: zero is the default, so it is left out. A client renewing in a loop sees TTL 0 and knows its keys are gone, without having to tell an error apart from a network failure.",
 		"request_fields": [
 			{
@@ -47,7 +47,7 @@
 				"offset": 1,
 				"length": 8,
 				"field": "response.result",
-				"value": "{\"ID\":\"999999\",\"header\":{\"cluster_id\":\"16928094051860459107\",\"member_id\":\"11629086798250354370\",\"raft_term\":\"2\",\"revisio…"
+				"value": "{\"ID\":\"999999\",\"header\":{\"cluster_id\":\"11001114916623679344\",\"member_id\":\"8208438672193156567\",\"raft_term\":\"2\",\"revision…"
 			}
 		]
 	}

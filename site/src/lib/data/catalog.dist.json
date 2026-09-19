@@ -1,6 +1,6 @@
 {
 	"track": "dist",
-	"generatedAt": "2026-09-19T05:05:20.894Z",
+	"generatedAt": "2026-09-19T06:08:03.028Z",
 	"sections": [
 		{
 			"id": "A",
@@ -103,6 +103,52 @@
 				53,
 				54,
 				55
+			]
+		},
+		{
+			"id": "I",
+			"title": "Algorithms: consensus",
+			"stages": [
+				56,
+				57,
+				58,
+				59,
+				60,
+				61,
+				62
+			]
+		},
+		{
+			"id": "J",
+			"title": "Algorithms: atomic commit",
+			"stages": [
+				63,
+				64,
+				65
+			]
+		},
+		{
+			"id": "K",
+			"title": "Algorithms: sagas and messaging",
+			"stages": [
+				66,
+				67,
+				68,
+				69,
+				70
+			]
+		},
+		{
+			"id": "L",
+			"title": "Algorithms: coordination and resilience",
+			"stages": [
+				71,
+				72,
+				73,
+				74,
+				75,
+				76,
+				77
 			]
 		}
 	],
@@ -4208,12 +4254,1957 @@
 				}
 			],
 			"exampleCount": 1
+		},
+		{
+			"number": 56,
+			"slug": "raft_leader_election",
+			"name": "Raft leader election",
+			"ext": false,
+			"section": "I",
+			"file": "src/stages/s56_raft_leader_election.rs",
+			"planDone": false,
+			"ladder": "algorithms",
+			"hints": [
+				"Topic `raft-election`: one node's role, term, votedFor and vote tally",
+				"Any message carrying a higher term makes this node a follower and clears votedFor",
+				"One vote per term, and only for a candidate whose log is at least as up to date",
+				"Count each voter once: a retransmitted vote must not make a minority a majority"
+			],
+			"tests": [
+				{
+					"name": "a fresh node is a follower at term zero",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "an election timeout makes it a candidate that voted for itself",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a vote request from an older term is refused",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a vote request from a newer term makes it step down",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a node votes only once per term",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "the same candidate asking twice gets the same answer",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a candidate whose log is behind is refused",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a higher last term beats a longer log",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a majority of votes makes a candidate the leader",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "the same vote arriving twice does not count twice",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "an append-entries from the current term ends the election",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a split vote elects nobody until a later term",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a leader steps down when it sees a higher term",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a leader does not start an election of its own",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "eighty seeded events match the tester's own replay",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 57,
+			"slug": "raft_log_replication",
+			"name": "Raft log replication",
+			"ext": false,
+			"section": "I",
+			"file": "src/stages/s57_raft_log_replication.rs",
+			"planDone": false,
+			"ladder": "algorithms",
+			"hints": [
+				"Topic `raft-log`: a log is an array of entry terms, index 1 upwards",
+				"Refuse the message when prev_index is past the end, or its term disagrees — and leave the log exactly as it was",
+				"Truncate only at the first entry that really conflicts; entries that already match must stay, tail and all",
+				"commit_index is min(leader_commit, the index of the last new entry), and it never goes backwards"
+			],
+			"tests": [
+				{
+					"name": "a fresh log answers its last index and term",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "an append from an older term is refused and changes nothing",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "an append past the end of the log names the first missing index",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "an append whose previous term disagrees is refused without truncating",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "an append at index zero always passes the consistency check",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a retransmitted prefix leaves the tail alone",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a conflicting entry truncates exactly the suffix that disagrees",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "the commit index is capped by the last new entry",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "the conflict index skips a whole term at once",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "the commit index never goes backwards",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "sixty seeded appends match the tester's own replay",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 58,
+			"slug": "raft_commit_safety",
+			"name": "Raft commitment and the Figure 8 trap",
+			"ext": false,
+			"section": "I",
+			"file": "src/stages/s58_raft_commit_safety.rs",
+			"planDone": false,
+			"ladder": "algorithms",
+			"hints": [
+				"Topic `raft-commit`: matchIndex and nextIndex per follower, and one commit index",
+				"The leader counts itself, so a five-member cluster commits on two acknowledgements",
+				"Advance the commit index only to an entry of the leader's *own* term — §5.4.2, the Figure 8 trap — and let it carry the earlier entries with it",
+				"An acknowledgement that arrived late must never lower a match index"
+			],
+			"tests": [
+				{
+					"name": "a fresh leader has replicated nothing",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a majority of acknowledgements commits an entry of the current term",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "the leader counts itself towards the majority",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a rejection backs the next index up to the conflict index",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a rejection never backs the next index below one",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a majority alone does not commit an entry from an earlier term",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "committing a current-term entry commits the earlier one behind it",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "commit-safe names the reason it refuses",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a late acknowledgement never lowers a match index",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a committed index keeps its term whatever arrives afterwards",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "eighty seeded acknowledgements match the tester's own replay",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 59,
+			"slug": "raft_snapshots",
+			"name": "Raft snapshots and log compaction",
+			"ext": false,
+			"section": "I",
+			"file": "src/stages/s59_raft_snapshots.rs",
+			"planDone": false,
+			"ladder": "algorithms",
+			"hints": [
+				"Topic `raft-snapshot`: the log no longer starts at index 1, so keep first_index, snapshot_index and snapshot_term",
+				"Never compact past the commit index: an uncommitted entry may still be truncated",
+				"The snapshot boundary still answers a consistency check, so keep its term; an append that reaches below the boundary can only be refused",
+				"An InstallSnapshot the follower already covers is ignored; one whose boundary it holds keeps the tail; anything else replaces the whole log"
+			],
+			"tests": [
+				{
+					"name": "a fresh log has no snapshot",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "compacting past the commit index is refused",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a snapshot discards the entries it covers and keeps their boundary term",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "the snapshot boundary still answers a consistency check",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "an append that reaches below the boundary is refused as compacted",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "taking the same snapshot twice changes nothing",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a snapshot from behind the commit index is ignored",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a snapshot whose boundary the follower holds keeps the tail",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a snapshot from ahead replaces the whole log",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "compaction never changes what any surviving index holds",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "sixty seeded commits, snapshots and installs match the tester's own replay",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 60,
+			"slug": "raft_membership",
+			"name": "Raft membership change",
+			"ext": false,
+			"section": "I",
+			"file": "src/stages/s60_raft_membership.rs",
+			"planDone": false,
+			"ladder": "algorithms",
+			"hints": [
+				"Topic `raft-membership`: a configuration is a set of voters, and its quorum is len/2 + 1",
+				"In the joint phase a decision needs a majority of C_old *and* a majority of C_new",
+				"Leaving the joint phase takes two committed steps: C_old,new, then C_new",
+				"One change at a time: refuse a second while the first is still uncommitted"
+			],
+			"tests": [
+				{
+					"name": "a fresh cluster reports its members and its quorum",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "entering the joint configuration names both sides",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a majority of the old configuration alone does not decide",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a majority of the new configuration alone does not decide",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a majority of both configurations decides",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "leaving the joint configuration takes two committed steps",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a second change while one is in flight is refused",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "adding a member that is already there is an error",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "removing a member that is not there is an error",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a single-server change moves the quorum by at most one",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "sixty seeded changes never leave two configurations in flight",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 61,
+			"slug": "paxos_single_decree",
+			"name": "Single-decree Paxos",
+			"ext": false,
+			"section": "I",
+			"file": "src/stages/s61_paxos_single_decree.rs",
+			"planDone": false,
+			"ladder": "algorithms",
+			"hints": [
+				"Topic `paxos`: every acceptor keeps a promised number and its highest accepted proposal",
+				"An acceptor promises a number only when it is strictly greater than the last one",
+				"Accepting implies promising, and an accept below the promise is refused outright",
+				"A proposer must propose the value of the highest-numbered proposal its promises reported, and its own only when none did"
+			],
+			"tests": [
+				{
+					"name": "a fresh acceptor has promised nothing and accepted nothing",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "an acceptor promises a higher number and refuses a lower one",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "the number an acceptor has already promised is not higher than itself",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a refused prepare still says how high a proposer must go",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "an accept at the promised number is taken and one below it is not",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "accepting implies promising",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a promise carries the highest-numbered proposal the acceptor accepted",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a value is chosen once a majority has accepted the same proposal",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a proposer uses its own value only when no promise reported one",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a proposer must adopt the highest-numbered value, not the last one it heard",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a majority of promises is what makes a proposer ready",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a chosen value cannot be changed by a later proposal",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "two duelling proposers can starve each other for ever",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "sixty-four scenarios of two proposals never choose two values",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "sixty seeded acceptor events match the tester's own replay",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				}
+			],
+			"exampleCount": 3
+		},
+		{
+			"number": 62,
+			"slug": "multi_paxos",
+			"name": "Multi-Paxos and a stable leader",
+			"ext": false,
+			"section": "I",
+			"file": "src/stages/s62_multi_paxos.rs",
+			"planDone": false,
+			"ladder": "algorithms",
+			"hints": [
+				"Topic `multi-paxos`: one ballot, every slot — phase one is run once, not per slot",
+				"While a proposer holds a majority of promises, every proposal costs one round trip; without them it costs two",
+				"A higher ballot strips leadership but never un-chooses a slot that was settled",
+				"The state machine applies a contiguous prefix: a gap blocks every slot above it"
+			],
+			"tests": [
+				{
+					"name": "a fresh instance has no leader and every slot needs phase one",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a proposal without leadership costs two round trips",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "one prepare turns every slot into a single accept round",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a stable leader commits in one round trip",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a prepare that wins no majority grants no leadership",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a slot is chosen once a majority has accepted it",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "an acceptor accepting the same slot twice counts once",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a higher ballot sends the leader back to phase one",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a lower ballot does not preempt the leader",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "preemption does not un-choose what was already chosen",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "the state machine cannot apply past a gap",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "re-proposing a chosen slot cannot change its value",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "ten slots under one leader cost ten round trips, not twenty",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "seventy seeded ballots and acceptances match the tester's own replay",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				}
+			],
+			"exampleCount": 3
+		},
+		{
+			"number": 63,
+			"slug": "two_phase_commit",
+			"name": "Two-phase commit",
+			"ext": false,
+			"section": "J",
+			"file": "src/stages/s63_two_phase_commit.rs",
+			"planDone": false,
+			"ladder": "algorithms",
+			"hints": [
+				"Topic `two-phase-commit`: a coordinator state machine and one per participant",
+				"One no is enough to abort; commit needs every vote, so a missing vote decides nothing",
+				"A yes vote is a promise: from then on the participant may not decide for itself",
+				"Cooperative termination settles some cases and not the one that matters"
+			],
+			"tests": [
+				{
+					"name": "a fresh transaction has every participant working",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "the coordinator does not decide until every vote is in",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "every yes decides commit",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "one no decides abort whatever the rest say",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a yes vote leaves the participant prepared",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a participant that has not voted may abort on its own",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a prepared participant is blocked when the coordinator dies",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "asking the peers settles nothing when every peer is prepared",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a peer that already decided settles the question",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a peer that never voted makes abort safe",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "delivering the decision twice changes nothing",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a unilateral abort makes commit impossible for ever",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "seeded vote orders and crash points never split the participants",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 64,
+			"slug": "three_phase_commit",
+			"name": "Three-phase commit",
+			"ext": false,
+			"section": "J",
+			"file": "src/stages/s64_three_phase_commit.rs",
+			"planDone": false,
+			"ladder": "algorithms",
+			"hints": [
+				"Topic `three-phase-commit`: vote, then pre-commit, then commit",
+				"Pre-commit is only legal once every participant has voted yes",
+				"On a timeout a pre-committed participant commits and a merely prepared one aborts",
+				"That rule reads 'no pre-commit arrived' as 'none was sent', which a partition breaks"
+			],
+			"tests": [
+				{
+					"name": "a fresh transaction has every participant working",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a pre-commit before every yes vote is refused",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "one no aborts before the pre-commit round begins",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "the happy path commits every participant",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a commit without a majority of acknowledgements is refused",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a pre-committed participant commits on its own when the coordinator dies",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a participant that never saw the pre-commit aborts on its own",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "no participant is ever blocked, which is what the extra round buys",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a partition makes two groups decide differently",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "the split decision survives the heal",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a partition stops the coordinator's broadcast reaching the far side",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "an acknowledgement from a participant that never saw the pre-commit does not count",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "seeded runs with a complete or a lost pre-commit round never diverge",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 65,
+			"slug": "commit_recovery",
+			"name": "Commit recovery from the log",
+			"ext": false,
+			"section": "J",
+			"file": "src/stages/s65_commit_recovery.rs",
+			"planDone": false,
+			"ladder": "algorithms",
+			"hints": [
+				"Topic `commit-recovery`: a durable log, a durable store, and volatile state a crash eats",
+				"The prepare record is forced out before the vote is sent, never after",
+				"No prepare record means presumed abort; a prepare record with no decision means ask",
+				"A commit record whose effect never landed is redone, and redo is idempotent"
+			],
+			"tests": [
+				{
+					"name": "a fresh participant has an empty log",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "the prepare record is forced out before the vote is sent",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a crash takes the volatile state and leaves the log",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a transaction that was never prepared is aborted on recovery",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a no vote is logged as an abort and needs nobody's permission",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a prepared transaction asks rather than guessing",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "the coordinator's answer resolves a prepared transaction",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a commit record whose effect never landed is redone",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "redo is idempotent",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "an aborted transaction needs nothing doing",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "recovering twice says the same thing",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "the log survives any number of crashes",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "several transactions recover independently",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a seeded sweep of crash points recovers exactly what the log implies",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 66,
+			"slug": "saga_orchestrated",
+			"name": "Orchestrated saga",
+			"ext": false,
+			"section": "K",
+			"file": "src/stages/s66_saga_orchestrated.rs",
+			"planDone": false,
+			"ladder": "algorithms",
+			"hints": [
+				"Topic `saga`: remember the steps that completed, and undo them newest first",
+				"A failure at step k compensates k-1 … 1; the step that failed never completed",
+				"Compensations are retried, so running one twice must leave one undo behind",
+				"A compensation that fails stays at the head of the queue until it succeeds"
+			],
+			"tests": [
+				{
+					"name": "a saga with no failure commits every step",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a failure at the last step undoes the rest in reverse",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "the step that failed is never compensated",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a failure at the first step compensates nothing",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a retried compensation leaves one undo, not two",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a compensation that fails stays at the head of the queue",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "the phase and the outcome follow the saga through",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a compensation for a step that never ran is refused",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "driving step by step reaches the same ledger as one run",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a seeded saga with seeded compensation failures matches the replay",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 67,
+			"slug": "saga_choreographed",
+			"name": "Choreographed saga",
+			"ext": false,
+			"section": "K",
+			"file": "src/stages/s67_saga_choreographed.rs",
+			"planDone": false,
+			"ladder": "algorithms",
+			"hints": [
+				"Topic `saga-choreo`: each service reacts to one event and emits the next",
+				"`<step>.fail` starts the chain; `<step>.undone` walks it one step further back",
+				"The bus is at-least-once, so an event already handled must emit nothing",
+				"Once a chain is running, a second failure is absorbed — one saga, one chain"
+			],
+			"tests": [
+				{
+					"name": "an event chain with no failure commits every step",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "the choreographed happy path reaches the orchestrated ledger",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a failure undoes the earlier steps in reverse",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "an event delivered twice emits only once",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "two failure events start only one compensation chain",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "an event that does not apply yet is dropped, not queued",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "the saga commits only when the last step answers",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a failure at the first step compensates nothing",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a repeated undone event does not undo twice",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "forty seeded events match the tester's own reaction table",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 68,
+			"slug": "transactional_outbox",
+			"name": "Transactional outbox",
+			"ext": false,
+			"section": "K",
+			"file": "src/stages/s68_transactional_outbox.rs",
+			"planDone": false,
+			"ladder": "algorithms",
+			"hints": [
+				"Topic `outbox`: the row and its event record commit in one transaction",
+				"A relay drains the table afterwards; publishing is not part of the write",
+				"A crash between publishing and acknowledging leaves the record, so it is resent",
+				"The outbox buys 'never lost'; only a deduplicating consumer buys 'never twice'"
+			],
+			"tests": [
+				{
+					"name": "a naive write loses its event when the process dies after the row",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "the row and the outbox record commit together",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a crash before the commit loses both, never one",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "the relay publishes what the crash left behind",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "an unacknowledged publish is sent again after recovery",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "an acknowledged record is never sent again",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "the relay drains the outbox in insertion order",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "the outbox alone is at-least-once, not exactly-once",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a crashed process refuses work until it has recovered",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a seeded run of writes and crashes never loses a transactional event",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 69,
+			"slug": "idempotent_consumer",
+			"name": "Idempotent consumer",
+			"ext": false,
+			"section": "K",
+			"file": "src/stages/s69_idempotent_consumer.rs",
+			"planDone": false,
+			"ladder": "algorithms",
+			"hints": [
+				"Topic `dedup`: look the message id up before applying the effect, not after",
+				"The table is a queue of first sightings: the oldest id is always the one evicted",
+				"A redelivery is not a refresh — an entry ages from when it was first seen",
+				"Exactly-once holds only while the table still remembers every id it applied"
+			],
+			"tests": [
+				{
+					"name": "the same message id applies once",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "two different ids both apply",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a duplicate does not move the running total",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "the table forgets the oldest id first",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "an id the table has forgotten is applied a second time",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "an unbounded table is exactly-once and a finite one is not",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "forgetting an id that was never seen changes nothing",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a redelivery does not refresh an entry",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a seeded stream with duplicates matches the tester's window model",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 70,
+			"slug": "idempotency_keys",
+			"name": "Retry with an idempotency key",
+			"ext": false,
+			"section": "K",
+			"file": "src/stages/s70_idempotency_keys.rs",
+			"planDone": false,
+			"ladder": "algorithms",
+			"hints": [
+				"Topic `idempotency-key`: store the answer under the key, and replay it on a retry",
+				"A key is bound to its request: the same key with a different amount is an error",
+				"A key whose first request is still running refuses the second, it does not race it",
+				"The client cannot tell a lost answer from a lost request, which is why it retries"
+			],
+			"tests": [
+				{
+					"name": "a naive retry charges twice",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a retry with the same key replays the first answer",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a key reused with a different amount is refused",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a second request while the first is in progress is refused",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a key that has finished replays for ever",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "different keys with the same amount are different charges",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "finishing a key twice does not charge twice",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a begin whose amount disagrees with the key is refused",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "the key survives any number of lost answers",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a seeded run of charges and retries sums the distinct keys",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 71,
+			"slug": "fencing_tokens",
+			"name": "Distributed locks and fencing tokens",
+			"ext": false,
+			"section": "L",
+			"file": "src/stages/s71_fencing_tokens.rs",
+			"planDone": false,
+			"ladder": "algorithms",
+			"hints": [
+				"Topic `fencing`: every grant hands out a token one higher than the last",
+				"The resource keeps a fence: the highest token it has accepted a write from",
+				"A write below the fence is refused, however firmly its client believes it holds the lock",
+				"Checking `holder` before writing proves nothing: the pause happens after the check"
+			],
+			"tests": [
+				{
+					"name": "a fresh lock has handed out no tokens",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "every grant hands out a strictly higher token",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a held lock cannot be taken",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "the fence rises with every accepted write",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a write at the fence is the holder writing twice",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a paused holder's write is refused once the lock has moved on",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "the same story without a fence corrupts the resource",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a client that never acquired has no token",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "believing you hold the lock is not enough",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "sixty seeded interleavings keep the highest token's value",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 72,
+			"slug": "leader_leases",
+			"name": "Leader leases and clock skew",
+			"ext": true,
+			"section": "L",
+			"file": "src/stages/s72_leader_leases.rs",
+			"planDone": false,
+			"ladder": "algorithms",
+			"hints": [
+				"Topic `leases`: `now` always arrives as an argument; never read a clock of your own",
+				"The holder stops serving at `expires_at - clock_error`, because its clock may be slow",
+				"The granter waits until `expires_at + clock_error`, because the old holder's may be slow too",
+				"Renewing extends from `now`, not from the old expiry: a late renewal buys no extra time"
+			],
+			"tests": [
+				{
+					"name": "a fresh lease has no holder",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a grant fixes the expiry and the safe point",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "the holder serves reads only inside the safe window",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a node that never held the lease is never served",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "renewing extends from now, not from the old expiry",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "renewing a lease you do not hold changes nothing",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "the lease may not be handed on until the clock error has passed",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a fast clock stops serving early",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a slow clock serves past the safe point and the grant rule covers it",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "no permitted clock offset lets two holders serve at once",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 73,
+			"slug": "anti_entropy",
+			"name": "Anti-entropy: read repair and hinted handoff",
+			"ext": false,
+			"section": "L",
+			"file": "src/stages/s73_anti_entropy.rs",
+			"planDone": false,
+			"ladder": "algorithms",
+			"hints": [
+				"Topic `anti-entropy`: a read takes the highest version any live replica holds",
+				"Repair exactly the replicas that were behind — repairing the current ones is wasted work",
+				"A write to a replica that is down leaves a hint on the first live replica instead",
+				"A hint dies with its stand-in; only `sync` is a guarantee, and it compares everything"
+			],
+			"tests": [
+				{
+					"name": "a read where every replica agrees repairs nothing",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a read repairs exactly the replicas that were behind",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a read of a key nobody holds answers nothing",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a write while a replica is down takes a hint",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a handoff delivers the hint once and then forgets it",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a handoff to a replica that is still down keeps the hint",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a sync moves only the keys that were behind",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "neither a repair nor a handoff carries a version backwards",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a hint whose stand-in dies is lost, and only a sync repairs the replica",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "seeded divergence converges once every pair has synced",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 74,
+			"slug": "gossip_dissemination",
+			"name": "Gossip dissemination",
+			"ext": false,
+			"section": "L",
+			"file": "src/stages/s74_gossip_dissemination.rs",
+			"planDone": false,
+			"ladder": "algorithms",
+			"hints": [
+				"Topic `gossip`: nodes are 0..n-1, node 0 starts infected, and the schedule is fixed",
+				"In round r every infected node i contacts (i + (fanout+1)^(r-1) * k) mod n for k = 1..=fanout",
+				"Everyone contacted becomes infected at the end of the round, not during it",
+				"Count every message, including the ones that land on a node that already knew"
+			],
+			"tests": [
+				{
+					"name": "a fresh run has one infected node",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "the first round with fanout one infects exactly one more node",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "the infected set doubles each round at fanout one",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a wider fanout infects more in the same first round",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "convergence takes a logarithmic number of rounds",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a wider fanout buys rounds with messages",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "one node needs no rounds and a cluster-wide fanout needs one",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "messages that land on a node that already knew are still messages",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a round after everyone knows infects nobody and still costs",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "every size from two to forty matches the tester's own replay",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 75,
+			"slug": "circuit_breaker",
+			"name": "Circuit breaker",
+			"ext": false,
+			"section": "L",
+			"file": "src/stages/s75_circuit_breaker.rs",
+			"planDone": false,
+			"ladder": "algorithms",
+			"hints": [
+				"Topic `circuit-breaker`: closed, open, half-open, and `now` always arrives as an argument",
+				"It is *consecutive* failures that open the circuit; one success resets the count",
+				"A call rejected while open never reached the dependency, so it is not evidence about it",
+				"A failed trial reopens the circuit and restarts the window from that instant"
+			],
+			"tests": [
+				{
+					"name": "a fresh breaker is closed",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "consecutive failures open the circuit",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "one success in between resets the count",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "an open circuit rejects without attempting",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a rejection while open is not counted as a failure",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "the trial is allowed exactly one window after opening",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "enough successful trials close the circuit",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a failed trial reopens the circuit and restarts the window",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a failed trial throws away the successes already banked",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "two hundred seeded calls match the tester's own model",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 76,
+			"slug": "hedged_requests",
+			"name": "Hedged requests",
+			"ext": true,
+			"section": "L",
+			"file": "src/stages/s76_hedged_requests.rs",
+			"planDone": false,
+			"ladder": "algorithms",
+			"hints": [
+				"Topic `hedging`: service times arrive as `[primary_ms, hedge_ms]`; never time anything yourself",
+				"Nothing is hedged below the threshold: `primary < hedge_after_ms` costs one message",
+				"A hedged request answers in min(primary, hedge_after_ms + hedge) — the hedge starts late",
+				"Cancel the loser: `inflight` is zero the moment either replica has answered"
+			],
+			"tests": [
+				{
+					"name": "a fresh client has sent nothing",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a request that beats the threshold sends one message",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a request at the threshold is hedged and a request below it is not",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a slow request answers when the hedge does",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a hedge slower than the primary wins nothing and still costs a message",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "the loser is cancelled, so nothing is ever left in flight",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a threshold of zero hedges everything and doubles the load",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "the statistics are computed from the recorded latencies",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "twenty seeded requests: the tail falls and the load rises",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 77,
+			"slug": "bulkheads",
+			"name": "Bulkheads and load shedding",
+			"ext": true,
+			"section": "L",
+			"file": "src/stages/s77_bulkheads.rs",
+			"planDone": false,
+			"ladder": "algorithms",
+			"hints": [
+				"Topic `bulkhead`: one concurrency limit per pool, and `now` arrives as an argument",
+				"A full pool rejects at once — an unbounded queue is how one slow dependency takes everything",
+				"Pools are independent: saturating one must not change what another admits",
+				"Shedding work whose deadline has passed is free capacity, and it is not a rejection"
+			],
+			"tests": [
+				{
+					"name": "a pool admits up to its limit",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a full pool rejects instead of queueing",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "finishing a call frees the slot at once",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "finishing a call that is not in flight is an error",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "one saturated pool does not change what another admits",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "one shared pool lets the first caller starve the second",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a call to a pool that does not exist is refused, not invented",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "shedding drops work past its deadline and frees the capacity",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "two hundred seeded calls never exceed a limit",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				}
+			],
+			"exampleCount": 2
 		}
 	],
 	"totals": {
-		"stages": 55,
-		"tests": 475,
-		"ext": 35
+		"stages": 77,
+		"tests": 720,
+		"ext": 38
 	},
 	"source": "disttest/catalog.json"
 }

@@ -1,0 +1,24 @@
+[
+	{
+		"title": "A saga that fails at the third of five steps",
+		"kind": "primitives",
+		"request": "a five-step saga driven in one command, failing at step three\n\n./your_program.sh saga\ninit [\"reserve\",\"charge\",\"pack\",\"ship\",\"notify\"]\nrun 3\nledger",
+		"request_hex": "2e2f796f75725f70726f6772616d2e736820736167610a696e6974205b2272657365727665222c22636861726765222c227061636b222c2273686970222c226e6f74696679225d0a72756e20330a6c6564676572",
+		"response": "two steps executed, the same two compensated newest first\n\n{\"names\":[\"reserve\",\"charge\",\"pack\",\"ship\",\"notify\"],\"steps\":5}\n{\"compensated\":[\"charge\",\"reserve\"],\"executed\":[\"reserve\",\"charge\"],\"outcome\":\"compensated\"}\n{\"entries\":[\"do:reserve\",\"do:charge\",\"undo:charge\",\"undo:reserve\"]}",
+		"response_hex": "7b226e616d6573223a5b2272657365727665222c22636861726765222c227061636b222c2273686970222c226e6f74696679225d2c227374657073223a357d0a7b22636f6d70656e7361746564223a5b22636861726765222c2272657365727665225d2c226578656375746564223a5b2272657365727665222c22636861726765225d2c226f7574636f6d65223a22636f6d70656e7361746564227d0a7b22656e7472696573223a5b22646f3a72657365727665222c22646f3a636861726765222c22756e646f3a636861726765222c22756e646f3a72657365727665225d7d",
+		"note": "The ledger is the whole specification of this stage: `do:reserve`, `do:charge`, `undo:charge`, `undo:reserve`. Note that `pack` appears nowhere. It failed, so it never completed, and compensating a step that did not happen is how a saga refunds money it never took.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "A compensation retried after it failed",
+		"kind": "primitives",
+		"request": "one compensation that fails, then succeeds, then is retried once more\n\n./your_program.sh saga\ninit [\"reserve\",\"charge\",\"ship\"]\nstep reserve ok\nstep charge fail\ncompensate reserve fail\ncompensate reserve ok\ncompensate reserve ok\nledger",
+		"request_hex": "2e2f796f75725f70726f6772616d2e736820736167610a696e6974205b2272657365727665222c22636861726765222c2273686970225d0a737465702072657365727665206f6b0a7374657020636861726765206661696c0a636f6d70656e736174652072657365727665206661696c0a636f6d70656e736174652072657365727665206f6b0a636f6d70656e736174652072657365727665206f6b0a6c6564676572",
+		"response": "the failed attempt leaves the queue alone; the ledger holds one undo\n\n{\"names\":[\"reserve\",\"charge\",\"ship\"],\"steps\":3}\n{\"completed\":[\"reserve\"],\"outcome\":\"running\",\"phase\":\"forward\"}\n{\"completed\":[\"reserve\"],\"outcome\":\"running\",\"phase\":\"compensating\"}\n{\"outcome\":\"running\",\"pending\":[\"reserve\"],\"phase\":\"compensating\"}\n{\"outcome\":\"compensated\",\"pending\":[],\"phase\":\"done\"}\n{\"outcome\":\"compensated\",\"pending\":[],\"phase\":\"done\"}\n{\"entries\":[\"do:reserve\",\"undo:reserve\"]}",
+		"response_hex": "7b226e616d6573223a5b2272657365727665222c22636861726765222c2273686970225d2c227374657073223a337d0a7b22636f6d706c65746564223a5b2272657365727665225d2c226f7574636f6d65223a2272756e6e696e67222c227068617365223a22666f7277617264227d0a7b22636f6d706c65746564223a5b2272657365727665225d2c226f7574636f6d65223a2272756e6e696e67222c227068617365223a22636f6d70656e736174696e67227d0a7b226f7574636f6d65223a2272756e6e696e67222c2270656e64696e67223a5b2272657365727665225d2c227068617365223a22636f6d70656e736174696e67227d0a7b226f7574636f6d65223a22636f6d70656e7361746564222c2270656e64696e67223a5b5d2c227068617365223a22646f6e65227d0a7b226f7574636f6d65223a22636f6d70656e7361746564222c2270656e64696e67223a5b5d2c227068617365223a22646f6e65227d0a7b22656e7472696573223a5b22646f3a72657365727665222c22756e646f3a72657365727665225d7d",
+		"note": "Both halves matter. A compensation that fails must stay at the head of the queue, because skipping it leaves the reservation held for ever; and the retry that eventually lands must be idempotent, because the orchestrator cannot tell a lost answer from a step that never ran.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

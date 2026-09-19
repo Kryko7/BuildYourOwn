@@ -35,16 +35,20 @@
 			2,
 			3,
 			18,
-			38
+			38,
+			63,
+			69
 		],
 		"concepts": [
 			"logical-clocks",
 			"vector-clocks",
 			"causal-broadcast",
 			"broadcast-protocols",
-			"linearizability"
+			"linearizability",
+			"atomic-commit",
+			"deduplication"
 		],
-		"why": "The clearest short treatment of everything the first ladder asks for: chapter 3 gives Lamport and vector clocks with worked diagrams, and chapter 4 gives the causal-broadcast delivery rule that stage 18's buffer has to implement exactly.",
+		"why": "The clearest short treatment of everything the first ladder asks for: chapter 3 gives Lamport and vector clocks with worked diagrams, and chapter 4 gives the causal-broadcast delivery rule that stage 18's buffer has to implement exactly. Section 7.1 is later the shortest honest account of two-phase commit for stage 63 - one no aborts, commit needs every vote, and a dead coordinator leaves prepared participants stuck - and section 5.1's retry-plus-deduplication argument is the reasoning behind stage 69's table of seen message ids.",
 		"minutes": 120,
 		"free": true,
 		"checkedAt": "2026-09-19"
@@ -60,15 +64,20 @@
 			1,
 			8,
 			18,
-			36
+			36,
+			63,
+			73,
+			74
 		],
 		"concepts": [
 			"consistency-models",
 			"replication",
 			"quorums",
-			"time-and-order"
+			"time-and-order",
+			"atomic-commit",
+			"read-repair"
 		],
-		"why": "Read chapters 2 and 3 before you start: they set up time, order and replication in the vocabulary the rest of this track uses, so quorums and causality are already familiar words by the time a stage demands them.",
+		"why": "Read chapters 2 and 3 before you start: they set up time, order and replication in the vocabulary the rest of this track uses, so quorums and causality are already familiar words by the time a stage demands them. Chapter 4 then introduces two-phase commit as the least fault-tolerant way to keep one copy, which is the framing stage 63 needs, and chapter 5 is the gentlest page anywhere on read repair and on gossip as replica synchronisation - stages 73 and 74 in prose before you write either.",
 		"minutes": 90,
 		"free": true,
 		"checkedAt": "2026-09-19"
@@ -131,7 +140,9 @@
 			5,
 			8,
 			9,
-			13
+			13,
+			73,
+			74
 		],
 		"concepts": [
 			"version-vectors",
@@ -139,9 +150,11 @@
 			"quorums",
 			"hinted-handoff",
 			"anti-entropy",
-			"sloppy-quorum"
+			"sloppy-quorum",
+			"read-repair",
+			"gossip"
 		],
-		"why": "One paper covers five of the primitives stages: section 4.2 is stage 3's version vectors and siblings, 4.3 is the ring, 4.5 is N/R/W, 4.6 is sloppy quorums and hinted handoff, and 4.7 is Merkle anti-entropy.",
+		"why": "One paper covers five of the primitives stages: section 4.2 is stage 3's version vectors and siblings, 4.3 is the ring, 4.5 is N/R/W, 4.6 is sloppy quorums and hinted handoff, and 4.7 is Merkle anti-entropy. It is also the source for two algorithm stages - 4.6's hint left on a stand-in replica and the read repair that writes the newest version back to exactly the replicas that answered stale are stage 73 entire, and 4.8.1's gossip, where each node picks a random peer every second and reconciles, is what stage 74 counts rounds of.",
 		"minutes": 90,
 		"free": true,
 		"checkedAt": "2026-09-19"
@@ -158,16 +171,20 @@
 			8,
 			26,
 			38,
-			40
+			40,
+			63,
+			71
 		],
 		"concepts": [
 			"replication",
 			"quorums",
 			"consistency-models",
 			"linearizability",
-			"mvcc"
+			"mvcc",
+			"atomic-commit",
+			"fencing-tokens"
 		],
-		"why": "Chapter 5 on leaderless replication is the readable version of the quorum arithmetic in stage 8, and chapter 9 on linearizability is worth having read before the cluster ladder tells you a read has to reflect a write that happened on another member.",
+		"why": "Chapter 5 on leaderless replication is the readable version of the quorum arithmetic in stage 8, and chapter 9 on linearizability is worth having read before the cluster ladder tells you a read has to reflect a write that happened on another member. Chapter 9 is also the standard treatment of two-phase commit and its blocking coordinator for stage 63, and chapter 8's fencing-token figure - the lock service handing out increasing tokens, the storage refusing a write that carries an old one - is the exact mechanism stage 71 grades.",
 		"free": false,
 		"checkedAt": "2026-09-19"
 	},
@@ -202,7 +219,8 @@
 		"track": "dist",
 		"stages": [
 			4,
-			51
+			51,
+			72
 		],
 		"concepts": [
 			"clock-skew",
@@ -210,7 +228,7 @@
 			"physical-time",
 			"external-consistency"
 		],
-		"why": "Section 3 is the other answer to the problem stage 4 poses and stage 51 stresses: bound the clock error and wait it out. Read it to see the cost of using real time for ordering, which is why your HLC does not.",
+		"why": "Section 3 is the other answer to the problem stage 4 poses and stage 51 stresses: bound the clock error and wait it out. Read it to see the cost of using real time for ordering, which is why your HLC does not. Stage 72 is the same trick without the atomic clocks - commit-wait pauses for the uncertainty interval rather than trusting the timestamp, exactly as your lease holder gives up early and your granter waits late.",
 		"minutes": 75,
 		"free": true,
 		"checkedAt": "2026-09-19"
@@ -266,7 +284,8 @@
 		"track": "dist",
 		"stages": [
 			8,
-			9
+			9,
+			73
 		],
 		"concepts": [
 			"quorums",
@@ -274,7 +293,7 @@
 			"sloppy-quorum",
 			"hinted-handoff"
 		],
-		"why": "A production system's plain-English account of N, R and W and of what happens when a node is down - useful at stage 9, where the point is that a sloppy quorum accepts the write but is not a quorum.",
+		"why": "A production system's plain-English account of N, R and W and of what happens when a node is down - useful at stage 9, where the point is that a sloppy quorum accepts the write but is not a quorum, and again at stage 73, where the same hint is handed to a live replica and replayed when the owner comes back.",
 		"minutes": 25,
 		"free": true,
 		"checkedAt": "2026-09-19"
@@ -302,7 +321,7 @@
 	{
 		"id": "dist-bloom-1970",
 		"title": "Space/Time Trade-offs in Hash Coding with Allowable Errors",
-		"url": "http://crystal.uta.edu/~mcguigan/cse6350/papers/Bloom.pdf",
+		"url": "https://crystal.uta.edu/~mcguigan/cse6350/papers/Bloom.pdf",
 		"type": "paper",
 		"level": "core",
 		"track": "dist",
@@ -390,7 +409,8 @@
 		"level": "core",
 		"track": "dist",
 		"stages": [
-			13
+			13,
+			73
 		],
 		"concepts": [
 			"merkle-tree",
@@ -398,7 +418,7 @@
 			"repair",
 			"round-trips"
 		],
-		"why": "The Merkle-diff stage in production form: how a real store builds trees over token ranges and exchanges only the differing subtrees, which is the round-trip discipline stage 13 scores you on with its `compared` count.",
+		"why": "The Merkle-diff stage in production form: how a real store builds trees over token ranges and exchanges only the differing subtrees, which is the round-trip discipline stage 13 scores you on with its `compared` count. It is also why stage 73's `sync` is the only operation in that stage that guarantees convergence: read repair and hints are opportunistic, and full repair is the one that compares everything.",
 		"minutes": 25,
 		"free": true,
 		"checkedAt": "2026-09-19"
@@ -602,21 +622,23 @@
 	{
 		"id": "dist-swim-paper",
 		"title": "SWIM: Scalable Weakly-consistent Infection-style Process Group Membership Protocol",
-		"url": "http://www.cs.cornell.edu/projects/Quicksilver/public_pdfs/SWIM.pdf",
+		"url": "https://www.cs.cornell.edu/projects/Quicksilver/public_pdfs/SWIM.pdf",
 		"type": "paper",
 		"level": "core",
 		"track": "dist",
 		"stages": [
-			20
+			20,
+			74
 		],
 		"concepts": [
 			"swim",
 			"failure-detection",
 			"suspicion",
 			"gossip",
-			"membership"
+			"membership",
+			"infection-style-dissemination"
 		],
-		"why": "Section 4.2 introduces the suspicion mechanism stage 20 models: a missed ack makes a member suspect, not dead, and only the timeout promotes it - which is why your `status` has three answers and not two.",
+		"why": "Section 4.2 introduces the suspicion mechanism stage 20 models: a missed ack makes a member suspect, not dead, and only the timeout promotes it - which is why your `status` has three answers and not two. Section 4.1 is then stage 74: updates piggybacked on the failure detector's pings spread infection-style, and the analysis there is where the O(log n) rounds your message counter should show comes from.",
 		"minutes": 60,
 		"free": true,
 		"checkedAt": "2026-09-19"
@@ -876,7 +898,8 @@
 		"track": "dist",
 		"stages": [
 			31,
-			32
+			32,
+			72
 		],
 		"concepts": [
 			"leases",
@@ -884,7 +907,7 @@
 			"clock-skew",
 			"fault-tolerance"
 		],
-		"why": "The paper that introduced the lease, including the part stages 31 and 32 make you live with: expiry may be late but must never be early, because the holder and the grantor do not share a clock.",
+		"why": "The paper that introduced the lease, including the part stages 31, 32 and 72 make you live with: expiry may be late but must never be early, because the holder and the grantor do not share a clock. Stage 72 turns that into arithmetic - the holder stops serving at expires_at minus the clock error, the granter will not re-grant until expires_at plus it - and this is the argument for why both sides of that gap are needed.",
 		"minutes": 50,
 		"free": true,
 		"checkedAt": "2026-09-19"
@@ -921,15 +944,17 @@
 		"track": "dist",
 		"stages": [
 			35,
-			44
+			44,
+			65
 		],
 		"concepts": [
 			"write-ahead-log",
 			"durability",
 			"fsync",
-			"crash-recovery"
+			"crash-recovery",
+			"presumed-abort"
 		],
-		"why": "The shortest correct description of the mechanism stage 35 kills you for not having: append the record, flush it, then answer. Read it before you write a store that acknowledges from memory.",
+		"why": "The shortest correct description of the mechanism stage 35 kills you for not having: append the record, flush it, then answer. Read it before you write a store that acknowledges from memory - and again before stage 65, where the same discipline decides the protocol: the prepare record is forced out before the vote is sent, so after a crash the log answers the question instead of the participant guessing.",
 		"minutes": 20,
 		"free": true,
 		"checkedAt": "2026-09-19"
@@ -963,7 +988,9 @@
 		"level": "intro",
 		"track": "dist",
 		"stages": [
-			36
+			36,
+			56,
+			57
 		],
 		"concepts": [
 			"raft",
@@ -971,7 +998,7 @@
 			"leader-election",
 			"implementations"
 		],
-		"why": "The front door: a one-paragraph summary, the visualisations, and the list of existing implementations you can read side by side when your own election will not converge at stage 36.",
+		"why": "The front door: a one-paragraph summary, the visualisation, and the list of existing implementations you can read side by side when your own election will not converge at stage 36 or stage 56. Drive the interactive diagram until you have watched a split vote resolve on the next timeout and a log entry replicate to a majority, which is the picture stage 57 asks you to write down.",
 		"minutes": 15,
 		"free": true,
 		"checkedAt": "2026-09-19"
@@ -985,7 +1012,9 @@
 		"track": "dist",
 		"stages": [
 			36,
-			43
+			43,
+			56,
+			57
 		],
 		"concepts": [
 			"raft",
@@ -993,7 +1022,7 @@
 			"log-replication",
 			"terms"
 		],
-		"why": "An animated walk through election and replication, including a leader failing and a new term starting - twenty minutes here makes stages 36 and 43 concrete before you read a line of the paper.",
+		"why": "An animated walk through election and replication, including a leader failing and a new term starting - twenty minutes here makes stages 36 and 56 concrete before you read a line of the paper, and the replication half shows the follower whose log disagrees being walked backwards, which is the case stage 57 truncates on.",
 		"minutes": 20,
 		"free": true,
 		"checkedAt": "2026-09-19"
@@ -1013,7 +1042,12 @@
 			43,
 			44,
 			45,
-			53
+			53,
+			56,
+			57,
+			58,
+			59,
+			60
 		],
 		"concepts": [
 			"raft",
@@ -1021,9 +1055,12 @@
 			"leader-election",
 			"log-replication",
 			"terms",
-			"commit-index"
+			"commit-index",
+			"snapshots",
+			"joint-consensus",
+			"membership-changes"
 		],
-		"why": "Figure 2 alone is the state machine your leader election has to match before you debug anything else; then section 5.4 is why stage 44's acknowledged write cannot be lost, and section 5.3's idempotent AppendEntries is why stage 53's duplicated messages are harmless.",
+		"why": "Figure 2 is the specification stages 36 and 56 are graded against, rule by rule. Section 5.2 is the one-vote-per-term election and the up-to-date-log check; 5.3 is the AppendEntries consistency check stage 57 implements, and its idempotence is why stage 53's duplicated messages are harmless; 5.4 is why stage 44's acknowledged write cannot be lost, and 5.4.2 is the Figure 8 scenario stage 58 is named for - a leader may only advance the commit index onto an entry of its own term. Section 7 is stage 59's snapshot, and section 6 is stage 60's joint consensus.",
 		"minutes": 150,
 		"free": true,
 		"checkedAt": "2026-09-19"
@@ -1040,15 +1077,18 @@
 			37,
 			46,
 			47,
-			53
+			53,
+			59,
+			60
 		],
 		"concepts": [
 			"raft",
 			"implementation",
 			"snapshots",
-			"message-handling"
+			"message-handling",
+			"membership-changes"
 		],
-		"why": "The raft library the reference implementation actually runs, with the design the paper leaves out: raft as a pure state machine that emits messages, so the transport, the disk and the clock stay outside it. Read `raft.go` when your own replication turns into tangled callbacks.",
+		"why": "The raft library the reference implementation actually runs, with the design the paper leaves out: raft as a pure state machine that emits messages, so the transport, the disk and the clock stay outside it. Read `raft.go` when your own replication turns into tangled callbacks, the `confchange` package when stage 60's joint configuration will not leave the joint phase, and the snapshot handling when stage 59 has to answer a follower asking for an index that was already compacted away.",
 		"minutes": 90,
 		"free": true,
 		"checkedAt": "2026-09-19"
@@ -1058,18 +1098,21 @@
 		"title": "Paxos Made Simple",
 		"url": "https://lamport.azurewebsites.net/pubs/paxos-simple.pdf",
 		"type": "paper",
-		"level": "deep",
+		"level": "core",
 		"track": "dist",
 		"stages": [
-			36
+			36,
+			61
 		],
 		"concepts": [
 			"paxos",
 			"consensus",
 			"majority-quorums",
-			"proposals"
+			"proposals",
+			"promise",
+			"two-phase-protocol"
 		],
-		"why": "The other consensus algorithm, in fourteen pages. Read it beside Raft at stage 36 for the invariant they share - any two majorities intersect, so a value chosen by one is seen by the next - stripped of the leader and the log.",
+		"why": "The fourteen pages stage 61 implements. P1 through P2c are the promise-and-accept rules your acceptor obeys, including the one that catches everyone out: a proposer must propose the value of the highest-numbered proposal its promises reported, and its own only when none did. Read it beside Raft at stage 36 too, for the invariant they share - any two majorities intersect, so a value chosen by one is seen by the next.",
 		"minutes": 60,
 		"free": true,
 		"checkedAt": "2026-09-19"
@@ -1084,7 +1127,8 @@
 		"stages": [
 			37,
 			42,
-			44
+			44,
+			58
 		],
 		"concepts": [
 			"commit-index",
@@ -1092,7 +1136,7 @@
 			"log-replication",
 			"durability"
 		],
-		"why": "Names the line stages 37 and 44 live on: the highest log index known to be on a majority, and therefore the furthest a member may let a client see. Everything above it is written but not yet committed.",
+		"why": "Names the line stages 37 and 44 live on: the highest log index known to be on a majority, and therefore the furthest a member may let a client see. Everything above it is written but not yet committed. Stage 58 is that line computed - sort the match indices, take the majority element, and then refuse to move onto it unless the entry is from the current term.",
 		"minutes": 15,
 		"free": true,
 		"checkedAt": "2026-09-19"
@@ -1106,7 +1150,9 @@
 		"track": "dist",
 		"stages": [
 			39,
-			45
+			45,
+			56,
+			71
 		],
 		"concepts": [
 			"terms",
@@ -1114,7 +1160,7 @@
 			"stale-leader",
 			"fencing"
 		],
-		"why": "Why a term number only ever increases and why every message carries it: it is what lets the cluster in stage 45 recognise a returning old leader as stale rather than believing its log.",
+		"why": "Why a term number only ever increases and why every message carries it: it is what makes stage 56 step down the instant it sees a higher term, and what lets the cluster in stage 45 recognise a returning old leader as stale rather than believing its log. Stage 71's fencing token is the same counter under another name, handed to the client instead of kept between peers.",
 		"minutes": 15,
 		"free": true,
 		"checkedAt": "2026-09-19"
@@ -1129,7 +1175,8 @@
 		"stages": [
 			39,
 			44,
-			45
+			45,
+			58
 		],
 		"concepts": [
 			"tla-plus",
@@ -1137,7 +1184,7 @@
 			"raft",
 			"model-checking"
 		],
-		"why": "Ongaro's own TLA+ spec, and the fastest way to get precise about the invariants stages 39, 44 and 45 test - leader completeness and state-machine safety as formulas you can run TLC against rather than sentences you hope you implemented.",
+		"why": "Ongaro's own TLA+ spec, and the fastest way to get precise about the invariants stages 39, 44, 45 and 58 test - leader completeness and state-machine safety as formulas you can run TLC against rather than sentences you hope you implemented. The `AdvanceCommitIndex` action is stage 58's commitment rule in four lines, including the clause that refuses an entry whose term is not the leader's own.",
 		"minutes": 90,
 		"free": true,
 		"checkedAt": "2026-09-19"
@@ -1288,7 +1335,10 @@
 			46,
 			47,
 			48,
-			49
+			49,
+			58,
+			59,
+			60
 		],
 		"concepts": [
 			"raft",
@@ -1297,7 +1347,7 @@
 			"log-compaction",
 			"catch-up"
 		],
-		"why": "The long version of Raft, and the only source that treats the four hardest cluster stages properly: chapter 4 on single-server membership changes, chapter 5 on snapshotting and how a far-behind follower is caught up by one.",
+		"why": "The long version of Raft, and the only source that treats the hardest stages properly: chapter 3's section on committing entries from previous terms is stage 58's rule with the counterexample worked through, chapter 4 gives both the joint consensus and the single-server membership change stage 60 and the cluster stages 48 and 49 need, and chapter 5 is snapshotting, log compaction and how a far-behind follower is caught up by one - stage 59 and stages 46 to 47 at once.",
 		"minutes": 240,
 		"free": true,
 		"checkedAt": "2026-09-19"
@@ -1495,6 +1545,642 @@
 		],
 		"why": "The other half of Jepsen's checking story: instead of searching for a linearization, Elle infers a dependency graph and looks for cycles, which scales to histories where stage 54's search would not finish. Worth knowing once stage 55 makes you want longer runs.",
 		"minutes": 45,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-ousterhout-paxos-lecture",
+		"title": "Implementing Replicated Logs with Paxos",
+		"url": "https://ongardie.net/static/raft/userstudy/paxos.pdf",
+		"type": "doc",
+		"level": "intro",
+		"track": "dist",
+		"stages": [
+			61,
+			62
+		],
+		"concepts": [
+			"paxos",
+			"multi-paxos",
+			"replicated-log",
+			"proposals",
+			"leader-election"
+		],
+		"why": "Ousterhout and Ongaro's lecture deck, drawn one slide per message exchange. It is the cheapest way to get single-decree Paxos straight before stage 61, and the second half - one leader, phase one run once, phase two per slot - is exactly the move stage 62 is asking you to make.",
+		"minutes": 45,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-paxos-made-moderately-complex",
+		"title": "Paxos Made Moderately Complex",
+		"url": "https://www.cs.cornell.edu/courses/cs7412/2011sp/paxos.pdf",
+		"type": "paper",
+		"level": "core",
+		"track": "dist",
+		"stages": [
+			61,
+			62
+		],
+		"concepts": [
+			"paxos",
+			"multi-paxos",
+			"ballots",
+			"replicated-log",
+			"pseudocode"
+		],
+		"why": "Van Renesse and Altinbuken give multi-decree Paxos as pseudocode guided by its invariants, which is what stage 62 needs and what Paxos Made Simple deliberately withholds. The ballot/slot split, the rule that a higher ballot strips leadership without un-choosing a settled slot, and the contiguous-prefix requirement on the state machine are all here in a form you can transcribe.",
+		"minutes": 120,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-paxos-made-live",
+		"title": "Paxos Made Live - An Engineering Perspective",
+		"url": "https://www.cs.utexas.edu/users/lorenzo/corsi/cs380d/papers/paper2-1.pdf",
+		"type": "paper",
+		"level": "deep",
+		"track": "dist",
+		"stages": [
+			62
+		],
+		"concepts": [
+			"paxos",
+			"multi-paxos",
+			"master-lease",
+			"engineering",
+			"chubby"
+		],
+		"why": "Chubby's authors on what stage 62's stable leader costs in practice: why they run with a master lease, what happens to throughput when two proposers duel over ballots, and the gap between the algorithm on paper and a system that has to survive disk faults and restarts. Read it after your multi-Paxos passes, for the list of things the tests do not model.",
+		"minutes": 75,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-fowler-two-phase-commit",
+		"title": "Two Phase Commit - Patterns of Distributed Systems",
+		"url": "https://martinfowler.com/articles/patterns-of-distributed-systems/two-phase-commit.html",
+		"type": "article",
+		"level": "intro",
+		"track": "dist",
+		"stages": [
+			63,
+			65
+		],
+		"concepts": [
+			"atomic-commit",
+			"two-phase-commit",
+			"coordinator",
+			"crash-recovery"
+		],
+		"why": "The pattern with working code either side of it: the coordinator collecting votes for stage 63, and - the part most write-ups skip - what each side has to have written down before it answers, which is the whole of stage 65. Start here, then read a paper.",
+		"minutes": 25,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-gray-lamport-transaction-commit",
+		"title": "Consensus on Transaction Commit",
+		"url": "https://arxiv.org/pdf/cs/0408036",
+		"type": "paper",
+		"level": "core",
+		"track": "dist",
+		"stages": [
+			63,
+			64
+		],
+		"concepts": [
+			"atomic-commit",
+			"two-phase-commit",
+			"non-blocking",
+			"paxos",
+			"correctness-conditions"
+		],
+		"why": "Section 2 is stage 63's participant as a four-state machine - working, prepared, committed, aborted - with the promise made explicit: once prepared, a participant may not decide for itself. It also states the Non-Blocking condition precisely, which is the property stage 64's extra phase is bought to obtain, and then shows that 2PC is Paxos Commit with a single acceptor, which is why one coordinator failure blocks it.",
+		"minutes": 70,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-skeen-nonblocking-commit",
+		"title": "Nonblocking Commit Protocols",
+		"url": "https://www.cs.cornell.edu/courses/cs614/2003sp/papers/Ske81.pdf",
+		"type": "paper",
+		"level": "deep",
+		"track": "dist",
+		"stages": [
+			64
+		],
+		"concepts": [
+			"three-phase-commit",
+			"atomic-commit",
+			"non-blocking",
+			"state-machines",
+			"partitions"
+		],
+		"why": "The paper that introduced three-phase commit and proved what the extra round buys: a protocol is nonblocking exactly when no reachable state is both committable and abortable, which is why the pre-commit state has to exist. It is also honest about the assumption stage 64 then breaks - the timeout rule reads 'no pre-commit arrived' as 'none was sent', which is only true without partitions.",
+		"minutes": 60,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-postgres-prepare-transaction",
+		"title": "PREPARE TRANSACTION - PostgreSQL",
+		"url": "https://www.postgresql.org/docs/current/sql-prepare-transaction.html",
+		"type": "doc",
+		"level": "core",
+		"track": "dist",
+		"stages": [
+			65
+		],
+		"concepts": [
+			"two-phase-commit",
+			"crash-recovery",
+			"durability",
+			"prepared-transactions"
+		],
+		"why": "Stage 65 in a real database: PREPARE forces the transaction's state to disk and dissociates it from the session, so a crash leaves it listed in pg_prepared_xacts waiting to be told the decision. The warnings on this page - a prepared transaction holds its locks until someone resolves it - are why a participant with a prepare record and no decision must ask rather than choose.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-sagas-paper",
+		"title": "Sagas",
+		"url": "https://www.cs.cornell.edu/andru/cs711/2002fa/reading/sagas.pdf",
+		"type": "paper",
+		"level": "core",
+		"track": "dist",
+		"stages": [
+			66,
+			67
+		],
+		"concepts": [
+			"sagas",
+			"compensation",
+			"long-lived-transactions",
+			"atomicity"
+		],
+		"why": "Garcia-Molina and Salem's original: a saga is a sequence T1..Tn where each Ti has a compensating Ci, and a failure at step k runs C(k-1)..C1 in reverse - stage 66's undo order, stated once and proved. Read section 3 for the requirement that compensations must be idempotent and must not fail permanently, which is why stage 66 retries a compensation until it succeeds.",
+		"minutes": 60,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-microservices-saga-pattern",
+		"title": "Pattern: Saga",
+		"url": "https://microservices.io/patterns/data/saga.html",
+		"type": "article",
+		"level": "intro",
+		"track": "dist",
+		"stages": [
+			66,
+			67
+		],
+		"concepts": [
+			"sagas",
+			"choreography",
+			"orchestration",
+			"compensation",
+			"eventual-consistency"
+		],
+		"why": "Richardson's write-up is the one that puts the two coordination styles side by side, which is the difference between stages 66 and 67: an orchestrator that remembers the completed steps and drives the undo, versus services that each react to one event and emit the next with no one holding the state. Read the trade-off list before you decide which failure is easier to debug.",
+		"minutes": 25,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-azure-saga-pattern",
+		"title": "Saga distributed transactions pattern",
+		"url": "https://learn.microsoft.com/en-us/azure/architecture/reference-architectures/saga/saga",
+		"type": "article",
+		"level": "core",
+		"track": "dist",
+		"stages": [
+			66,
+			67
+		],
+		"concepts": [
+			"sagas",
+			"choreography",
+			"orchestration",
+			"compensation",
+			"idempotency"
+		],
+		"why": "The most careful modern treatment of the two shapes, with the failure diagrams drawn. It names the properties stage 67 tests you on and stage 66 does not need: events are at-least-once, so a handler that has already run must emit nothing, and a chain already unwinding must absorb a second failure rather than start a second chain.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-microservices-transactional-outbox",
+		"title": "Pattern: Transactional outbox",
+		"url": "https://microservices.io/patterns/data/transactional-outbox.html",
+		"type": "article",
+		"level": "intro",
+		"track": "dist",
+		"stages": [
+			68
+		],
+		"concepts": [
+			"transactional-outbox",
+			"dual-write",
+			"atomicity",
+			"message-relay"
+		],
+		"why": "States stage 68's problem in one line - you cannot atomically update a database and publish to a broker - and its answer: insert the event into an OUTBOX table in the same transaction as the row, and let something else publish it afterwards. Read it first, because the stage's naive case is exactly the dual write this rules out.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-debezium-outbox-pattern",
+		"title": "Reliable Microservices Data Exchange With the Outbox Pattern",
+		"url": "https://debezium.io/blog/2019/02/19/reliable-microservices-data-exchange-with-the-outbox-pattern/",
+		"type": "article",
+		"level": "core",
+		"track": "dist",
+		"stages": [
+			68
+		],
+		"concepts": [
+			"transactional-outbox",
+			"change-data-capture",
+			"message-relay",
+			"at-least-once"
+		],
+		"why": "The outbox with a real relay behind it, including the part stage 68 grades: the relay crashing between publishing and marking the record done leaves the record, so the event is sent again. This post is blunt that the outbox buys at-least-once and nothing more, which is the handoff to stage 69.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-microservices-idempotent-consumer",
+		"title": "Pattern: Idempotent Consumer",
+		"url": "https://microservices.io/patterns/communication-style/idempotent-consumer.html",
+		"type": "article",
+		"level": "intro",
+		"track": "dist",
+		"stages": [
+			69
+		],
+		"concepts": [
+			"idempotent-consumer",
+			"deduplication",
+			"at-least-once",
+			"message-ids"
+		],
+		"why": "The shape stage 69 implements: record the message id in the same transaction as the effect, and check it before applying rather than after. It also raises the question the stage turns into a test - how long you keep the ids, and what exactly-once means once the table has forgotten one.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-fowler-idempotent-receiver",
+		"title": "Idempotent Receiver - Patterns of Distributed Systems",
+		"url": "https://martinfowler.com/articles/patterns-of-distributed-systems/idempotent-receiver.html",
+		"type": "article",
+		"level": "core",
+		"track": "dist",
+		"stages": [
+			69,
+			70
+		],
+		"concepts": [
+			"idempotent-consumer",
+			"deduplication",
+			"request-ids",
+			"retries",
+			"expiry"
+		],
+		"why": "The pattern with both halves stage 69 needs: a per-client request id stored with the saved response, so a retransmission is answered from the record instead of applied twice, and an explicit discussion of expiring those records - which is the eviction policy the stage makes you get right. The saved-response half is also stage 70 before the HTTP vocabulary is put on it.",
+		"minutes": 25,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-stripe-idempotent-requests",
+		"title": "Idempotent requests - Stripe API",
+		"url": "https://docs.stripe.com/api/idempotent_requests",
+		"type": "doc",
+		"level": "intro",
+		"track": "dist",
+		"stages": [
+			70
+		],
+		"concepts": [
+			"idempotency-key",
+			"retries",
+			"api-design",
+			"key-reuse"
+		],
+		"why": "The reference definition of the header stage 70 implements, and short enough to read twice. Note the two rules the stage tests: the stored response is replayed for a repeated key, and reusing a key with a different request body is an error rather than a new charge.",
+		"minutes": 10,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-brandur-idempotency-keys",
+		"title": "Implementing Stripe-like Idempotency Keys in Postgres",
+		"url": "https://brandur.org/idempotency-keys",
+		"type": "article",
+		"level": "core",
+		"track": "dist",
+		"stages": [
+			70
+		],
+		"concepts": [
+			"idempotency-key",
+			"retries",
+			"atomic-phases",
+			"recovery-points",
+			"concurrency"
+		],
+		"why": "The implementation behind the header, by someone who built it: keys are rows with a state, an in-flight key locks rather than races, and the work is split into atomic phases so a crash resumes from a recovery point. Stage 70's rule that a second request under a running key is refused rather than queued comes straight from here.",
+		"minutes": 40,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-kleppmann-distributed-locking",
+		"title": "How to do distributed locking",
+		"url": "https://martin.kleppmann.com/2016/02/08/how-to-do-distributed-locking.html",
+		"type": "article",
+		"level": "core",
+		"track": "dist",
+		"stages": [
+			71
+		],
+		"concepts": [
+			"distributed-locks",
+			"fencing-tokens",
+			"process-pauses",
+			"redlock",
+			"timing-assumptions"
+		],
+		"why": "The argument stage 71 is built on, with the figure to match: a client checks that it holds the lock, is paused by GC after the check, and writes after its lease has expired - so the lock service must hand out a monotonically increasing token and the resource must refuse anything below the highest it has seen. Read it for why checking `holder` first proves nothing.",
+		"minutes": 35,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-redis-distributed-locks",
+		"title": "Distributed locks with Redis - the Redlock algorithm",
+		"url": "https://redis.io/docs/latest/develop/clients/patterns/distributed-locks/",
+		"type": "doc",
+		"level": "intro",
+		"track": "dist",
+		"stages": [
+			71
+		],
+		"concepts": [
+			"distributed-locks",
+			"redlock",
+			"lease-expiry",
+			"liveness"
+		],
+		"why": "The algorithm the fencing argument is aimed at: acquire on a majority of independent Redis instances, each with a TTL, and treat the lock as held if enough of them answered within the validity time. Read it before the critiques so stage 71's question - what the resource does when a lock holder it believes in has already been superseded - has a concrete target.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-antirez-redlock-analysis",
+		"title": "Is Redlock safe?",
+		"url": "https://antirez.com/news/101",
+		"type": "article",
+		"level": "deep",
+		"track": "dist",
+		"stages": [
+			71
+		],
+		"concepts": [
+			"distributed-locks",
+			"redlock",
+			"fencing-tokens",
+			"timing-assumptions",
+			"mutual-exclusion"
+		],
+		"why": "Redis's author answering the fencing-token critique point by point. Read it beside Kleppmann's post at stage 71: the disagreement is about whether a lock can be made safe by timing alone, and the concession - that a mutual-exclusion guarantee at the resource needs a token the resource checks - is the reason the stage grades the fence and not the lock.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-fowler-lease-pattern",
+		"title": "Lease - Patterns of Distributed Systems",
+		"url": "https://martinfowler.com/articles/patterns-of-distributed-systems/lease.html",
+		"type": "article",
+		"level": "intro",
+		"track": "dist",
+		"stages": [
+			72
+		],
+		"concepts": [
+			"leases",
+			"ttl",
+			"renewal",
+			"clock-skew",
+			"leader-leases"
+		],
+		"why": "The short version of what stage 72 implements: a lease is a lock with an expiry, renewal extends it from now rather than from the old deadline, and the holder has to give up before the granter believes it has. Read it first, then Gray and Cheriton for why the two clocks make that gap mandatory.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-cassandra-hinted-handoff",
+		"title": "Hints - Apache Cassandra",
+		"url": "https://cassandra.apache.org/doc/latest/cassandra/managing/operating/hints.html",
+		"type": "doc",
+		"level": "core",
+		"track": "dist",
+		"stages": [
+			73
+		],
+		"concepts": [
+			"hinted-handoff",
+			"anti-entropy",
+			"hint-expiry",
+			"replay"
+		],
+		"why": "Hinted handoff as an operator sees it: where the hint is stored, when it is replayed, and - the part stage 73 turns into a test - that a hint is not a guarantee. Hints have a window and they die with the node holding them, which is why the stage's `sync` compares everything rather than trusting that the hints were delivered.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-kermarrec-gossiping",
+		"title": "Gossiping in Distributed Systems",
+		"url": "https://www.distributed-systems.net/my-data/papers/2007.osr.pdf",
+		"type": "paper",
+		"level": "intro",
+		"track": "dist",
+		"stages": [
+			74
+		],
+		"concepts": [
+			"gossip",
+			"epidemic-protocols",
+			"fanout",
+			"dissemination",
+			"rounds"
+		],
+		"why": "A twelve-page survey that gives stage 74 its arithmetic: the anti-entropy and rumour-mongering models, what fanout does to the number of rounds, and why an epidemic reaches every node in O(log n) rounds while the message count keeps climbing. Read it to know what your round-by-round counts should look like before you trust them.",
+		"minutes": 35,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-nygard-release-it",
+		"title": "Release It! Design and Deploy Production-Ready Software",
+		"url": "https://pragprog.com/titles/mnee2/release-it-second-edition/",
+		"type": "book",
+		"level": "core",
+		"track": "dist",
+		"stages": [
+			75,
+			77
+		],
+		"concepts": [
+			"circuit-breaker",
+			"bulkhead",
+			"stability-patterns",
+			"cascading-failure",
+			"integration-points"
+		],
+		"why": "The book that named both patterns. The stability chapters are where the circuit breaker of stage 75 comes from - a breaker exists so a caller stops spending threads on a dependency that is already failing - and the bulkhead of stage 77, where partitioning resources means one saturated pool cannot take the whole process with it. Read the antipattern chapters first: they are the failures the stages simulate.",
+		"free": false,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-fowler-circuit-breaker",
+		"title": "CircuitBreaker",
+		"url": "https://martinfowler.com/bliki/CircuitBreaker.html",
+		"type": "article",
+		"level": "intro",
+		"track": "dist",
+		"stages": [
+			75
+		],
+		"concepts": [
+			"circuit-breaker",
+			"half-open",
+			"failure-threshold",
+			"reset-timeout"
+		],
+		"why": "Six hundred words and a state diagram covering all three states stage 75 implements: closed with a failure counter, open with a reset timeout, and the half-open trial whose single result decides which way the breaker goes. Read the note on what counts as a failure before you decide whether a call rejected while open is evidence about the dependency.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-sre-cascading-failures",
+		"title": "Addressing Cascading Failures - Google SRE Book",
+		"url": "https://sre.google/sre-book/addressing-cascading-failures/",
+		"type": "book",
+		"level": "deep",
+		"track": "dist",
+		"stages": [
+			75,
+			77
+		],
+		"concepts": [
+			"cascading-failure",
+			"retry-amplification",
+			"queue-management",
+			"load-shedding",
+			"overload"
+		],
+		"why": "Why stages 75 and 77 exist. The chapter walks a server into overload and shows the feedback loops that keep it there - unbounded queues turning latency into timeouts, retries multiplying the load, one slow dependency consuming every thread - and then names the ways out, which are the breaker, the bounded pool and the shed request you are about to implement.",
+		"minutes": 60,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-tail-at-scale",
+		"title": "The Tail at Scale",
+		"url": "https://www.barroso.org/publications/TheTailAtScale.pdf",
+		"type": "paper",
+		"level": "core",
+		"track": "dist",
+		"stages": [
+			76
+		],
+		"concepts": [
+			"tail-latency",
+			"hedged-requests",
+			"tied-requests",
+			"latency-percentiles",
+			"cancellation"
+		],
+		"why": "Dean and Barroso's paper is where stage 76's technique is named and measured: send the hedge only after the primary has passed a high percentile, so the extra load is a percent or two, and cancel the loser the moment either answers. The 95th-percentile trigger and the resulting p99 numbers are the reason the stage refuses to hedge below its threshold.",
+		"minutes": 40,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-grpc-request-hedging",
+		"title": "gRPC request hedging",
+		"url": "https://grpc.io/docs/guides/request-hedging/",
+		"type": "doc",
+		"level": "intro",
+		"track": "dist",
+		"stages": [
+			76
+		],
+		"concepts": [
+			"hedged-requests",
+			"hedging-delay",
+			"retry-policy",
+			"cancellation"
+		],
+		"why": "Hedging as a configuration knob: hedgingDelay is stage 76's hedge_after_ms, maxAttempts caps how many copies exist, and the first non-failing response wins while the rest are cancelled. Useful at stage 76 for seeing that the rule you are implementing is a real, shipped policy and not a thought experiment.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-sre-handling-overload",
+		"title": "Handling Overload - Google SRE Book",
+		"url": "https://sre.google/sre-book/handling-overload/",
+		"type": "book",
+		"level": "core",
+		"track": "dist",
+		"stages": [
+			77
+		],
+		"concepts": [
+			"load-shedding",
+			"overload",
+			"criticality",
+			"client-throttling",
+			"capacity"
+		],
+		"why": "The chapter stage 77 is modelled on: rejecting work cheaply is better than accepting it and being too slow to finish, a request whose deadline has already passed is free to drop, and per-client quotas keep one caller from consuming the capacity of the rest. It is also the source of the stage's distinction between shedding stale work and rejecting a caller.",
+		"minutes": 45,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-aws-load-shedding",
+		"title": "Using load shedding to avoid overload",
+		"url": "https://aws.amazon.com/builders-library/using-load-shedding-to-avoid-overload/",
+		"type": "article",
+		"level": "core",
+		"track": "dist",
+		"stages": [
+			77
+		],
+		"concepts": [
+			"load-shedding",
+			"bulkhead",
+			"concurrency-limits",
+			"queue-depth",
+			"brownout"
+		],
+		"why": "The operational half of stage 77, with graphs: what a service's throughput curve does past its limit, why an unbounded queue is how one slow dependency takes everything, and why the limit should be on concurrency rather than on the queue. Read the section on dropping work whose deadline has passed - the stage counts that as capacity recovered, not as a rejection.",
+		"minutes": 35,
 		"free": true,
 		"checkedAt": "2026-09-19"
 	}

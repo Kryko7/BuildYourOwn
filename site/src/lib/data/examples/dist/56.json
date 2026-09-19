@@ -1,0 +1,24 @@
+[
+	{
+		"title": "An election won on the third vote",
+		"kind": "primitives",
+		"request": "a five-member cluster, one timeout, and two granted votes\n\n./your_program.sh raft-election\ninit 5\ntimeout\nvote-response 1 s2 true\nvote-response 1 s3 true\nstate",
+		"request_hex": "2e2f796f75725f70726f6772616d2e736820726166742d656c656374696f6e0a696e697420350a74696d656f75740a766f74652d726573706f6e7365203120733220747275650a766f74652d726573706f6e7365203120733320747275650a7374617465",
+		"response": "candidate at term 1 with one vote, then two, then leader on the third\n\n{\"majority\":3,\"members\":5,\"ok\":true}\n{\"last_index\":0,\"last_term\":0,\"leader\":null,\"state\":\"candidate\",\"term\":1,\"voted_for\":\"self\",\"votes\":1}\n{\"last_index\":0,\"last_term\":0,\"leader\":null,\"state\":\"candidate\",\"term\":1,\"voted_for\":\"self\",\"votes\":2}\n{\"last_index\":0,\"last_term\":0,\"leader\":\"self\",\"state\":\"leader\",\"term\":1,\"voted_for\":\"self\",\"votes\":3}\n{\"last_index\":0,\"last_term\":0,\"leader\":\"self\",\"state\":\"leader\",\"term\":1,\"voted_for\":\"self\",\"votes\":3}",
+		"response_hex": "7b226d616a6f72697479223a332c226d656d62657273223a352c226f6b223a747275657d0a7b226c6173745f696e646578223a302c226c6173745f7465726d223a302c226c6561646572223a6e756c6c2c227374617465223a2263616e646964617465222c227465726d223a312c22766f7465645f666f72223a2273656c66222c22766f746573223a317d0a7b226c6173745f696e646578223a302c226c6173745f7465726d223a302c226c6561646572223a6e756c6c2c227374617465223a2263616e646964617465222c227465726d223a312c22766f7465645f666f72223a2273656c66222c22766f746573223a327d0a7b226c6173745f696e646578223a302c226c6173745f7465726d223a302c226c6561646572223a2273656c66222c227374617465223a226c6561646572222c227465726d223a312c22766f7465645f666f72223a2273656c66222c22766f746573223a337d0a7b226c6173745f696e646578223a302c226c6173745f7465726d223a302c226c6561646572223a2273656c66222c227374617465223a226c6561646572222c227465726d223a312c22766f7465645f666f72223a2273656c66222c22766f746573223a337d",
+		"note": "The candidate's own vote counts, so a five-member cluster needs two more, not three. Forgetting it means a leader is never elected until an extra round of timeouts, which looks like a liveness bug and is really an off-by-one.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "A candidate whose log is behind",
+		"kind": "primitives",
+		"request": "a node holding two entries, asked by a short candidate and then a current one\n\n./your_program.sh raft-election\ninit 3\nlog-append 1\nlog-append 2\nrequest-vote 3 s2 1 1\nrequest-vote 3 s3 2 2",
+		"request_hex": "2e2f796f75725f70726f6772616d2e736820726166742d656c656374696f6e0a696e697420330a6c6f672d617070656e6420310a6c6f672d617070656e6420320a726571756573742d766f74652033207332203120310a726571756573742d766f7465203320733320322032",
+		"response": "granted false for the first, and true for the second\n\n{\"majority\":2,\"members\":3,\"ok\":true}\n{\"last_index\":1,\"last_term\":1}\n{\"last_index\":2,\"last_term\":2}\n{\"granted\":false,\"state\":\"follower\",\"term\":3}\n{\"granted\":true,\"state\":\"follower\",\"term\":3}",
+		"response_hex": "7b226d616a6f72697479223a322c226d656d62657273223a332c226f6b223a747275657d0a7b226c6173745f696e646578223a312c226c6173745f7465726d223a317d0a7b226c6173745f696e646578223a322c226c6173745f7465726d223a327d0a7b226772616e746564223a66616c73652c227374617465223a22666f6c6c6f776572222c227465726d223a337d0a7b226772616e746564223a747275652c227374617465223a22666f6c6c6f776572222c227465726d223a337d",
+		"note": "This is §5.4.1, and it is the only thing standing between Raft and a leader that silently drops committed entries. Note that the first request still moved the term to 3: a refused vote is not an ignored message.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

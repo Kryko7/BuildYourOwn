@@ -1,0 +1,24 @@
+[
+	{
+		"title": "The blocking window",
+		"kind": "primitives",
+		"request": "two participants that both voted yes, and a coordinator that dies before it speaks\n\n./your_program.sh two-phase-commit\ninit [\"p1\",\"p2\"]\nprepare\nvote p1 yes\nvote p2 yes\ncrash coordinator\np-timeout p1\np-consult p1",
+		"request_hex": "2e2f796f75725f70726f6772616d2e73682074776f2d70686173652d636f6d6d69740a696e6974205b227031222c227032225d0a707265706172650a766f7465207031207965730a766f7465207032207965730a637261736820636f6f7264696e61746f720a702d74696d656f75742070310a702d636f6e73756c74207031",
+		"response": "blocked twice: once on its own timer, and again after asking its peer\n\n{\"participants\":[\"p1\",\"p2\"],\"state\":\"init\"}\n{\"sent\":2,\"state\":\"preparing\"}\n{\"decision\":null,\"state\":\"preparing\",\"votes\":1}\n{\"decision\":\"commit\",\"state\":\"committed\",\"votes\":2}\n{\"coordinator\":\"crashed\",\"ok\":true}\n{\"blocked\":true,\"decision\":null,\"reason\":\"prepared, waiting for the coordinator\"}\n{\"blocked\":true,\"decision\":null,\"reason\":\"every peer is prepared\"}",
+		"response_hex": "7b227061727469636970616e7473223a5b227031222c227032225d2c227374617465223a22696e6974227d0a7b2273656e74223a322c227374617465223a22707265706172696e67227d0a7b226465636973696f6e223a6e756c6c2c227374617465223a22707265706172696e67222c22766f746573223a317d0a7b226465636973696f6e223a22636f6d6d6974222c227374617465223a22636f6d6d6974746564222c22766f746573223a327d0a7b22636f6f7264696e61746f72223a2263726173686564222c226f6b223a747275657d0a7b22626c6f636b6564223a747275652c226465636973696f6e223a6e756c6c2c22726561736f6e223a2270726570617265642c2077616974696e6720666f722074686520636f6f7264696e61746f72227d0a7b22626c6f636b6564223a747275652c226465636973696f6e223a6e756c6c2c22726561736f6e223a2265766572792070656572206973207072657061726564227d",
+		"note": "The decision exists — every vote was yes — and it is unreachable. Both participants are holding their locks, neither may abort, and the only cure is the coordinator coming back. This is the window that makes two-phase commit a blocking protocol, and it is why stage 64 adds a round.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "One no aborts the lot",
+		"kind": "primitives",
+		"request": "one refusal, then two agreements, then the broadcast\n\n./your_program.sh two-phase-commit\ninit [\"p1\",\"p2\",\"p3\"]\nprepare\nvote p2 no\nvote p1 yes\nvote p3 yes\ndecide\ndeliver p1",
+		"request_hex": "2e2f796f75725f70726f6772616d2e73682074776f2d70686173652d636f6d6d69740a696e6974205b227031222c227032222c227033225d0a707265706172650a766f7465207032206e6f0a766f7465207031207965730a766f7465207033207965730a6465636964650a64656c69766572207031",
+		"response": "abort as soon as the no lands, and the later yes votes change nothing\n\n{\"participants\":[\"p1\",\"p2\",\"p3\"],\"state\":\"init\"}\n{\"sent\":3,\"state\":\"preparing\"}\n{\"decision\":\"abort\",\"state\":\"aborted\",\"votes\":1}\n{\"decision\":\"abort\",\"state\":\"aborted\",\"votes\":2}\n{\"decision\":\"abort\",\"state\":\"aborted\",\"votes\":3}\n{\"decision\":\"abort\",\"sent\":3}\n{\"state\":\"aborted\"}",
+		"response_hex": "7b227061727469636970616e7473223a5b227031222c227032222c227033225d2c227374617465223a22696e6974227d0a7b2273656e74223a332c227374617465223a22707265706172696e67227d0a7b226465636973696f6e223a2261626f7274222c227374617465223a2261626f72746564222c22766f746573223a317d0a7b226465636973696f6e223a2261626f7274222c227374617465223a2261626f72746564222c22766f746573223a327d0a7b226465636973696f6e223a2261626f7274222c227374617465223a2261626f72746564222c22766f746573223a337d0a7b226465636973696f6e223a2261626f7274222c2273656e74223a337d0a7b227374617465223a2261626f72746564227d",
+		"note": "Abort needs one vote; commit needs all of them. An implementation that waits for every vote before deciding abort is not wrong, but one that lets a later yes overturn an abort has lost atomicity outright.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

@@ -22,7 +22,8 @@ export type ExampleKind = 'transcript' | 'bytes';
 export type MascotName = 'fox' | 'bunny' | 'owl' | 'hedgehog' | 'squirrel' | 'duckling' | 'cat';
 
 /**
- * A track whose stages come in ladders (dist: `primitives` → `node` → `cluster`) declares
+ * A track whose stages come in ladders (dist: `primitives` → `algorithms` → `node` →
+ * `cluster`) declares
  * them here; the track page draws a rung per ladder and every stage says which it is on.
  * Tracks without ladders leave this out and nothing about them changes.
  */
@@ -255,7 +256,7 @@ export const tracks: Record<TrackId, TrackMeta> = {
 		tagline: 'From a Lamport clock to a linearizable cluster',
 		building: 'a replicated, linearizable key-value store',
 		blurb:
-			'A replicated, linearizable key-value store, climbed in three ladders: the primitives (clocks, quorums, CRDTs, failure detectors), then one durable node, then a real cluster that survives partitions — with the final rung checking your history against a linearizability model.',
+			'A replicated, linearizable key-value store, climbed in four ladders: the primitives (clocks, quorums, CRDTs, failure detectors), then the algorithms themselves as exercises — Raft, Paxos, two-phase commit, sagas, fencing tokens, circuit breakers — then one durable node, then a real cluster that survives partitions with its history checked against a linearizability model.',
 		glyph: '⁂',
 		accent: 'var(--dist)',
 		accentBright: 'var(--dist-bright)',
@@ -271,7 +272,7 @@ export const tracks: Record<TrackId, TrackMeta> = {
 		reference: 'the suite’s own model checker',
 		reportPath: '/__reports/dist.json',
 		examples: 'bytes',
-		plannedStages: 45,
+		plannedStages: 77,
 		sectionBadges: {
 			A: { badge: 'Clock Clearing', icon: '🕰' },
 			B: { badge: 'The Allotments', icon: '🌾' },
@@ -280,7 +281,11 @@ export const tracks: Record<TrackId, TrackMeta> = {
 			E: { badge: 'Windbreak Row', icon: '🍃' },
 			F: { badge: 'The Rookery', icon: '🪺' },
 			G: { badge: 'Storm Hedge', icon: '⛈' },
-			H: { badge: 'The Far Orchard', icon: '🌳' }
+			H: { badge: 'The Far Orchard', icon: '🌳' },
+			I: { badge: 'The Council Ring', icon: '🗳' },
+			J: { badge: 'The Handshake Gate', icon: '🤝' },
+			K: { badge: 'The Long Furrow', icon: '📜' },
+			L: { badge: 'The Weather Station', icon: '🧭' }
 		},
 		ladders: [
 			{
@@ -288,6 +293,12 @@ export const tracks: Record<TrackId, TrackMeta> = {
 				title: 'Primitives',
 				note: 'The pieces on their own: clocks and causality, partitioning and quorums, probabilistic structures, CRDTs, flow control and failure detection.',
 				sections: ['A', 'B', 'C']
+			},
+			{
+				id: 'algorithms',
+				title: 'Algorithms & patterns',
+				note: 'The named algorithms on their own terms: Raft and Paxos, atomic commit, sagas and the outbox, fencing tokens, leases, gossip, circuit breakers and load shedding. Exercises, not another server.',
+				sections: ['I', 'J', 'K', 'L']
 			},
 			{
 				id: 'node',
