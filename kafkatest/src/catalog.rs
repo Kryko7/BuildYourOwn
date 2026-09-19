@@ -215,7 +215,13 @@ pub fn list(stages: &[Stage], plan: &Path) {
         );
     }
     let total: usize = stages.iter().map(|s| s.tests.len()).sum();
-    let planned = 45 - stages.len();
+    // Counted from the section table, so adding a stage to the plan cannot leave this
+    // behind.
+    let planned = crate::stages::sections()
+        .iter()
+        .map(|s| s.stages.len())
+        .sum::<usize>()
+        - stages.len();
     println!(
         "\n{} stages implemented, {total} tests ({planned} stages still planned)",
         stages.len()
@@ -252,7 +258,10 @@ mod tests {
             serde_json::from_str(&to_json(&cat).expect("json")).expect("parse");
         assert_eq!(v["track"], "kafka");
         assert_eq!(v["generatedAt"], "2026-01-01T00:00:00Z");
-        assert_eq!(v["sections"].as_array().map(Vec::len), Some(6));
+        assert_eq!(
+            v["sections"].as_array().map(Vec::len),
+            Some(crate::stages::sections().len())
+        );
         let first = &v["stages"][0];
         assert_eq!(first["number"], 1);
         assert!(first["file"]

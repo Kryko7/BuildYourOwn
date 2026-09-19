@@ -339,7 +339,7 @@
 			"topics": {
 				"t1": {
 					"name": "t1-ex351",
-					"id": "766d1c5d-950d-495d-8d91-5554e18ea2ba",
+					"id": "7189055c-5943-4228-8461-a037abebfc37",
 					"partitions": 1
 				}
 			},
@@ -350,9 +350,9 @@
 		"title": "Fetching the records back",
 		"kind": "wire",
 		"request": "Fetch v16, correlation id 352, max_wait_ms 1000, min_bytes 1: topic by topic id (v13 and later name topics by id, not by name), partition 0, fetch_offset 0",
-		"request_hex": "00000060000100100000016000096b61666b617465737400000003e80000000100a00000000000000000000000022cc8a4494ff24c1d9b4c4f5c98546f620200000000ffffffff0000000000000000ffffffffffffffffffffffff001000000000010100",
+		"request_hex": "00000060000100100000016000096b61666b617465737400000003e80000000100a0000000000000000000000002319687090a134a80a3bc90b3fe6ab4ae0200000000ffffffff0000000000000000ffffffffffffffffffffffff001000000000010100",
 		"response": "error_code 0 (NONE) at the top, then one partitions entry: partition_index 0, error_code 0, high_watermark 3, last_stable_offset 3, log_start_offset 0, and a records field carrying the stored v2 batch with the three records at offsets 0, 1 and 2, keys, values and CreateTime timestamps as they were produced",
-		"response_hex": "0000009d000001600000000000000032379504022cc8a4494ff24c1d9b4c4f5c98546f620200000000000000000000000000030000000000000003000000000000000000ffffffff5600000000000000000000004900000000023312cc7b000000000002000001a097a53132000001a097a53132ffffffffffffffffffffffffffff000000030e000000010261000e000002010262000e00000401026300000000",
+		"response_hex": "0000009d000001600000000000000036963a9a02319687090a134a80a3bc90b3fe6ab4ae0200000000000000000000000000030000000000000003000000000000000000ffffffff560000000000000000000000490000000002576ea67b000000000002000001a0b8dc6f1c000001a0b8dc6f1cffffffffffffffffffffffffffff000000030e000000010261000e000002010262000e00000401026300000000",
 		"note": "The records field is the segment's bytes handed back as they are — that is why a Fetch after a restart is the real test of stage 34's on-disk format. Only baseOffset and partitionLeaderEpoch were ever the broker's to write; everything inside the batch belongs to the producer and must come back byte for byte.",
 		"request_fields": [
 			{
@@ -437,7 +437,7 @@
 				"offset": 46,
 				"length": 16,
 				"field": "body.topics[0].topic_id",
-				"value": "2cc8a449-4ff2-4c1d-9b4c-4f5c98546f62",
+				"value": "31968709-0a13-4a80-a3bc-90b3fe6ab4ae",
 				"varies": true
 			},
 			{
@@ -548,7 +548,7 @@
 				"offset": 15,
 				"length": 4,
 				"field": "body.session_id",
-				"value": "842503428",
+				"value": "915815066",
 				"varies": true
 			},
 			{
@@ -561,7 +561,7 @@
 				"offset": 20,
 				"length": 16,
 				"field": "body.responses[0].topic_id",
-				"value": "2cc8a449-4ff2-4c1d-9b4c-4f5c98546f62",
+				"value": "31968709-0a13-4a80-a3bc-90b3fe6ab4ae",
 				"varies": true
 			},
 			{
@@ -646,7 +646,7 @@
 				"offset": 90,
 				"length": 4,
 				"field": "body.responses[0].partitions[0].records.batch[0].crc",
-				"value": "0x3312cc7b (CRC-32C of everything after this field)",
+				"value": "0x576ea67b (CRC-32C of everything after this field)",
 				"varies": true
 			},
 			{
@@ -665,14 +665,14 @@
 				"offset": 100,
 				"length": 8,
 				"field": "body.responses[0].partitions[0].records.batch[0].base_timestamp",
-				"value": "1789250580786",
+				"value": "1789807849244",
 				"varies": true
 			},
 			{
 				"offset": 108,
 				"length": 8,
 				"field": "body.responses[0].partitions[0].records.batch[0].max_timestamp",
-				"value": "1789250580786",
+				"value": "1789807849244",
 				"varies": true
 			},
 			{
@@ -764,7 +764,7 @@
 			"topics": {
 				"t1": {
 					"name": "t1-ex352",
-					"id": "2cc8a449-4ff2-4c1d-9b4c-4f5c98546f62",
+					"id": "31968709-0a13-4a80-a3bc-90b3fe6ab4ae",
 					"partitions": 1
 				}
 			},

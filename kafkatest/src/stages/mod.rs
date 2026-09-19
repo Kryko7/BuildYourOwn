@@ -16,7 +16,7 @@ use std::path::PathBuf;
 use std::pin::Pin;
 use std::time::Duration;
 
-mod group_protocol;
+pub(crate) mod group_protocol;
 mod helpers;
 pub use helpers::*;
 
@@ -68,6 +68,7 @@ mod s42_group_errors;
 mod s43_cli_interop;
 mod s44_fuzz;
 mod s45_soak;
+mod s46_transaction_coordinator;
 
 /// Every implemented stage, in ascending order.
 pub fn all() -> Vec<Stage> {
@@ -117,6 +118,7 @@ pub fn all() -> Vec<Stage> {
         s43_cli_interop::stage(),
         s44_fuzz::stage(),
         s45_soak::stage(),
+        s46_transaction_coordinator::stage(),
     ];
     v.sort_by_key(|s| s.number);
     v
@@ -165,6 +167,11 @@ pub fn sections() -> &'static [Section] {
             id: "f",
             title: "Interop, robustness, performance",
             stages: &[43, 44, 45],
+        },
+        Section {
+            id: "g",
+            title: "Transactions",
+            stages: &[46],
         },
     ]
 }
@@ -589,7 +596,11 @@ mod tests {
     fn sections_cover_the_whole_plan_once() {
         let mut all_numbers: Vec<u32> = sections().iter().flat_map(|s| s.stages.to_vec()).collect();
         all_numbers.sort_unstable();
-        assert_eq!(all_numbers, (1..=45).collect::<Vec<u32>>());
+        assert_eq!(
+            all_numbers,
+            (1..=all_numbers.len() as u32).collect::<Vec<u32>>(),
+            "the sections must cover 1..=n once each, with no gap and no repeat"
+        );
     }
 
     #[test]

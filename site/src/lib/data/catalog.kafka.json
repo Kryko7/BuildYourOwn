@@ -1,6 +1,6 @@
 {
 	"track": "kafka",
-	"generatedAt": "2026-09-19T05:05:20.894Z",
+	"generatedAt": "2026-09-19T08:54:57.737Z",
 	"sections": [
 		{
 			"id": "A",
@@ -81,6 +81,13 @@
 				43,
 				44,
 				45
+			]
+		},
+		{
+			"id": "G",
+			"title": "Transactions",
+			"stages": [
+				46
 			]
 		}
 	],
@@ -1999,12 +2006,70 @@
 				}
 			],
 			"exampleCount": 2
+		},
+		{
+			"number": 46,
+			"slug": "transaction_coordinator",
+			"name": "The transaction coordinator and producer fencing",
+			"ext": true,
+			"section": "G",
+			"file": "src/stages/s46_transaction_coordinator.rs",
+			"planDone": false,
+			"hints": [
+				"`FindCoordinator` with `key_type` 1 asks for a *transaction* coordinator; the same request with 0 asks for a consumer group's, and the two are different lookups",
+				"`InitProducerId` with a transactional id is a different operation from the same request with a null one: it is coordinator state that outlives the connection",
+				"Asking twice for the same transactional id must return the same producer id with a higher epoch — that bump is the entire fencing mechanism",
+				"A produce stamped with a superseded epoch is refused with INVALID_PRODUCER_EPOCH (47) and must append nothing"
+			],
+			"tests": [
+				{
+					"name": "ApiVersions advertises InitProducerId and FindCoordinator",
+					"ext": true
+				},
+				{
+					"name": "FindCoordinator with key_type 1 answers for a transactional id",
+					"ext": true
+				},
+				{
+					"name": "the same transactional id maps to the same coordinator every time",
+					"ext": true
+				},
+				{
+					"name": "InitProducerId with a transactional id hands out a producer id",
+					"ext": true
+				},
+				{
+					"name": "asking again for the same id bumps the epoch",
+					"ext": true
+				},
+				{
+					"name": "and keeps the same producer id",
+					"ext": true
+				},
+				{
+					"name": "the superseded instance is fenced when it resumes",
+					"ext": true
+				},
+				{
+					"name": "and the live one is not",
+					"ext": true
+				},
+				{
+					"name": "a different transactional id is a different producer",
+					"ext": true
+				},
+				{
+					"name": "the broker is still serving afterwards",
+					"ext": true
+				}
+			],
+			"exampleCount": 2
 		}
 	],
 	"totals": {
-		"stages": 45,
-		"tests": 296,
-		"ext": 23
+		"stages": 46,
+		"tests": 306,
+		"ext": 24
 	},
 	"source": "kafkatest/catalog.json"
 }

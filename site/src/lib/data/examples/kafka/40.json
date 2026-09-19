@@ -5,7 +5,7 @@
 		"request": "JoinGroup v9 for 'kafkatest-group' with an empty member_id, session_timeout_ms 10000, rebalance_timeout_ms 10000, protocol_type 'consumer' and one protocol named 'range' whose metadata is a ConsumerProtocolSubscription v0 naming the fixture topic",
 		"request_hex": "00000056000b00090000019100096b61666b617465737400106b61666b61746573742d67726f75700000271000002710010009636f6e73756d6572020672616e676515000000000001000874312d6578343031ffffffff000000",
 		"response": "error_code 79 (MEMBER_ID_REQUIRED), generation_id -1, an empty members array — and a member_id the coordinator has just minted (Kafka builds it from the client id and a fresh UUID). The client must send that id back in a second, otherwise identical, JoinGroup, which is the one that really joins",
-		"response_hex": "00000044000001910000000000004fffffffff000001002f6b61666b61746573742d63616534626331382d643930302d343761622d386434312d3537373236326630333732610100",
+		"response_hex": "00000044000001910000000000004fffffffff000001002f6b61666b61746573742d64383032326261322d333537632d343466622d613962332d3639616237653861373265390100",
 		"note": "This is KIP-394. The first join is refused on purpose: it costs the coordinator nothing to mint an id, and it means a client that disappears between its two joins cannot hold a rebalance open. Do not treat 79 as a failure — it carries the id you need, and only the second join gets generation 1 and the leader's members list.",
 		"request_fields": [
 			{
@@ -182,7 +182,7 @@
 				"offset": 23,
 				"length": 47,
 				"field": "body.member_id",
-				"value": "'kafkatest-cae4bc18-d900-47ab-8d41-577262f0372a'",
+				"value": "'kafkatest-d8022ba2-357c-44fb-a9b3-69ab7e8a72e9'",
 				"varies": true
 			},
 			{
@@ -202,7 +202,7 @@
 			"topics": {
 				"t1": {
 					"name": "t1-ex401",
-					"id": "a99bc849-e8d6-49c0-9b2d-fb76c770b658",
+					"id": "e4a8b408-5951-4338-bd61-7bfee502ece9",
 					"partitions": 2
 				}
 			},

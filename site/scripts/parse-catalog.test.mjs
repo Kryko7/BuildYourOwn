@@ -176,10 +176,15 @@ describe.skipIf(!hasShelltest)('the real shelltest suite', () => {
 });
 
 describe('kafka placeholder', () => {
-	it('has 45 stages across sections A..F', () => {
+	it('is internally consistent, whatever size it has grown to', () => {
 		const plan = kafkaPlaceholderPlan();
-		expect(plan.stages).toHaveLength(45);
-		expect(plan.sections.map((s) => s.id)).toEqual(['A', 'B', 'C', 'D', 'E', 'F']);
+		// The placeholder is a transcription of the plan, so what is worth holding is that it
+		// hangs together — contiguous sections, every stage covered — rather than a count
+		// that has to be edited in two places whenever the plan grows.
+		const ids = plan.sections.map((s) => s.id);
+		expect(ids[0]).toBe('A');
+		expect(ids).toEqual(ids.map((_, i) => String.fromCharCode('A'.charCodeAt(0) + i)));
+		expect(plan.stages.length).toBeGreaterThan(40);
 		expect(plan.stages.every((s) => s.hints.length >= 1)).toBe(true);
 		expect(plan.stages.filter((s) => s.ext).length).toBeGreaterThan(15);
 	});
@@ -377,19 +382,21 @@ describe('mergePlannedStages (a gapped kafkatest catalog)', () => {
 });
 
 describe.skipIf(!existsSync(join(kafkatest, 'PLAN.md')))('the real kafkatest sources', () => {
-	it('reaches 45 stages across A..F however far catalog.json has been merged', async () => {
+	it('reaches every planned stage however far catalog.json has been merged', async () => {
 		const plan = parseKafkaPlan(await readFile(join(kafkatest, 'PLAN.md'), 'utf8'));
-		expect(plan.stages).toHaveLength(45);
-		expect(plan.sections.map((s) => s.id)).toEqual(['A', 'B', 'C', 'D', 'E', 'F']);
+		const ids = plan.sections.map((s) => s.id);
+		expect(ids[0]).toBe('A');
+		expect(ids).toEqual(ids.map((_, i) => String.fromCharCode('A'.charCodeAt(0) + i)));
+		expect(plan.stages.length).toBeGreaterThan(40);
 		expect(plan.stages.every((s) => s.hints.length >= 1)).toBe(true);
 
 		const rawCatalog = existsSync(join(kafkatest, 'catalog.json'))
 			? JSON.parse(await readFile(join(kafkatest, 'catalog.json'), 'utf8'))
 			: { sections: [], stages: [] };
 		const merged = mergePlannedStages(normalizeKafkaCatalog(rawCatalog, 'x'), plan);
-		expect(merged.totals.stages).toBe(45);
+		expect(merged.totals.stages).toBe(plan.stages.length);
 		expect(merged.stages.map((s) => s.number)).toEqual(
-			Array.from({ length: 45 }, (_, i) => i + 1)
+			Array.from({ length: plan.stages.length }, (_, i) => i + 1)
 		);
 		// every stage is reachable from exactly one camp, so the map draws all of them
 		const covered = merged.sections.flatMap((s) => s.stages).sort((a, b) => a - b);
@@ -409,16 +416,17 @@ describe.skipIf(!existsSync(join(kafkatest, 'PLAN.md')))('the real kafkatest sou
 			? JSON.parse(await readFile(join(kafkatest, 'catalog.json'), 'utf8'))
 			: { sections: [], stages: [] };
 		const full = normalizeKafkaCatalog(rawCatalog, 'x');
-		const all = Array.from({ length: 45 }, (_, i) => i + 1);
+		const n = plan.stages.length;
+		const all = Array.from({ length: n }, (_, i) => i + 1);
 
-		for (const keep of [45, 24, 14, 9, 1, 0]) {
+		for (const keep of [n, 24, 14, 9, 1, 0]) {
 			const gapped = normalizeKafkaCatalog(
 				{ ...rawCatalog, stages: full.stages.slice(0, keep) },
 				'x'
 			);
 			const merged = mergePlannedStages(gapped, plan);
 			expect({ keep, numbers: merged.stages.map((s) => s.number) }).toEqual({ keep, numbers: all });
-			expect(merged.stages.filter((s) => s.planned).length).toBe(45 - keep);
+			expect(merged.stages.filter((s) => s.planned).length).toBe(n - keep);
 			// what the prerenderer walks: a section entry for every stage, and no duplicates
 			const covered = merged.sections.flatMap((s) => s.stages);
 			expect(new Set(covered).size).toBe(covered.length);

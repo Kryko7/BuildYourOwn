@@ -3,9 +3,9 @@
 		"title": "partition_max_bytes 1",
 		"kind": "wire",
 		"request": "Fetch v16, correlation id 261: partition 0 from offset 0 with partition_max_bytes 1 and a top-level max_bytes of 10485760. The partition holds six one-record batches, every one of them far larger than a byte",
-		"request_hex": "00000060000100100000010500096b61666b617465737400000001f40000000100a0000000000000000000000002bbd4d925812940e4a72eb177e1ccecfe0200000000ffffffff0000000000000000ffffffffffffffffffffffff000000010000010100",
+		"request_hex": "00000060000100100000010500096b61666b617465737400000001f40000000100a0000000000000000000000002f7cd16bde0ed48d3b5306472695727490200000000ffffffff0000000000000000ffffffffffffffffffffffff000000010000010100",
 		"response": "error_code 0, high_watermark 6, and a records field holding the first batch complete — base_offset 0, its record 'b0' — and nothing after it",
-		"response_hex": "0000008e0000010500000000000000512e149002bbd4d925812940e4a72eb177e1ccecfe0200000000000000000000000000060000000000000006000000000000000000ffffffff4700000000000000000000003a000000000239ab0c72000000000000000001a097a51e7b000001a097a51e7bffffffffffffffffffffffffffff00000001100000000104623000000000",
+		"response_hex": "0000008e000001050000000000000050587d6702f7cd16bde0ed48d3b5306472695727490200000000000000000000000000060000000000000006000000000000000000ffffffff4700000000000000000000003a00000000022dd7f5ab000000000000000001a0b8dc5cba000001a0b8dc5cbaffffffffffffffffffffffffffff00000001100000000104623000000000",
 		"note": "The first batch is exempt from the limit, and it goes out whole or not at all. Without that rule a consumer whose buffer is smaller than the batch it is sitting on can never advance, and one oversized batch stalls the partition for ever.",
 		"request_fields": [
 			{
@@ -90,7 +90,7 @@
 				"offset": 46,
 				"length": 16,
 				"field": "body.topics[0].topic_id",
-				"value": "bbd4d925-8129-40e4-a72e-b177e1ccecfe",
+				"value": "f7cd16bd-e0ed-48d3-b530-647269572749",
 				"varies": true
 			},
 			{
@@ -201,7 +201,7 @@
 				"offset": 15,
 				"length": 4,
 				"field": "body.session_id",
-				"value": "1361974416",
+				"value": "1347976551",
 				"varies": true
 			},
 			{
@@ -214,7 +214,7 @@
 				"offset": 20,
 				"length": 16,
 				"field": "body.responses[0].topic_id",
-				"value": "bbd4d925-8129-40e4-a72e-b177e1ccecfe",
+				"value": "f7cd16bd-e0ed-48d3-b530-647269572749",
 				"varies": true
 			},
 			{
@@ -299,7 +299,7 @@
 				"offset": 90,
 				"length": 4,
 				"field": "body.responses[0].partitions[0].records.batch[0].crc",
-				"value": "0x39ab0c72 (CRC-32C of everything after this field)",
+				"value": "0x2dd7f5ab (CRC-32C of everything after this field)",
 				"varies": true
 			},
 			{
@@ -318,14 +318,14 @@
 				"offset": 100,
 				"length": 8,
 				"field": "body.responses[0].partitions[0].records.batch[0].base_timestamp",
-				"value": "1789250575995",
+				"value": "1789807844538",
 				"varies": true
 			},
 			{
 				"offset": 108,
 				"length": 8,
 				"field": "body.responses[0].partitions[0].records.batch[0].max_timestamp",
-				"value": "1789250575995",
+				"value": "1789807844538",
 				"varies": true
 			},
 			{
@@ -417,7 +417,7 @@
 			"topics": {
 				"t1": {
 					"name": "t1-ex261",
-					"id": "bbd4d925-8129-40e4-a72e-b177e1ccecfe",
+					"id": "f7cd16bd-e0ed-48d3-b530-647269572749",
 					"partitions": 2
 				}
 			},
@@ -428,9 +428,9 @@
 		"title": "A top-level max_bytes of 1 across two partitions",
 		"kind": "wire",
 		"request": "Fetch v16, correlation id 262: partitions 0 and 1, each allowed a megabyte of its own, but a top-level max_bytes of 1 for the whole response",
-		"request_hex": "00000081000100100000010600096b61666b617465737400000001f4000000010000000100000000000000000002c3e83e3db4b64f42b5828b9458e6df310300000000ffffffff0000000000000000ffffffffffffffffffffffff001000000000000001ffffffff0000000000000000ffffffffffffffffffffffff001000000000010100",
+		"request_hex": "00000081000100100000010600096b61666b617465737400000001f4000000010000000100000000000000000002a01a6fcbb5f04ea0bd2d3e61cc537cb60300000000ffffffff0000000000000000ffffffffffffffffffffffff001000000000000001ffffffff0000000000000000ffffffffffffffffffffffff001000000000010100",
 		"response": "error_code 0 on both partitions: partition 0 carries its first batch — the exemption is spent there — and partition 1 comes back with an empty records field",
-		"response_hex": "000000b300000106000000000000006af938cc02c3e83e3db4b64f42b5828b9458e6df310300000000000000000000000000060000000000000006000000000000000000ffffffff4700000000000000000000003a00000000029baa8b59000000000000000001a097a51f45000001a097a51f45ffffffffffffffffffffffffffff000000011000000001046230000000000001000000000000000000030000000000000003000000000000000000ffffffff01000000",
+		"response_hex": "000000b3000001060000000000000069ac1bef02a01a6fcbb5f04ea0bd2d3e61cc537cb60300000000000000000000000000060000000000000006000000000000000000ffffffff4700000000000000000000003a000000000252b36dca000000000000000001a0b8dc5d81000001a0b8dc5d81ffffffffffffffffffffffffffff000000011000000001046230000000000001000000000000000000030000000000000003000000000000000000ffffffff01000000",
 		"note": "max_bytes is a budget for the response as a whole: subtract what each partition used and hand the remainder to the next one. Once it is gone the remaining partitions are answered with error 0 and no records — they are never dropped from the response.",
 		"request_fields": [
 			{
@@ -515,7 +515,7 @@
 				"offset": 46,
 				"length": 16,
 				"field": "body.topics[0].topic_id",
-				"value": "c3e83e3d-b4b6-4f42-b582-8b9458e6df31",
+				"value": "a01a6fcb-b5f0-4ea0-bd2d-3e61cc537cb6",
 				"varies": true
 			},
 			{
@@ -626,7 +626,7 @@
 				"offset": 15,
 				"length": 4,
 				"field": "body.session_id",
-				"value": "1794717900",
+				"value": "1772887023",
 				"varies": true
 			},
 			{
@@ -639,7 +639,7 @@
 				"offset": 20,
 				"length": 16,
 				"field": "body.responses[0].topic_id",
-				"value": "c3e83e3d-b4b6-4f42-b582-8b9458e6df31",
+				"value": "a01a6fcb-b5f0-4ea0-bd2d-3e61cc537cb6",
 				"varies": true
 			},
 			{
@@ -724,7 +724,7 @@
 				"offset": 90,
 				"length": 4,
 				"field": "body.responses[0].partitions[0].records.batch[0].crc",
-				"value": "0x9baa8b59 (CRC-32C of everything after this field)",
+				"value": "0x52b36dca (CRC-32C of everything after this field)",
 				"varies": true
 			},
 			{
@@ -743,14 +743,14 @@
 				"offset": 100,
 				"length": 8,
 				"field": "body.responses[0].partitions[0].records.batch[0].base_timestamp",
-				"value": "1789250576197",
+				"value": "1789807844737",
 				"varies": true
 			},
 			{
 				"offset": 108,
 				"length": 8,
 				"field": "body.responses[0].partitions[0].records.batch[0].max_timestamp",
-				"value": "1789250576197",
+				"value": "1789807844737",
 				"varies": true
 			},
 			{
@@ -842,7 +842,7 @@
 			"topics": {
 				"t1": {
 					"name": "t1-ex262",
-					"id": "c3e83e3d-b4b6-4f42-b582-8b9458e6df31",
+					"id": "a01a6fcb-b5f0-4ea0-bd2d-3e61cc537cb6",
 					"partitions": 2
 				}
 			},

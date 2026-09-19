@@ -1,2174 +1,2275 @@
 [
-  {
-    "id": "kafka-protocol-guide",
-    "title": "Kafka protocol guide",
-    "url": "https://kafka.apache.org/43/design/protocol",
-    "type": "spec",
-    "level": "core",
-    "track": "kafka",
-    "stages": [
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      10,
-      11,
-      12,
-      13,
-      14,
-      15,
-      16,
-      17,
-      18,
-      19,
-      20,
-      21,
-      22,
-      23,
-      24,
-      29,
-      30,
-      31,
-      32,
-      38,
-      39,
-      40,
-      41,
-      42
-    ],
-    "concepts": [
-      "wire-protocol",
-      "request-header",
-      "api-keys",
-      "error-codes",
-      "flexible-versions"
-    ],
-    "why": "The one document the whole track is graded against: framing, primitive types, header versions, the error-code table, the API-key table and every message schema in BNF. Keep it open; almost every failing test is a mismatch with a line on this page.",
-    "minutes": 240,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kafka-protocol-primitive-types",
-    "title": "Kafka protocol guide - Protocol Primitive Types",
-    "url": "https://kafka.apache.org/43/design/protocol/#protocol-primitive-types",
-    "type": "spec",
-    "level": "core",
-    "track": "kafka",
-    "stages": [
-      2,
-      3,
-      5,
-      11,
-      15
-    ],
-    "concepts": [
-      "varint",
-      "zigzag",
-      "compact-arrays",
-      "nullable-string",
-      "uuid"
-    ],
-    "why": "The table that distinguishes STRING from COMPACT_STRING, ARRAY from COMPACT_ARRAY and defines UNSIGNED_VARINT. Getting the compact forms wrong is the single most common reason a flexible-version response decodes as garbage.",
-    "minutes": 20,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kafka-protocol-request-response-headers",
-    "title": "Kafka protocol guide - Request and Response Headers",
-    "url": "https://kafka.apache.org/43/design/protocol/#request-and-response-headers",
-    "type": "spec",
-    "level": "core",
-    "track": "kafka",
-    "stages": [
-      2,
-      3,
-      5,
-      8
-    ],
-    "concepts": [
-      "request-header",
-      "correlation-id",
-      "header-versions",
-      "tagged-fields"
-    ],
-    "why": "Header v0/v1/v2 side by side and the rule that decides which one an API uses. Stage 3 is exactly this, and the ApiVersions response header being v0 rather than v1 is the classic trap.",
-    "minutes": 15,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kafka-protocol-record-batch",
-    "title": "Kafka protocol guide - Record Batch",
-    "url": "https://kafka.apache.org/43/design/protocol/#record-batch",
-    "type": "spec",
-    "level": "deep",
-    "track": "kafka",
-    "stages": [
-      23,
-      24,
-      27,
-      31,
-      32,
-      34,
-      36,
-      37
-    ],
-    "concepts": [
-      "record-batch",
-      "crc32c",
-      "varint",
-      "zigzag",
-      "compression",
-      "control-batch"
-    ],
-    "why": "Byte-for-byte layout of the v2 batch: which bytes the CRC covers, where the attribute bits live, and the varint/zigzag encoding of each record. Your records codec is written straight off this section.",
-    "minutes": 45,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kafka-protocol-error-codes",
-    "title": "Kafka protocol guide - Error Codes",
-    "url": "https://kafka.apache.org/43/design/protocol/#error-codes",
-    "type": "spec",
-    "level": "core",
-    "track": "kafka",
-    "stages": [
-      4,
-      11,
-      17,
-      18,
-      21,
-      25,
-      30,
-      36,
-      37,
-      42
-    ],
-    "concepts": [
-      "error-codes",
-      "retriable-errors"
-    ],
-    "why": "The numeric table you need every time a stage asserts an error: 35 UNSUPPORTED_VERSION, 3 UNKNOWN_TOPIC_OR_PARTITION, 100 UNKNOWN_TOPIC_ID, 1 OFFSET_OUT_OF_RANGE, 2 CORRUPT_MESSAGE. Also says which are retriable, which matters for client interop in stage 43.",
-    "minutes": 15,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kafka-protocol-api-keys",
-    "title": "Kafka protocol guide - API Keys",
-    "url": "https://kafka.apache.org/43/design/protocol/#api-keys",
-    "type": "spec",
-    "level": "intro",
-    "track": "kafka",
-    "stages": [
-      5,
-      10,
-      16,
-      17,
-      18,
-      19,
-      29,
-      38,
-      39,
-      40,
-      41
-    ],
-    "concepts": [
-      "api-keys",
-      "api-versions"
-    ],
-    "why": "Maps every numeric api_key to a name. You will refer to it constantly: 0 Produce, 1 Fetch, 2 ListOffsets, 18 ApiVersions, 75 DescribeTopicPartitions.",
-    "minutes": 5,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kafka-protocol-network",
-    "title": "Kafka protocol guide - Network",
-    "url": "https://kafka.apache.org/43/design/protocol/#network",
-    "type": "spec",
-    "level": "core",
-    "track": "kafka",
-    "stages": [
-      1,
-      6,
-      7,
-      8,
-      9
-    ],
-    "concepts": [
-      "framing",
-      "size-prefix",
-      "pipelining",
-      "ordering"
-    ],
-    "why": "States the size-prefixed framing and the guarantee that a broker processes requests on one connection in order and replies in order. That single sentence is the contract stages 6 and 8 test.",
-    "minutes": 10,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kafka-protocol-api-version-negotiation",
-    "title": "Kafka protocol guide - Retrieving Supported API versions",
-    "url": "https://kafka.apache.org/43/design/protocol/#retrieving-supported-api-versions",
-    "type": "spec",
-    "level": "core",
-    "track": "kafka",
-    "stages": [
-      4,
-      5,
-      10,
-      19,
-      29
-    ],
-    "concepts": [
-      "api-versions",
-      "version-negotiation",
-      "unsupported-version"
-    ],
-    "why": "Explains the handshake and, critically, that a broker must answer an unsupported ApiVersions version with error 35 in a v0-shaped body rather than closing the connection. Stage 4 in one paragraph.",
-    "minutes": 10,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kafka-docs-message-format",
-    "title": "Message Format | Apache Kafka",
-    "url": "https://kafka.apache.org/43/implementation/message-format/",
-    "type": "doc",
-    "level": "deep",
-    "track": "kafka",
-    "stages": [
-      23,
-      24,
-      27,
-      31,
-      34,
-      35,
-      37
-    ],
-    "concepts": [
-      "record-batch",
-      "message-format",
-      "crc32c",
-      "varint",
-      "compression"
-    ],
-    "why": "The on-disk and on-the-wire batch format with the field table and the note that the same bytes are used in the log and in Fetch responses. Stage 23's 'bytes identical to the log file batch' assertion comes from here.",
-    "minutes": 40,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kafka-docs-log",
-    "title": "Log | Apache Kafka",
-    "url": "https://kafka.apache.org/43/implementation/log/",
-    "type": "doc",
-    "level": "core",
-    "track": "kafka",
-    "stages": [
-      22,
-      23,
-      25,
-      34,
-      35
-    ],
-    "concepts": [
-      "log-segments",
-      "offset-index",
-      "high-watermark",
-      "segment-file-naming"
-    ],
-    "why": "Why segments are named by their base offset, how the index lets a read start in the middle, and what the high watermark means. Read before you write the fixture files for stages 22-25.",
-    "minutes": 25,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kafka-docs-messages",
-    "title": "Messages | Apache Kafka",
-    "url": "https://kafka.apache.org/43/implementation/messages/",
-    "type": "doc",
-    "level": "intro",
-    "track": "kafka",
-    "stages": [
-      23,
-      31
-    ],
-    "concepts": [
-      "message-format",
-      "batching"
-    ],
-    "why": "One screen on why messages are grouped into batches and what that buys. Useful framing before the byte-level format page.",
-    "minutes": 5,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kafka-docs-network-layer",
-    "title": "Network Layer | Apache Kafka",
-    "url": "https://kafka.apache.org/43/implementation/network-layer/",
-    "type": "doc",
-    "level": "core",
-    "track": "kafka",
-    "stages": [
-      1,
-      7,
-      9,
-      45
-    ],
-    "concepts": [
-      "network-layer",
-      "sendfile",
-      "zero-copy"
-    ],
-    "why": "How a real broker serves fetches without copying record bytes through user space. Context for why Fetch responses are expected to return the log's bytes untouched, which stage 23 checks.",
-    "minutes": 10,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kafka-docs-design",
-    "title": "Design | Apache Kafka",
-    "url": "https://kafka.apache.org/43/design/design/",
-    "type": "doc",
-    "level": "core",
-    "track": "kafka",
-    "stages": [
-      13,
-      22,
-      28,
-      33,
-      35,
-      36
-    ],
-    "concepts": [
-      "replication",
-      "isr",
-      "delivery-semantics",
-      "high-watermark",
-      "idempotent-producer"
-    ],
-    "why": "The motivation chapter: persistence, efficiency, the producer and consumer models, replication and ISR, and the delivery-semantics section that explains what acks=0/1/all actually promise. Read the replication and semantics parts before stage 33.",
-    "minutes": 60,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kafka-docs-kraft",
-    "title": "KRaft | Apache Kafka",
-    "url": "https://kafka.apache.org/43/operations/kraft/",
-    "type": "doc",
-    "level": "core",
-    "track": "kafka",
-    "stages": [
-      1,
-      11,
-      12,
-      16
-    ],
-    "concepts": [
-      "kraft",
-      "metadata-log",
-      "cluster-id",
-      "controller"
-    ],
-    "why": "What `kafka-storage.sh format` writes, what lives in __cluster_metadata-0 and meta.properties, and how a combined-mode node boots. This is the shape of the on-disk fixtures the harness hands your broker.",
-    "minutes": 30,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kafka-docs-consumer-rebalance-protocol",
-    "title": "Consumer Rebalance Protocol | Apache Kafka",
-    "url": "https://kafka.apache.org/43/operations/consumer-rebalance-protocol/",
-    "type": "doc",
-    "level": "deep",
-    "track": "kafka",
-    "stages": [
-      40,
-      42
-    ],
-    "concepts": [
-      "consumer-groups",
-      "rebalance",
-      "kip-848",
-      "generation-id"
-    ],
-    "why": "The operator-facing description of both the classic and the new rebalance protocols in one place, including how the two coexist. Orientation before you read KIP-848 itself.",
-    "minutes": 25,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kafka-docs-transaction-protocol",
-    "title": "Transaction Protocol | Apache Kafka",
-    "url": "https://kafka.apache.org/43/operations/transaction-protocol/",
-    "type": "doc",
-    "level": "deep",
-    "track": "kafka",
-    "stages": [
-      36
-    ],
-    "concepts": [
-      "idempotent-producer",
-      "producer-id",
-      "epoch",
-      "control-batch"
-    ],
-    "why": "Where producer ids, epochs and sequence numbers fit, and what the control batches in the log mean. Stage 36 only needs the idempotence half, but this explains why the fields are shaped the way they are.",
-    "minutes": 30,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kafka-docs-broker-configs",
-    "title": "Broker Configs | Apache Kafka",
-    "url": "https://kafka.apache.org/43/configuration/broker-configs/",
-    "type": "doc",
-    "level": "core",
-    "track": "kafka",
-    "stages": [
-      1,
-      17,
-      26,
-      37
-    ],
-    "concepts": [
-      "broker-config",
-      "message-max-bytes",
-      "listeners",
-      "log-dirs"
-    ],
-    "why": "The properties the harness writes into server.properties, plus the defaults your broker is expected to honour: message.max.bytes for stage 37 and the fetch size limits for stage 26.",
-    "minutes": 30,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kafka-docs-producer-configs",
-    "title": "Producer Configs | Apache Kafka",
-    "url": "https://kafka.apache.org/43/configuration/producer-configs/",
-    "type": "doc",
-    "level": "core",
-    "track": "kafka",
-    "stages": [
-      33,
-      36,
-      43
-    ],
-    "concepts": [
-      "acks",
-      "idempotent-producer",
-      "compression",
-      "batching"
-    ],
-    "why": "Defines acks, enable.idempotence, max.in.flight and compression.type from the client's side - i.e. what the real console producer will send you in stage 43 and what it expects back.",
-    "minutes": 25,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kafka-docs-consumer-configs",
-    "title": "Consumer and Share Consumer Configs | Apache Kafka",
-    "url": "https://kafka.apache.org/43/configuration/consumer-configs/",
-    "type": "doc",
-    "level": "core",
-    "track": "kafka",
-    "stages": [
-      26,
-      28,
-      40,
-      41,
-      42,
-      43
-    ],
-    "concepts": [
-      "fetch-min-bytes",
-      "max-wait-ms",
-      "session-timeout",
-      "consumer-groups"
-    ],
-    "why": "fetch.min.bytes, fetch.max.wait.ms, max.partition.fetch.bytes, session.timeout.ms and heartbeat.interval.ms - the exact knobs that decide what the real consumer sends in stages 28 and 40-42.",
-    "minutes": 30,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kafka-docs-basic-operations",
-    "title": "Basic Kafka Operations | Apache Kafka",
-    "url": "https://kafka.apache.org/43/operations/basic-kafka-operations/",
-    "type": "doc",
-    "level": "intro",
-    "track": "kafka",
-    "stages": [
-      17,
-      18,
-      43
-    ],
-    "concepts": [
-      "cli-tools",
-      "topic-management"
-    ],
-    "why": "What kafka-topics.sh, kafka-console-producer.sh and kafka-console-consumer.sh actually do. Stage 43 points those exact tools at your broker, so knowing their request sequence tells you what to implement first.",
-    "minutes": 25,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kafka-docs-quickstart",
-    "title": "Quick Start | Apache Kafka",
-    "url": "https://kafka.apache.org/43/getting-started/quickstart",
-    "type": "doc",
-    "level": "intro",
-    "track": "kafka",
-    "stages": [
-      1,
-      43
-    ],
-    "concepts": [
-      "kraft",
-      "cli-tools",
-      "cluster-format"
-    ],
-    "why": "Ten minutes with a real broker from the tarball: format storage, start it, produce and consume. Do this once before stage 1 so you have a working reference to diff your broker against.",
-    "minutes": 20,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kafka-downloads",
-    "title": "Downloads | Apache Kafka",
-    "url": "https://kafka.apache.org/community/downloads/",
-    "type": "tool",
-    "level": "intro",
-    "track": "kafka",
-    "stages": [
-      43,
-      45
-    ],
-    "concepts": [
-      "reference-broker",
-      "tarball",
-      "cli-tools"
-    ],
-    "why": "Where the reference broker tarball comes from. The same archive supplies kafka-dump-log.sh, which is how you prove your on-disk record batches in stage 34 are actually valid.",
-    "minutes": 5,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kip-482-tagged-fields",
-    "title": "KIP-482: The Kafka Protocol should Support Optional Tagged Fields",
-    "url": "https://cwiki.apache.org/confluence/display/KAFKA/KIP-482%3A+The+Kafka+Protocol+should+Support+Optional+Tagged+Fields",
-    "type": "spec",
-    "level": "deep",
-    "track": "kafka",
-    "stages": [
-      3,
-      5,
-      10,
-      11,
-      12,
-      13,
-      14,
-      15,
-      16
-    ],
-    "concepts": [
-      "flexible-versions",
-      "tagged-fields",
-      "compact-arrays",
-      "varint"
-    ],
-    "why": "The definition of 'flexible versions': unsigned varint lengths, compact strings and arrays offset by one, and the tagged-field section at the end of every struct. Everything in section B decodes wrong until this is right.",
-    "minutes": 30,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kip-500-kraft",
-    "title": "KIP-500: Replace ZooKeeper with a Self-Managed Metadata Quorum",
-    "url": "https://cwiki.apache.org/confluence/display/KAFKA/KIP-500%3A+Replace+ZooKeeper+with+a+Self-Managed+Metadata+Quorum",
-    "type": "spec",
-    "level": "deep",
-    "track": "kafka",
-    "stages": [
-      1,
-      11,
-      16
-    ],
-    "concepts": [
-      "kraft",
-      "metadata-log",
-      "controller",
-      "cluster-metadata"
-    ],
-    "why": "The design rationale for storing cluster metadata as an event log rather than in ZooKeeper. Explains why __cluster_metadata-0 is a normal Kafka log and why the fixtures look the way they do.",
-    "minutes": 30,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kip-595-raft-metadata-quorum",
-    "title": "KIP-595: A Raft Protocol for the Metadata Quorum",
-    "url": "https://cwiki.apache.org/confluence/display/KAFKA/KIP-595%3A+A+Raft+Protocol+for+the+Metadata+Quorum",
-    "type": "spec",
-    "level": "deep",
-    "track": "kafka",
-    "stages": [
-      16
-    ],
-    "concepts": [
-      "kraft",
-      "raft",
-      "metadata-log",
-      "leader-election"
-    ],
-    "why": "Kafka's pull-based variant of Raft, with the Vote/BeginQuorumEpoch/Fetch APIs. You do not implement it for this track, but it tells you what the records in the metadata log mean.",
-    "minutes": 60,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kip-631-quorum-controller",
-    "title": "KIP-631: The Quorum-based Kafka Controller",
-    "url": "https://cwiki.apache.org/confluence/display/KAFKA/KIP-631%3A+The+Quorum-based+Kafka+Controller",
-    "type": "spec",
-    "level": "deep",
-    "track": "kafka",
-    "stages": [
-      11,
-      12,
-      13,
-      16,
-      17,
-      18
-    ],
-    "concepts": [
-      "metadata-records",
-      "topic-record",
-      "partition-record",
-      "feature-level-record",
-      "kraft"
-    ],
-    "why": "Lists the metadata record types - FeatureLevelRecord, TopicRecord, PartitionRecord - and their fields. This is the schema you decode when you read the cluster metadata log for stages 11-14.",
-    "minutes": 45,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kip-98-idempotent-producer",
-    "title": "KIP-98 - Exactly Once Delivery and Transactional Messaging",
-    "url": "https://cwiki.apache.org/confluence/display/KAFKA/KIP-98+-+Exactly+Once+Delivery+and+Transactional+Messaging",
-    "type": "spec",
-    "level": "deep",
-    "track": "kafka",
-    "stages": [
-      31,
-      36
-    ],
-    "concepts": [
-      "idempotent-producer",
-      "producer-id",
-      "sequence-numbers",
-      "epoch",
-      "duplicate-detection"
-    ],
-    "why": "Where InitProducerId, producer epochs and per-partition sequence numbers come from, and the exact rules for returning DUPLICATE_SEQUENCE_NUMBER versus OUT_OF_ORDER_SEQUENCE_NUMBER. Stage 36 is a direct implementation of this section.",
-    "minutes": 60,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kip-848-consumer-rebalance",
-    "title": "KIP-848: The Next Generation of the Consumer Rebalance Protocol",
-    "url": "https://cwiki.apache.org/confluence/display/KAFKA/KIP-848%3A+The+Next+Generation+of+the+Consumer+Rebalance+Protocol",
-    "type": "spec",
-    "level": "deep",
-    "track": "kafka",
-    "stages": [
-      40,
-      42
-    ],
-    "concepts": [
-      "consumer-groups",
-      "rebalance",
-      "kip-848",
-      "consumer-group-heartbeat"
-    ],
-    "why": "The server-driven replacement for JoinGroup/SyncGroup. Worth reading after stage 40 so you understand what a modern client may negotiate instead of the classic protocol you just implemented.",
-    "minutes": 75,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kafka-client-side-assignment-proposal",
-    "title": "Kafka Client-side Assignment Proposal",
-    "url": "https://cwiki.apache.org/confluence/display/KAFKA/Kafka+Client-side+Assignment+Proposal",
-    "type": "spec",
-    "level": "deep",
-    "track": "kafka",
-    "stages": [
-      40,
-      41,
-      42
-    ],
-    "concepts": [
-      "consumer-groups",
-      "join-group",
-      "sync-group",
-      "generation-id",
-      "group-leader"
-    ],
-    "why": "The original design of the classic group protocol: the join/sync round trip, how a leader is picked and why the assignment is an opaque blob the broker just relays. This is the document stage 40 is built from.",
-    "minutes": 45,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kip-62-heartbeat-thread",
-    "title": "KIP-62: Allow consumer to send heartbeats from a background thread",
-    "url": "https://cwiki.apache.org/confluence/display/KAFKA/KIP-62%3A+Allow+consumer+to+send+heartbeats+from+a+background+thread",
-    "type": "spec",
-    "level": "deep",
-    "track": "kafka",
-    "stages": [
-      40,
-      42
-    ],
-    "concepts": [
-      "consumer-groups",
-      "heartbeat",
-      "session-timeout",
-      "rebalance-in-progress"
-    ],
-    "why": "Why session.timeout.ms and max.poll.interval.ms are separate, and the timing your Heartbeat handler has to respect. Explains when a broker is entitled to answer REBALANCE_IN_PROGRESS.",
-    "minutes": 25,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kip-699-find-coordinator-batching",
-    "title": "KIP-699: Update FindCoordinator to resolve multiple Coordinators at a time",
-    "url": "https://cwiki.apache.org/confluence/display/KAFKA/KIP-699%3A+Update+FindCoordinator+to+resolve+multiple+Coordinators+at+a+time",
-    "type": "spec",
-    "level": "core",
-    "track": "kafka",
-    "stages": [
-      39
-    ],
-    "concepts": [
-      "find-coordinator",
-      "consumer-groups",
-      "api-versions"
-    ],
-    "why": "Explains why FindCoordinator v4+ takes a list of keys and returns a list of coordinators while v0-v3 take one. If stage 39 fails only against newer clients, this version split is why.",
-    "minutes": 15,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kip-516-topic-identifiers",
-    "title": "KIP-516: Topic Identifiers",
-    "url": "https://cwiki.apache.org/confluence/display/KAFKA/KIP-516%3A+Topic+Identifiers",
-    "type": "spec",
-    "level": "deep",
-    "track": "kafka",
-    "stages": [
-      11,
-      12,
-      16,
-      21,
-      24
-    ],
-    "concepts": [
-      "topic-ids",
-      "uuid",
-      "unknown-topic-id",
-      "fetch"
-    ],
-    "why": "Why Fetch v13+ addresses partitions by UUID instead of name, where UNKNOWN_TOPIC_ID (100) comes from, and why an unknown topic gets the zero UUID. Stages 11 and 21 both check that behaviour.",
-    "minutes": 35,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kip-227-incremental-fetch",
-    "title": "KIP-227: Introduce Incremental FetchRequests to Increase Partition Scalability",
-    "url": "https://cwiki.apache.org/confluence/display/KAFKA/KIP-227%3A+Introduce+Incremental+FetchRequests+to+Increase+Partition+Scalability",
-    "type": "spec",
-    "level": "deep",
-    "track": "kafka",
-    "stages": [
-      19,
-      20,
-      24
-    ],
-    "concepts": [
-      "fetch-sessions",
-      "session-id",
-      "session-epoch",
-      "fetch"
-    ],
-    "why": "Explains the session_id / session_epoch fields sitting in every Fetch request. You can answer with the full-session values, but you need to know why they are there and what epoch -1 means.",
-    "minutes": 30,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kip-74-fetch-response-size-limit",
-    "title": "KIP-74: Add Fetch Response Size Limit in Bytes",
-    "url": "https://cwiki.apache.org/confluence/display/KAFKA/KIP-74%3A+Add+Fetch+Response+Size+Limit+in+Bytes",
-    "type": "spec",
-    "level": "core",
-    "track": "kafka",
-    "stages": [
-      26
-    ],
-    "concepts": [
-      "fetch",
-      "max-bytes",
-      "truncation"
-    ],
-    "why": "The rule stage 26 asserts: max_bytes is a soft limit and the broker must still return at least one full batch so a consumer can never wedge on an oversized record.",
-    "minutes": 20,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kip-392-fetch-from-closest-replica",
-    "title": "KIP-392: Allow consumers to fetch from closest replica",
-    "url": "https://cwiki.apache.org/confluence/display/KAFKA/KIP-392%3A+Allow+consumers+to+fetch+from+closest+replica",
-    "type": "spec",
-    "level": "deep",
-    "track": "kafka",
-    "stages": [
-      24,
-      25
-    ],
-    "concepts": [
-      "fetch",
-      "replica-id",
-      "offset-for-leader-epoch",
-      "high-watermark"
-    ],
-    "why": "Where rack_id and the follower-fetch semantics in Fetch come from, and how OFFSET_OUT_OF_RANGE interacts with a follower's log end offset. Background for the edge cases in stage 25.",
-    "minutes": 30,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kip-405-tiered-storage",
-    "title": "KIP-405: Kafka Tiered Storage",
-    "url": "https://cwiki.apache.org/confluence/display/KAFKA/KIP-405%3A+Kafka+Tiered+Storage",
-    "type": "spec",
-    "level": "deep",
-    "track": "kafka",
-    "stages": [
-      38
-    ],
-    "concepts": [
-      "list-offsets",
-      "earliest-local-timestamp",
-      "log-segments"
-    ],
-    "why": "Only relevant here because it added the extra ListOffsets timestamps (-4 earliest-local, -5 latest-tiered) that a modern client may send in stage 38. Know they exist and what to answer.",
-    "minutes": 40,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kip-966-eligible-leader-replicas",
-    "title": "KIP-966: Eligible Leader Replicas",
-    "url": "https://cwiki.apache.org/confluence/display/KAFKA/KIP-966%3A+Eligible+Leader+Replicas",
-    "type": "spec",
-    "level": "deep",
-    "track": "kafka",
-    "stages": [
-      13,
-      14,
-      15
-    ],
-    "concepts": [
-      "isr",
-      "eligible-leader-replicas",
-      "describe-topic-partitions",
-      "partition-record"
-    ],
-    "why": "Introduces the ELR fields that appear in PartitionRecord and in DescribeTopicPartitions responses. If your stage 13 response is a few bytes short against real Kafka, these optional fields are usually why.",
-    "minutes": 40,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kafka-old-protocol-guide",
-    "title": "A Guide To The Kafka Protocol",
-    "url": "https://cwiki.apache.org/confluence/display/KAFKA/A+Guide+To+The+Kafka+Protocol",
-    "type": "article",
-    "level": "intro",
-    "track": "kafka",
-    "stages": [
-      2,
-      6,
-      8,
-      29
-    ],
-    "concepts": [
-      "wire-protocol",
-      "framing",
-      "correlation-id",
-      "design-rationale"
-    ],
-    "why": "The superseded wiki guide, kept because it explains the reasoning - why size-prefixed frames, why correlation ids, why the client drives everything - in prose the current reference does not repeat. Do not take field layouts from it.",
-    "minutes": 40,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kafka-message-schemas-dir",
-    "title": "kafka/clients/src/main/resources/common/message at trunk",
-    "url": "https://github.com/apache/kafka/tree/trunk/clients/src/main/resources/common/message",
-    "type": "repo",
-    "level": "core",
-    "track": "kafka",
-    "stages": [
-      3,
-      5,
-      10,
-      11,
-      16,
-      17,
-      18,
-      19,
-      29,
-      38,
-      39,
-      40,
-      41
-    ],
-    "concepts": [
-      "message-schemas",
-      "flexible-versions",
-      "api-versions",
-      "wire-protocol"
-    ],
-    "why": "The machine-readable source of truth: every request and response as JSON with per-version field ranges and flexibleVersions. When the HTML guide and reality disagree, these files are reality.",
-    "minutes": 30,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kafka-message-schema-readme",
-    "title": "kafka/clients/src/main/resources/common/message/README.md at trunk",
-    "url": "https://github.com/apache/kafka/blob/trunk/clients/src/main/resources/common/message/README.md",
-    "type": "doc",
-    "level": "core",
-    "track": "kafka",
-    "stages": [
-      3,
-      5,
-      15
-    ],
-    "concepts": [
-      "message-schemas",
-      "flexible-versions",
-      "tagged-fields",
-      "nullable-versions"
-    ],
-    "why": "Explains how to read those JSON files: what versions, nullableVersions, taggedVersions and flexibleVersions mean. Fifteen minutes here saves hours of guessing at field presence.",
-    "minutes": 20,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kafka-schema-request-header",
-    "title": "kafka/clients/src/main/resources/common/message/RequestHeader.json at trunk",
-    "url": "https://github.com/apache/kafka/blob/trunk/clients/src/main/resources/common/message/RequestHeader.json",
-    "type": "repo",
-    "level": "core",
-    "track": "kafka",
-    "stages": [
-      3,
-      6
-    ],
-    "concepts": [
-      "request-header",
-      "correlation-id",
-      "client-id",
-      "tagged-fields"
-    ],
-    "why": "Header v0/v1/v2 as a schema, including the comment that client_id is a plain nullable STRING even in flexible versions. That inconsistency breaks a lot of first parsers in stage 3.",
-    "minutes": 10,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kafka-schema-response-header",
-    "title": "kafka/clients/src/main/resources/common/message/ResponseHeader.json at trunk",
-    "url": "https://github.com/apache/kafka/blob/trunk/clients/src/main/resources/common/message/ResponseHeader.json",
-    "type": "repo",
-    "level": "core",
-    "track": "kafka",
-    "stages": [
-      2,
-      5
-    ],
-    "concepts": [
-      "response-header",
-      "correlation-id",
-      "tagged-fields"
-    ],
-    "why": "Two versions, and the choice between them is per-API rather than per-connection. Stage 5 needs v0 for ApiVersions while stage 11 needs v1 for DescribeTopicPartitions.",
-    "minutes": 5,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kafka-schema-apiversions-response",
-    "title": "kafka/clients/src/main/resources/common/message/ApiVersionsResponse.json at trunk",
-    "url": "https://github.com/apache/kafka/blob/trunk/clients/src/main/resources/common/message/ApiVersionsResponse.json",
-    "type": "repo",
-    "level": "core",
-    "track": "kafka",
-    "stages": [
-      4,
-      5,
-      10,
-      19,
-      29
-    ],
-    "concepts": [
-      "api-versions",
-      "flexible-versions",
-      "throttle-time",
-      "tagged-fields"
-    ],
-    "why": "The authoritative field order for the response stages 5, 10, 19 and 29 all build on, including where throttle_time_ms sits relative to the api_keys array.",
-    "minutes": 10,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kafka-schema-describetopicpartitions-request",
-    "title": "kafka/clients/src/main/resources/common/message/DescribeTopicPartitionsRequest.json at trunk",
-    "url": "https://github.com/apache/kafka/blob/trunk/clients/src/main/resources/common/message/DescribeTopicPartitionsRequest.json",
-    "type": "repo",
-    "level": "core",
-    "track": "kafka",
-    "stages": [
-      10,
-      11,
-      12,
-      13,
-      14,
-      15
-    ],
-    "concepts": [
-      "describe-topic-partitions",
-      "cursor",
-      "pagination",
-      "flexible-versions"
-    ],
-    "why": "Shows response_partition_limit and the nullable cursor struct that stage 15's pagination is built on. Read it alongside the response schema in the same directory.",
-    "minutes": 10,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kafka-schema-metadata-request",
-    "title": "kafka/clients/src/main/resources/common/message/MetadataRequest.json at trunk",
-    "url": "https://github.com/apache/kafka/blob/trunk/clients/src/main/resources/common/message/MetadataRequest.json",
-    "type": "repo",
-    "level": "core",
-    "track": "kafka",
-    "stages": [
-      16
-    ],
-    "concepts": [
-      "metadata",
-      "topic-ids",
-      "auto-create-topics"
-    ],
-    "why": "v12 semantics for stage 16: a null topics array means 'all topics', an empty array means none, and topic ids appear in the response. The distinction between null and empty is the trap.",
-    "minutes": 10,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kafka-schema-createtopics-request",
-    "title": "kafka/clients/src/main/resources/common/message/CreateTopicsRequest.json at trunk",
-    "url": "https://github.com/apache/kafka/blob/trunk/clients/src/main/resources/common/message/CreateTopicsRequest.json",
-    "type": "repo",
-    "level": "core",
-    "track": "kafka",
-    "stages": [
-      17
-    ],
-    "concepts": [
-      "create-topics",
-      "validate-only",
-      "topic-already-exists"
-    ],
-    "why": "Includes validate_only and the -1 sentinel for 'use the broker default' on partitions and replication factor. Stage 17 checks the duplicate case returning 36.",
-    "minutes": 10,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kafka-schema-deletetopics-request",
-    "title": "kafka/clients/src/main/resources/common/message/DeleteTopicsRequest.json at trunk",
-    "url": "https://github.com/apache/kafka/blob/trunk/clients/src/main/resources/common/message/DeleteTopicsRequest.json",
-    "type": "repo",
-    "level": "core",
-    "track": "kafka",
-    "stages": [
-      18
-    ],
-    "concepts": [
-      "delete-topics",
-      "topic-ids"
-    ],
-    "why": "Newer versions delete by topic id as well as by name, and the response echoes both. Stage 18 then expects a describe of the deleted topic to report unknown.",
-    "minutes": 10,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kafka-schema-fetch-request",
-    "title": "kafka/clients/src/main/resources/common/message/FetchRequest.json at trunk",
-    "url": "https://github.com/apache/kafka/blob/trunk/clients/src/main/resources/common/message/FetchRequest.json",
-    "type": "repo",
-    "level": "core",
-    "track": "kafka",
-    "stages": [
-      19,
-      20,
-      21,
-      22,
-      23,
-      24,
-      25,
-      26,
-      27,
-      28
-    ],
-    "concepts": [
-      "fetch",
-      "topic-ids",
-      "max-wait-ms",
-      "min-bytes",
-      "fetch-sessions"
-    ],
-    "why": "v16 field by field: max_wait_ms and min_bytes for stage 28, max_bytes and partition_max_bytes for stage 26, topic_id instead of name for stage 21. The whole of section C in one file.",
-    "minutes": 20,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kafka-schema-produce-request",
-    "title": "kafka/clients/src/main/resources/common/message/ProduceRequest.json at trunk",
-    "url": "https://github.com/apache/kafka/blob/trunk/clients/src/main/resources/common/message/ProduceRequest.json",
-    "type": "repo",
-    "level": "core",
-    "track": "kafka",
-    "stages": [
-      29,
-      30,
-      31,
-      32,
-      33,
-      34
-    ],
-    "concepts": [
-      "produce",
-      "acks",
-      "transactional-id",
-      "record-batch"
-    ],
-    "why": "v11 layout including acks as an int16 (0, 1 or -1) and the records field as opaque bytes. Stage 33's 'no response at all when acks=0' rule follows from the semantics described here.",
-    "minutes": 15,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kafka-schema-initproducerid-request",
-    "title": "kafka/clients/src/main/resources/common/message/InitProducerIdRequest.json at trunk",
-    "url": "https://github.com/apache/kafka/blob/trunk/clients/src/main/resources/common/message/InitProducerIdRequest.json",
-    "type": "repo",
-    "level": "core",
-    "track": "kafka",
-    "stages": [
-      36
-    ],
-    "concepts": [
-      "idempotent-producer",
-      "producer-id",
-      "epoch"
-    ],
-    "why": "The request that hands out a producer id and epoch. Note the null transactional_id case - that is the pure-idempotence path stage 36 exercises.",
-    "minutes": 10,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kafka-schema-listoffsets-request",
-    "title": "kafka/clients/src/main/resources/common/message/ListOffsetsRequest.json at trunk",
-    "url": "https://github.com/apache/kafka/blob/trunk/clients/src/main/resources/common/message/ListOffsetsRequest.json",
-    "type": "repo",
-    "level": "core",
-    "track": "kafka",
-    "stages": [
-      38
-    ],
-    "concepts": [
-      "list-offsets",
-      "timestamps",
-      "isolation-level"
-    ],
-    "why": "The magic timestamps (-1 latest, -2 earliest, and the newer tiered-storage values) plus isolation_level. Stage 38 checks all three lookup modes.",
-    "minutes": 10,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kafka-schema-findcoordinator-request",
-    "title": "kafka/clients/src/main/resources/common/message/FindCoordinatorRequest.json at trunk",
-    "url": "https://github.com/apache/kafka/blob/trunk/clients/src/main/resources/common/message/FindCoordinatorRequest.json",
-    "type": "repo",
-    "level": "core",
-    "track": "kafka",
-    "stages": [
-      39
-    ],
-    "concepts": [
-      "find-coordinator",
-      "coordinator-type",
-      "consumer-groups"
-    ],
-    "why": "The single-key/multi-key version split and the key_type byte (0 group, 1 transaction). Stage 39 wants your own host and port back, which is the answer for a single-node broker.",
-    "minutes": 10,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kafka-schema-joingroup-request",
-    "title": "kafka/clients/src/main/resources/common/message/JoinGroupRequest.json at trunk",
-    "url": "https://github.com/apache/kafka/blob/trunk/clients/src/main/resources/common/message/JoinGroupRequest.json",
-    "type": "repo",
-    "level": "core",
-    "track": "kafka",
-    "stages": [
-      40,
-      42
-    ],
-    "concepts": [
-      "join-group",
-      "member-id",
-      "generation-id",
-      "protocol-metadata"
-    ],
-    "why": "Shows the empty-member-id first round trip that forces a rejoin, the protocol list, and the opaque metadata bytes. Stage 40's second-member rebalance hinges on that first-round behaviour.",
-    "minutes": 15,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kafka-schema-offsetcommit-request",
-    "title": "kafka/clients/src/main/resources/common/message/OffsetCommitRequest.json at trunk",
-    "url": "https://github.com/apache/kafka/blob/trunk/clients/src/main/resources/common/message/OffsetCommitRequest.json",
-    "type": "repo",
-    "level": "core",
-    "track": "kafka",
-    "stages": [
-      41,
-      42
-    ],
-    "concepts": [
-      "offset-commit",
-      "consumer-groups",
-      "generation-id",
-      "leader-epoch"
-    ],
-    "why": "Includes generation_id and member_id, which is how the broker decides between ILLEGAL_GENERATION and UNKNOWN_MEMBER_ID in stage 42. The -1 for an unknown offset in OffsetFetch is defined in the sibling file.",
-    "minutes": 15,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kafka-metadata-records-dir",
-    "title": "kafka/metadata/src/main/resources/common/metadata at trunk",
-    "url": "https://github.com/apache/kafka/tree/trunk/metadata/src/main/resources/common/metadata",
-    "type": "repo",
-    "level": "deep",
-    "track": "kafka",
-    "stages": [
-      11,
-      12,
-      13,
-      16
-    ],
-    "concepts": [
-      "metadata-records",
-      "kraft",
-      "cluster-metadata",
-      "record-schemas"
-    ],
-    "why": "Every record type that can appear in __cluster_metadata-0, as JSON schemas with api keys and versions. This is what you decode when the harness writes a metadata log fixture for your broker.",
-    "minutes": 25,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kafka-metadata-topic-record",
-    "title": "kafka/metadata/src/main/resources/common/metadata/TopicRecord.json at trunk",
-    "url": "https://github.com/apache/kafka/blob/trunk/metadata/src/main/resources/common/metadata/TopicRecord.json",
-    "type": "repo",
-    "level": "deep",
-    "track": "kafka",
-    "stages": [
-      12,
-      16,
-      17
-    ],
-    "concepts": [
-      "topic-record",
-      "topic-ids",
-      "metadata-records"
-    ],
-    "why": "Three fields - name, topic_id, and the record's own api key and version - and it is how a topic comes into existence on disk. Stage 12 reads exactly this to answer a describe.",
-    "minutes": 5,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kafka-metadata-partition-record",
-    "title": "kafka/metadata/src/main/resources/common/metadata/PartitionRecord.json at trunk",
-    "url": "https://github.com/apache/kafka/blob/trunk/metadata/src/main/resources/common/metadata/PartitionRecord.json",
-    "type": "repo",
-    "level": "deep",
-    "track": "kafka",
-    "stages": [
-      13,
-      14,
-      16
-    ],
-    "concepts": [
-      "partition-record",
-      "isr",
-      "leader-epoch",
-      "replicas"
-    ],
-    "why": "Replicas, ISR, removing/adding replicas, leader and leader epoch, plus the newer eligible-leader-replica fields. Stage 13's replica and ISR arrays are copied from this record.",
-    "minutes": 10,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kafka-errors-java",
-    "title": "kafka/clients/src/main/java/org/apache/kafka/common/protocol/Errors.java at trunk",
-    "url": "https://github.com/apache/kafka/blob/trunk/clients/src/main/java/org/apache/kafka/common/protocol/Errors.java",
-    "type": "repo",
-    "level": "core",
-    "track": "kafka",
-    "stages": [
-      4,
-      11,
-      17,
-      21,
-      25,
-      30,
-      36,
-      37,
-      42
-    ],
-    "concepts": [
-      "error-codes",
-      "retriable-errors"
-    ],
-    "why": "The enum with every code, its number and its exception class. Faster to grep than the HTML table when you need to confirm that DUPLICATE_SEQUENCE_NUMBER is 46 or MESSAGE_TOO_LARGE is 10.",
-    "minutes": 10,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kafka-protocol-type-java",
-    "title": "kafka/clients/src/main/java/org/apache/kafka/common/protocol/types/Type.java at trunk",
-    "url": "https://github.com/apache/kafka/blob/trunk/clients/src/main/java/org/apache/kafka/common/protocol/types/Type.java",
-    "type": "repo",
-    "level": "deep",
-    "track": "kafka",
-    "stages": [
-      2,
-      3,
-      5,
-      15
-    ],
-    "concepts": [
-      "protocol-primitive-types",
-      "varint",
-      "compact-arrays",
-      "nullable-string"
-    ],
-    "why": "Reference implementations of every primitive read and write, including the +1 offset on compact lengths and how null is encoded as 0. Use it to settle an argument with your own codec.",
-    "minutes": 25,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kafka-default-record-batch-java",
-    "title": "kafka/clients/src/main/java/org/apache/kafka/common/record/internal/DefaultRecordBatch.java at trunk",
-    "url": "https://github.com/apache/kafka/blob/trunk/clients/src/main/java/org/apache/kafka/common/record/internal/DefaultRecordBatch.java",
-    "type": "repo",
-    "level": "deep",
-    "track": "kafka",
-    "stages": [
-      23,
-      27,
-      31,
-      34,
-      36,
-      37
-    ],
-    "concepts": [
-      "record-batch",
-      "crc32c",
-      "attributes",
-      "compression",
-      "control-batch"
-    ],
-    "why": "Offset constants for every field of the v2 batch and the exact CRC range (from the attributes field to the end). If stage 34 says your CRC is wrong, diff your implementation against this file.",
-    "minutes": 40,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kafka-default-record-java",
-    "title": "kafka/clients/src/main/java/org/apache/kafka/common/record/internal/DefaultRecord.java at trunk",
-    "url": "https://github.com/apache/kafka/blob/trunk/clients/src/main/java/org/apache/kafka/common/record/internal/DefaultRecord.java",
-    "type": "repo",
-    "level": "deep",
-    "track": "kafka",
-    "stages": [
-      23,
-      31,
-      32
-    ],
-    "concepts": [
-      "record-batch",
-      "varint",
-      "zigzag",
-      "headers",
-      "delta-encoding"
-    ],
-    "why": "How a single record inside a batch is encoded: varint length, attributes byte, zigzag timestamp and offset deltas, nullable key and value, header array. Everything varint in this track is here.",
-    "minutes": 30,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kafka-memory-records-builder-java",
-    "title": "kafka/clients/src/main/java/org/apache/kafka/common/record/internal/MemoryRecordsBuilder.java at trunk",
-    "url": "https://github.com/apache/kafka/blob/trunk/clients/src/main/java/org/apache/kafka/common/record/internal/MemoryRecordsBuilder.java",
-    "type": "repo",
-    "level": "deep",
-    "track": "kafka",
-    "stages": [
-      27,
-      31,
-      32,
-      34
-    ],
-    "concepts": [
-      "record-batch",
-      "compression",
-      "crc32c",
-      "batch-building"
-    ],
-    "why": "The writer side: how the header is back-filled once the records are known, when compression is applied, and where the CRC is computed. The model to copy for your own batch writer.",
-    "minutes": 35,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kafka-dump-log-segments-java",
-    "title": "kafka/tools/src/main/java/org/apache/kafka/tools/DumpLogSegments.java at trunk",
-    "url": "https://github.com/apache/kafka/blob/trunk/tools/src/main/java/org/apache/kafka/tools/DumpLogSegments.java",
-    "type": "repo",
-    "level": "deep",
-    "track": "kafka",
-    "stages": [
-      23,
-      34,
-      35
-    ],
-    "concepts": [
-      "log-segments",
-      "record-batch",
-      "cli-tools",
-      "validation"
-    ],
-    "why": "The source of kafka-dump-log.sh, which is the independent checker for your on-disk batches in stage 34. Reading it tells you exactly which invariants it verifies before it prints.",
-    "minutes": 25,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kafka-protocol-crate",
-    "title": "kafka_protocol - Rust",
-    "url": "https://docs.rs/kafka-protocol/latest/kafka_protocol/",
-    "type": "doc",
-    "level": "core",
-    "track": "kafka",
-    "stages": [
-      3,
-      5,
-      11,
-      16,
-      19,
-      23,
-      29,
-      31,
-      38,
-      40
-    ],
-    "concepts": [
-      "rust",
-      "wire-protocol",
-      "message-schemas",
-      "record-batch"
-    ],
-    "why": "Generated Rust types for every Kafka message plus a records module for v2 batches. The harness decodes with it, so its module layout is a good map of the protocol surface you are implementing.",
-    "minutes": 30,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "tokio-tutorial",
-    "title": "Tutorial | Tokio - An asynchronous Rust runtime",
-    "url": "https://tokio.rs/tokio/tutorial",
-    "type": "course",
-    "level": "intro",
-    "track": "kafka",
-    "stages": [
-      1,
-      6,
-      7
-    ],
-    "concepts": [
-      "rust",
-      "async",
-      "tcp",
-      "tokio"
-    ],
-    "why": "Start to finish it builds a small server with a TCP accept loop, per-connection tasks and shared state - the exact skeleton stages 1, 6 and 7 ask for.",
-    "minutes": 180,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "tokio-tutorial-spawning",
-    "title": "Spawning | Tokio - An asynchronous Rust runtime",
-    "url": "https://tokio.rs/tokio/tutorial/spawning",
-    "type": "doc",
-    "level": "core",
-    "track": "kafka",
-    "stages": [
-      1,
-      7
-    ],
-    "concepts": [
-      "rust",
-      "tokio",
-      "tcp",
-      "concurrency"
-    ],
-    "why": "The accept-then-spawn pattern and why each connection needs its own task. Stage 7 interleaves several clients and will catch you if you handle connections one at a time.",
-    "minutes": 30,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "tokio-tutorial-framing",
-    "title": "Framing | Tokio - An asynchronous Rust runtime",
-    "url": "https://tokio.rs/tokio/tutorial/framing",
-    "type": "doc",
-    "level": "core",
-    "track": "kafka",
-    "stages": [
-      8,
-      9,
-      44
-    ],
-    "concepts": [
-      "framing",
-      "length-prefix",
-      "buffering",
-      "partial-reads"
-    ],
-    "why": "Turning a byte stream into messages with a read buffer that tolerates partial and coalesced frames. Stages 9 and 44 feed you split frames and garbage lengths precisely to test this layer.",
-    "minutes": 45,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "tokio-tutorial-io",
-    "title": "I/O | Tokio - An asynchronous Rust runtime",
-    "url": "https://tokio.rs/tokio/tutorial/io",
-    "type": "doc",
-    "level": "core",
-    "track": "kafka",
-    "stages": [
-      6,
-      9
-    ],
-    "concepts": [
-      "rust",
-      "async-io",
-      "buffering",
-      "half-close"
-    ],
-    "why": "AsyncRead/AsyncWrite, read_exact and the meaning of a zero-length read. Stage 9's half-close test is about distinguishing 'peer finished writing' from 'connection broken'.",
-    "minutes": 30,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "bytes-crate",
-    "title": "bytes - Rust",
-    "url": "https://docs.rs/bytes/latest/bytes/",
-    "type": "doc",
-    "level": "core",
-    "track": "kafka",
-    "stages": [
-      2,
-      9,
-      23,
-      31,
-      34
-    ],
-    "concepts": [
-      "rust",
-      "buffers",
-      "zero-copy",
-      "framing"
-    ],
-    "why": "Buf and BufMut give you the big-endian get/put helpers the whole protocol needs, and Bytes lets you slice a record batch out of a read buffer without copying it.",
-    "minutes": 25,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "crc32c-crate",
-    "title": "crc32c - Rust",
-    "url": "https://docs.rs/crc32c/latest/crc32c/",
-    "type": "doc",
-    "level": "core",
-    "track": "kafka",
-    "stages": [
-      34,
-      37
-    ],
-    "concepts": [
-      "crc32c",
-      "castagnoli",
-      "record-batch"
-    ],
-    "why": "Castagnoli CRC32 with the SSE4.2 instruction when available. Note it is CRC32C, not the zlib CRC32 - using the wrong polynomial is a classic half-day lost on stage 34.",
-    "minutes": 10,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "rfc-3385-crc32c",
-    "title": "RFC 3385 - Internet Protocol Small Computer System Interface (iSCSI) Cyclic Redundancy Check (CRC)/Checksum Considerations",
-    "url": "https://datatracker.ietf.org/doc/html/rfc3385",
-    "type": "spec",
-    "level": "deep",
-    "track": "kafka",
-    "stages": [
-      34,
-      37
-    ],
-    "concepts": [
-      "crc32c",
-      "castagnoli",
-      "checksums"
-    ],
-    "why": "Where the Castagnoli polynomial Kafka uses actually comes from, with its error-detection properties. Read it only if you are implementing the CRC yourself rather than calling a crate.",
-    "minutes": 30,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "protobuf-encoding-varints",
-    "title": "Encoding | Protocol Buffers Documentation",
-    "url": "https://protobuf.dev/programming-guides/encoding/",
-    "type": "doc",
-    "level": "core",
-    "track": "kafka",
-    "stages": [
-      3,
-      5,
-      23,
-      31
-    ],
-    "concepts": [
-      "varint",
-      "zigzag",
-      "encoding"
-    ],
-    "why": "The clearest explanation anywhere of base-128 varints and zigzag encoding of signed integers, with worked examples. Kafka borrowed both wholesale for records and flexible versions.",
-    "minutes": 30,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "variable-length-quantity",
-    "title": "Variable-length integer - Wikipedia",
-    "url": "https://en.wikipedia.org/wiki/Variable-length_quantity",
-    "type": "article",
-    "level": "intro",
-    "track": "kafka",
-    "stages": [
-      3,
-      23
-    ],
-    "concepts": [
-      "varint",
-      "encoding"
-    ],
-    "why": "A short survey of the varint family so you can see which variant Kafka picked and why the continuation bit is on the high bit of each byte.",
-    "minutes": 15,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "flate2-crate",
-    "title": "flate2 - Rust",
-    "url": "https://docs.rs/flate2/latest/flate2/",
-    "type": "doc",
-    "level": "intro",
-    "track": "kafka",
-    "stages": [
-      27
-    ],
-    "concepts": [
-      "compression",
-      "gzip",
-      "record-batch"
-    ],
-    "why": "Gzip for codec 1 in the batch attributes. Kafka uses raw gzip streams, so pick GzEncoder/GzDecoder rather than the zlib or deflate wrappers.",
-    "minutes": 10,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "snap-crate",
-    "title": "snap - Rust",
-    "url": "https://docs.rs/snap/latest/snap/",
-    "type": "doc",
-    "level": "intro",
-    "track": "kafka",
-    "stages": [
-      27
-    ],
-    "concepts": [
-      "compression",
-      "snappy",
-      "record-batch"
-    ],
-    "why": "Snappy for codec 2. Read the raw-vs-framed section carefully: Kafka uses the framed format from the Java xerial library, which is not the same as snap's raw block encoding.",
-    "minutes": 15,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "lz4-flex-crate",
-    "title": "lz4_flex - Rust",
-    "url": "https://docs.rs/lz4_flex/latest/lz4_flex/",
-    "type": "doc",
-    "level": "intro",
-    "track": "kafka",
-    "stages": [
-      27
-    ],
-    "concepts": [
-      "compression",
-      "lz4",
-      "record-batch"
-    ],
-    "why": "LZ4 for codec 3, in the frame format Kafka expects. Same caveat as snappy: block mode and frame mode are different wire formats.",
-    "minutes": 10,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "zstd-crate",
-    "title": "zstd - Rust",
-    "url": "https://docs.rs/zstd/latest/zstd/",
-    "type": "doc",
-    "level": "intro",
-    "track": "kafka",
-    "stages": [
-      27
-    ],
-    "concepts": [
-      "compression",
-      "zstd",
-      "record-batch"
-    ],
-    "why": "Zstd for codec 4, the default for a lot of modern producers. Stage 27 wants the decompressed records back byte-identical, so stream the whole batch payload rather than guessing a size.",
-    "minutes": 10,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "uuid-crate",
-    "title": "uuid - Rust",
-    "url": "https://docs.rs/uuid/latest/uuid/",
-    "type": "doc",
-    "level": "intro",
-    "track": "kafka",
-    "stages": [
-      11,
-      12,
-      16,
-      21
-    ],
-    "concepts": [
-      "uuid",
-      "topic-ids"
-    ],
-    "why": "Kafka topic ids are 16 raw big-endian bytes on the wire; this crate gives you as_bytes/from_bytes plus Uuid::nil for the zero UUID stage 11 expects on an unknown topic.",
-    "minutes": 10,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "rust-fuzz-book",
-    "title": "Introduction - Rust Fuzz Book",
-    "url": "https://rust-fuzz.github.io/book/",
-    "type": "doc",
-    "level": "deep",
-    "track": "kafka",
-    "stages": [
-      9,
-      44
-    ],
-    "concepts": [
-      "fuzzing",
-      "robustness",
-      "panic-safety"
-    ],
-    "why": "If stage 44's seeded mutations find a panic, this is how you turn the failing input into a reproducible fuzz target. Also a good argument for why no decode path should ever unwrap.",
-    "minutes": 45,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "confluent-purgatory-timing-wheels",
-    "title": "Apache Kafka, Purgatory, and Hierarchical Timing Wheels | Confluent",
-    "url": "https://www.confluent.io/blog/apache-kafka-purgatory-hierarchical-timing-wheels/",
-    "type": "article",
-    "level": "deep",
-    "track": "kafka",
-    "stages": [
-      28,
-      33,
-      40
-    ],
-    "concepts": [
-      "long-poll",
-      "delayed-operations",
-      "timing-wheels",
-      "min-bytes"
-    ],
-    "why": "How a real broker parks a fetch that cannot be satisfied yet and wakes it when data arrives or the timer expires. Stage 28's max_wait_ms/min_bytes semantics are this mechanism, and acks=all uses the same machinery.",
-    "minutes": 30,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "confluent-transactions-in-kafka",
-    "title": "Transactions in Apache Kafka | Confluent",
-    "url": "https://www.confluent.io/blog/transactions-apache-kafka/",
-    "type": "article",
-    "level": "core",
-    "track": "kafka",
-    "stages": [
-      31,
-      36
-    ],
-    "concepts": [
-      "idempotent-producer",
-      "sequence-numbers",
-      "producer-id",
-      "exactly-once"
-    ],
-    "why": "The readable version of KIP-98, with a diagram of the producer-id/sequence-number handshake. Read this first, then the KIP for the exact error rules stage 36 checks.",
-    "minutes": 25,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "confluent-message-compression",
-    "title": "Apache Kafka Message Compression",
-    "url": "https://www.confluent.io/blog/apache-kafka-message-compression/",
-    "type": "article",
-    "level": "core",
-    "track": "kafka",
-    "stages": [
-      27
-    ],
-    "concepts": [
-      "compression",
-      "record-batch",
-      "attributes"
-    ],
-    "why": "Which codecs map to which attribute bits, and the key point for stage 27: compression is per batch, applied to the records section only, and a broker normally passes the compressed bytes through untouched.",
-    "minutes": 20,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "confluent-kafka-listeners-explained",
-    "title": "Kafka Listeners - Explained | Confluent",
-    "url": "https://www.confluent.io/blog/kafka-listeners-explained/",
-    "type": "article",
-    "level": "core",
-    "track": "kafka",
-    "stages": [
-      1,
-      16,
-      39,
-      43
-    ],
-    "concepts": [
-      "listeners",
-      "advertised-listeners",
-      "bootstrap",
-      "metadata"
-    ],
-    "why": "Why the host and port you advertise in Metadata and FindCoordinator responses matter more than the one you bind. If real clients connect and then hang in stage 43, this article is the reason.",
-    "minutes": 25,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "confluent-architecture-course",
-    "title": "Apache Kafka Architecture Deep Dive",
-    "url": "https://developer.confluent.io/courses/architecture/get-started/",
-    "type": "course",
-    "level": "intro",
-    "track": "kafka",
-    "stages": [
-      1,
-      13,
-      16,
-      22,
-      35,
-      40
-    ],
-    "concepts": [
-      "broker-architecture",
-      "replication",
-      "consumer-groups",
-      "log"
-    ],
-    "why": "Short video modules covering the broker's internal components, the log, replication and group coordination. Useful orientation before section E if the group protocol feels like it came out of nowhere.",
-    "minutes": 120,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "confluent-learn-kraft",
-    "title": "KRaft - Apache Kafka Without ZooKeeper",
-    "url": "https://developer.confluent.io/learn/kraft/",
-    "type": "article",
-    "level": "intro",
-    "track": "kafka",
-    "stages": [
-      1,
-      16
-    ],
-    "concepts": [
-      "kraft",
-      "metadata-log",
-      "controller"
-    ],
-    "why": "A fifteen-minute explanation of what KRaft replaced and why the metadata is now a topic. Enough background to understand the fixture files without reading KIP-500 end to end.",
-    "minutes": 15,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kafka-definitive-guide",
-    "title": "Apache Kafka: The Definitive Guide",
-    "url": "https://www.confluent.io/resources/kafka-the-definitive-guide-v2/",
-    "type": "book",
-    "level": "core",
-    "track": "kafka",
-    "stages": [
-      1,
-      16,
-      19,
-      29,
-      33,
-      35,
-      38,
-      40,
-      41
-    ],
-    "concepts": [
-      "broker-architecture",
-      "producer",
-      "consumer-groups",
-      "replication",
-      "storage"
-    ],
-    "why": "Chapter 6 (Kafka internals - cluster membership, the controller, replication, request processing) and chapter 5 (consumers and group coordination) are the two that map onto this track. The rest is client-side and can be skimmed.",
-    "minutes": 600,
-    "free": false,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "kafka-linkedin-paper",
-    "title": "Kafka: a Distributed Messaging System for Log Processing",
-    "url": "https://notes.stephenholiday.com/Kafka.pdf",
-    "type": "paper",
-    "level": "core",
-    "track": "kafka",
-    "stages": [
-      1,
-      22,
-      35,
-      45
-    ],
-    "concepts": [
-      "log",
-      "design-rationale",
-      "throughput",
-      "pull-model"
-    ],
-    "why": "The original 2011 paper. Six pages that explain the pull model, the segmented log and the batching decisions that the wire protocol still reflects fifteen years later.",
-    "minutes": 40,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "raft-paper",
-    "title": "In Search of an Understandable Consensus Algorithm (Extended Version)",
-    "url": "https://raft.github.io/raft.pdf",
-    "type": "paper",
-    "level": "deep",
-    "track": "kafka",
-    "stages": [
-      16
-    ],
-    "concepts": [
-      "raft",
-      "consensus",
-      "leader-election",
-      "log-replication"
-    ],
-    "why": "The Raft paper Kafka's metadata quorum is based on. Read sections 5.1-5.4 if you want to understand what the metadata log's epochs and offsets are protecting.",
-    "minutes": 120,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "jepsen-redpanda",
-    "title": "Jepsen: Redpanda 21.10.1",
-    "url": "https://jepsen.io/analyses/redpanda-21.10.1",
-    "type": "paper",
-    "level": "deep",
-    "track": "kafka",
-    "stages": [
-      35,
-      36,
-      41,
-      45
-    ],
-    "concepts": [
-      "consistency",
-      "idempotent-producer",
-      "offset-commit",
-      "safety"
-    ],
-    "why": "An independent analysis of a Kafka-compatible broker, with the failure modes that come from getting offsets, epochs and idempotence subtly wrong. The best catalogue of what 'wrong but passes casual tests' looks like.",
-    "minutes": 90,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "jepsen-kafka",
-    "title": "Jepsen: Kafka",
-    "url": "https://aphyr.com/posts/293-call-me-maybe-kafka",
-    "type": "paper",
-    "level": "deep",
-    "track": "kafka",
-    "stages": [
-      33,
-      35
-    ],
-    "concepts": [
-      "replication",
-      "isr",
-      "acks",
-      "data-loss"
-    ],
-    "why": "The classic write-up of how unclean leader election and acks settings lose data. Short, and it makes the acks semantics in stage 33 feel like a real decision rather than a field to echo.",
-    "minutes": 30,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "confluent-benchmark-rabbitmq-kafka-pulsar",
-    "title": "Benchmarking RabbitMQ vs Kafka vs Pulsar Performance",
-    "url": "https://www.confluent.io/blog/kafka-fastest-messaging-system/",
-    "type": "article",
-    "level": "core",
-    "track": "kafka",
-    "stages": [
-      45
-    ],
-    "concepts": [
-      "benchmarking",
-      "throughput",
-      "latency",
-      "p99"
-    ],
-    "why": "Shows how to measure a broker honestly: fixed rate, warm-up, and p99 rather than averages. Useful when you decide what your stage 45 soak numbers actually mean.",
-    "minutes": 40,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  },
-  {
-    "id": "linkedin-kafka-benchmark",
-    "title": "Benchmarking Apache Kafka: 2 Million Writes Per Second (On Three Cheap Machines)",
-    "url": "https://engineering.linkedin.com/kafka/benchmarking-apache-kafka-2-million-writes-second-three-cheap-machines",
-    "type": "article",
-    "level": "core",
-    "track": "kafka",
-    "stages": [
-      45
-    ],
-    "concepts": [
-      "benchmarking",
-      "throughput",
-      "batching",
-      "page-cache"
-    ],
-    "why": "Jay Kreps' original numbers with the reasoning behind them - batching, sequential writes and the page cache. Sets expectations for what stage 45's 10 000-record soak should cost.",
-    "minutes": 30,
-    "free": true,
-    "checkedAt": "2026-09-13"
-  }
+	{
+		"id": "kafka-protocol-guide",
+		"title": "Kafka protocol guide",
+		"url": "https://kafka.apache.org/43/design/protocol",
+		"type": "spec",
+		"level": "core",
+		"track": "kafka",
+		"stages": [
+			2,
+			3,
+			4,
+			5,
+			6,
+			7,
+			8,
+			10,
+			11,
+			12,
+			13,
+			14,
+			15,
+			16,
+			17,
+			18,
+			19,
+			20,
+			21,
+			22,
+			23,
+			24,
+			29,
+			30,
+			31,
+			32,
+			38,
+			39,
+			40,
+			41,
+			42,
+			46
+		],
+		"concepts": [
+			"wire-protocol",
+			"request-header",
+			"api-keys",
+			"error-codes",
+			"flexible-versions"
+		],
+		"why": "The one document the whole track is graded against: framing, primitive types, header versions, the error-code table, the API-key table and every message schema in BNF. Keep it open; almost every failing test is a mismatch with a line on this page.",
+		"minutes": 240,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kafka-protocol-primitive-types",
+		"title": "Kafka protocol guide - Protocol Primitive Types",
+		"url": "https://kafka.apache.org/43/design/protocol/#protocol-primitive-types",
+		"type": "spec",
+		"level": "core",
+		"track": "kafka",
+		"stages": [
+			2,
+			3,
+			5,
+			11,
+			15
+		],
+		"concepts": [
+			"varint",
+			"zigzag",
+			"compact-arrays",
+			"nullable-string",
+			"uuid"
+		],
+		"why": "The table that distinguishes STRING from COMPACT_STRING, ARRAY from COMPACT_ARRAY and defines UNSIGNED_VARINT. Getting the compact forms wrong is the single most common reason a flexible-version response decodes as garbage.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kafka-protocol-request-response-headers",
+		"title": "Kafka protocol guide - Request and Response Headers",
+		"url": "https://kafka.apache.org/43/design/protocol/#request-and-response-headers",
+		"type": "spec",
+		"level": "core",
+		"track": "kafka",
+		"stages": [
+			2,
+			3,
+			5,
+			8
+		],
+		"concepts": [
+			"request-header",
+			"correlation-id",
+			"header-versions",
+			"tagged-fields"
+		],
+		"why": "Header v0/v1/v2 side by side and the rule that decides which one an API uses. Stage 3 is exactly this, and the ApiVersions response header being v0 rather than v1 is the classic trap.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kafka-protocol-record-batch",
+		"title": "Kafka protocol guide - Record Batch",
+		"url": "https://kafka.apache.org/43/design/protocol/#record-batch",
+		"type": "spec",
+		"level": "deep",
+		"track": "kafka",
+		"stages": [
+			23,
+			24,
+			27,
+			31,
+			32,
+			34,
+			36,
+			37
+		],
+		"concepts": [
+			"record-batch",
+			"crc32c",
+			"varint",
+			"zigzag",
+			"compression",
+			"control-batch"
+		],
+		"why": "Byte-for-byte layout of the v2 batch: which bytes the CRC covers, where the attribute bits live, and the varint/zigzag encoding of each record. Your records codec is written straight off this section.",
+		"minutes": 45,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kafka-protocol-error-codes",
+		"title": "Kafka protocol guide - Error Codes",
+		"url": "https://kafka.apache.org/43/design/protocol/#error-codes",
+		"type": "spec",
+		"level": "core",
+		"track": "kafka",
+		"stages": [
+			4,
+			11,
+			17,
+			18,
+			21,
+			25,
+			30,
+			36,
+			37,
+			42
+		],
+		"concepts": [
+			"error-codes",
+			"retriable-errors"
+		],
+		"why": "The numeric table you need every time a stage asserts an error: 35 UNSUPPORTED_VERSION, 3 UNKNOWN_TOPIC_OR_PARTITION, 100 UNKNOWN_TOPIC_ID, 1 OFFSET_OUT_OF_RANGE, 2 CORRUPT_MESSAGE. Also says which are retriable, which matters for client interop in stage 43.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kafka-protocol-api-keys",
+		"title": "Kafka protocol guide - API Keys",
+		"url": "https://kafka.apache.org/43/design/protocol/#api-keys",
+		"type": "spec",
+		"level": "intro",
+		"track": "kafka",
+		"stages": [
+			5,
+			10,
+			16,
+			17,
+			18,
+			19,
+			29,
+			38,
+			39,
+			40,
+			41
+		],
+		"concepts": [
+			"api-keys",
+			"api-versions"
+		],
+		"why": "Maps every numeric api_key to a name. You will refer to it constantly: 0 Produce, 1 Fetch, 2 ListOffsets, 18 ApiVersions, 75 DescribeTopicPartitions.",
+		"minutes": 5,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kafka-protocol-network",
+		"title": "Kafka protocol guide - Network",
+		"url": "https://kafka.apache.org/43/design/protocol/#network",
+		"type": "spec",
+		"level": "core",
+		"track": "kafka",
+		"stages": [
+			1,
+			6,
+			7,
+			8,
+			9
+		],
+		"concepts": [
+			"framing",
+			"size-prefix",
+			"pipelining",
+			"ordering"
+		],
+		"why": "States the size-prefixed framing and the guarantee that a broker processes requests on one connection in order and replies in order. That single sentence is the contract stages 6 and 8 test.",
+		"minutes": 10,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kafka-protocol-api-version-negotiation",
+		"title": "Kafka protocol guide - Retrieving Supported API versions",
+		"url": "https://kafka.apache.org/43/design/protocol/#retrieving-supported-api-versions",
+		"type": "spec",
+		"level": "core",
+		"track": "kafka",
+		"stages": [
+			4,
+			5,
+			10,
+			19,
+			29
+		],
+		"concepts": [
+			"api-versions",
+			"version-negotiation",
+			"unsupported-version"
+		],
+		"why": "Explains the handshake and, critically, that a broker must answer an unsupported ApiVersions version with error 35 in a v0-shaped body rather than closing the connection. Stage 4 in one paragraph.",
+		"minutes": 10,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kafka-docs-message-format",
+		"title": "Message Format | Apache Kafka",
+		"url": "https://kafka.apache.org/43/implementation/message-format/",
+		"type": "doc",
+		"level": "deep",
+		"track": "kafka",
+		"stages": [
+			23,
+			24,
+			27,
+			31,
+			34,
+			35,
+			37
+		],
+		"concepts": [
+			"record-batch",
+			"message-format",
+			"crc32c",
+			"varint",
+			"compression"
+		],
+		"why": "The on-disk and on-the-wire batch format with the field table and the note that the same bytes are used in the log and in Fetch responses. Stage 23's 'bytes identical to the log file batch' assertion comes from here.",
+		"minutes": 40,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kafka-docs-log",
+		"title": "Log | Apache Kafka",
+		"url": "https://kafka.apache.org/43/implementation/log/",
+		"type": "doc",
+		"level": "core",
+		"track": "kafka",
+		"stages": [
+			22,
+			23,
+			25,
+			34,
+			35
+		],
+		"concepts": [
+			"log-segments",
+			"offset-index",
+			"high-watermark",
+			"segment-file-naming"
+		],
+		"why": "Why segments are named by their base offset, how the index lets a read start in the middle, and what the high watermark means. Read before you write the fixture files for stages 22-25.",
+		"minutes": 25,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kafka-docs-messages",
+		"title": "Messages | Apache Kafka",
+		"url": "https://kafka.apache.org/43/implementation/messages/",
+		"type": "doc",
+		"level": "intro",
+		"track": "kafka",
+		"stages": [
+			23,
+			31
+		],
+		"concepts": [
+			"message-format",
+			"batching"
+		],
+		"why": "One screen on why messages are grouped into batches and what that buys. Useful framing before the byte-level format page.",
+		"minutes": 5,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kafka-docs-network-layer",
+		"title": "Network Layer | Apache Kafka",
+		"url": "https://kafka.apache.org/43/implementation/network-layer/",
+		"type": "doc",
+		"level": "core",
+		"track": "kafka",
+		"stages": [
+			1,
+			7,
+			9,
+			45
+		],
+		"concepts": [
+			"network-layer",
+			"sendfile",
+			"zero-copy"
+		],
+		"why": "How a real broker serves fetches without copying record bytes through user space. Context for why Fetch responses are expected to return the log's bytes untouched, which stage 23 checks.",
+		"minutes": 10,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kafka-docs-design",
+		"title": "Design | Apache Kafka",
+		"url": "https://kafka.apache.org/43/design/design/",
+		"type": "doc",
+		"level": "core",
+		"track": "kafka",
+		"stages": [
+			13,
+			22,
+			28,
+			33,
+			35,
+			36
+		],
+		"concepts": [
+			"replication",
+			"isr",
+			"delivery-semantics",
+			"high-watermark",
+			"idempotent-producer"
+		],
+		"why": "The motivation chapter: persistence, efficiency, the producer and consumer models, replication and ISR, and the delivery-semantics section that explains what acks=0/1/all actually promise. Read the replication and semantics parts before stage 33.",
+		"minutes": 60,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kafka-docs-kraft",
+		"title": "KRaft | Apache Kafka",
+		"url": "https://kafka.apache.org/43/operations/kraft/",
+		"type": "doc",
+		"level": "core",
+		"track": "kafka",
+		"stages": [
+			1,
+			11,
+			12,
+			16
+		],
+		"concepts": [
+			"kraft",
+			"metadata-log",
+			"cluster-id",
+			"controller"
+		],
+		"why": "What `kafka-storage.sh format` writes, what lives in __cluster_metadata-0 and meta.properties, and how a combined-mode node boots. This is the shape of the on-disk fixtures the harness hands your broker.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kafka-docs-consumer-rebalance-protocol",
+		"title": "Consumer Rebalance Protocol | Apache Kafka",
+		"url": "https://kafka.apache.org/43/operations/consumer-rebalance-protocol/",
+		"type": "doc",
+		"level": "deep",
+		"track": "kafka",
+		"stages": [
+			40,
+			42
+		],
+		"concepts": [
+			"consumer-groups",
+			"rebalance",
+			"kip-848",
+			"generation-id"
+		],
+		"why": "The operator-facing description of both the classic and the new rebalance protocols in one place, including how the two coexist. Orientation before you read KIP-848 itself.",
+		"minutes": 25,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kafka-docs-transaction-protocol",
+		"title": "Transaction Protocol | Apache Kafka",
+		"url": "https://kafka.apache.org/43/operations/transaction-protocol/",
+		"type": "doc",
+		"level": "deep",
+		"track": "kafka",
+		"stages": [
+			36
+		],
+		"concepts": [
+			"idempotent-producer",
+			"producer-id",
+			"epoch",
+			"control-batch"
+		],
+		"why": "Where producer ids, epochs and sequence numbers fit, and what the control batches in the log mean. Stage 36 only needs the idempotence half, but this explains why the fields are shaped the way they are.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kafka-docs-broker-configs",
+		"title": "Broker Configs | Apache Kafka",
+		"url": "https://kafka.apache.org/43/configuration/broker-configs/",
+		"type": "doc",
+		"level": "core",
+		"track": "kafka",
+		"stages": [
+			1,
+			17,
+			26,
+			37
+		],
+		"concepts": [
+			"broker-config",
+			"message-max-bytes",
+			"listeners",
+			"log-dirs"
+		],
+		"why": "The properties the harness writes into server.properties, plus the defaults your broker is expected to honour: message.max.bytes for stage 37 and the fetch size limits for stage 26.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kafka-docs-producer-configs",
+		"title": "Producer Configs | Apache Kafka",
+		"url": "https://kafka.apache.org/43/configuration/producer-configs/",
+		"type": "doc",
+		"level": "core",
+		"track": "kafka",
+		"stages": [
+			33,
+			36,
+			43
+		],
+		"concepts": [
+			"acks",
+			"idempotent-producer",
+			"compression",
+			"batching"
+		],
+		"why": "Defines acks, enable.idempotence, max.in.flight and compression.type from the client's side - i.e. what the real console producer will send you in stage 43 and what it expects back.",
+		"minutes": 25,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kafka-docs-consumer-configs",
+		"title": "Consumer and Share Consumer Configs | Apache Kafka",
+		"url": "https://kafka.apache.org/43/configuration/consumer-configs/",
+		"type": "doc",
+		"level": "core",
+		"track": "kafka",
+		"stages": [
+			26,
+			28,
+			40,
+			41,
+			42,
+			43
+		],
+		"concepts": [
+			"fetch-min-bytes",
+			"max-wait-ms",
+			"session-timeout",
+			"consumer-groups"
+		],
+		"why": "fetch.min.bytes, fetch.max.wait.ms, max.partition.fetch.bytes, session.timeout.ms and heartbeat.interval.ms - the exact knobs that decide what the real consumer sends in stages 28 and 40-42.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kafka-docs-basic-operations",
+		"title": "Basic Kafka Operations | Apache Kafka",
+		"url": "https://kafka.apache.org/43/operations/basic-kafka-operations/",
+		"type": "doc",
+		"level": "intro",
+		"track": "kafka",
+		"stages": [
+			17,
+			18,
+			43
+		],
+		"concepts": [
+			"cli-tools",
+			"topic-management"
+		],
+		"why": "What kafka-topics.sh, kafka-console-producer.sh and kafka-console-consumer.sh actually do. Stage 43 points those exact tools at your broker, so knowing their request sequence tells you what to implement first.",
+		"minutes": 25,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kafka-docs-quickstart",
+		"title": "Quick Start | Apache Kafka",
+		"url": "https://kafka.apache.org/43/getting-started/quickstart",
+		"type": "doc",
+		"level": "intro",
+		"track": "kafka",
+		"stages": [
+			1,
+			43
+		],
+		"concepts": [
+			"kraft",
+			"cli-tools",
+			"cluster-format"
+		],
+		"why": "Ten minutes with a real broker from the tarball: format storage, start it, produce and consume. Do this once before stage 1 so you have a working reference to diff your broker against.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kafka-downloads",
+		"title": "Downloads | Apache Kafka",
+		"url": "https://kafka.apache.org/community/downloads/",
+		"type": "tool",
+		"level": "intro",
+		"track": "kafka",
+		"stages": [
+			43,
+			45
+		],
+		"concepts": [
+			"reference-broker",
+			"tarball",
+			"cli-tools"
+		],
+		"why": "Where the reference broker tarball comes from. The same archive supplies kafka-dump-log.sh, which is how you prove your on-disk record batches in stage 34 are actually valid.",
+		"minutes": 5,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kip-482-tagged-fields",
+		"title": "KIP-482: The Kafka Protocol should Support Optional Tagged Fields",
+		"url": "https://cwiki.apache.org/confluence/display/KAFKA/KIP-482%3A+The+Kafka+Protocol+should+Support+Optional+Tagged+Fields",
+		"type": "spec",
+		"level": "deep",
+		"track": "kafka",
+		"stages": [
+			3,
+			5,
+			10,
+			11,
+			12,
+			13,
+			14,
+			15,
+			16
+		],
+		"concepts": [
+			"flexible-versions",
+			"tagged-fields",
+			"compact-arrays",
+			"varint"
+		],
+		"why": "The definition of 'flexible versions': unsigned varint lengths, compact strings and arrays offset by one, and the tagged-field section at the end of every struct. Everything in section B decodes wrong until this is right.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kip-500-kraft",
+		"title": "KIP-500: Replace ZooKeeper with a Self-Managed Metadata Quorum",
+		"url": "https://cwiki.apache.org/confluence/display/KAFKA/KIP-500%3A+Replace+ZooKeeper+with+a+Self-Managed+Metadata+Quorum",
+		"type": "spec",
+		"level": "deep",
+		"track": "kafka",
+		"stages": [
+			1,
+			11,
+			16
+		],
+		"concepts": [
+			"kraft",
+			"metadata-log",
+			"controller",
+			"cluster-metadata"
+		],
+		"why": "The design rationale for storing cluster metadata as an event log rather than in ZooKeeper. Explains why __cluster_metadata-0 is a normal Kafka log and why the fixtures look the way they do.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kip-595-raft-metadata-quorum",
+		"title": "KIP-595: A Raft Protocol for the Metadata Quorum",
+		"url": "https://cwiki.apache.org/confluence/display/KAFKA/KIP-595%3A+A+Raft+Protocol+for+the+Metadata+Quorum",
+		"type": "spec",
+		"level": "deep",
+		"track": "kafka",
+		"stages": [
+			16
+		],
+		"concepts": [
+			"kraft",
+			"raft",
+			"metadata-log",
+			"leader-election"
+		],
+		"why": "Kafka's pull-based variant of Raft, with the Vote/BeginQuorumEpoch/Fetch APIs. You do not implement it for this track, but it tells you what the records in the metadata log mean.",
+		"minutes": 60,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kip-631-quorum-controller",
+		"title": "KIP-631: The Quorum-based Kafka Controller",
+		"url": "https://cwiki.apache.org/confluence/display/KAFKA/KIP-631%3A+The+Quorum-based+Kafka+Controller",
+		"type": "spec",
+		"level": "deep",
+		"track": "kafka",
+		"stages": [
+			11,
+			12,
+			13,
+			16,
+			17,
+			18
+		],
+		"concepts": [
+			"metadata-records",
+			"topic-record",
+			"partition-record",
+			"feature-level-record",
+			"kraft"
+		],
+		"why": "Lists the metadata record types - FeatureLevelRecord, TopicRecord, PartitionRecord - and their fields. This is the schema you decode when you read the cluster metadata log for stages 11-14.",
+		"minutes": 45,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kip-98-idempotent-producer",
+		"title": "KIP-98 - Exactly Once Delivery and Transactional Messaging",
+		"url": "https://cwiki.apache.org/confluence/display/KAFKA/KIP-98+-+Exactly+Once+Delivery+and+Transactional+Messaging",
+		"type": "spec",
+		"level": "deep",
+		"track": "kafka",
+		"stages": [
+			31,
+			36
+		],
+		"concepts": [
+			"idempotent-producer",
+			"producer-id",
+			"sequence-numbers",
+			"epoch",
+			"duplicate-detection"
+		],
+		"why": "Where InitProducerId, producer epochs and per-partition sequence numbers come from, and the exact rules for returning DUPLICATE_SEQUENCE_NUMBER versus OUT_OF_ORDER_SEQUENCE_NUMBER. Stage 36 is a direct implementation of this section.",
+		"minutes": 60,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kip-848-consumer-rebalance",
+		"title": "KIP-848: The Next Generation of the Consumer Rebalance Protocol",
+		"url": "https://cwiki.apache.org/confluence/display/KAFKA/KIP-848%3A+The+Next+Generation+of+the+Consumer+Rebalance+Protocol",
+		"type": "spec",
+		"level": "deep",
+		"track": "kafka",
+		"stages": [
+			40,
+			42
+		],
+		"concepts": [
+			"consumer-groups",
+			"rebalance",
+			"kip-848",
+			"consumer-group-heartbeat"
+		],
+		"why": "The server-driven replacement for JoinGroup/SyncGroup. Worth reading after stage 40 so you understand what a modern client may negotiate instead of the classic protocol you just implemented.",
+		"minutes": 75,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kafka-client-side-assignment-proposal",
+		"title": "Kafka Client-side Assignment Proposal",
+		"url": "https://cwiki.apache.org/confluence/display/KAFKA/Kafka+Client-side+Assignment+Proposal",
+		"type": "spec",
+		"level": "deep",
+		"track": "kafka",
+		"stages": [
+			40,
+			41,
+			42
+		],
+		"concepts": [
+			"consumer-groups",
+			"join-group",
+			"sync-group",
+			"generation-id",
+			"group-leader"
+		],
+		"why": "The original design of the classic group protocol: the join/sync round trip, how a leader is picked and why the assignment is an opaque blob the broker just relays. This is the document stage 40 is built from.",
+		"minutes": 45,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kip-62-heartbeat-thread",
+		"title": "KIP-62: Allow consumer to send heartbeats from a background thread",
+		"url": "https://cwiki.apache.org/confluence/display/KAFKA/KIP-62%3A+Allow+consumer+to+send+heartbeats+from+a+background+thread",
+		"type": "spec",
+		"level": "deep",
+		"track": "kafka",
+		"stages": [
+			40,
+			42
+		],
+		"concepts": [
+			"consumer-groups",
+			"heartbeat",
+			"session-timeout",
+			"rebalance-in-progress"
+		],
+		"why": "Why session.timeout.ms and max.poll.interval.ms are separate, and the timing your Heartbeat handler has to respect. Explains when a broker is entitled to answer REBALANCE_IN_PROGRESS.",
+		"minutes": 25,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kip-699-find-coordinator-batching",
+		"title": "KIP-699: Update FindCoordinator to resolve multiple Coordinators at a time",
+		"url": "https://cwiki.apache.org/confluence/display/KAFKA/KIP-699%3A+Update+FindCoordinator+to+resolve+multiple+Coordinators+at+a+time",
+		"type": "spec",
+		"level": "core",
+		"track": "kafka",
+		"stages": [
+			39
+		],
+		"concepts": [
+			"find-coordinator",
+			"consumer-groups",
+			"api-versions"
+		],
+		"why": "Explains why FindCoordinator v4+ takes a list of keys and returns a list of coordinators while v0-v3 take one. If stage 39 fails only against newer clients, this version split is why.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kip-516-topic-identifiers",
+		"title": "KIP-516: Topic Identifiers",
+		"url": "https://cwiki.apache.org/confluence/display/KAFKA/KIP-516%3A+Topic+Identifiers",
+		"type": "spec",
+		"level": "deep",
+		"track": "kafka",
+		"stages": [
+			11,
+			12,
+			16,
+			21,
+			24
+		],
+		"concepts": [
+			"topic-ids",
+			"uuid",
+			"unknown-topic-id",
+			"fetch"
+		],
+		"why": "Why Fetch v13+ addresses partitions by UUID instead of name, where UNKNOWN_TOPIC_ID (100) comes from, and why an unknown topic gets the zero UUID. Stages 11 and 21 both check that behaviour.",
+		"minutes": 35,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kip-227-incremental-fetch",
+		"title": "KIP-227: Introduce Incremental FetchRequests to Increase Partition Scalability",
+		"url": "https://cwiki.apache.org/confluence/display/KAFKA/KIP-227%3A+Introduce+Incremental+FetchRequests+to+Increase+Partition+Scalability",
+		"type": "spec",
+		"level": "deep",
+		"track": "kafka",
+		"stages": [
+			19,
+			20,
+			24
+		],
+		"concepts": [
+			"fetch-sessions",
+			"session-id",
+			"session-epoch",
+			"fetch"
+		],
+		"why": "Explains the session_id / session_epoch fields sitting in every Fetch request. You can answer with the full-session values, but you need to know why they are there and what epoch -1 means.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kip-74-fetch-response-size-limit",
+		"title": "KIP-74: Add Fetch Response Size Limit in Bytes",
+		"url": "https://cwiki.apache.org/confluence/display/KAFKA/KIP-74%3A+Add+Fetch+Response+Size+Limit+in+Bytes",
+		"type": "spec",
+		"level": "core",
+		"track": "kafka",
+		"stages": [
+			26
+		],
+		"concepts": [
+			"fetch",
+			"max-bytes",
+			"truncation"
+		],
+		"why": "The rule stage 26 asserts: max_bytes is a soft limit and the broker must still return at least one full batch so a consumer can never wedge on an oversized record.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kip-392-fetch-from-closest-replica",
+		"title": "KIP-392: Allow consumers to fetch from closest replica",
+		"url": "https://cwiki.apache.org/confluence/display/KAFKA/KIP-392%3A+Allow+consumers+to+fetch+from+closest+replica",
+		"type": "spec",
+		"level": "deep",
+		"track": "kafka",
+		"stages": [
+			24,
+			25
+		],
+		"concepts": [
+			"fetch",
+			"replica-id",
+			"offset-for-leader-epoch",
+			"high-watermark"
+		],
+		"why": "Where rack_id and the follower-fetch semantics in Fetch come from, and how OFFSET_OUT_OF_RANGE interacts with a follower's log end offset. Background for the edge cases in stage 25.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kip-405-tiered-storage",
+		"title": "KIP-405: Kafka Tiered Storage",
+		"url": "https://cwiki.apache.org/confluence/display/KAFKA/KIP-405%3A+Kafka+Tiered+Storage",
+		"type": "spec",
+		"level": "deep",
+		"track": "kafka",
+		"stages": [
+			38
+		],
+		"concepts": [
+			"list-offsets",
+			"earliest-local-timestamp",
+			"log-segments"
+		],
+		"why": "Only relevant here because it added the extra ListOffsets timestamps (-4 earliest-local, -5 latest-tiered) that a modern client may send in stage 38. Know they exist and what to answer.",
+		"minutes": 40,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kip-966-eligible-leader-replicas",
+		"title": "KIP-966: Eligible Leader Replicas",
+		"url": "https://cwiki.apache.org/confluence/display/KAFKA/KIP-966%3A+Eligible+Leader+Replicas",
+		"type": "spec",
+		"level": "deep",
+		"track": "kafka",
+		"stages": [
+			13,
+			14,
+			15
+		],
+		"concepts": [
+			"isr",
+			"eligible-leader-replicas",
+			"describe-topic-partitions",
+			"partition-record"
+		],
+		"why": "Introduces the ELR fields that appear in PartitionRecord and in DescribeTopicPartitions responses. If your stage 13 response is a few bytes short against real Kafka, these optional fields are usually why.",
+		"minutes": 40,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kafka-old-protocol-guide",
+		"title": "A Guide To The Kafka Protocol",
+		"url": "https://cwiki.apache.org/confluence/display/KAFKA/A+Guide+To+The+Kafka+Protocol",
+		"type": "article",
+		"level": "intro",
+		"track": "kafka",
+		"stages": [
+			2,
+			6,
+			8,
+			29
+		],
+		"concepts": [
+			"wire-protocol",
+			"framing",
+			"correlation-id",
+			"design-rationale"
+		],
+		"why": "The superseded wiki guide, kept because it explains the reasoning - why size-prefixed frames, why correlation ids, why the client drives everything - in prose the current reference does not repeat. Do not take field layouts from it.",
+		"minutes": 40,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kafka-message-schemas-dir",
+		"title": "kafka/clients/src/main/resources/common/message at trunk",
+		"url": "https://github.com/apache/kafka/tree/trunk/clients/src/main/resources/common/message",
+		"type": "repo",
+		"level": "core",
+		"track": "kafka",
+		"stages": [
+			3,
+			5,
+			10,
+			11,
+			16,
+			17,
+			18,
+			19,
+			29,
+			38,
+			39,
+			40,
+			41
+		],
+		"concepts": [
+			"message-schemas",
+			"flexible-versions",
+			"api-versions",
+			"wire-protocol"
+		],
+		"why": "The machine-readable source of truth: every request and response as JSON with per-version field ranges and flexibleVersions. When the HTML guide and reality disagree, these files are reality.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kafka-message-schema-readme",
+		"title": "kafka/clients/src/main/resources/common/message/README.md at trunk",
+		"url": "https://github.com/apache/kafka/blob/trunk/clients/src/main/resources/common/message/README.md",
+		"type": "doc",
+		"level": "core",
+		"track": "kafka",
+		"stages": [
+			3,
+			5,
+			15
+		],
+		"concepts": [
+			"message-schemas",
+			"flexible-versions",
+			"tagged-fields",
+			"nullable-versions"
+		],
+		"why": "Explains how to read those JSON files: what versions, nullableVersions, taggedVersions and flexibleVersions mean. Fifteen minutes here saves hours of guessing at field presence.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kafka-schema-request-header",
+		"title": "kafka/clients/src/main/resources/common/message/RequestHeader.json at trunk",
+		"url": "https://github.com/apache/kafka/blob/trunk/clients/src/main/resources/common/message/RequestHeader.json",
+		"type": "repo",
+		"level": "core",
+		"track": "kafka",
+		"stages": [
+			3,
+			6
+		],
+		"concepts": [
+			"request-header",
+			"correlation-id",
+			"client-id",
+			"tagged-fields"
+		],
+		"why": "Header v0/v1/v2 as a schema, including the comment that client_id is a plain nullable STRING even in flexible versions. That inconsistency breaks a lot of first parsers in stage 3.",
+		"minutes": 10,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kafka-schema-response-header",
+		"title": "kafka/clients/src/main/resources/common/message/ResponseHeader.json at trunk",
+		"url": "https://github.com/apache/kafka/blob/trunk/clients/src/main/resources/common/message/ResponseHeader.json",
+		"type": "repo",
+		"level": "core",
+		"track": "kafka",
+		"stages": [
+			2,
+			5
+		],
+		"concepts": [
+			"response-header",
+			"correlation-id",
+			"tagged-fields"
+		],
+		"why": "Two versions, and the choice between them is per-API rather than per-connection. Stage 5 needs v0 for ApiVersions while stage 11 needs v1 for DescribeTopicPartitions.",
+		"minutes": 5,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kafka-schema-apiversions-response",
+		"title": "kafka/clients/src/main/resources/common/message/ApiVersionsResponse.json at trunk",
+		"url": "https://github.com/apache/kafka/blob/trunk/clients/src/main/resources/common/message/ApiVersionsResponse.json",
+		"type": "repo",
+		"level": "core",
+		"track": "kafka",
+		"stages": [
+			4,
+			5,
+			10,
+			19,
+			29
+		],
+		"concepts": [
+			"api-versions",
+			"flexible-versions",
+			"throttle-time",
+			"tagged-fields"
+		],
+		"why": "The authoritative field order for the response stages 5, 10, 19 and 29 all build on, including where throttle_time_ms sits relative to the api_keys array.",
+		"minutes": 10,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kafka-schema-describetopicpartitions-request",
+		"title": "kafka/clients/src/main/resources/common/message/DescribeTopicPartitionsRequest.json at trunk",
+		"url": "https://github.com/apache/kafka/blob/trunk/clients/src/main/resources/common/message/DescribeTopicPartitionsRequest.json",
+		"type": "repo",
+		"level": "core",
+		"track": "kafka",
+		"stages": [
+			10,
+			11,
+			12,
+			13,
+			14,
+			15
+		],
+		"concepts": [
+			"describe-topic-partitions",
+			"cursor",
+			"pagination",
+			"flexible-versions"
+		],
+		"why": "Shows response_partition_limit and the nullable cursor struct that stage 15's pagination is built on. Read it alongside the response schema in the same directory.",
+		"minutes": 10,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kafka-schema-metadata-request",
+		"title": "kafka/clients/src/main/resources/common/message/MetadataRequest.json at trunk",
+		"url": "https://github.com/apache/kafka/blob/trunk/clients/src/main/resources/common/message/MetadataRequest.json",
+		"type": "repo",
+		"level": "core",
+		"track": "kafka",
+		"stages": [
+			16
+		],
+		"concepts": [
+			"metadata",
+			"topic-ids",
+			"auto-create-topics"
+		],
+		"why": "v12 semantics for stage 16: a null topics array means 'all topics', an empty array means none, and topic ids appear in the response. The distinction between null and empty is the trap.",
+		"minutes": 10,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kafka-schema-createtopics-request",
+		"title": "kafka/clients/src/main/resources/common/message/CreateTopicsRequest.json at trunk",
+		"url": "https://github.com/apache/kafka/blob/trunk/clients/src/main/resources/common/message/CreateTopicsRequest.json",
+		"type": "repo",
+		"level": "core",
+		"track": "kafka",
+		"stages": [
+			17
+		],
+		"concepts": [
+			"create-topics",
+			"validate-only",
+			"topic-already-exists"
+		],
+		"why": "Includes validate_only and the -1 sentinel for 'use the broker default' on partitions and replication factor. Stage 17 checks the duplicate case returning 36.",
+		"minutes": 10,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kafka-schema-deletetopics-request",
+		"title": "kafka/clients/src/main/resources/common/message/DeleteTopicsRequest.json at trunk",
+		"url": "https://github.com/apache/kafka/blob/trunk/clients/src/main/resources/common/message/DeleteTopicsRequest.json",
+		"type": "repo",
+		"level": "core",
+		"track": "kafka",
+		"stages": [
+			18
+		],
+		"concepts": [
+			"delete-topics",
+			"topic-ids"
+		],
+		"why": "Newer versions delete by topic id as well as by name, and the response echoes both. Stage 18 then expects a describe of the deleted topic to report unknown.",
+		"minutes": 10,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kafka-schema-fetch-request",
+		"title": "kafka/clients/src/main/resources/common/message/FetchRequest.json at trunk",
+		"url": "https://github.com/apache/kafka/blob/trunk/clients/src/main/resources/common/message/FetchRequest.json",
+		"type": "repo",
+		"level": "core",
+		"track": "kafka",
+		"stages": [
+			19,
+			20,
+			21,
+			22,
+			23,
+			24,
+			25,
+			26,
+			27,
+			28
+		],
+		"concepts": [
+			"fetch",
+			"topic-ids",
+			"max-wait-ms",
+			"min-bytes",
+			"fetch-sessions"
+		],
+		"why": "v16 field by field: max_wait_ms and min_bytes for stage 28, max_bytes and partition_max_bytes for stage 26, topic_id instead of name for stage 21. The whole of section C in one file.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kafka-schema-produce-request",
+		"title": "kafka/clients/src/main/resources/common/message/ProduceRequest.json at trunk",
+		"url": "https://github.com/apache/kafka/blob/trunk/clients/src/main/resources/common/message/ProduceRequest.json",
+		"type": "repo",
+		"level": "core",
+		"track": "kafka",
+		"stages": [
+			29,
+			30,
+			31,
+			32,
+			33,
+			34
+		],
+		"concepts": [
+			"produce",
+			"acks",
+			"transactional-id",
+			"record-batch"
+		],
+		"why": "v11 layout including acks as an int16 (0, 1 or -1) and the records field as opaque bytes. Stage 33's 'no response at all when acks=0' rule follows from the semantics described here.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kafka-schema-initproducerid-request",
+		"title": "kafka/clients/src/main/resources/common/message/InitProducerIdRequest.json at trunk",
+		"url": "https://github.com/apache/kafka/blob/trunk/clients/src/main/resources/common/message/InitProducerIdRequest.json",
+		"type": "repo",
+		"level": "core",
+		"track": "kafka",
+		"stages": [
+			36
+		],
+		"concepts": [
+			"idempotent-producer",
+			"producer-id",
+			"epoch"
+		],
+		"why": "The request that hands out a producer id and epoch. Note the null transactional_id case - that is the pure-idempotence path stage 36 exercises.",
+		"minutes": 10,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kafka-schema-listoffsets-request",
+		"title": "kafka/clients/src/main/resources/common/message/ListOffsetsRequest.json at trunk",
+		"url": "https://github.com/apache/kafka/blob/trunk/clients/src/main/resources/common/message/ListOffsetsRequest.json",
+		"type": "repo",
+		"level": "core",
+		"track": "kafka",
+		"stages": [
+			38
+		],
+		"concepts": [
+			"list-offsets",
+			"timestamps",
+			"isolation-level"
+		],
+		"why": "The magic timestamps (-1 latest, -2 earliest, and the newer tiered-storage values) plus isolation_level. Stage 38 checks all three lookup modes.",
+		"minutes": 10,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kafka-schema-findcoordinator-request",
+		"title": "kafka/clients/src/main/resources/common/message/FindCoordinatorRequest.json at trunk",
+		"url": "https://github.com/apache/kafka/blob/trunk/clients/src/main/resources/common/message/FindCoordinatorRequest.json",
+		"type": "repo",
+		"level": "core",
+		"track": "kafka",
+		"stages": [
+			39
+		],
+		"concepts": [
+			"find-coordinator",
+			"coordinator-type",
+			"consumer-groups"
+		],
+		"why": "The single-key/multi-key version split and the key_type byte (0 group, 1 transaction). Stage 39 wants your own host and port back, which is the answer for a single-node broker.",
+		"minutes": 10,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kafka-schema-joingroup-request",
+		"title": "kafka/clients/src/main/resources/common/message/JoinGroupRequest.json at trunk",
+		"url": "https://github.com/apache/kafka/blob/trunk/clients/src/main/resources/common/message/JoinGroupRequest.json",
+		"type": "repo",
+		"level": "core",
+		"track": "kafka",
+		"stages": [
+			40,
+			42
+		],
+		"concepts": [
+			"join-group",
+			"member-id",
+			"generation-id",
+			"protocol-metadata"
+		],
+		"why": "Shows the empty-member-id first round trip that forces a rejoin, the protocol list, and the opaque metadata bytes. Stage 40's second-member rebalance hinges on that first-round behaviour.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kafka-schema-offsetcommit-request",
+		"title": "kafka/clients/src/main/resources/common/message/OffsetCommitRequest.json at trunk",
+		"url": "https://github.com/apache/kafka/blob/trunk/clients/src/main/resources/common/message/OffsetCommitRequest.json",
+		"type": "repo",
+		"level": "core",
+		"track": "kafka",
+		"stages": [
+			41,
+			42
+		],
+		"concepts": [
+			"offset-commit",
+			"consumer-groups",
+			"generation-id",
+			"leader-epoch"
+		],
+		"why": "Includes generation_id and member_id, which is how the broker decides between ILLEGAL_GENERATION and UNKNOWN_MEMBER_ID in stage 42. The -1 for an unknown offset in OffsetFetch is defined in the sibling file.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kafka-metadata-records-dir",
+		"title": "kafka/metadata/src/main/resources/common/metadata at trunk",
+		"url": "https://github.com/apache/kafka/tree/trunk/metadata/src/main/resources/common/metadata",
+		"type": "repo",
+		"level": "deep",
+		"track": "kafka",
+		"stages": [
+			11,
+			12,
+			13,
+			16
+		],
+		"concepts": [
+			"metadata-records",
+			"kraft",
+			"cluster-metadata",
+			"record-schemas"
+		],
+		"why": "Every record type that can appear in __cluster_metadata-0, as JSON schemas with api keys and versions. This is what you decode when the harness writes a metadata log fixture for your broker.",
+		"minutes": 25,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kafka-metadata-topic-record",
+		"title": "kafka/metadata/src/main/resources/common/metadata/TopicRecord.json at trunk",
+		"url": "https://github.com/apache/kafka/blob/trunk/metadata/src/main/resources/common/metadata/TopicRecord.json",
+		"type": "repo",
+		"level": "deep",
+		"track": "kafka",
+		"stages": [
+			12,
+			16,
+			17
+		],
+		"concepts": [
+			"topic-record",
+			"topic-ids",
+			"metadata-records"
+		],
+		"why": "Three fields - name, topic_id, and the record's own api key and version - and it is how a topic comes into existence on disk. Stage 12 reads exactly this to answer a describe.",
+		"minutes": 5,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kafka-metadata-partition-record",
+		"title": "kafka/metadata/src/main/resources/common/metadata/PartitionRecord.json at trunk",
+		"url": "https://github.com/apache/kafka/blob/trunk/metadata/src/main/resources/common/metadata/PartitionRecord.json",
+		"type": "repo",
+		"level": "deep",
+		"track": "kafka",
+		"stages": [
+			13,
+			14,
+			16
+		],
+		"concepts": [
+			"partition-record",
+			"isr",
+			"leader-epoch",
+			"replicas"
+		],
+		"why": "Replicas, ISR, removing/adding replicas, leader and leader epoch, plus the newer eligible-leader-replica fields. Stage 13's replica and ISR arrays are copied from this record.",
+		"minutes": 10,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kafka-errors-java",
+		"title": "kafka/clients/src/main/java/org/apache/kafka/common/protocol/Errors.java at trunk",
+		"url": "https://github.com/apache/kafka/blob/trunk/clients/src/main/java/org/apache/kafka/common/protocol/Errors.java",
+		"type": "repo",
+		"level": "core",
+		"track": "kafka",
+		"stages": [
+			4,
+			11,
+			17,
+			21,
+			25,
+			30,
+			36,
+			37,
+			42
+		],
+		"concepts": [
+			"error-codes",
+			"retriable-errors"
+		],
+		"why": "The enum with every code, its number and its exception class. Faster to grep than the HTML table when you need to confirm that DUPLICATE_SEQUENCE_NUMBER is 46 or MESSAGE_TOO_LARGE is 10.",
+		"minutes": 10,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kafka-protocol-type-java",
+		"title": "kafka/clients/src/main/java/org/apache/kafka/common/protocol/types/Type.java at trunk",
+		"url": "https://github.com/apache/kafka/blob/trunk/clients/src/main/java/org/apache/kafka/common/protocol/types/Type.java",
+		"type": "repo",
+		"level": "deep",
+		"track": "kafka",
+		"stages": [
+			2,
+			3,
+			5,
+			15
+		],
+		"concepts": [
+			"protocol-primitive-types",
+			"varint",
+			"compact-arrays",
+			"nullable-string"
+		],
+		"why": "Reference implementations of every primitive read and write, including the +1 offset on compact lengths and how null is encoded as 0. Use it to settle an argument with your own codec.",
+		"minutes": 25,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kafka-default-record-batch-java",
+		"title": "kafka/clients/src/main/java/org/apache/kafka/common/record/internal/DefaultRecordBatch.java at trunk",
+		"url": "https://github.com/apache/kafka/blob/trunk/clients/src/main/java/org/apache/kafka/common/record/internal/DefaultRecordBatch.java",
+		"type": "repo",
+		"level": "deep",
+		"track": "kafka",
+		"stages": [
+			23,
+			27,
+			31,
+			34,
+			36,
+			37
+		],
+		"concepts": [
+			"record-batch",
+			"crc32c",
+			"attributes",
+			"compression",
+			"control-batch"
+		],
+		"why": "Offset constants for every field of the v2 batch and the exact CRC range (from the attributes field to the end). If stage 34 says your CRC is wrong, diff your implementation against this file.",
+		"minutes": 40,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kafka-default-record-java",
+		"title": "kafka/clients/src/main/java/org/apache/kafka/common/record/internal/DefaultRecord.java at trunk",
+		"url": "https://github.com/apache/kafka/blob/trunk/clients/src/main/java/org/apache/kafka/common/record/internal/DefaultRecord.java",
+		"type": "repo",
+		"level": "deep",
+		"track": "kafka",
+		"stages": [
+			23,
+			31,
+			32
+		],
+		"concepts": [
+			"record-batch",
+			"varint",
+			"zigzag",
+			"headers",
+			"delta-encoding"
+		],
+		"why": "How a single record inside a batch is encoded: varint length, attributes byte, zigzag timestamp and offset deltas, nullable key and value, header array. Everything varint in this track is here.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kafka-memory-records-builder-java",
+		"title": "kafka/clients/src/main/java/org/apache/kafka/common/record/internal/MemoryRecordsBuilder.java at trunk",
+		"url": "https://github.com/apache/kafka/blob/trunk/clients/src/main/java/org/apache/kafka/common/record/internal/MemoryRecordsBuilder.java",
+		"type": "repo",
+		"level": "deep",
+		"track": "kafka",
+		"stages": [
+			27,
+			31,
+			32,
+			34
+		],
+		"concepts": [
+			"record-batch",
+			"compression",
+			"crc32c",
+			"batch-building"
+		],
+		"why": "The writer side: how the header is back-filled once the records are known, when compression is applied, and where the CRC is computed. The model to copy for your own batch writer.",
+		"minutes": 35,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kafka-dump-log-segments-java",
+		"title": "kafka/tools/src/main/java/org/apache/kafka/tools/DumpLogSegments.java at trunk",
+		"url": "https://github.com/apache/kafka/blob/trunk/tools/src/main/java/org/apache/kafka/tools/DumpLogSegments.java",
+		"type": "repo",
+		"level": "deep",
+		"track": "kafka",
+		"stages": [
+			23,
+			34,
+			35
+		],
+		"concepts": [
+			"log-segments",
+			"record-batch",
+			"cli-tools",
+			"validation"
+		],
+		"why": "The source of kafka-dump-log.sh, which is the independent checker for your on-disk batches in stage 34. Reading it tells you exactly which invariants it verifies before it prints.",
+		"minutes": 25,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kafka-protocol-crate",
+		"title": "kafka_protocol - Rust",
+		"url": "https://docs.rs/kafka-protocol/latest/kafka_protocol/",
+		"type": "doc",
+		"level": "core",
+		"track": "kafka",
+		"stages": [
+			3,
+			5,
+			11,
+			16,
+			19,
+			23,
+			29,
+			31,
+			38,
+			40
+		],
+		"concepts": [
+			"rust",
+			"wire-protocol",
+			"message-schemas",
+			"record-batch"
+		],
+		"why": "Generated Rust types for every Kafka message plus a records module for v2 batches. The harness decodes with it, so its module layout is a good map of the protocol surface you are implementing.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "tokio-tutorial",
+		"title": "Tutorial | Tokio - An asynchronous Rust runtime",
+		"url": "https://tokio.rs/tokio/tutorial",
+		"type": "course",
+		"level": "intro",
+		"track": "kafka",
+		"stages": [
+			1,
+			6,
+			7
+		],
+		"concepts": [
+			"rust",
+			"async",
+			"tcp",
+			"tokio"
+		],
+		"why": "Start to finish it builds a small server with a TCP accept loop, per-connection tasks and shared state - the exact skeleton stages 1, 6 and 7 ask for.",
+		"minutes": 180,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "tokio-tutorial-spawning",
+		"title": "Spawning | Tokio - An asynchronous Rust runtime",
+		"url": "https://tokio.rs/tokio/tutorial/spawning",
+		"type": "doc",
+		"level": "core",
+		"track": "kafka",
+		"stages": [
+			1,
+			7
+		],
+		"concepts": [
+			"rust",
+			"tokio",
+			"tcp",
+			"concurrency"
+		],
+		"why": "The accept-then-spawn pattern and why each connection needs its own task. Stage 7 interleaves several clients and will catch you if you handle connections one at a time.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "tokio-tutorial-framing",
+		"title": "Framing | Tokio - An asynchronous Rust runtime",
+		"url": "https://tokio.rs/tokio/tutorial/framing",
+		"type": "doc",
+		"level": "core",
+		"track": "kafka",
+		"stages": [
+			8,
+			9,
+			44
+		],
+		"concepts": [
+			"framing",
+			"length-prefix",
+			"buffering",
+			"partial-reads"
+		],
+		"why": "Turning a byte stream into messages with a read buffer that tolerates partial and coalesced frames. Stages 9 and 44 feed you split frames and garbage lengths precisely to test this layer.",
+		"minutes": 45,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "tokio-tutorial-io",
+		"title": "I/O | Tokio - An asynchronous Rust runtime",
+		"url": "https://tokio.rs/tokio/tutorial/io",
+		"type": "doc",
+		"level": "core",
+		"track": "kafka",
+		"stages": [
+			6,
+			9
+		],
+		"concepts": [
+			"rust",
+			"async-io",
+			"buffering",
+			"half-close"
+		],
+		"why": "AsyncRead/AsyncWrite, read_exact and the meaning of a zero-length read. Stage 9's half-close test is about distinguishing 'peer finished writing' from 'connection broken'.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "bytes-crate",
+		"title": "bytes - Rust",
+		"url": "https://docs.rs/bytes/latest/bytes/",
+		"type": "doc",
+		"level": "core",
+		"track": "kafka",
+		"stages": [
+			2,
+			9,
+			23,
+			31,
+			34
+		],
+		"concepts": [
+			"rust",
+			"buffers",
+			"zero-copy",
+			"framing"
+		],
+		"why": "Buf and BufMut give you the big-endian get/put helpers the whole protocol needs, and Bytes lets you slice a record batch out of a read buffer without copying it.",
+		"minutes": 25,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "crc32c-crate",
+		"title": "crc32c - Rust",
+		"url": "https://docs.rs/crc32c/latest/crc32c/",
+		"type": "doc",
+		"level": "core",
+		"track": "kafka",
+		"stages": [
+			34,
+			37
+		],
+		"concepts": [
+			"crc32c",
+			"castagnoli",
+			"record-batch"
+		],
+		"why": "Castagnoli CRC32 with the SSE4.2 instruction when available. Note it is CRC32C, not the zlib CRC32 - using the wrong polynomial is a classic half-day lost on stage 34.",
+		"minutes": 10,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "rfc-3385-crc32c",
+		"title": "RFC 3385 - Internet Protocol Small Computer System Interface (iSCSI) Cyclic Redundancy Check (CRC)/Checksum Considerations",
+		"url": "https://datatracker.ietf.org/doc/html/rfc3385",
+		"type": "spec",
+		"level": "deep",
+		"track": "kafka",
+		"stages": [
+			34,
+			37
+		],
+		"concepts": [
+			"crc32c",
+			"castagnoli",
+			"checksums"
+		],
+		"why": "Where the Castagnoli polynomial Kafka uses actually comes from, with its error-detection properties. Read it only if you are implementing the CRC yourself rather than calling a crate.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "protobuf-encoding-varints",
+		"title": "Encoding | Protocol Buffers Documentation",
+		"url": "https://protobuf.dev/programming-guides/encoding/",
+		"type": "doc",
+		"level": "core",
+		"track": "kafka",
+		"stages": [
+			3,
+			5,
+			23,
+			31
+		],
+		"concepts": [
+			"varint",
+			"zigzag",
+			"encoding"
+		],
+		"why": "The clearest explanation anywhere of base-128 varints and zigzag encoding of signed integers, with worked examples. Kafka borrowed both wholesale for records and flexible versions.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "variable-length-quantity",
+		"title": "Variable-length integer - Wikipedia",
+		"url": "https://en.wikipedia.org/wiki/Variable-length_quantity",
+		"type": "article",
+		"level": "intro",
+		"track": "kafka",
+		"stages": [
+			3,
+			23
+		],
+		"concepts": [
+			"varint",
+			"encoding"
+		],
+		"why": "A short survey of the varint family so you can see which variant Kafka picked and why the continuation bit is on the high bit of each byte.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "flate2-crate",
+		"title": "flate2 - Rust",
+		"url": "https://docs.rs/flate2/latest/flate2/",
+		"type": "doc",
+		"level": "intro",
+		"track": "kafka",
+		"stages": [
+			27
+		],
+		"concepts": [
+			"compression",
+			"gzip",
+			"record-batch"
+		],
+		"why": "Gzip for codec 1 in the batch attributes. Kafka uses raw gzip streams, so pick GzEncoder/GzDecoder rather than the zlib or deflate wrappers.",
+		"minutes": 10,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "snap-crate",
+		"title": "snap - Rust",
+		"url": "https://docs.rs/snap/latest/snap/",
+		"type": "doc",
+		"level": "intro",
+		"track": "kafka",
+		"stages": [
+			27
+		],
+		"concepts": [
+			"compression",
+			"snappy",
+			"record-batch"
+		],
+		"why": "Snappy for codec 2. Read the raw-vs-framed section carefully: Kafka uses the framed format from the Java xerial library, which is not the same as snap's raw block encoding.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "lz4-flex-crate",
+		"title": "lz4_flex - Rust",
+		"url": "https://docs.rs/lz4_flex/latest/lz4_flex/",
+		"type": "doc",
+		"level": "intro",
+		"track": "kafka",
+		"stages": [
+			27
+		],
+		"concepts": [
+			"compression",
+			"lz4",
+			"record-batch"
+		],
+		"why": "LZ4 for codec 3, in the frame format Kafka expects. Same caveat as snappy: block mode and frame mode are different wire formats.",
+		"minutes": 10,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "zstd-crate",
+		"title": "zstd - Rust",
+		"url": "https://docs.rs/zstd/latest/zstd/",
+		"type": "doc",
+		"level": "intro",
+		"track": "kafka",
+		"stages": [
+			27
+		],
+		"concepts": [
+			"compression",
+			"zstd",
+			"record-batch"
+		],
+		"why": "Zstd for codec 4, the default for a lot of modern producers. Stage 27 wants the decompressed records back byte-identical, so stream the whole batch payload rather than guessing a size.",
+		"minutes": 10,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "uuid-crate",
+		"title": "uuid - Rust",
+		"url": "https://docs.rs/uuid/latest/uuid/",
+		"type": "doc",
+		"level": "intro",
+		"track": "kafka",
+		"stages": [
+			11,
+			12,
+			16,
+			21
+		],
+		"concepts": [
+			"uuid",
+			"topic-ids"
+		],
+		"why": "Kafka topic ids are 16 raw big-endian bytes on the wire; this crate gives you as_bytes/from_bytes plus Uuid::nil for the zero UUID stage 11 expects on an unknown topic.",
+		"minutes": 10,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "rust-fuzz-book",
+		"title": "Introduction - Rust Fuzz Book",
+		"url": "https://rust-fuzz.github.io/book/",
+		"type": "doc",
+		"level": "deep",
+		"track": "kafka",
+		"stages": [
+			9,
+			44
+		],
+		"concepts": [
+			"fuzzing",
+			"robustness",
+			"panic-safety"
+		],
+		"why": "If stage 44's seeded mutations find a panic, this is how you turn the failing input into a reproducible fuzz target. Also a good argument for why no decode path should ever unwrap.",
+		"minutes": 45,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "confluent-purgatory-timing-wheels",
+		"title": "Apache Kafka, Purgatory, and Hierarchical Timing Wheels | Confluent",
+		"url": "https://www.confluent.io/blog/apache-kafka-purgatory-hierarchical-timing-wheels/",
+		"type": "article",
+		"level": "deep",
+		"track": "kafka",
+		"stages": [
+			28,
+			33,
+			40
+		],
+		"concepts": [
+			"long-poll",
+			"delayed-operations",
+			"timing-wheels",
+			"min-bytes"
+		],
+		"why": "How a real broker parks a fetch that cannot be satisfied yet and wakes it when data arrives or the timer expires. Stage 28's max_wait_ms/min_bytes semantics are this mechanism, and acks=all uses the same machinery.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "confluent-transactions-in-kafka",
+		"title": "Transactions in Apache Kafka | Confluent",
+		"url": "https://www.confluent.io/blog/transactions-apache-kafka/",
+		"type": "article",
+		"level": "core",
+		"track": "kafka",
+		"stages": [
+			31,
+			36
+		],
+		"concepts": [
+			"idempotent-producer",
+			"sequence-numbers",
+			"producer-id",
+			"exactly-once"
+		],
+		"why": "The readable version of KIP-98, with a diagram of the producer-id/sequence-number handshake. Read this first, then the KIP for the exact error rules stage 36 checks.",
+		"minutes": 25,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "confluent-message-compression",
+		"title": "Apache Kafka Message Compression",
+		"url": "https://www.confluent.io/blog/apache-kafka-message-compression/",
+		"type": "article",
+		"level": "core",
+		"track": "kafka",
+		"stages": [
+			27
+		],
+		"concepts": [
+			"compression",
+			"record-batch",
+			"attributes"
+		],
+		"why": "Which codecs map to which attribute bits, and the key point for stage 27: compression is per batch, applied to the records section only, and a broker normally passes the compressed bytes through untouched.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "confluent-kafka-listeners-explained",
+		"title": "Kafka Listeners - Explained | Confluent",
+		"url": "https://www.confluent.io/blog/kafka-listeners-explained/",
+		"type": "article",
+		"level": "core",
+		"track": "kafka",
+		"stages": [
+			1,
+			16,
+			39,
+			43
+		],
+		"concepts": [
+			"listeners",
+			"advertised-listeners",
+			"bootstrap",
+			"metadata"
+		],
+		"why": "Why the host and port you advertise in Metadata and FindCoordinator responses matter more than the one you bind. If real clients connect and then hang in stage 43, this article is the reason.",
+		"minutes": 25,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "confluent-architecture-course",
+		"title": "Apache Kafka Architecture Deep Dive",
+		"url": "https://developer.confluent.io/courses/architecture/get-started/",
+		"type": "course",
+		"level": "intro",
+		"track": "kafka",
+		"stages": [
+			1,
+			13,
+			16,
+			22,
+			35,
+			40
+		],
+		"concepts": [
+			"broker-architecture",
+			"replication",
+			"consumer-groups",
+			"log"
+		],
+		"why": "Short video modules covering the broker's internal components, the log, replication and group coordination. Useful orientation before section E if the group protocol feels like it came out of nowhere.",
+		"minutes": 120,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "confluent-learn-kraft",
+		"title": "KRaft - Apache Kafka Without ZooKeeper",
+		"url": "https://developer.confluent.io/learn/kraft/",
+		"type": "article",
+		"level": "intro",
+		"track": "kafka",
+		"stages": [
+			1,
+			16
+		],
+		"concepts": [
+			"kraft",
+			"metadata-log",
+			"controller"
+		],
+		"why": "A fifteen-minute explanation of what KRaft replaced and why the metadata is now a topic. Enough background to understand the fixture files without reading KIP-500 end to end.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kafka-definitive-guide",
+		"title": "Apache Kafka: The Definitive Guide",
+		"url": "https://www.confluent.io/resources/kafka-the-definitive-guide-v2/",
+		"type": "book",
+		"level": "core",
+		"track": "kafka",
+		"stages": [
+			1,
+			16,
+			19,
+			29,
+			33,
+			35,
+			38,
+			40,
+			41
+		],
+		"concepts": [
+			"broker-architecture",
+			"producer",
+			"consumer-groups",
+			"replication",
+			"storage"
+		],
+		"why": "Chapter 6 (Kafka internals - cluster membership, the controller, replication, request processing) and chapter 5 (consumers and group coordination) are the two that map onto this track. The rest is client-side and can be skimmed.",
+		"minutes": 600,
+		"free": false,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kafka-linkedin-paper",
+		"title": "Kafka: a Distributed Messaging System for Log Processing",
+		"url": "https://notes.stephenholiday.com/Kafka.pdf",
+		"type": "paper",
+		"level": "core",
+		"track": "kafka",
+		"stages": [
+			1,
+			22,
+			35,
+			45
+		],
+		"concepts": [
+			"log",
+			"design-rationale",
+			"throughput",
+			"pull-model"
+		],
+		"why": "The original 2011 paper. Six pages that explain the pull model, the segmented log and the batching decisions that the wire protocol still reflects fifteen years later.",
+		"minutes": 40,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "raft-paper",
+		"title": "In Search of an Understandable Consensus Algorithm (Extended Version)",
+		"url": "https://raft.github.io/raft.pdf",
+		"type": "paper",
+		"level": "deep",
+		"track": "kafka",
+		"stages": [
+			16
+		],
+		"concepts": [
+			"raft",
+			"consensus",
+			"leader-election",
+			"log-replication"
+		],
+		"why": "The Raft paper Kafka's metadata quorum is based on. Read sections 5.1-5.4 if you want to understand what the metadata log's epochs and offsets are protecting.",
+		"minutes": 120,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "jepsen-redpanda",
+		"title": "Jepsen: Redpanda 21.10.1",
+		"url": "https://jepsen.io/analyses/redpanda-21.10.1",
+		"type": "paper",
+		"level": "deep",
+		"track": "kafka",
+		"stages": [
+			35,
+			36,
+			41,
+			45
+		],
+		"concepts": [
+			"consistency",
+			"idempotent-producer",
+			"offset-commit",
+			"safety"
+		],
+		"why": "An independent analysis of a Kafka-compatible broker, with the failure modes that come from getting offsets, epochs and idempotence subtly wrong. The best catalogue of what 'wrong but passes casual tests' looks like.",
+		"minutes": 90,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "jepsen-kafka",
+		"title": "Jepsen: Kafka",
+		"url": "https://aphyr.com/posts/293-call-me-maybe-kafka",
+		"type": "paper",
+		"level": "deep",
+		"track": "kafka",
+		"stages": [
+			33,
+			35
+		],
+		"concepts": [
+			"replication",
+			"isr",
+			"acks",
+			"data-loss"
+		],
+		"why": "The classic write-up of how unclean leader election and acks settings lose data. Short, and it makes the acks semantics in stage 33 feel like a real decision rather than a field to echo.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "confluent-benchmark-rabbitmq-kafka-pulsar",
+		"title": "Benchmarking RabbitMQ vs Kafka vs Pulsar Performance",
+		"url": "https://www.confluent.io/blog/kafka-fastest-messaging-system/",
+		"type": "article",
+		"level": "core",
+		"track": "kafka",
+		"stages": [
+			45
+		],
+		"concepts": [
+			"benchmarking",
+			"throughput",
+			"latency",
+			"p99"
+		],
+		"why": "Shows how to measure a broker honestly: fixed rate, warm-up, and p99 rather than averages. Useful when you decide what your stage 45 soak numbers actually mean.",
+		"minutes": 40,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "linkedin-kafka-benchmark",
+		"title": "Benchmarking Apache Kafka: 2 Million Writes Per Second (On Three Cheap Machines)",
+		"url": "https://engineering.linkedin.com/kafka/benchmarking-apache-kafka-2-million-writes-second-three-cheap-machines",
+		"type": "article",
+		"level": "core",
+		"track": "kafka",
+		"stages": [
+			45
+		],
+		"concepts": [
+			"benchmarking",
+			"throughput",
+			"batching",
+			"page-cache"
+		],
+		"why": "Jay Kreps' original numbers with the reasoning behind them - batching, sequential writes and the page cache. Sets expectations for what stage 45's 10 000-record soak should cost.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "kafka-kip-98",
+		"title": "KIP-98: Exactly Once Delivery and Transactional Messaging",
+		"url": "https://cwiki.apache.org/confluence/display/KAFKA/KIP-98+-+Exactly+Once+Delivery+and+Transactional+Messaging",
+		"type": "spec",
+		"level": "core",
+		"track": "kafka",
+		"stages": [
+			46
+		],
+		"concepts": [
+			"transactions",
+			"exactly-once",
+			"producer-fencing"
+		],
+		"why": "The design document for the whole feature, and the place the reasoning lives: why a transactional id is needed on top of a producer id, why the epoch is the fencing mechanism, and what the coordinator keeps in __transaction_state.",
+		"minutes": 60,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "kafka-transactions-confluent",
+		"title": "Transactions in Apache Kafka (Confluent)",
+		"url": "https://www.confluent.io/blog/transactions-apache-kafka/",
+		"type": "article",
+		"level": "intro",
+		"track": "kafka",
+		"stages": [
+			46
+		],
+		"concepts": [
+			"transactions",
+			"coordinator",
+			"epoch"
+		],
+		"why": "The readable version of KIP-98, with the message flow drawn out: FindCoordinator, InitProducerId, AddPartitionsToTxn, EndTxn and the control records. Read it before the KIP.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "kafka-exactly-once-semantics",
+		"title": "Exactly-once semantics: how Apache Kafka does it (Confluent)",
+		"url": "https://www.confluent.io/blog/exactly-once-semantics-are-possible-heres-how-apache-kafka-does-it/",
+		"type": "article",
+		"level": "intro",
+		"track": "kafka",
+		"stages": [
+			46
+		],
+		"concepts": [
+			"exactly-once",
+			"idempotence",
+			"zombie-fencing"
+		],
+		"why": "Where idempotence stops and transactions start, which is exactly the boundary stage 36 and stage 46 sit either side of. The zombie-fencing section is what the epoch tests are about.",
+		"minutes": 25,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "kafka-transactional-id-config",
+		"title": "transactional.id (Kafka producer configuration)",
+		"url": "https://kafka.apache.org/documentation/#producerconfigs_transactional.id",
+		"type": "doc",
+		"level": "core",
+		"track": "kafka",
+		"stages": [
+			46
+		],
+		"concepts": [
+			"transactional-id",
+			"configuration",
+			"fencing"
+		],
+		"why": "Short, and it contains the rule an application has to get right: the id must be stable across restarts of the same logical task and distinct between tasks, because that is the granularity at which fencing happens.",
+		"minutes": 10,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "kafka-kip-447",
+		"title": "KIP-447: Producer scalability for exactly-once semantics",
+		"url": "https://cwiki.apache.org/confluence/display/KAFKA/KIP-447%3A+Producer+scalability+for+exactly+once+semantics",
+		"type": "spec",
+		"level": "deep",
+		"track": "kafka",
+		"stages": [
+			46
+		],
+		"concepts": [
+			"transactions",
+			"consumer-groups",
+			"scalability"
+		],
+		"why": "What went wrong with the first design at scale — one transactional id per input partition — and how fencing moved to the consumer group generation instead. Worth reading once the basic mechanism is clear, because it explains why the API has the shape it does today.",
+		"minutes": 45,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	}
 ]

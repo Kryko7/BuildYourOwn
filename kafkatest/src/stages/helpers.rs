@@ -49,6 +49,8 @@ pub const OUT_OF_ORDER_SEQUENCE_NUMBER: i16 = 45;
 pub const DUPLICATE_SEQUENCE_NUMBER: i16 = 46;
 /// `INVALID_PRODUCER_EPOCH`
 pub const INVALID_PRODUCER_EPOCH: i16 = 47;
+/// `PRODUCER_FENCED` — a newer producer with the same transactional id has taken over.
+pub const PRODUCER_FENCED: i16 = 90;
 /// `INVALID_RECORD`
 pub const INVALID_RECORD: i16 = 87;
 
@@ -277,6 +279,7 @@ pub fn error_name(code: i16) -> &'static str {
         45 => "OUT_OF_ORDER_SEQUENCE_NUMBER",
         46 => "DUPLICATE_SEQUENCE_NUMBER",
         47 => "INVALID_PRODUCER_EPOCH",
+        90 => "PRODUCER_FENCED",
         79 => "MEMBER_ID_REQUIRED",
         87 => "INVALID_RECORD",
         100 => "UNKNOWN_TOPIC_ID",

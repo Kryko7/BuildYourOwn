@@ -46,7 +46,7 @@ fn catalog_has_the_shape_the_site_expects() {
     assert!(cat["generatedAt"].is_string());
 
     let sections = cat["sections"].as_array().expect("sections array");
-    assert_eq!(sections.len(), 6);
+    assert_eq!(sections.len(), stages::sections().len());
     let mut numbers: Vec<u64> = sections
         .iter()
         .flat_map(|s| {
@@ -60,7 +60,7 @@ fn catalog_has_the_shape_the_site_expects() {
     numbers.sort_unstable();
     assert_eq!(
         numbers,
-        (1..=45).collect::<Vec<u64>>(),
+        (1..=numbers.len() as u64).collect::<Vec<u64>>(),
         "the sections must cover all 45 planned stages, implemented or not"
     );
 
@@ -96,8 +96,11 @@ fn plan_md_lists_every_stage_including_the_planned_ones() {
     let ticks = catalog::plan_ticks(&plan);
     assert_eq!(
         ticks.len(),
-        45,
-        "PLAN.md must carry a tickbox for all 45 stages so later agents can fill the gaps"
+        stages::sections()
+            .iter()
+            .map(|s| s.stages.len())
+            .sum::<usize>(),
+        "PLAN.md must carry a tickbox for every stage the section table plans"
     );
     for s in stages::all() {
         assert!(

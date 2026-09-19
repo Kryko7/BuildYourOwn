@@ -249,3 +249,15 @@ apache_kafka`, and reach the site through `catalog.json`. See README.md, "Exampl
   - Open and close 1 000 connections without leaking file descriptors or threads — close the socket when the client goes away, not when the process exits
   - Fifty concurrent connections must not serialize behind one another, and per connection the responses still come back in request order
   - p50/p95/p99 latency is reported for information; the only hard limit is that each test finishes within 60 seconds
+
+## G. Transactions [ext]
+
+Stage 36 built the idempotent producer, which gets exactly-once within one producer
+session. A transactional id is what makes the guarantee outlive the process — and the epoch
+the coordinator hands out with it is what stops two instances of the same job both writing.
+
+- [ ] **Stage 46** — The transaction coordinator and producer fencing **[ext]** (`src/stages/s46_transaction_coordinator.rs`, 10 tests)
+  - `FindCoordinator` with `key_type` 1 asks for a *transaction* coordinator; the same request with 0 asks for a consumer group's, and the two are different lookups
+  - `InitProducerId` with a transactional id is a different operation from the same request with a null one: it is coordinator state that outlives the connection
+  - Asking twice for the same transactional id must return the same producer id with a higher epoch — that bump is the entire fencing mechanism
+  - A produce stamped with a superseded epoch is refused with INVALID_PRODUCER_EPOCH (47) and must append nothing

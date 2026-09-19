@@ -1,0 +1,282 @@
+[
+	{
+		"title": "FindCoordinator for a transactional id",
+		"kind": "wire",
+		"request": "FindCoordinator (api_key 10) v4, correlation id 461: key_type 1 and one coordinator_key, the transactional id — the same request a consumer group sends with key_type 0",
+		"request_hex": "0000002d000a0004000001cd00096b61666b6174657374000102166b61666b61746573742d6578616d706c652d74786e00",
+		"response": "One coordinators entry: the key echoed, a node_id, host and port, and error_code 0 — or 15 (COORDINATOR_NOT_AVAILABLE) while the broker is still creating __transaction_state",
+		"response_hex": "0000002e000001cd000000000002166b61666b61746573742d6578616d706c652d74786effffffff01ffffffff000f010000",
+		"note": "The coordinator is chosen by hashing the transactional id onto a partition of the internal __transaction_state topic, so every producer using this id reaches the same broker with no coordination between them. A broker that has never run a transaction has no such topic and creates it here, which is why the first lookup of a fresh cluster is the one that needs retrying.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "45 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 2,
+				"field": "header.api_key",
+				"value": "10 (FindCoordinator)"
+			},
+			{
+				"offset": 6,
+				"length": 2,
+				"field": "header.api_version",
+				"value": "4"
+			},
+			{
+				"offset": 8,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "461"
+			},
+			{
+				"offset": 12,
+				"length": 11,
+				"field": "header.client_id",
+				"value": "'kafkatest'"
+			},
+			{
+				"offset": 23,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 24,
+				"length": 1,
+				"field": "body.key_type",
+				"value": "1"
+			},
+			{
+				"offset": 25,
+				"length": 1,
+				"field": "body.coordinator_keys.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 26,
+				"length": 22,
+				"field": "body.coordinator_keys[0]",
+				"value": "'kafkatest-example-txn'"
+			},
+			{
+				"offset": 48,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "46 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "461"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 9,
+				"length": 4,
+				"field": "body.throttle_time_ms",
+				"value": "0"
+			},
+			{
+				"offset": 13,
+				"length": 1,
+				"field": "body.coordinators.length",
+				"value": "1 entry"
+			},
+			{
+				"offset": 14,
+				"length": 22,
+				"field": "body.coordinators[0].key",
+				"value": "'kafkatest-example-txn'"
+			},
+			{
+				"offset": 36,
+				"length": 4,
+				"field": "body.coordinators[0].node_id",
+				"value": "-1"
+			},
+			{
+				"offset": 40,
+				"length": 1,
+				"field": "body.coordinators[0].host",
+				"value": "''",
+				"varies": true
+			},
+			{
+				"offset": 41,
+				"length": 4,
+				"field": "body.coordinators[0].port",
+				"value": "-1",
+				"varies": true
+			},
+			{
+				"offset": 45,
+				"length": 2,
+				"field": "body.coordinators[0].error_code",
+				"value": "15 (COORDINATOR_NOT_AVAILABLE)"
+			},
+			{
+				"offset": 47,
+				"length": 1,
+				"field": "body.coordinators[0].error_message",
+				"value": "''"
+			},
+			{
+				"offset": 48,
+				"length": 1,
+				"field": "body.coordinators[0].tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 49,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		]
+	},
+	{
+		"title": "InitProducerId with a transactional id",
+		"kind": "wire",
+		"request": "InitProducerId (api_key 22) v4, correlation id 462: the same request stage 36 sends, with a transactional_id in place of the null and a real transaction_timeout_ms",
+		"request_hex": "0000003900160004000001ce00096b61666b617465737400166b61666b61746573742d6578616d706c652d74786e0000ea60ffffffffffffffffffff00",
+		"response": "error_code 0, a producer_id the coordinator keeps under that transactional id, and a producer_epoch that is one higher than whatever the previous session held",
+		"response_hex": "00000016000001ce00000000000010ffffffffffffffffffff00",
+		"note": "Those two fields are the difference between idempotence and exactly-once. The producer id survives a restart because the coordinator remembers it; the epoch goes up because the coordinator has just decided this caller is the current owner of the id, and everything holding a lower epoch is now fenced.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "57 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 2,
+				"field": "header.api_key",
+				"value": "22 (InitProducerId)"
+			},
+			{
+				"offset": 6,
+				"length": 2,
+				"field": "header.api_version",
+				"value": "4"
+			},
+			{
+				"offset": 8,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "462"
+			},
+			{
+				"offset": 12,
+				"length": 11,
+				"field": "header.client_id",
+				"value": "'kafkatest'"
+			},
+			{
+				"offset": 23,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 24,
+				"length": 22,
+				"field": "body.transactional_id",
+				"value": "'kafkatest-example-txn'"
+			},
+			{
+				"offset": 46,
+				"length": 4,
+				"field": "body.transaction_timeout_ms",
+				"value": "60000"
+			},
+			{
+				"offset": 50,
+				"length": 8,
+				"field": "body.producer_id",
+				"value": "-1"
+			},
+			{
+				"offset": 58,
+				"length": 2,
+				"field": "body.producer_epoch",
+				"value": "-1"
+			},
+			{
+				"offset": 60,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "22 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "462"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 9,
+				"length": 4,
+				"field": "body.throttle_time_ms",
+				"value": "0"
+			},
+			{
+				"offset": 13,
+				"length": 2,
+				"field": "body.error_code",
+				"value": "16 (NOT_COORDINATOR)"
+			},
+			{
+				"offset": 15,
+				"length": 8,
+				"field": "body.producer_id",
+				"value": "-1"
+			},
+			{
+				"offset": 23,
+				"length": 2,
+				"field": "body.producer_epoch",
+				"value": "-1"
+			},
+			{
+				"offset": 25,
+				"length": 1,
+				"field": "body.tagged_fields",
+				"value": "0 tagged fields"
+			}
+		]
+	}
+]
