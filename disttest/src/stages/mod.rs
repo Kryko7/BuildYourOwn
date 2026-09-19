@@ -79,6 +79,28 @@ mod s52_lossy_link;
 mod s53_duplicate_and_reorder;
 mod s54_linearizability;
 mod s55_five_node_soak;
+mod s56_raft_leader_election;
+mod s57_raft_log_replication;
+mod s58_raft_commit_safety;
+mod s59_raft_snapshots;
+mod s60_raft_membership;
+mod s61_paxos_single_decree;
+mod s62_multi_paxos;
+mod s63_two_phase_commit;
+mod s64_three_phase_commit;
+mod s65_commit_recovery;
+mod s66_saga_orchestrated;
+mod s67_saga_choreographed;
+mod s68_transactional_outbox;
+mod s69_idempotent_consumer;
+mod s70_idempotency_keys;
+mod s71_fencing_tokens;
+mod s72_leader_leases;
+mod s73_anti_entropy;
+mod s74_gossip_dissemination;
+mod s75_circuit_breaker;
+mod s76_hedged_requests;
+mod s77_bulkheads;
 
 /// Every implemented stage, in ascending order.
 pub fn all() -> Vec<Stage> {
@@ -138,16 +160,40 @@ pub fn all() -> Vec<Stage> {
         s53_duplicate_and_reorder::stage(),
         s54_linearizability::stage(),
         s55_five_node_soak::stage(),
+        s56_raft_leader_election::stage(),
+        s57_raft_log_replication::stage(),
+        s58_raft_commit_safety::stage(),
+        s59_raft_snapshots::stage(),
+        s60_raft_membership::stage(),
+        s61_paxos_single_decree::stage(),
+        s62_multi_paxos::stage(),
+        s63_two_phase_commit::stage(),
+        s64_three_phase_commit::stage(),
+        s65_commit_recovery::stage(),
+        s66_saga_orchestrated::stage(),
+        s67_saga_choreographed::stage(),
+        s68_transactional_outbox::stage(),
+        s69_idempotent_consumer::stage(),
+        s70_idempotency_keys::stage(),
+        s71_fencing_tokens::stage(),
+        s72_leader_leases::stage(),
+        s73_anti_entropy::stage(),
+        s74_gossip_dissemination::stage(),
+        s75_circuit_breaker::stage(),
+        s76_hedged_requests::stage(),
+        s77_bulkheads::stage(),
     ];
     v.sort_by_key(|s| s.number);
     v
 }
 
-/// Which of the three ladders a stage belongs to.
+/// Which of the four ladders a stage belongs to.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Ladder {
     /// Deterministic algorithm exercises in a single line-oriented process.
     Primitives,
+    /// Consensus, atomic commit and the integration patterns, driven the same way.
+    Algorithms,
     /// One server speaking the etcd v3 HTTP/JSON subset.
     Node,
     /// Three or five of those servers, with faults injected between them.
@@ -156,15 +202,30 @@ pub enum Ladder {
 
 impl Ladder {
     /// Every ladder, in the order a learner climbs them.
-    pub const ALL: [Ladder; 3] = [Ladder::Primitives, Ladder::Node, Ladder::Cluster];
+    ///
+    /// This is the order the site and the run header show, not the order the stage numbers
+    /// run in: the algorithms ladder was appended as stages 56 and upward so that the
+    /// numbers already cited elsewhere could not move, but it is the natural second rung.
+    pub const ALL: [Ladder; 4] = [
+        Ladder::Primitives,
+        Ladder::Algorithms,
+        Ladder::Node,
+        Ladder::Cluster,
+    ];
 
     /// The tag this ladder puts on every one of its tests.
     pub fn as_str(self) -> &'static str {
         match self {
             Ladder::Primitives => "primitives",
+            Ladder::Algorithms => "algorithms",
             Ladder::Node => "node",
             Ladder::Cluster => "cluster",
         }
+    }
+
+    /// True when this ladder drives a line-oriented CLI rather than a server.
+    pub fn is_cli(self) -> bool {
+        matches!(self, Ladder::Primitives | Ladder::Algorithms)
     }
 
     /// Parse a `--tag` value.
@@ -175,7 +236,7 @@ impl Ladder {
 
 /// A section of the plan; `stages` lists every number the section holds.
 pub struct Section {
-    /// Short id, `a`..`h`.
+    /// Short id, `a`..`l`.
     pub id: &'static str,
     /// Human title.
     pub title: &'static str,
@@ -183,7 +244,7 @@ pub struct Section {
     pub stages: &'static [u32],
 }
 
-/// The eight sections of the distributed track.
+/// The twelve sections of the distributed track.
 pub fn sections() -> &'static [Section] {
     &[
         Section {
@@ -225,6 +286,26 @@ pub fn sections() -> &'static [Section] {
             id: "h",
             title: "Cluster: linearizability under fault injection",
             stages: &[52, 53, 54, 55],
+        },
+        Section {
+            id: "i",
+            title: "Algorithms: consensus",
+            stages: &[56, 57, 58, 59, 60, 61, 62],
+        },
+        Section {
+            id: "j",
+            title: "Algorithms: atomic commit",
+            stages: &[63, 64, 65],
+        },
+        Section {
+            id: "k",
+            title: "Algorithms: sagas and messaging",
+            stages: &[66, 67, 68, 69, 70],
+        },
+        Section {
+            id: "l",
+            title: "Algorithms: coordination and resilience",
+            stages: &[71, 72, 73, 74, 75, 76, 77],
         },
     ]
 }
@@ -633,11 +714,11 @@ mod tests {
     #[test]
     fn the_suite_is_as_large_as_the_plan_says() {
         let stages = all();
-        assert_eq!(stages.len(), 55, "the plan is 55 stages");
+        assert_eq!(stages.len(), 77, "the plan is 77 stages");
         let tests: usize = stages.iter().map(|s| s.tests.len()).sum();
         assert!(
-            tests >= 400,
-            "the plan is at least 400 tests, found {tests}"
+            tests >= 700,
+            "the plan is at least 700 tests, found {tests}"
         );
     }
 
@@ -674,27 +755,33 @@ mod tests {
     }
 
     #[test]
-    fn ladders_are_contiguous_and_in_order() {
+    fn every_ladder_owns_one_contiguous_block_of_numbers() {
+        // Stage numbers are append-only — the algorithms ladder sits at 56.. even though it
+        // is the second rung a learner climbs — but a ladder must still be one unbroken run
+        // of numbers, or `--tag` would select a ragged range.
         let stages = all();
-        let ladders: Vec<Ladder> = stages.iter().map(|s| s.ladder).collect();
-        let first_node = ladders
-            .iter()
-            .position(|l| *l == Ladder::Node)
-            .expect("a node stage");
-        let first_cluster = ladders
-            .iter()
-            .position(|l| *l == Ladder::Cluster)
-            .expect("a cluster stage");
-        assert!(first_node < first_cluster);
-        assert!(ladders[..first_node]
-            .iter()
-            .all(|l| *l == Ladder::Primitives));
-        assert!(ladders[first_node..first_cluster]
-            .iter()
-            .all(|l| *l == Ladder::Node));
-        assert!(ladders[first_cluster..]
-            .iter()
-            .all(|l| *l == Ladder::Cluster));
+        for ladder in Ladder::ALL {
+            let mine: Vec<u32> = stages
+                .iter()
+                .filter(|s| s.ladder == ladder)
+                .map(|s| s.number)
+                .collect();
+            assert!(!mine.is_empty(), "{} has no stages", ladder.as_str());
+            let (lo, hi) = (mine[0], mine[mine.len() - 1]);
+            assert_eq!(
+                mine,
+                (lo..=hi).collect::<Vec<u32>>(),
+                "the {} ladder is not one contiguous block",
+                ladder.as_str()
+            );
+        }
+        assert!(
+            stages
+                .iter()
+                .filter(|s| s.ladder == Ladder::Algorithms)
+                .all(|s| s.number >= 56),
+            "stage numbers 1-55 are frozen; the algorithms ladder appends"
+        );
     }
 
     #[test]
@@ -724,7 +811,10 @@ mod tests {
             vec!["cluster".to_string(), "ext".into(), "slow".into()]
         );
         assert_eq!(Ladder::parse("node"), Some(Ladder::Node));
+        assert_eq!(Ladder::parse("algorithms"), Some(Ladder::Algorithms));
         assert_eq!(Ladder::parse("nonsense"), None);
+        assert!(Ladder::Algorithms.is_cli() && Ladder::Primitives.is_cli());
+        assert!(!Ladder::Node.is_cli() && !Ladder::Cluster.is_cli());
     }
 
     #[test]
@@ -749,7 +839,7 @@ mod tests {
     fn sections_cover_the_whole_plan_once() {
         let mut numbers: Vec<u32> = sections().iter().flat_map(|s| s.stages.to_vec()).collect();
         numbers.sort_unstable();
-        assert_eq!(numbers, (1..=55).collect::<Vec<u32>>());
+        assert_eq!(numbers, (1..=77).collect::<Vec<u32>>());
     }
 
     #[test]

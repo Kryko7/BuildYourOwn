@@ -1,5 +1,5 @@
 //! The references: real etcd for the `node` and `cluster` ladders, and this crate's own
-//! example binaries for the `primitives` ladder.
+//! example binaries for the `primitives` and `algorithms` ladders.
 //!
 //! The etcd release tarball lands in `~/.cache/disttest` (override with `DISTTEST_CACHE`)
 //! behind an `flock`ed lock file, so parallel runs share one copy, and its SHA-256 is
@@ -265,8 +265,8 @@ pub fn crate_root() -> Result<PathBuf> {
 
 /// Locate one of this crate's example binaries, building it once if it is missing.
 ///
-/// `reference_primitives` is the `primitives` ladder's reference and `broken_node` is the
-/// deliberately wrong node the README uses to show red output.
+/// `reference_primitives` and `reference_algorithms` are the two CLI ladders' references, and
+/// `broken_node` is the deliberately wrong node the README uses to show red output.
 pub fn example_binary(name: &str) -> Result<PathBuf> {
     let root = crate_root()?;
     for profile in ["release", "debug"] {

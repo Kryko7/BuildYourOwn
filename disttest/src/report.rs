@@ -328,7 +328,8 @@ pub struct JsonTest {
     pub status: Status,
     /// True when the test carries the `ext` tag.
     pub ext: bool,
-    /// Every tag the test carries, the ladder (`primitives`/`node`/`cluster`) included.
+    /// Every tag the test carries, the ladder (`primitives`/`algorithms`/`node`/`cluster`)
+    /// included.
     pub tags: Vec<String>,
     /// Wall-clock duration.
     pub duration_ms: u128,

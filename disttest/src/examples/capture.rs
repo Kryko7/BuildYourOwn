@@ -33,6 +33,9 @@ pub async fn run(
     let prim_target = targets
         .get("reference_primitives")
         .context("targets.yaml has no 'reference_primitives' reference")?;
+    let alg_target = targets
+        .get("reference_algorithms")
+        .context("targets.yaml has no 'reference_algorithms' reference")?;
     if etcd.kind != TargetKind::Reference {
         bail!("the 'etcd' target must be `kind: reference` for a capture");
     }
@@ -48,6 +51,11 @@ pub async fn run(
     let mut cluster: Option<Cluster> = None;
 
     let prim_argv = vec![reference::example_binary(&prim_target.name)?
+        .to_string_lossy()
+        .to_string()];
+    // Both CLI ladders declare `Primitives` examples — the same transcript shape — but each
+    // is captured from its own reference binary.
+    let alg_argv = vec![reference::example_binary(&alg_target.name)?
         .to_string_lossy()
         .to_string()];
     let cwd = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
@@ -153,7 +161,12 @@ pub async fn run(
                     .await?
                 }
                 ExampleBody::Primitives { topic, commands } => {
-                    capture_prim(spec, &prim_argv, &cwd, topic, commands(), &tmp, timeout).await?
+                    let argv = if stage.ladder == Ladder::Algorithms {
+                        &alg_argv
+                    } else {
+                        &prim_argv
+                    };
+                    capture_prim(spec, argv, &cwd, topic, commands(), &tmp, timeout).await?
                 }
             };
             println!(
@@ -178,7 +191,6 @@ pub async fn run(
         file.stages.len(),
         out.display()
     );
-    let _ = Ladder::ALL;
     Ok(())
 }
 

@@ -38,14 +38,15 @@ fn list_prints_every_stage_with_its_ladder() {
     assert!(out.status.success(), "{}", stderr(&out));
     let text = stdout(&out);
     assert!(text.contains("Stage 01"), "{text}");
-    assert!(text.contains("Stage 55"), "{text}");
+    assert!(text.contains("Stage 77"), "{text}");
     assert!(text.contains("primitives"), "{text}");
+    assert!(text.contains("algorithms"), "{text}");
     assert!(text.contains("node"), "{text}");
     assert!(text.contains("cluster"), "{text}");
-    assert!(text.contains("55 stages"), "{text}");
+    assert!(text.contains("77 stages"), "{text}");
     // One line per stage, plus the per-ladder summary and the total.
     let stage_lines = text.lines().filter(|l| l.contains("Stage ")).count();
-    assert_eq!(stage_lines, 55, "{text}");
+    assert_eq!(stage_lines, 77, "{text}");
 }
 
 #[test]
@@ -54,8 +55,8 @@ fn list_json_is_the_catalog() {
     assert!(out.status.success(), "{}", stderr(&out));
     let v: serde_json::Value = serde_json::from_str(&stdout(&out)).expect("valid JSON");
     assert_eq!(v["track"], "dist");
-    assert_eq!(v["stages"].as_array().map(Vec::len), Some(55));
-    assert_eq!(v["sections"].as_array().map(Vec::len), Some(8));
+    assert_eq!(v["stages"].as_array().map(Vec::len), Some(77));
+    assert_eq!(v["sections"].as_array().map(Vec::len), Some(12));
 }
 
 #[test]
@@ -97,6 +98,10 @@ fn validate_announces_which_reference_each_ladder_uses() {
     let text = stdout(&out);
     assert!(
         text.contains("primitives  validated against reference_primitives"),
+        "{text}"
+    );
+    assert!(
+        text.contains("algorithms  validated against reference_algorithms"),
         "{text}"
     );
     assert!(

@@ -6,7 +6,8 @@
 //! * `reference` — real etcd, downloaded and cached by [`crate::node::reference`]. It serves
 //!   the `node` and `cluster` ladders.
 //! * `example` — one of this crate's own `examples/*.rs` binaries. `reference_primitives`
-//!   serves the `primitives` ladder; `broken_node` is a deliberately wrong node.
+//!   serves the `primitives` ladder and `reference_algorithms` the `algorithms` ladder;
+//!   `broken_node` is a deliberately wrong node.
 //! * `external` (the default) — the learner's `command`, which the harness calls with the
 //!   ladder's own argv appended.
 
@@ -89,15 +90,31 @@ impl TargetDef {
 
     /// Can this target take part in the given ladder at all?
     ///
-    /// Real etcd has no primitives CLI, and `reference_primitives` is not a server; the
-    /// learner's own `command` serves all three.
+    /// Real etcd has no line-oriented CLI, and neither CLI reference is a server; the
+    /// learner's own `command` serves all four.
     pub fn serves(&self, ladder: Ladder) -> bool {
         match (self.kind, ladder) {
             (TargetKind::External, _) => true,
-            (TargetKind::Reference, Ladder::Primitives) => false,
+            (TargetKind::Reference, l) if l.is_cli() => false,
             (TargetKind::Reference, _) => true,
-            (TargetKind::Example, Ladder::Primitives) => self.name.contains("primitives"),
-            (TargetKind::Example, _) => !self.name.contains("primitives"),
+            (TargetKind::Example, l) => match self.cli_reference_for() {
+                Some(mine) => mine == l,
+                None => !l.is_cli(),
+            },
+        }
+    }
+
+    /// Which CLI ladder this example is the reference for, if it is one.
+    ///
+    /// The two CLI references are told apart by name, which is what `targets.yaml` already
+    /// keys them by; every other example (`broken_node`) is a server.
+    fn cli_reference_for(&self) -> Option<Ladder> {
+        if self.name.contains("primitives") {
+            Some(Ladder::Primitives)
+        } else if self.name.contains("algorithms") {
+            Some(Ladder::Algorithms)
+        } else {
+            None
         }
     }
 }
@@ -109,6 +126,7 @@ impl TargetDef {
 pub fn reference_for(ladder: Ladder) -> &'static str {
     match ladder {
         Ladder::Primitives => "reference_primitives",
+        Ladder::Algorithms => "reference_algorithms",
         Ladder::Node | Ladder::Cluster => "etcd",
     }
 }
@@ -208,7 +226,8 @@ mod tests {
     use super::*;
 
     const MINIMAL: &str = "targets:\n  etcd:\n    kind: reference\n    version: '3.7.1'\n  \
-                           reference_primitives:\n    kind: example\n  my_node:\n    \
+                           reference_primitives:\n    kind: example\n  \
+                           reference_algorithms:\n    kind: example\n  my_node:\n    \
                            command: ['./your_program.sh']\n    cwd: '.'\n";
 
     fn write(text: &str) -> (tempfile::TempDir, PathBuf) {
@@ -244,6 +263,7 @@ mod tests {
     #[test]
     fn ladders_route_to_their_own_reference() {
         assert_eq!(reference_for(Ladder::Primitives), "reference_primitives");
+        assert_eq!(reference_for(Ladder::Algorithms), "reference_algorithms");
         assert_eq!(reference_for(Ladder::Node), "etcd");
         assert_eq!(reference_for(Ladder::Cluster), "etcd");
     }
@@ -253,9 +273,14 @@ mod tests {
         let (_d, p) = write(MINIMAL);
         let t = load_targets(&p).expect("load");
         assert!(!t["etcd"].serves(Ladder::Primitives));
+        assert!(!t["etcd"].serves(Ladder::Algorithms));
         assert!(t["etcd"].serves(Ladder::Node));
         assert!(t["reference_primitives"].serves(Ladder::Primitives));
+        assert!(!t["reference_primitives"].serves(Ladder::Algorithms));
         assert!(!t["reference_primitives"].serves(Ladder::Cluster));
+        assert!(t["reference_algorithms"].serves(Ladder::Algorithms));
+        assert!(!t["reference_algorithms"].serves(Ladder::Primitives));
+        assert!(!t["reference_algorithms"].serves(Ladder::Node));
         for l in Ladder::ALL {
             assert!(t["my_node"].serves(l), "the learner's program serves all");
         }

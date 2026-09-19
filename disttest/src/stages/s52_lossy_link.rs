@@ -292,7 +292,14 @@ dist_test!(writes_are_still_acknowledged, |ctx| {
     let stats = cluster.stats.summary();
     let mut c = Check::new("a five-second workload over a slow, flapping link");
     // A cluster whose transport gives up rather than retrying acknowledges nothing at all.
-    c.at_least("operations acknowledged", 20, result.acknowledged);
+    // A floor, not a throughput target. The workload runs for a fixed window while the
+    // proxies are deliberately dropping, duplicating and reordering peer traffic, so how
+    // many operations come back acknowledged is not something a correct cluster controls:
+    // an observed run acknowledged 10 of 21 and another 19 of 27, both perfectly healthy.
+    // What this check is for is non-vacuity — convergence over zero writes proves nothing —
+    // so it asks only that real work got through. The property under test is the agreement
+    // assertion below.
+    c.at_least("operations acknowledged", 5, result.acknowledged);
     c.observe("operations with no answer", result.unknown);
     attach_state(cluster, &mut c).await;
     ctx.note(summary);

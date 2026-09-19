@@ -1,16 +1,21 @@
 # disttest stage plan
 
 Tick a stage when `disttest --target my_node --stage N` is green. `disttest --list` reads
-these boxes. Each entry names its **ladder** — `primitives`, `node` or `cluster` — its source
-file and its test count. Stages marked **[ext]** go beyond the core track, and `--skip-ext`
-hides them.
+these boxes. Each entry names its **ladder** — `primitives`, `algorithms`, `node` or
+`cluster` — its source file and its test count. Stages marked **[ext]** go beyond the core
+track, and `--skip-ext` hides them.
+
+Stage numbers are **append-only**: the algorithms ladder is the second rung a learner climbs
+and is listed second everywhere, but it was added after stages 1-55 were already cited
+elsewhere, so it took numbers 56-77 rather than moving anything. The `ladder` field and the
+section letter are what place a stage, never its number.
 
 Run one stage: `disttest --target my_node --stage 22` — everything so far: `--until 35` —
-one ladder: `--tag cluster --all` — the lot: `--all`. Prove the suite itself:
+one ladder: `--tag algorithms --all` — the lot: `--all`. Prove the suite itself:
 `disttest --target etcd --validate --all`, which routes each ladder to its own reference.
 
 Every stage also carries 1-3 **worked examples**: a request and what the reference answered,
-a transcript of a conversation with the primitives CLI, or a recorded history and the
+a transcript of a conversation with the line-oriented CLI, or a recorded history and the
 linearizability checker's verdict on it. They live in the stage's own file, are recaptured
 with `disttest --capture-examples examples/captured.json --target etcd`, and reach the site
 through `catalog.json`. See README.md, "Adding a stage".
@@ -312,11 +317,132 @@ Three or five of those servers, with a userspace TCP proxy in front of every pee
   - After the faults heal, every member must converge on the same values
   - No process, port or temporary file may survive the end of the run
 
+## I. Algorithms: consensus
+The classics as exercises in their own right, over the same line-oriented CLI: Raft, Paxos, two- and three-phase commit, sagas, outboxes, fencing tokens, gossip and circuit breakers. Every oracle is the tester's own encoding of the specified rules, and every famous trap - Figure 8, the 2PC blocking window, compensation order, the fencing scenario, Paxos livelock - has a test of its own.
+
+- [ ] **Stage 56** — Raft leader election `algorithms` (`src/stages/s56_raft_leader_election.rs`, 15 tests, 4 ext)
+  - Topic `raft-election`: one node's role, term, votedFor and vote tally
+  - Any message carrying a higher term makes this node a follower and clears votedFor
+  - One vote per term, and only for a candidate whose log is at least as up to date
+  - Count each voter once: a retransmitted vote must not make a minority a majority
+- [ ] **Stage 57** — Raft log replication `algorithms` (`src/stages/s57_raft_log_replication.rs`, 11 tests, 3 ext)
+  - Topic `raft-log`: a log is an array of entry terms, index 1 upwards
+  - Refuse the message when prev_index is past the end, or its term disagrees — and leave the log exactly as it was
+  - Truncate only at the first entry that really conflicts; entries that already match must stay, tail and all
+  - commit_index is min(leader_commit, the index of the last new entry), and it never goes backwards
+- [ ] **Stage 58** — Raft commitment and the Figure 8 trap `algorithms` (`src/stages/s58_raft_commit_safety.rs`, 11 tests, 3 ext)
+  - Topic `raft-commit`: matchIndex and nextIndex per follower, and one commit index
+  - The leader counts itself, so a five-member cluster commits on two acknowledgements
+  - Advance the commit index only to an entry of the leader's *own* term — §5.4.2, the Figure 8 trap — and let it carry the earlier entries with it
+  - An acknowledgement that arrived late must never lower a match index
+- [ ] **Stage 59** — Raft snapshots and log compaction `algorithms` (`src/stages/s59_raft_snapshots.rs`, 11 tests, 2 ext)
+  - Topic `raft-snapshot`: the log no longer starts at index 1, so keep first_index, snapshot_index and snapshot_term
+  - Never compact past the commit index: an uncommitted entry may still be truncated
+  - The snapshot boundary still answers a consistency check, so keep its term; an append that reaches below the boundary can only be refused
+  - An InstallSnapshot the follower already covers is ignored; one whose boundary it holds keeps the tail; anything else replaces the whole log
+- [ ] **Stage 60** — Raft membership change `algorithms` (`src/stages/s60_raft_membership.rs`, 11 tests, 2 ext)
+  - Topic `raft-membership`: a configuration is a set of voters, and its quorum is len/2 + 1
+  - In the joint phase a decision needs a majority of C_old *and* a majority of C_new
+  - Leaving the joint phase takes two committed steps: C_old,new, then C_new
+  - One change at a time: refuse a second while the first is still uncommitted
+- [ ] **Stage 61** — Single-decree Paxos `algorithms` (`src/stages/s61_paxos_single_decree.rs`, 15 tests, 3 ext)
+  - Topic `paxos`: every acceptor keeps a promised number and its highest accepted proposal
+  - An acceptor promises a number only when it is strictly greater than the last one
+  - Accepting implies promising, and an accept below the promise is refused outright
+  - A proposer must propose the value of the highest-numbered proposal its promises reported, and its own only when none did
+- [ ] **Stage 62** — Multi-Paxos and a stable leader `algorithms` (`src/stages/s62_multi_paxos.rs`, 14 tests, 2 ext)
+  - Topic `multi-paxos`: one ballot, every slot — phase one is run once, not per slot
+  - While a proposer holds a majority of promises, every proposal costs one round trip; without them it costs two
+  - A higher ballot strips leadership but never un-chooses a slot that was settled
+  - The state machine applies a contiguous prefix: a gap blocks every slot above it
+
+## J. Algorithms: atomic commit
+- [ ] **Stage 63** — Two-phase commit `algorithms` (`src/stages/s63_two_phase_commit.rs`, 13 tests, 3 ext)
+  - Topic `two-phase-commit`: a coordinator state machine and one per participant
+  - One no is enough to abort; commit needs every vote, so a missing vote decides nothing
+  - A yes vote is a promise: from then on the participant may not decide for itself
+  - Cooperative termination settles some cases and not the one that matters
+- [ ] **Stage 64** — Three-phase commit `algorithms` (`src/stages/s64_three_phase_commit.rs`, 13 tests, 4 ext)
+  - Topic `three-phase-commit`: vote, then pre-commit, then commit
+  - Pre-commit is only legal once every participant has voted yes
+  - On a timeout a pre-committed participant commits and a merely prepared one aborts
+  - That rule reads 'no pre-commit arrived' as 'none was sent', which a partition breaks
+- [ ] **Stage 65** — Commit recovery from the log `algorithms` (`src/stages/s65_commit_recovery.rs`, 14 tests, 4 ext)
+  - Topic `commit-recovery`: a durable log, a durable store, and volatile state a crash eats
+  - The prepare record is forced out before the vote is sent, never after
+  - No prepare record means presumed abort; a prepare record with no decision means ask
+  - A commit record whose effect never landed is redone, and redo is idempotent
+
+## K. Algorithms: sagas and messaging
+- [ ] **Stage 66** — Orchestrated saga `algorithms` (`src/stages/s66_saga_orchestrated.rs`, 10 tests, 3 ext)
+  - Topic `saga`: remember the steps that completed, and undo them newest first
+  - A failure at step k compensates k-1 … 1; the step that failed never completed
+  - Compensations are retried, so running one twice must leave one undo behind
+  - A compensation that fails stays at the head of the queue until it succeeds
+- [ ] **Stage 67** — Choreographed saga `algorithms` (`src/stages/s67_saga_choreographed.rs`, 10 tests, 3 ext)
+  - Topic `saga-choreo`: each service reacts to one event and emits the next
+  - `<step>.fail` starts the chain; `<step>.undone` walks it one step further back
+  - The bus is at-least-once, so an event already handled must emit nothing
+  - Once a chain is running, a second failure is absorbed — one saga, one chain
+- [ ] **Stage 68** — Transactional outbox `algorithms` (`src/stages/s68_transactional_outbox.rs`, 10 tests, 3 ext)
+  - Topic `outbox`: the row and its event record commit in one transaction
+  - A relay drains the table afterwards; publishing is not part of the write
+  - A crash between publishing and acknowledging leaves the record, so it is resent
+  - The outbox buys 'never lost'; only a deduplicating consumer buys 'never twice'
+- [ ] **Stage 69** — Idempotent consumer `algorithms` (`src/stages/s69_idempotent_consumer.rs`, 9 tests, 3 ext)
+  - Topic `dedup`: look the message id up before applying the effect, not after
+  - The table is a queue of first sightings: the oldest id is always the one evicted
+  - A redelivery is not a refresh — an entry ages from when it was first seen
+  - Exactly-once holds only while the table still remembers every id it applied
+- [ ] **Stage 70** — Retry with an idempotency key `algorithms` (`src/stages/s70_idempotency_keys.rs`, 10 tests, 3 ext)
+  - Topic `idempotency-key`: store the answer under the key, and replay it on a retry
+  - A key is bound to its request: the same key with a different amount is an error
+  - A key whose first request is still running refuses the second, it does not race it
+  - The client cannot tell a lost answer from a lost request, which is why it retries
+
+## L. Algorithms: coordination and resilience
+- [ ] **Stage 71** — Distributed locks and fencing tokens `algorithms` (`src/stages/s71_fencing_tokens.rs`, 10 tests, 2 ext)
+  - Topic `fencing`: every grant hands out a token one higher than the last
+  - The resource keeps a fence: the highest token it has accepted a write from
+  - A write below the fence is refused, however firmly its client believes it holds the lock
+  - Checking `holder` before writing proves nothing: the pause happens after the check
+- [ ] **Stage 72** — Leader leases and clock skew **[ext]** `algorithms` (`src/stages/s72_leader_leases.rs`, 10 tests)
+  - Topic `leases`: `now` always arrives as an argument; never read a clock of your own
+  - The holder stops serving at `expires_at - clock_error`, because its clock may be slow
+  - The granter waits until `expires_at + clock_error`, because the old holder's may be slow too
+  - Renewing extends from `now`, not from the old expiry: a late renewal buys no extra time
+- [ ] **Stage 73** — Anti-entropy: read repair and hinted handoff `algorithms` (`src/stages/s73_anti_entropy.rs`, 10 tests, 2 ext)
+  - Topic `anti-entropy`: a read takes the highest version any live replica holds
+  - Repair exactly the replicas that were behind — repairing the current ones is wasted work
+  - A write to a replica that is down leaves a hint on the first live replica instead
+  - A hint dies with its stand-in; only `sync` is a guarantee, and it compares everything
+- [ ] **Stage 74** — Gossip dissemination `algorithms` (`src/stages/s74_gossip_dissemination.rs`, 10 tests, 2 ext)
+  - Topic `gossip`: nodes are 0..n-1, node 0 starts infected, and the schedule is fixed
+  - In round r every infected node i contacts (i + (fanout+1)^(r-1) * k) mod n for k = 1..=fanout
+  - Everyone contacted becomes infected at the end of the round, not during it
+  - Count every message, including the ones that land on a node that already knew
+- [ ] **Stage 75** — Circuit breaker `algorithms` (`src/stages/s75_circuit_breaker.rs`, 10 tests, 2 ext)
+  - Topic `circuit-breaker`: closed, open, half-open, and `now` always arrives as an argument
+  - It is *consecutive* failures that open the circuit; one success resets the count
+  - A call rejected while open never reached the dependency, so it is not evidence about it
+  - A failed trial reopens the circuit and restarts the window from that instant
+- [ ] **Stage 76** — Hedged requests **[ext]** `algorithms` (`src/stages/s76_hedged_requests.rs`, 9 tests)
+  - Topic `hedging`: service times arrive as `[primary_ms, hedge_ms]`; never time anything yourself
+  - Nothing is hedged below the threshold: `primary < hedge_after_ms` costs one message
+  - A hedged request answers in min(primary, hedge_after_ms + hedge) — the hedge starts late
+  - Cancel the loser: `inflight` is zero the moment either replica has answered
+- [ ] **Stage 77** — Bulkheads and load shedding **[ext]** `algorithms` (`src/stages/s77_bulkheads.rs`, 9 tests)
+  - Topic `bulkhead`: one concurrency limit per pool, and `now` arrives as an argument
+  - A full pool rejects at once — an unbounded queue is how one slow dependency takes everything
+  - Pools are independent: saturating one must not change what another admits
+  - Shedding work whose deadline has passed is free capacity, and it is not a rejection
+
 ## Totals
 
 | ladder | stages | tests |
 |---|---:|---:|
 | `primitives` | 20 | 183 |
+| `algorithms` | 22 | 245 |
 | `node` | 15 | 128 |
 | `cluster` | 20 | 164 |
-| **all** | **55** | **475** |
+| **all** | **77** | **720** |

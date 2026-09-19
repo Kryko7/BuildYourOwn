@@ -18,16 +18,21 @@ PLAN = os.path.join(HERE, "PLAN.md")
 HEADER = """# disttest stage plan
 
 Tick a stage when `disttest --target my_node --stage N` is green. `disttest --list` reads
-these boxes. Each entry names its **ladder** — `primitives`, `node` or `cluster` — its source
-file and its test count. Stages marked **[ext]** go beyond the core track, and `--skip-ext`
-hides them.
+these boxes. Each entry names its **ladder** — `primitives`, `algorithms`, `node` or
+`cluster` — its source file and its test count. Stages marked **[ext]** go beyond the core
+track, and `--skip-ext` hides them.
+
+Stage numbers are **append-only**: the algorithms ladder is the second rung a learner climbs
+and is listed second everywhere, but it was added after stages 1-55 were already cited
+elsewhere, so it took numbers 56-77 rather than moving anything. The `ladder` field and the
+section letter are what place a stage, never its number.
 
 Run one stage: `disttest --target my_node --stage 22` — everything so far: `--until 35` —
-one ladder: `--tag cluster --all` — the lot: `--all`. Prove the suite itself:
+one ladder: `--tag algorithms --all` — the lot: `--all`. Prove the suite itself:
 `disttest --target etcd --validate --all`, which routes each ladder to its own reference.
 
 Every stage also carries 1-3 **worked examples**: a request and what the reference answered,
-a transcript of a conversation with the primitives CLI, or a recorded history and the
+a transcript of a conversation with the line-oriented CLI, or a recorded history and the
 linearizability checker's verdict on it. They live in the stage's own file, are recaptured
 with `disttest --capture-examples examples/captured.json --target etcd`, and reach the site
 through `catalog.json`. See README.md, "Adding a stage".
@@ -39,6 +44,13 @@ LADDER_BLURB = {
         "one command per line in, one JSON object per line out. The tester works every "
         "answer out independently — brute force, closed-form arithmetic, or a statistical "
         "bound with the measured value printed next to it."
+    ),
+    "algorithms": (
+        "The classics as exercises in their own right, over the same line-oriented CLI: "
+        "Raft, Paxos, two- and three-phase commit, sagas, outboxes, fencing tokens, gossip "
+        "and circuit breakers. Every oracle is the tester's own encoding of the specified "
+        "rules, and every famous trap - Figure 8, the 2PC blocking window, compensation "
+        "order, the fencing scenario, Paxos livelock - has a test of its own."
     ),
     "node": (
         "One server speaking a subset of the etcd v3 HTTP/JSON API, validated against real "
@@ -111,7 +123,7 @@ def main():
         t[1] += len(s["tests"])
     out.append("\n## Totals\n\n")
     out.append("| ladder | stages | tests |\n|---|---:|---:|\n")
-    for ladder in ("primitives", "node", "cluster"):
+    for ladder in ("primitives", "algorithms", "node", "cluster"):
         if ladder in totals:
             out.append(
                 "| `%s` | %d | %d |\n" % (ladder, totals[ladder][0], totals[ladder][1])

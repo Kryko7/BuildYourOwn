@@ -468,8 +468,10 @@ mod tests {
                 );
                 let ok = matches!(
                     (s.ladder, e.body.kind()),
-                    (stages::Ladder::Primitives, ExampleKind::Primitives)
-                        | (stages::Ladder::Node, ExampleKind::Node)
+                    (
+                        stages::Ladder::Primitives | stages::Ladder::Algorithms,
+                        ExampleKind::Primitives
+                    ) | (stages::Ladder::Node, ExampleKind::Node)
                         | (
                             stages::Ladder::Cluster,
                             ExampleKind::Cluster | ExampleKind::Workload | ExampleKind::Node

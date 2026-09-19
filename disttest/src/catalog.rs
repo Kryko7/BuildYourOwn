@@ -14,7 +14,7 @@ use std::path::Path;
 /// A section entry of the catalog.
 #[derive(Serialize)]
 pub struct CatalogSection {
-    /// Short id (`a`..`h`).
+    /// Short id (`a`..`l`).
     pub id: String,
     /// Section title.
     pub title: String,
@@ -53,7 +53,7 @@ pub struct CatalogStage {
     pub name: String,
     /// True when the whole stage is beyond the core track.
     pub ext: bool,
-    /// Which ladder the stage belongs to: `primitives`, `node` or `cluster`.
+    /// Which ladder the stage belongs to: `primitives`, `algorithms`, `node` or `cluster`.
     pub ladder: String,
     /// Source file.
     pub file: String,
@@ -271,7 +271,7 @@ mod tests {
             serde_json::from_str(&to_json(&cat).expect("json")).expect("parse");
         assert_eq!(v["track"], "dist");
         assert_eq!(v["generatedAt"], "2026-01-01T00:00:00Z");
-        assert_eq!(v["sections"].as_array().map(Vec::len), Some(8));
+        assert_eq!(v["sections"].as_array().map(Vec::len), Some(12));
         let first = &v["stages"][0];
         assert_eq!(first["number"], 1);
         assert_eq!(first["ladder"], "primitives");

@@ -4,10 +4,14 @@
 #                      `node` and `cluster` ladders and is what `--validate` checks them
 #                      against.
 #   kind: example    — one of this crate's own examples/*.rs binaries. `reference_primitives`
-#                      serves the `primitives` ladder. Reading it spoils ladder A.
+#                      serves the `primitives` ladder and `reference_algorithms` the
+#                      `algorithms` ladder. Reading either spoils its ladder.
 #   (default)        — your program. The harness appends the ladder's own arguments to
 #                      `command`: a topic name for the primitives ladder, the etcd flag
 #                      subset for the node and cluster ladders.
+#
+# The harness appends the ladder's own arguments to `command`: a topic name for the
+# primitives and algorithms ladders, the etcd flag subset for the node and cluster ladders.
 #
 # Placeholders inside `command`, `cwd` and `env`: {NAME} {DATADIR} {TMP} {PORT} {PEERPORT}.
 # Ports are never fixed: the harness allocates free ones for every node it starts.
@@ -17,6 +21,8 @@ targets:
     kind: reference
     version: "3.7.1"
   reference_primitives: # reference for the primitives ladder
+    kind: example
+  reference_algorithms: # reference for the algorithms ladder
     kind: example
   broken_node:          # a deliberately wrong node, so red output can be demonstrated
     kind: example

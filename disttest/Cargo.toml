@@ -39,6 +39,10 @@ name = "reference_primitives"
 path = "examples/reference_primitives.rs"
 
 [[example]]
+name = "reference_algorithms"
+path = "examples/reference_algorithms.rs"
+
+[[example]]
 name = "broken_node"
 path = "examples/broken_node.rs"
 

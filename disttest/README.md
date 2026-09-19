@@ -5,6 +5,7 @@ write yourself. Track id `dist`.
 
 ```
 disttest --target my_node --stage 22
+disttest --target my_node --tag algorithms --all
 disttest --target my_node --until 35 --json report.json
 disttest --target my_node --all --skip-ext
 disttest --target etcd --validate --all          # must be all green — the suite's self-check
@@ -15,33 +16,43 @@ disttest --list --json > catalog.json            # the stage catalog the site re
 Nothing here implements the thing you are building. This repository holds the harness, the
 suite, the oracles, the fault injector and the docs.
 
-**55 stages, 475 tests.** 20 stages on the primitives ladder, 15 on the node ladder, 20 on the
-cluster ladder; 268 of the tests are the core track and the rest are `[ext]`.
+**77 stages, 720 tests.** 20 stages on the primitives ladder, 22 on the algorithms
+ladder, 15 on the node ladder, 20 on the cluster ladder; 456 of the tests are the core
+track and the rest are `[ext]`.
 
 ---
 
-## 1. Three ladders
+## 1. Four ladders
 
 This track is deliberately **multi-level**. You do not start by writing a replicated store;
-you start by writing a vector clock, and you finish by surviving a partition while a
-linearizability checker watches. Every stage carries a `ladder` tag, which is also a `--tag`
-value and a field in `catalog.json`.
+you start by writing a vector clock, you work your way through Raft and two-phase commit as
+exercises in their own right, and you finish by surviving a partition while a linearizability
+checker watches. Every stage carries a `ladder` tag, which is also a `--tag` value and a field
+in `catalog.json`.
 
 | ladder | stages | what your program is | reference for `--validate` |
 |---|---|---|---|
 | `primitives` | 01–20 | a line-oriented CLI, one JSON object per command | `reference_primitives` (this crate's own example) |
+| `algorithms` | 56–77 | the same CLI, one topic per classic algorithm or pattern | `reference_algorithms` (this crate's own example) |
 | `node` | 21–35 | one server speaking a subset of the etcd v3 HTTP/JSON API | real **etcd 3.7.1** |
 | `cluster` | 36–55 | three or five of those servers, replicating | real **etcd 3.7.1** |
 
 ```
 disttest --target my_node --tag primitives --all      # just ladder A
-disttest --target my_node --tag node --all            # just ladder B
-disttest --target my_node --tag cluster --all         # just ladder C
+disttest --target my_node --tag algorithms --all      # just ladder B
+disttest --target my_node --tag node --all            # just ladder C
+disttest --target my_node --tag cluster --all         # just ladder D
 ```
 
-One program serves all three ladders. The harness decides which ladder it is asking for by
-the arguments it appends to your `command` in `targets.yaml`: a bare topic name means "be a
-primitives CLI", the etcd flag subset means "be a server".
+**The algorithms ladder is numbered 56 and upward, and that is deliberate.** It is the second
+rung a learner climbs, and it is listed second everywhere the ladders are listed, but stage
+numbers 1–55 were already cited by the resource library and by work in flight, so the new
+stages were appended rather than inserted. Nothing reads a stage number as a position in the
+ladder order; `--tag` and the `ladder` field are what say where a stage belongs.
+
+One program serves all four ladders. The harness decides which ladder it is asking for by the
+arguments it appends to your `command` in `targets.yaml`: a bare topic name means "be a CLI"
+— the topic says which of the two CLI ladders — and the etcd flag subset means "be a server".
 
 ---
 
@@ -279,9 +290,487 @@ The oracles live in `src/prim/oracles.rs` and have their own unit tests.
 
 ---
 
-## 3. Ladder B — one node
+## 3. Ladder B — algorithms and patterns
+
+The classics, as exercises in their own right. Raft, Paxos, two- and three-phase commit,
+sagas, outboxes, fencing tokens, gossip, circuit breakers — none of them need a cluster to
+learn, and every one of them is a state machine or a property you can drive by hand.
+
+These are **deterministic, single-process exercises**: no sockets, no clusters, no timing
+races. Where an algorithm is a state machine, the harness feeds it the events a real node
+would have received (`request-vote`, `append-entries`, `timeout`, `crash`, `recover`) and
+asserts the transition the specification mandates. Where it is a property — compensations run
+in reverse, a fenced write is rejected, no two participants decide differently — the harness
+asserts it over an exhaustive or seeded set of event orders.
 
 ### 3.1 The program contract
+
+The same contract as ladder A, to the letter:
+
+```
+./your_program.sh <topic>
+```
+
+Then, on stdin, **one command per line**; on stdout, **exactly one JSON object per line**, in
+the same order. Nothing else may go to stdout. Numbers may be JSON numbers or JSON strings.
+A command your program cannot make sense of should answer `{"ok": false, "error": "..."}`.
+JSON that appears **as an argument** is compact, because commands are split on whitespace.
+State lives in the process and is per topic.
+
+**Time never comes from a clock of your own.** Every topic that needs time takes it as an
+argument, so a run under `--seed` is reproducible to the millisecond.
+
+### 3.2 The topics
+
+#### `raft-election` — Raft leader election (stage 56)
+
+One node's election state machine. `<n>` is the cluster size; this node is always the one
+being driven, and `voted_for` is `"self"` when it voted for itself.
+
+| command | answer |
+|---|---|
+| `init <n>` | `{"ok": true, "members": n, "majority": m}` |
+| `state` | `{"state": "follower"\|"candidate"\|"leader", "term": t, "voted_for": s\|null, "votes": k, "leader": s\|null, "last_index": i, "last_term": t}` |
+| `log-append <term>` | `{"last_index": i, "last_term": t}` — one entry onto this node's own log |
+| `timeout` | the new `state`; a leader ignores it |
+| `request-vote <term> <candidate> <last_index> <last_term>` | `{"term": t, "granted": bool, "state": s}` |
+| `vote-response <term> <voter> <true\|false>` | the new `state` |
+| `append-entries <term> <leader>` | `{"term": t, "success": bool, "state": s}` |
+
+Any message carrying a higher term makes this node a follower, raises its term and clears
+`votedFor`. A vote is granted only when `votedFor` is free (or is already this candidate) and
+the candidate's `(last_term, last_index)` is at least this node's. Each voter counts once.
+
+#### `raft-log` — AppendEntries on the follower (stage 57)
+
+A log is an array of **entry terms**, index 1-based.
+
+| command | answer |
+|---|---|
+| `init <terms-json>` | `{"term": t, "last_index": i, "last_term": t, "commit_index": 0}` |
+| `term <t>` | `{"term": t}` |
+| `append <term> <prev_index> <prev_term> <leader_commit> <entries-json>` | `{"term": t, "success": bool, "last_index": i, "last_term": t, "commit_index": c, "conflict_index": i}` |
+| `log` | `{"term": t, "terms": [...], "last_index": i, "last_term": t, "commit_index": c}` |
+
+A failed consistency check leaves the log **untouched**; a successful one truncates only from
+the first entry whose term conflicts, so a retransmitted prefix cannot eat the tail.
+`commit_index` is `min(leader_commit, index of the last new entry)`. On a refusal for a stale
+*term* the `conflict_index` is `0`: nothing can be inferred about a log the follower never
+looked at.
+
+#### `raft-commit` — matchIndex, nextIndex and §5.4.2 (stage 58)
+
+| command | answer |
+|---|---|
+| `init <n> <term> <terms-json>` | `{"term": t, "last_index": i, "commit_index": 0, "majority": m}` |
+| `append` | `{"last_index": i, "term": t}` — one entry of the leader's current term |
+| `ack <peer> <index>` | `{"match_index": m, "next_index": i, "commit_index": c}` |
+| `reject <peer> <conflict_index>` | `{"next_index": i}` |
+| `commit-safe <index>` | `{"safe": bool, "replicas": k, "reason": "..."}` |
+| `entry <index>` | `{"term": t}` |
+| `state` | `{"term": t, "last_index": i, "commit_index": c, "match": {...}, "next": {...}}` |
+
+`reason` is one of `"current term"`, `"earlier term"`, `"no majority"`, `"already committed"`
+(which answers `safe: true` — the index is committed, so it is certainly safe) and
+`"past the end of the log"`. Peers are fixed at `init` as `s2`..`sN`, so `state` has a
+deterministic shape and an `ack` or `reject` naming anyone else is an error. The leader counts
+itself towards the majority, `ack` is monotonic, and **an entry from an earlier term is never
+committed by replica count alone** — that is Figure 8, and stage 58 walks the whole scenario.
+
+#### `raft-snapshot` — compaction and InstallSnapshot (stage 59)
+
+| command | answer |
+|---|---|
+| `init <terms-json>` | `{"first_index": 1, "last_index": i, "commit_index": 0, "snapshot_index": 0, "snapshot_term": 0}` |
+| `commit <index>` | `{"commit_index": c}` |
+| `snapshot <index>` | `{"ok": bool, "snapshot_index": i, "snapshot_term": t, "first_index": i, "log_len": n}` |
+| `install <term> <last_included_index> <last_included_term>` | `{"ok": bool, "action": "stale"\|"retained"\|"discarded", "first_index": i, "last_index": i, "commit_index": c}` |
+| `append <term> <prev_index> <prev_term> <entries-json>` | `{"success": bool, "reason": "ok"\|"compacted"\|"missing"\|"term mismatch", "last_index": i}` |
+| `log` | `{"terms": [...], "first_index": i, "last_index": i, "commit_index": c, "snapshot_index": i, "snapshot_term": t}` |
+
+You may never compact past `commit_index`. An `append` whose `prev_index` is below the
+snapshot boundary is refused with `reason: "compacted"` — the follower cannot check it, and
+the leader must send a snapshot instead. On `install`, `ok` means *applied*: a `"stale"`
+install answers `ok: false`, while `"retained"` and `"discarded"` answer `ok: true` and both
+raise `commit_index` to `max(commit_index, last_included_index)`.
+
+#### `raft-membership` — joint consensus (stage 60)
+
+| command | answer |
+|---|---|
+| `init <members-json>` | `{"phase": "stable", "members": [...], "quorum": n}` |
+| `joint <new-members-json>` | `{"ok": bool, "phase": "joint", "old": [...], "new": [...], "quorum_old": n, "quorum_new": n}` |
+| `commit-joint` | `{"ok": bool, "phase": "new", "members": [...], "quorum": n}` |
+| `commit-new` | `{"ok": bool, "phase": "stable", "members": [...], "quorum": n}` |
+| `agree <voters-json>` | `{"ok": bool, "reason": "..."}` — `"old and new"`, `"old only"`, `"new only"` or `"neither"` inside the joint phase; `"majority"` or `"no majority"` outside it |
+| `add <member>` / `remove <member>` | `{"ok": bool, "phase": "pending"\|"stable", "members": [...], "quorum": n}` |
+| `commit-change` | `{"ok": bool, "phase": "stable", "members": [...], "quorum": n}` |
+| `state` | `{"phase": "...", "members": [...], "quorum": n}` |
+
+In the joint phase a decision needs a majority of **both** configurations. One change at a
+time: a second `joint`, `add` or `remove` while one is in flight is refused, and removing the
+last member is refused outright. Inside the joint phase `state.members` is the **union** of the
+two configurations and `state.quorum` is `max(quorum_old, quorum_new)` — there is no single
+quorum there, which is why `joint` reports both separately.
+
+#### `paxos` — single-decree Paxos (stage 61)
+
+Acceptors are `a1`..`a<n>`; proposal numbers are integers; values are single words.
+
+| command | answer |
+|---|---|
+| `init <n>` | `{"ok": true, "acceptors": n, "majority": m}` |
+| `prepare <acceptor> <n>` | `{"promised": bool, "promised_n": n, "last_n": n\|null, "last_value": v\|null}` |
+| `accept <acceptor> <n> <value>` | `{"accepted": bool, "promised_n": n}` |
+| `acceptor <acceptor>` | `{"promised_n": n, "last_n": n\|null, "last_value": v\|null}` |
+| `learn` | `{"chosen": bool, "value": v\|null, "count": k}` — `count` is how many acceptors hold the chosen value, and `0` when nothing is chosen |
+| `propose <n> <value>` | `{"phase": "prepare", "n": n, "value": v}` |
+| `promise <acceptor> <last_n> <last_value>` | `{"promises": k, "value": v, "ready": bool}` — `-1` and `-` mean "nothing accepted"; promises are keyed by acceptor, so the same one twice is still one promise |
+| `proposer` | `{"n": n, "phase": "prepare"\|"accept", "promises": k, "value": v, "ready": bool}` |
+
+An acceptor promises `n` only when `n > promised_n`, strictly. Once a majority of promises is
+in, the proposer must use the value of the **highest-numbered** accepted proposal among them,
+and only its own if no promise reported one.
+
+#### `multi-paxos` — a stable leader (stage 62)
+
+| command | answer |
+|---|---|
+| `init <n>` | `{"ok": true, "acceptors": n, "majority": m}` |
+| `phase <slot>` | `{"phase": "prepare"\|"accept", "reason": "no leader"\|"stable leader"\|"preempted"}` |
+| `prepare <n>` | `{"promised": k, "leader": bool, "n": n}` |
+| `propose <slot> <value>` | `{"ok": bool, "phase": "...", "round_trips": k, "error": s\|null}` — refused with `round_trips: 2` when this proposer is not the leader |
+| `accepted <slot> <acceptor>` | `{"chosen": bool, "value": v\|null, "count": k}` |
+| `chosen <slot>` | `{"chosen": bool, "value": v\|null}` |
+| `preempt <n>` | `{"leader": bool, "promised_n": n}` |
+| `applied` | `{"index": i, "gaps": [...]}` |
+| `state` | `{"n": n, "leader": bool, "slots": {...}, "applied": i}` |
+
+One prepare covers every future slot, so an established leader commits in **one** round trip
+rather than two. That is precisely the property Raft builds in as leadership. A `prepare` that
+wins no majority leaves any existing leadership alone; only a `preempt` at a strictly higher
+ballot strips it.
+
+#### `two-phase-commit` — the blocking window (stage 63)
+
+| command | answer |
+|---|---|
+| `init <participants-json>` | `{"state": "init", "participants": [...]}` |
+| `prepare` | `{"state": "preparing", "sent": n}` |
+| `vote <participant> <yes\|no>` | `{"state": "...", "votes": k, "decision": "commit"\|"abort"\|null}` |
+| `decide` | `{"decision": ..., "sent": n}` |
+| `deliver <participant>` | `{"state": "committed"\|"aborted"}` |
+| `p-state <participant>` | `{"state": "working"\|"prepared"\|"committed"\|"aborted"}` |
+| `p-timeout <participant>` | `{"decision": "abort"\|null, "blocked": bool, "reason": "..."}` |
+| `p-consult <participant>` | `{"decision": ..., "blocked": bool, "reason": "..."}` |
+| `crash coordinator` | `{"ok": true, "coordinator": "crashed"}` |
+| `state` | `{"state": "...", "decision": ..., "votes": {...}, "coordinator": "up"\|"crashed"}` |
+
+A participant that voted yes is `prepared` and has given up its right to abort. With the
+coordinator down, cooperative termination helps only when some peer knows the decision or
+some peer never voted; when every peer is prepared, everyone is stuck. That is the blocking
+window, and no amount of asking around closes it.
+
+A vote is a promise, so a repeated `vote` from the same participant is ignored and the first
+one stands. `p-timeout` on a participant that has not yet voted records its vote as `no`, which
+is what makes "the coordinator can never commit now" observable rather than merely eventual.
+On a participant that has already reached a terminal state, both `p-timeout` and `p-consult`
+answer with its own decision and `reason: "already decided"`. Every answer carries every key
+the grammar names, with `null` where it does not apply, so no test has to branch on whether a
+key is present.
+
+#### `three-phase-commit` — what the extra round buys (stage 64)
+
+| command | answer |
+|---|---|
+| `init <participants-json>` | `{"state": "init", "participants": [...]}` |
+| `vote <participant> <yes\|no>` | `{"state": "...", "votes": k, "decision": ...}` |
+| `pre-commit` | `{"ok": bool, "state": "pre-committed", "sent": n}` |
+| `p-precommit <participant>` | `{"state": "pre-committed"}` |
+| `ack <participant>` | `{"acks": k}` |
+| `commit` | `{"ok": bool, "decision": "commit"}` |
+| `deliver <participant>` | `{"state": "committed"\|"aborted"}` |
+| `p-state <participant>` | `{"state": "working"\|"prepared"\|"pre-committed"\|"committed"\|"aborted"}` |
+| `p-timeout <participant>` | `{"decision": "commit"\|"abort", "blocked": bool, "reason": "..."}` |
+| `crash coordinator` | `{"ok": true}` |
+| `partition <group-json>` | `{"split": true, "groups": [[...], [...]]}` |
+| `heal` | `{"split": false}` |
+| `decisions` | `{"decisions": {...}, "inconsistent": bool}` |
+
+The coordinator's states are `init`, `voting`, `pre-committed`, `committed` and `aborted`;
+`p-state` and `decisions` are what a test reads, and there is deliberately no top-level `state`
+command here.
+
+The pre-commit round turns the blocking window into a termination rule: a pre-committed
+participant times out to commit, a merely prepared one to abort, and neither is ever blocked.
+It costs a round trip on every commit, and it still does not survive a partition — which is
+what stage 64's last test demonstrates, and why real systems reach for consensus instead.
+
+Be precise about what that buys. The termination rule this topic implements is the simple one
+— pre-committed commits, prepared aborts, with no consultation between peers — so a *partially
+delivered* pre-commit diverges on its own, partition or no partition. 3PC removes the
+*blocking*, not the disagreement; only consensus removes the disagreement.
+
+#### `commit-recovery` — learning the outcome from the log (stage 65)
+
+| command | answer |
+|---|---|
+| `init <participant>` | `{"ok": true, "log": []}` |
+| `begin <tx>` | `{"state": "working"}` |
+| `prepare <tx> <yes\|no>` | `{"vote": "...", "logged": "prepared"\|"abort", "state": "..."}` |
+| `vote-sent <tx>` | `{"ok": true}` |
+| `decide <tx> <commit\|abort>` | `{"state": "...", "logged": "commit"\|"abort"}` |
+| `apply <tx>` | `{"applied": true}` |
+| `crash` | `{"ok": true, "lost": "volatile state"}` |
+| `recover` | `{"pending": [...], "decided": [...], "actions": {...}}` |
+| `outcome <tx>` | `{"state": "...", "applied": bool}` |
+| `coordinator-says <tx> <commit\|abort>` | `{"state": "...", "applied": bool}` |
+| `log` | `{"records": [...]}` |
+
+`actions` values are `"ask-coordinator"`, `"redo"`, `"abort"` and `"none"`. The prepare record
+is **forced to the log before the vote is sent**; a transaction with no prepare record is
+presumed aborted; one that is prepared asks the coordinator rather than guessing. Between a
+`crash` and a `recover` every `outcome` is `"unknown"` — that is what makes "volatile state
+does not survive and the log does" observable. `coordinator-says <tx> commit` also applies the
+effect, as a recovering participant really does, and recovery writes no abort record for a
+presumed-abort transaction, so a crash loop cannot grow the log.
+
+#### `saga` — an orchestrated saga (stage 66)
+
+| command | answer |
+|---|---|
+| `init <steps-json>` | `{"steps": n, "names": [...]}` |
+| `step <name> <ok\|fail>` | `{"phase": "forward"\|"compensating"\|"done", "completed": [...], "outcome": ...}` |
+| `compensate <name> <ok\|fail>` | `{"phase": "...", "pending": [...], "outcome": ...}` |
+| `run <fail_at>` | `{"executed": [...], "compensated": [...], "outcome": "committed"\|"compensated"}` |
+| `ledger` | `{"entries": ["do:reserve", "undo:reserve", ...]}` |
+| `state` | `{"phase": "...", "completed": [...], "pending": [...], "outcome": ...}` |
+
+A failure at step *k* compensates steps *k-1 … 1*, in that order. The failing step is **not**
+compensated — it never completed. Compensations are idempotent, and one that fails is retried
+rather than skipped.
+
+#### `saga-choreo` — the same guarantee, driven by events (stage 67)
+
+| command | answer |
+|---|---|
+| `init <steps-json>` | `{"steps": n, "names": [...]}` |
+| `event <name>` | `{"emitted": [...], "duplicate": bool, "ledger": [...]}` |
+| `ledger` | `{"entries": [...]}` |
+| `outcome` | `{"outcome": "running"\|"committed"\|"compensated", "inflight": k}` |
+| `state` | `{"handled": [...], "emitted": [...], "outcome": "..."}` |
+
+Event names are `start`, `<step>.ok`, `<step>.fail` and `<step>.undone`. A duplicate event
+emits nothing the second time, and two failure events must not start two compensation chains —
+that race is the pattern's characteristic bug. An event that does not apply in the current
+state is dropped and **not** recorded as handled, so the same event arriving later, when it
+does apply, is not swallowed as a duplicate.
+
+The ledger records `do:<step>` when the step's `.do` is *emitted*, so a failed step still
+leaves a `do:` entry here, where stage 66's orchestrated ledger leaves none. The happy-path
+ledgers of the two stages are identical — a test asserts it — and so are the `undo:`
+sequences; that one entry is the whole difference, and it is an artefact of who writes the
+ledger, not of the guarantee.
+
+#### `outbox` — a write and its event, atomically (stage 68)
+
+| command | answer |
+|---|---|
+| `init` | `{"rows": 0, "outbox": 0, "published": 0}` |
+| `write <key> <value> <event>` | `{"ok": true, "rows": n, "outbox": k}` |
+| `naive-write <key> <value> <event>` | `{"ok": true, "rows": n, "published": k}` |
+| `crash <before-commit\|after-row\|now>` | `{"ok": true, "lost": "..."}` |
+| `recover` | `{"rows": n, "outbox": k, "published": k, "lost": k}` |
+| `publish` | `{"published": [...], "outbox": k, "unacked": k}` |
+| `ack <event>` | `{"outbox": k, "unacked": k}` |
+| `delivered <event>` | `{"count": k, "distinct": k}` |
+| `state` | `{"rows": {...}, "outbox": [...], "published": [...], "lost": [...]}` |
+
+`crash before-commit` rewinds the most recent write entirely — no row, no outbox record, no
+event — which is how the "loses both, never one" half of atomicity is observed; `after-row`
+shows the other half. While the process is down, `write`, `naive-write`, `publish` and `ack`
+are refused until `recover`; `state` and `delivered` still answer, being observations rather
+than actions.
+
+The outbox buys "never lost"; the consumer's dedup buys "never applied twice". Neither alone
+is exactly-once, and a crash between publish and ack really does send the event twice.
+
+#### `dedup` — an idempotent consumer (stage 69)
+
+| command | answer |
+|---|---|
+| `init <window>` | `{"window": n, "seen": 0, "total": 0}` — `0` means unbounded |
+| `deliver <id> <amount>` | `{"applied": bool, "duplicate": bool, "total": n, "seen": k}` |
+| `forget <id>` | `{"ok": bool, "seen": k}` |
+| `guarantee` | `{"exactly_once": bool, "reason": "..."}` |
+| `state` | `{"total": n, "seen": k, "applied": k, "ids": [...]}` |
+
+The dedup table is a FIFO of first sightings, evicted oldest-first. Once an id has been
+forgotten the guarantee is gone, which is the difference between *effectively*-once and
+*exactly*-once.
+
+#### `idempotency-key` — a retry that does not double-charge (stage 70)
+
+| command | answer |
+|---|---|
+| `init` | `{"balance": 0, "charges": 0}` |
+| `charge <key> <amount>` | `{"ok": bool, "charge_id": "c1", "amount": n, "replayed": bool, "balance": n}` |
+| `naive-charge <amount>` | `{"charge_id": "c1", "balance": n}` |
+| `begin <key> <amount>` | `{"ok": bool, "state": "in-progress"\|"done"}` |
+| `finish <key>` | `{"ok": bool, "charge_id": "c1", "balance": n}` |
+| `lost-answer <key>` | `{"ok": true}` |
+| `state` | `{"balance": n, "keys": {...}}` |
+
+A key is bound to its request: the same key with a different amount is an error, not a replay.
+A key that is still in progress refuses a second request rather than starting a second charge.
+
+#### `fencing` — a lock that survives a paused holder (stage 71)
+
+| command | answer |
+|---|---|
+| `init` | `{"holder": null, "token": 0, "fence": 0, "value": null}` |
+| `acquire <client>` | `{"granted": bool, "token": n, "holder": "c1"}` |
+| `release <client>` | `{"ok": bool, "holder": null}` |
+| `expire` | `{"expired": "c1", "holder": null}` |
+| `write <client> <token> <value>` | `{"ok": bool, "reason": "accepted"\|"stale token"\|"no token", "value": v, "fence": n}` |
+| `write-unfenced <client> <value>` | `{"ok": true, "value": v}` |
+| `state` | `{"holder": ..., "token": n, "fence": n, "value": v, "writes": [...]}` |
+
+Tokens strictly increase across every grant, and the resource rejects any write below its
+fence. Checking `holder` before writing closes nothing, because the pause happens between the
+check and the write — which is exactly Kleppmann's scenario.
+
+#### `leases` — a leader lease under clock skew (stage 72)
+
+| command | answer |
+|---|---|
+| `init <lease_ms> <clock_error_ms>` | `{"lease_ms": n, "clock_error_ms": n}` |
+| `grant <node> <now>` | `{"ok": bool, "holder": ..., "expires_at": t, "safe_until": t}` |
+| `renew <node> <now>` | `{"ok": bool, "expires_at": t, "safe_until": t}` |
+| `read <node> <now>` | `{"served": bool, "reason": "..."}` |
+| `skew <node> <offset_ms>` | `{"ok": true, "offset_ms": n}` |
+| `holder <now>` | `{"holder": ..., "expires_at": t}` |
+| `state` | `{"holder": ..., "granted_at": t, "expires_at": t, "safe_until": t, "offsets": {...}}` |
+
+`safe_until` is `expires_at - clock_error_ms`: a leader stops serving local reads one
+clock-error before its lease ends, and the granter waits one clock-error past the old expiry
+before handing the lease on. Those two margins are what stop two leaders from believing in
+themselves at once.
+
+#### `anti-entropy` — read repair, hints and sync (stage 73)
+
+| command | answer |
+|---|---|
+| `init <replicas-json>` | `{"replicas": [...]}` |
+| `put <replica> <key> <value> <version>` | `{"ok": true, "version": n}` |
+| `down <replica>` / `up <replica>` | `{"up": [...], "down": [...]}` |
+| `write <key> <value> <version>` | `{"stored": [...], "hinted": [{"for": r, "on": r}, ...]}` |
+| `read <key>` | `{"value": v, "version": n, "stale": [...], "repaired": [...]}` |
+| `hints <replica>` | `{"keys": [...]}` |
+| `handoff` | `{"delivered": n, "remaining": n}` |
+| `sync <a> <b>` | `{"transferred": n, "keys": [...]}` |
+| `state <replica>` | `{"keys": {...}}` |
+
+A read repairs exactly the replicas that were behind. The stand-in for a hint is always the
+first live replica in `init` order, and `handoff` delivers a hint only when the owner **and**
+its stand-in are up — which is what makes "a hint dies with its stand-in" observable.
+Repairs, writes and handoffs are version-guarded; `put` is an unguarded fixture, so a test can
+deliberately push a replica backwards. Hinted handoff is an optimisation; anti-entropy is the
+guarantee, and stage 73 builds the case where only `sync` can finish the job.
+
+#### `gossip` — rounds to convergence (stage 74)
+
+The peer choice is **pinned**, so a gossip run is reproducible:
+
+> Nodes are numbered `0 .. n-1`; node 0 starts infected. In round `r` (1-based), every already
+> infected node `i` contacts the nodes `(i + (fanout+1)^(r-1) * k) mod n` for `k = 1 ..= fanout`.
+> Every node contacted becomes infected at the end of the round, and every contact counts as one
+> message whether or not the target was already infected.
+
+| command | answer |
+|---|---|
+| `init <n> <fanout>` | `{"nodes": n, "fanout": f, "infected": 1, "round": 0}` |
+| `round` | `{"round": r, "infected": n, "new": k, "messages": m}` |
+| `converge` | `{"rounds": r, "messages": m, "infected": n}` |
+| `infected` | `{"nodes": [...], "count": k}` |
+| `state` | `{"nodes": n, "fanout": f, "round": r, "infected": [...], "messages": m}` |
+
+The step is `(fanout+1)^(r-1)` rather than a plain doubling precisely so the round count
+answers to the fanout: at `n = 32` the schedule converges in 5, 4, 3 and 3 rounds for fanouts
+1 to 4, sending 31, 80, 63 and 124 messages. Convergence takes about `log_(fanout+1)(n)`
+rounds, and the message count rises faster than the round count falls — which is the whole
+reason the fanout is a knob and not a constant.
+
+#### `circuit-breaker` — closed, open, half-open (stage 75)
+
+| command | answer |
+|---|---|
+| `init <fail_threshold> <open_ms> <success_threshold>` | `{"state": "closed", "failures": 0, "successes": 0}` |
+| `call <now> <ok\|fail>` | `{"allowed": bool, "state": "closed"\|"open"\|"half-open", "failures": k, "successes": k, "reason": "attempted"\|"rejected while open"\|"trial"}` |
+| `state <now>` | `{"state": "...", "failures": k, "successes": k, "opened_at": t, "retry_at": t}` |
+
+A rejection while open is not a failure — the breaker exists to stop hammering a service that
+is down. A failure during a trial reopens the circuit and restarts the timer.
+
+#### `hedging` — hedged requests (stage 76)
+
+| command | answer |
+|---|---|
+| `init <hedge_after_ms>` | `{"hedge_after_ms": n, "requests": 0, "messages": 0}` |
+| `request <id> <latencies-json>` | `{"latency": n, "messages": k, "winner": "primary"\|"hedge", "inflight": 0}` |
+| `plain <id> <latencies-json>` | `{"latency": n, "messages": 1}` |
+| `stats` | `{"requests": n, "messages": k, "extra_load_pct": p, "p50": n, "p99": n, "max": n}` |
+| `state` | `{"hedge_after_ms": n, "latencies": [...], "messages": k}` |
+
+`latencies-json` is `[primary_ms, hedge_ms]`. A hedged request answers in
+`min(primary, hedge_after_ms + hedge)` and the loser is cancelled, so `inflight` is always 0
+afterwards. `request` and `plain` report the `messages` **that request** cost, 1 or 2, while
+`stats.messages` is the running total. The hedge fires when the primary is not strictly faster
+than the threshold, so a primary at exactly `hedge_after_ms` is hedged. The tail falls and the
+load rises; stage 76 asserts both halves at once.
+
+#### `bulkhead` — pools and load shedding (stage 77)
+
+| command | answer |
+|---|---|
+| `init <pools-json>` | `{"pools": {"a": {"limit": n}, ...}}` |
+| `init-shared <limit>` | `{"pools": {"shared": {"limit": n}}}` |
+| `call <pool> <id> <now>` | `{"admitted": bool, "pool": p, "inflight": k, "rejected": n, "reason": "admitted"\|"pool is full"\|"no such pool"}` |
+| `done <pool> <id>` | `{"ok": bool, "inflight": k}` |
+| `shed <now> <deadline_ms>` | `{"shed": [...], "inflight": {...}}` |
+| `stats` | `{"pools": {...}, "total_rejected": n}` |
+
+A full pool rejects immediately rather than queueing, and saturating one pool leaves the
+others untouched — which a single shared pool conspicuously does not. `shed` sweeps every pool
+at once, and its `inflight` is an object of pool name to count.
+
+### 3.3 How the oracles work
+
+Every oracle on this ladder is **the tester's own model of the specified rules**, written out
+in the stage file next to the tests that use it. Nothing here is a second implementation the
+learner could copy: the model encodes invariants, not behaviour.
+
+* **State transitions, asserted one at a time** — the election rules of §5.1 and §5.2, the
+  AppendEntries consistency check, the acceptor's "promise only a strictly higher number", the
+  breaker's three states. Each transition gets its own test, so a failure names the rule.
+* **Traps, each with a test of its own** — Raft's Figure 8, the 2PC blocking window, saga
+  compensation order and the failing step that must not be compensated, the fencing-token
+  scenario, Paxos livelock, the racing compensations of a choreographed saga, the forgotten
+  dedup entry. These are the point of the ladder, not a bonus round.
+* **Properties over many orders** — "no two participants decide differently", "at most one
+  value is ever chosen", "the pool's inflight never exceeds its limit". Asserted over an
+  exhaustive sweep where the space is small, and over a seeded replay against the tester's
+  model where it is not. The seed is printed with the failure, so a red test is reproducible.
+
+`reference_algorithms` exists only so this ladder can be self-checked, exactly as
+`reference_primitives` does for ladder A. **Reading `examples/reference_algorithms.rs` or
+anything under `examples/alg/` spoils ladder B.**
+
+---
+
+## 4. Ladder C — one node
+
+### 4.1 The program contract
 
 ```
 ./your_program.sh --name <n> --data-dir <dir> \
@@ -310,10 +799,10 @@ value on the wire is **base64**.
 | `POST /v3/lease/keepalive` | a stream; renew one |
 | `POST /v3/watch` | a stream; events from a revision |
 | `POST /v3/maintenance/status` | revision, term, leader, sizes |
-| `POST /v3/cluster/member/{list,add,remove}` | membership (ladder C) |
+| `POST /v3/cluster/member/{list,add,remove}` | membership (ladder D) |
 | `GET /version`, `GET /health` | what they say |
 
-### 3.2 Two properties of this wire format
+### 4.2 Two properties of this wire format
 
 Both are protobuf's JSON mapping, and both are load-bearing:
 
@@ -324,7 +813,7 @@ Both are protobuf's JSON mapping, and both are load-bearing:
   all mean the same thing, and real etcd omits it. No test in this suite ever asserts that a
   field is *present*; everything decodes a missing field as its zero.
 
-### 3.3 Worked exchanges
+### 4.3 Worked exchanges
 
 A put, and the header it answers with:
 
@@ -411,7 +900,7 @@ An event with no `type` is a put, because `PUT` is the zero value of that enum. 
 request messages may be sent in one request body, one per line; that is how the suite creates
 a watch and then cancels it on the same stream.
 
-### 3.4 A note on `/tmp`
+### 4.4 A note on `/tmp`
 
 Each node preallocates a 64 MB write-ahead log the moment it starts, and a full run starts
 several hundred of them. The harness deletes every test's scratch directory as soon as the
@@ -419,7 +908,7 @@ node or cluster that owned it is gone, and sweeps the leftovers of runs whose pr
 longer exists, so the steady state is a few hundred megabytes. If your `/tmp` is a small
 tmpfs and you are running several testers at once, point `TMPDIR` at real disk.
 
-### 3.5 Durability
+### 4.5 Durability
 
 Stage 35 is the one that hurts. The harness runs a workload, `SIGKILL`s the process in the
 middle of it, starts it again from the same `--data-dir`, and demands that **every
@@ -429,9 +918,9 @@ exactly what that failure looks like.
 
 ---
 
-## 4. Ladder C — a cluster
+## 5. Ladder D — a cluster
 
-### 4.1 How a cluster is started
+### 5.1 How a cluster is started
 
 Three (or five) copies of your program, each with its own `--name`, `--data-dir` and ports,
 and all with the same `--initial-cluster`. Members are called `m1`, `m2`, ... and are
@@ -448,7 +937,7 @@ Client traffic goes straight to the member; peer traffic always goes through a p
 what lets the suite partition a cluster with no privileges, no `iptables` and no network
 namespaces.
 
-### 4.2 The fault-injection model
+### 5.2 The fault-injection model
 
 `src/cluster/proxy.rs`. Faults are expressed per **link** — an unordered pair of members —
 because both directions of a pair share the same TCP connections.
@@ -504,7 +993,7 @@ what the cluster *answered* rather than on how many packets the proxy stopped.
   freshly started cluster has not been. The membership stages therefore re-offer the change
   until it is accepted, which is most of what makes them the slowest two stages in the run.
 
-### 4.3 The linearizability checker
+### 5.3 The linearizability checker
 
 `src/lin/`. Stage 54 runs a randomized concurrent workload — several client tasks, a handful
 of keys, requests spread across members, puts and reads and compare-and-swaps and deletes —
@@ -558,7 +1047,7 @@ of the suite most likely to be subtly wrong.
 
 ---
 
-## 5. Targets and `--validate`
+## 6. Targets and `--validate`
 
 `targets.yaml`:
 
@@ -568,6 +1057,8 @@ targets:
     kind: reference
     version: "3.7.1"
   reference_primitives: # reference for the primitives ladder
+    kind: example
+  reference_algorithms: # reference for the algorithms ladder
     kind: example
   broken_node:          # a deliberately wrong node
     kind: example
@@ -587,12 +1078,14 @@ targets:
 ### How `--validate` picks the reference
 
 **`--validate` runs every stage against the reference that stage's own ladder names,
-whatever `--target` said.** `primitives` is routed to `reference_primitives`; `node` and
-`cluster` are routed to `etcd`. That is why one command can prove the whole suite:
+whatever `--target` said.** `primitives` is routed to `reference_primitives`, `algorithms` to
+`reference_algorithms`, and `node` and `cluster` to `etcd`. That is why one command can prove
+the whole suite:
 
 ```
 disttest --target etcd --validate --all
   primitives  validated against reference_primitives
+  algorithms  validated against reference_algorithms
   node        validated against etcd
   cluster     validated against etcd
 ```
@@ -603,9 +1096,10 @@ nothing. `--validate` never changes which stages are selected: `--validate --sta
 stage 5, and `--validate` on its own means `--all`. A failure under `--validate` is worded as
 a **suite bug**, because the reference is by definition right.
 
-`reference_primitives` exists only so the primitives ladder can be self-checked, exactly as
-`broken_node` exists only so the red output can be demonstrated. **Reading
-`examples/reference_primitives.rs` spoils ladder A.**
+`reference_primitives` and `reference_algorithms` exist only so the two CLI ladders can be
+self-checked, exactly as `broken_node` exists only so the red output can be demonstrated.
+**Reading `examples/reference_primitives.rs` spoils ladder A, and reading
+`examples/reference_algorithms.rs` or anything under `examples/alg/` spoils ladder B.**
 
 ### Watching it go red
 
@@ -638,7 +1132,7 @@ leader — so the cluster ladder fails against it too, loudly.
 
 ---
 
-## 6. Flags
+## 7. Flags
 
 | flag | meaning |
 |---|---|
@@ -648,7 +1142,7 @@ leader — so the cluster ladder fails against it too, loudly.
 | `--from N` | run stages `N..` (or `N..=--until`) |
 | `--all` | run every stage |
 | `--only SUBSTR` | only tests whose name contains this |
-| `--tag T` | only tests carrying this tag: a ladder, `ext`, or any tag a stage added |
+| `--tag T` | only tests carrying this tag: a ladder (`primitives`, `algorithms`, `node`, `cluster`), `ext`, or any tag a stage added |
 | `--skip-ext` | hide everything past a sensible core |
 | `--verbose` | say what the harness is doing between tests |
 | `--keep-tmp` | keep every test's temporary directory and print the paths |
@@ -667,9 +1161,9 @@ was left out.
 
 ---
 
-## 7. The JSON schemas
+## 8. The JSON schemas
 
-### 7.1 `--json report.json`
+### 8.1 `--json report.json`
 
 Field for field the schema `shelltest` and `kafkatest` write, so `byo` and the site ingest it
 with no branch of their own. The ladder rides along in each test's `tags`; nothing was added
@@ -700,7 +1194,7 @@ at the top level.
       ]
     }
   ],
-  "passed": 475, "failed": 0, "skipped": 0, "elapsed_ms": 1041236
+  "passed": 720, "failed": 0, "skipped": 0, "elapsed_ms": 1041236
 }
 ```
 
@@ -708,7 +1202,7 @@ at the top level.
 `connection`, `protocol`, `node_crash`, `linearizability`, `harness` — a crashed node never
 looks like a wrong value.
 
-### 7.2 `catalog.json`
+### 8.2 `catalog.json`
 
 ```json
 {
@@ -739,7 +1233,10 @@ looks like a wrong value.
 }
 ```
 
-`kind` is `node`, `cluster`, `primitives` or `workload`. `*_hex` holds the exact bytes that
+`ladder` is `primitives`, `algorithms`, `node` or `cluster`, and it is also the first entry of
+every test's `tags`. `kind` is `node`, `cluster`, `primitives` or `workload`; a ladder B stage
+carries `primitives` examples, because the exchange it records has exactly that shape — a CLI
+transcript — and the site renders it with the same component. `*_hex` holds the exact bytes that
 went over the wire or the pipe, so an example can never quietly drift from what the suite
 actually sends; the readable form is in `request` and `response`. Fields marked `varies` are
 the ones that legitimately differ every run — ids, revisions, terms.
@@ -753,7 +1250,7 @@ disttest --list --json catalog.json
 
 ---
 
-## 8. Layout
+## 9. Layout
 
 ```
 disttest/
@@ -763,7 +1260,9 @@ disttest/
   catalog.json          --list --json output, committed
   examples/
     reference_primitives.rs   ladder A's reference (reading it spoils ladder A)
-    prim/*.rs                 one file per group of topics
+    prim/*.rs                 one file per group of ladder A topics
+    reference_algorithms.rs   ladder B's reference (reading it spoils ladder B)
+    alg/*.rs                  one file per group of ladder B topics
     broken_node.rs            a node that acknowledges writes before they are durable
     captured.json             what --capture-examples recorded
   src/
@@ -781,7 +1280,7 @@ disttest/
     cluster/proxy.rs    the peer proxy and the fault table
     cluster/workload.rs the randomized workload and the seeded fault schedule
     lin/mod.rs          the linearizability checker
-    prim/mod.rs         driving the primitives CLI
+    prim/mod.rs         driving the CLI of ladders A and B
     prim/oracles.rs     what the answer should be, worked out independently
     examples/           the example specs, and --capture-examples
     stages/sNN_*.rs     one file per stage
@@ -790,12 +1289,17 @@ disttest/
 
 ---
 
-## 9. Adding a stage
+## 10. Adding a stage
 
 1. Write `src/stages/sNN_slug.rs` with a `pub fn stage() -> Stage`.
 2. Add two lines to `src/stages/mod.rs`: the `mod` and the `push`.
 3. Add the stage number to a section in `sections()`, and a tickbox to `PLAN.md`.
 4. Re-run `--capture-examples` and `--list --json catalog.json`.
+
+**Stage numbers are append-only.** The site's resource library cites them, so a new stage
+takes the next free number whatever ladder it belongs to; the `ladder` field and the section
+letter are what place it. That is why the algorithms ladder is stages 56–77 and still sits
+second in every listing.
 
 A stage looks like this:
 

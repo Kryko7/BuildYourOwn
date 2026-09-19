@@ -126,7 +126,8 @@ impl Runner {
     /// Without `--validate` that is always the `--target` the command line named. With
     /// `--validate` it is the reference the *ladder* names, whatever `--target` said, so
     /// one command can prove the whole suite: the primitives ladder is checked against
-    /// `reference_primitives` and the node and cluster ladders against real etcd.
+    /// `reference_primitives`, the algorithms ladder against `reference_algorithms`, and
+    /// the node and cluster ladders against real etcd.
     pub fn target_for(&self, ladder: Ladder) -> Result<TargetDef, Failure> {
         if self.validate {
             let want = config::reference_for(ladder);
@@ -363,7 +364,9 @@ impl Runner {
         );
 
         match stage.ladder {
-            Ladder::Primitives => {}
+            // Both CLI ladders drive the program through `ctx.prim(..)`, which starts it on
+            // first use; there is nothing for the runner to set up.
+            Ladder::Primitives | Ladder::Algorithms => {}
             Ladder::Node => {
                 self.start_single_node(def, dist.as_deref(), &tmp, timeout)?;
                 ctx.node = self.node.take();
@@ -575,6 +578,10 @@ mod tests {
             "reference_primitives".to_string(),
             TargetDef::example("reference_primitives"),
         );
+        m.insert(
+            "reference_algorithms".to_string(),
+            TargetDef::example("reference_algorithms"),
+        );
         let mut mine = TargetDef::example("my_node");
         mine.kind = TargetKind::External;
         mine.command = vec!["./your_program.sh".into()];
@@ -617,6 +624,10 @@ mod tests {
             r.target_for(Ladder::Primitives).expect("target").name,
             "reference_primitives"
         );
+        assert_eq!(
+            r.target_for(Ladder::Algorithms).expect("target").name,
+            "reference_algorithms"
+        );
         assert_eq!(r.target_for(Ladder::Node).expect("target").name, "etcd");
         assert_eq!(r.target_for(Ladder::Cluster).expect("target").name, "etcd");
         // The same is true when --target names the primitives reference.
@@ -627,7 +638,12 @@ mod tests {
                 .iter()
                 .map(|(_, n)| n.clone())
                 .collect::<Vec<_>>(),
-            vec!["reference_primitives", "etcd", "etcd"]
+            vec![
+                "reference_primitives",
+                "reference_algorithms",
+                "etcd",
+                "etcd"
+            ]
         );
     }
 
