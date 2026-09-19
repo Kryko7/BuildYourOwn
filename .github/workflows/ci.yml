@@ -102,6 +102,15 @@ jobs:
       # `--examples` alone builds the examples and *not the tester*, and cargo says so in a
       # warning that is easy to scroll past. The dist ladders need the examples too, because
       # reference_primitives and reference_algorithms are what they validate against.
+      # Printed before the run, because the suites encode what a *specific* reference does
+      # and the runner's versions are not the ones these were developed against.
+      - name: Reference versions on this runner
+        run: |
+          bash --version | head -1 || true
+          ld --version | head -1 || true
+          as --version | head -1 || true
+          openssl version || true
+          java -version 2>&1 | head -1 || true
       - run: cargo build --release --bins --examples -p ${{ matrix.crate }}
       - run: ${{ matrix.run }}
 
