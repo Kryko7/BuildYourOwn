@@ -125,10 +125,24 @@ fn list_stages(stages: &[Stage], tests_dir: &Path) {
             Some(false) => "[ ]",
             None => "[?]",
         };
-        let ext_note = if ext > 0 { format!(", {ext} ext") } else { String::new() };
-        println!("{tick} Stage {:02}  {:<40} {:<24} {} tests{ext_note}", st.stage, st.name, st.file_name(), st.tests.len());
+        let ext_note = if ext > 0 {
+            format!(", {ext} ext")
+        } else {
+            String::new()
+        };
+        println!(
+            "{tick} Stage {:02}  {:<40} {:<24} {} tests{ext_note}",
+            st.stage,
+            st.name,
+            st.file_name(),
+            st.tests.len()
+        );
     }
-    println!("\n{} stages, {} tests", stages.len(), stages.iter().map(|s| s.tests.len()).sum::<usize>());
+    println!(
+        "\n{} stages, {} tests",
+        stages.len(),
+        stages.iter().map(|s| s.tests.len()).sum::<usize>()
+    );
 }
 
 fn select<'a>(cli: &Cli, stages: &'a [Stage]) -> Result<Vec<&'a Stage>> {
@@ -141,7 +155,10 @@ fn select<'a>(cli: &Cli, stages: &'a [Stage]) -> Result<Vec<&'a Stage>> {
     } else {
         bail!("select stages with --stage N, --until N, --from N, --all or --validate");
     };
-    let picked: Vec<&Stage> = stages.iter().filter(|s| (lo..=hi).contains(&s.stage)).collect();
+    let picked: Vec<&Stage> = stages
+        .iter()
+        .filter(|s| (lo..=hi).contains(&s.stage))
+        .collect();
     if picked.is_empty() {
         bail!("no stages match the selection");
     }
@@ -159,23 +176,41 @@ fn run() -> Result<bool> {
     }
     let shells_file = locate(cli.shells_file.clone(), "shells.yaml")?;
     let shells = config::load_shells(&shells_file)?;
-    let spec = cli.shell.as_deref().context("--shell <name|path> is required")?;
+    let spec = cli
+        .shell
+        .as_deref()
+        .context("--shell <name|path> is required")?;
     let shell = config::resolve_shell(spec, &shells)?;
     if cli.validate && !shells.contains_key(spec) {
-        bail!("--validate needs a registered reference shell (one of: {})", shells.keys().cloned().collect::<Vec<_>>().join(", "));
+        bail!(
+            "--validate needs a registered reference shell (one of: {})",
+            shells.keys().cloned().collect::<Vec<_>>().join(", ")
+        );
     }
     let picked = select(&cli, &stages)?;
     let wanted = |t: &loader::TestCase| {
-        cli.only.as_ref().is_none_or(|s| t.name.contains(s.as_str()))
+        cli.only
+            .as_ref()
+            .is_none_or(|s| t.name.contains(s.as_str()))
             && cli.tag.as_ref().is_none_or(|tag| t.tags.contains(tag))
             && !(cli.skip_ext && t.is_ext())
     };
 
-    let reporter = report::Reporter { validate: cli.validate, verbose: cli.verbose };
-    let opts = runner::RunOptions { keep_tmp: cli.keep_tmp, default_timeout_ms: cli.timeout_ms };
+    let reporter = report::Reporter {
+        validate: cli.validate,
+        verbose: cli.verbose,
+    };
+    let opts = runner::RunOptions {
+        keep_tmp: cli.keep_tmp,
+        default_timeout_ms: cli.timeout_ms,
+    };
     let start = Instant::now();
     let mut all: Vec<(&Stage, Vec<runner::TestResult>)> = Vec::new();
-    println!("shelltest: testing '{}' with {}", shell.name, shells_file.display());
+    println!(
+        "shelltest: testing '{}' with {}",
+        shell.name,
+        shells_file.display()
+    );
     for st in picked {
         let tests: Vec<&loader::TestCase> = st.tests.iter().filter(|t| wanted(t)).collect();
         if tests.is_empty() {

@@ -1,0 +1,111 @@
+stage: 67
+name: "Here-documents"
+tests:
+  - name: "a here-document feeds the lines between the markers to stdin"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "cat << EOF\nline one\nline two\nEOF\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "line one\nline two"
+      exit_code: 0
+
+  - name: "the body is expanded like a double-quoted string"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "name=world\ncat << EOF\nhello $name\nsum $((2 + 2))\nsub $(echo inner)\nEOF\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "hello world\nsum 4\nsub inner"
+      exit_code: 0
+
+  - name: "quoting the delimiter turns expansion off"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "name=world\ncat << 'EOF'\nhello $name\nsum $((2 + 2))\nEOF\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "hello $name\nsum $((2 + 2))"
+      exit_code: 0
+
+  - name: "<<- strips leading tabs from the body and the delimiter"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "if true; then\n\tcat <<- EOF\n\tindented body\n\tsecond line\n\tEOF\nfi\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "indented body\nsecond line"
+      exit_code: 0
+
+  - name: "an empty here-document sends nothing"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "cat << EOF\nEOF\necho after\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "after"
+      exit_code: 0
+
+  - name: "the delimiter only ends the body when it is alone on its line"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "cat << EOF\nEOF not yet\n EOF\nEOF\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "EOF not yet\n EOF"
+      exit_code: 0
+
+  - name: "the marker can be any word"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "cat << ---END---\nbody\n---END---\necho after\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "body\nafter"
+      exit_code: 0
+
+  - name: "a here-document can be redirected to a file like any other input"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "cat > {TMP}/out.txt << EOF\nwritten\nEOF\necho done\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "done"
+      files:
+        "{TMP}/out.txt": "written\n"
+
+  - name: "two here-documents on one line have their bodies read in order"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "cat << ONE; cat << TWO\nfirst body\nONE\nsecond body\nTWO\necho after\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "first body\nsecond body\nafter"
+      exit_code: 0
+
+  - name: "a here-document works inside a loop, once per iteration"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "for n in 1 2; do\ncat << EOF\nitem $n\nEOF\ndone\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "item 1\nitem 2"
+      exit_code: 0
+
+  - name: "a while loop can read a here-document line by line"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "while read l; do echo \"[$l]\"; done << EOF\nalpha\nbeta\nEOF\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "[alpha]\n[beta]"
+      exit_code: 0
+
+  - name: "a backslash at the end of a body line joins it to the next"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "cat << EOF\njoined \\\nline\nEOF\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "joined line"
+      exit_code: 0

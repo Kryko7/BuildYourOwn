@@ -1,0 +1,131 @@
+stage: 64
+name: "Positional parameters, $@ and shift"
+tests:
+  - name: "$# counts them and $1.. name them"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "echo count=$#\necho one=$1 two=$2 three=$3\n" }
+    shell_args: ["{TMP}/s.sh", "a", "b", "c"]
+    expect:
+      stdout: "count=3\none=a two=b three=c"
+      exit_code: 0
+
+  - name: "a parameter that was never passed is empty, not an error"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "echo \"[$1]\"[$5]\necho count=$#\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "[][]\ncount=0"
+      exit_code: 0
+
+  - name: "past the ninth, the number needs braces"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "echo tenth=${10}\necho nine-then-zero=$10\n" }
+    shell_args: ["{TMP}/s.sh", "1", "2", "3", "4", "5", "6", "7", "8", "9", "TEN"]
+    expect:
+      stdout: "tenth=TEN\nnine-then-zero=10"
+      exit_code: 0
+
+  - name: "\"$@\" keeps every parameter a separate word, spaces and all"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "for a in \"$@\"; do echo \"[$a]\"; done\n" }
+    shell_args: ["{TMP}/s.sh", "a b", "c", "d e"]
+    expect:
+      stdout: "[a b]\n[c]\n[d e]"
+      exit_code: 0
+
+  - name: "\"$*\" joins them into one word instead"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "for a in \"$*\"; do echo \"[$a]\"; done\n" }
+    shell_args: ["{TMP}/s.sh", "a b", "c"]
+    expect:
+      stdout: "[a b c]"
+      exit_code: 0
+
+  - name: "unquoted, both split on whitespace and the difference disappears"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "for a in $@; do echo \"at[$a]\"; done\nfor a in $*; do echo \"star[$a]\"; done\n" }
+    shell_args: ["{TMP}/s.sh", "a b", "c"]
+    expect:
+      stdout: "at[a]\nat[b]\nat[c]\nstar[a]\nstar[b]\nstar[c]"
+      exit_code: 0
+
+  - name: "\"$@\" with nothing to expand disappears rather than leaving an empty word"
+    tags: [ext]
+    fixtures:
+      path_isolated: true
+      executables:
+        count_args: |
+          echo argc=$#
+      files: { "s.sh": "count_args \"$@\"\ncount_args \"$*\"\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "argc=0\nargc=1"
+      exit_code: 0
+
+  - name: "shift drops the first and renumbers the rest"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "echo $# $1 $2 $3\nshift\necho $# $1 $2\nshift\necho $# $1\n" }
+    shell_args: ["{TMP}/s.sh", "a", "b", "c"]
+    expect:
+      stdout: "3 a b c\n2 b c\n1 c"
+      exit_code: 0
+
+  - name: "shift takes a count"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "shift 2\necho count=$# first=$1\n" }
+    shell_args: ["{TMP}/s.sh", "a", "b", "c", "d"]
+    expect:
+      stdout: "count=2 first=c"
+      exit_code: 0
+
+  - name: "shifting further than there are parameters fails instead of emptying them"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "shift 5 2>/dev/null\necho status=$? count=$#\n" }
+    shell_args: ["{TMP}/s.sh", "a", "b"]
+    expect:
+      stdout: { regex: "^status=[1-9][0-9]* count=2$" }
+
+  - name: "set -- replaces the whole list"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "set -- x y z\necho count=$# all=$*\nset --\necho after=$#\n" }
+    shell_args: ["{TMP}/s.sh", "a"]
+    expect:
+      stdout: "count=3 all=x y z\nafter=0"
+      exit_code: 0
+
+  - name: "set -- takes values that look like options"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "set -- -x --verbose\necho one=$1 two=$2 count=$#\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "one=-x two=--verbose count=2"
+      exit_code: 0
+
+  - name: "$0 is the script, and it is not one of the parameters"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "case $0 in *s.sh) echo zero-is-script ;; *) echo zero-is-$0 ;; esac\necho count=$#\n" }
+    shell_args: ["{TMP}/s.sh", "a"]
+    expect:
+      stdout: "zero-is-script\ncount=1"
+      exit_code: 0
+
+  - name: "a loop can consume the parameters with shift"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "while [ $# -gt 0 ]; do\n  echo \"[$1]\"\n  shift\ndone\necho left=$#\n" }
+    shell_args: ["{TMP}/s.sh", "p", "q", "r"]
+    expect:
+      stdout: "[p]\n[q]\n[r]\nleft=0"
+      exit_code: 0

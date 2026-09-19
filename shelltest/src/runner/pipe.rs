@@ -12,7 +12,10 @@ use std::time::{Duration, Instant};
 const EXIT_GRACE: Duration = Duration::from_millis(300);
 
 pub fn run(mut cmd: Command, input: &[u8], timeout: Duration) -> Result<Captured> {
-    cmd.stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::piped()).process_group(0);
+    cmd.stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .process_group(0);
     let mut child = cmd.spawn().context("spawn failed")?;
     let mut stdin = child.stdin.take();
     let stdout = child.stdout.take().expect("stdout piped");
@@ -93,7 +96,12 @@ mod tests {
 
     #[test]
     fn captures_streams_and_exit_code() {
-        let cap = run(sh(), b"echo out\necho err >&2\nexit 3\n", Duration::from_secs(5)).unwrap();
+        let cap = run(
+            sh(),
+            b"echo out\necho err >&2\nexit 3\n",
+            Duration::from_secs(5),
+        )
+        .unwrap();
         assert_eq!(cap.stdout, b"out\n");
         assert_eq!(cap.stderr, b"err\n");
         assert_eq!(cap.exit, Some(ExitInfo::Code(3)));
@@ -109,7 +117,12 @@ mod tests {
     #[test]
     fn hung_shell_is_killed_and_reported() {
         let start = Instant::now();
-        let cap = run(sh(), b"echo partial\nsleep 30\n", Duration::from_millis(300)).unwrap();
+        let cap = run(
+            sh(),
+            b"echo partial\nsleep 30\n",
+            Duration::from_millis(300),
+        )
+        .unwrap();
         assert!(cap.timed_out);
         assert_eq!(cap.stdout, b"partial\n");
         assert!(start.elapsed() < Duration::from_secs(5));

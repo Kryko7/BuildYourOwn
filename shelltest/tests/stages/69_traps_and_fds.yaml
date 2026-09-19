@@ -1,0 +1,141 @@
+stage: 69
+name: "trap, exec and numbered file descriptors"
+tests:
+  - name: "a trap on EXIT runs when the shell leaves"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "trap 'echo goodbye' EXIT\necho working\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "working\ngoodbye"
+      exit_code: 0
+
+  - name: "the EXIT trap runs on an explicit exit too, and keeps its status"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "trap 'echo cleanup' EXIT\nexit 5\necho never\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "cleanup"
+      exit_code: 5
+
+  - name: "trap - removes a handler that was set"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "trap 'echo first' EXIT\ntrap - EXIT\necho done\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "done"
+      exit_code: 0
+
+  - name: "setting a trap twice keeps only the second"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "trap 'echo one' EXIT\ntrap 'echo two' EXIT\necho body\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "body\ntwo"
+      exit_code: 0
+
+  - name: "a trap on a signal runs when that signal arrives"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "trap 'echo caught-term' TERM\nkill -TERM $$\necho still-running\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "caught-term\nstill-running"
+      exit_code: 0
+
+  - name: "an ignored signal does not kill the shell"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "trap '' TERM\nkill -TERM $$\necho survived\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "survived"
+      exit_code: 0
+
+  - name: "the trap's cleanup can remove the file the script was using"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "tmp={TMP}/work.tmp\ntrap 'rm -f \"$tmp\"' EXIT\necho data > \"$tmp\"\ncat \"$tmp\"\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "data"
+      file_absent: ["{TMP}/work.tmp"]
+
+  - name: "exec opens a numbered descriptor that later writes go to"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "exec 3> {TMP}/three.txt\necho to-three >&3\necho to-stdout\necho more >&3\nexec 3>&-\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "to-stdout"
+      files:
+        "{TMP}/three.txt": "to-three\nmore\n"
+
+  - name: "a closed descriptor is an error to write to"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "exec 3> {TMP}/three.txt\nexec 3>&-\necho late >&3 2>/dev/null\necho status=$?\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: { regex: "status=[1-9][0-9]*" }
+
+  - name: "exec can open a descriptor for reading, and read follows it"
+    tags: [ext]
+    fixtures:
+      files:
+        "in.txt": "first\nsecond\n"
+        "s.sh": "exec 3< {TMP}/in.txt\nread a <&3\nread b <&3\nexec 3<&-\necho \"[$a][$b]\"\n"
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "[first][second]"
+      exit_code: 0
+
+  - name: "a descriptor can be saved and put back, which is how stdout is borrowed"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "exec 4>&1\nexec 1> {TMP}/captured.txt\necho into-the-file\nexec 1>&4 4>&-\necho back-on-stdout\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "back-on-stdout"
+      files:
+        "{TMP}/captured.txt": "into-the-file\n"
+
+  - name: "exec with a command replaces the shell instead of forking"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "echo before\nexec echo replaced\necho never\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "before\nreplaced"
+      exit_code: 0
+
+  - name: "redirections are applied left to right, which is the whole 2>&1 trap"
+    tags: [ext]
+    fixtures:
+      path_isolated: true
+      executables:
+        noisy: |
+          echo to-stdout
+          echo to-stderr >&2
+      files: { "s.sh": "noisy > {TMP}/both.txt 2>&1\nnoisy 2>&1 > {TMP}/only-out.txt\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      # 2>&1 before > sends stderr to where stdout pointed *then* — the script's own
+      # stdout — and only afterwards moves stdout into the file. That is the trap.
+      stdout: "to-stderr"
+      files:
+        "{TMP}/both.txt": { lines_unordered: ["to-stdout", "to-stderr"] }
+        "{TMP}/only-out.txt": "to-stdout\n"
+
+  - name: "a numbered descriptor duplicated per command keeps the target it had at that moment"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "exec 3> {TMP}/kept.txt\necho kept >&3\necho once >&3 3> {TMP}/other.txt\necho after >&3\nexec 3>&-\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      files:
+        "{TMP}/kept.txt": "kept\nonce\nafter\n"
+        "{TMP}/other.txt": ""

@@ -1,0 +1,128 @@
+stage: 65
+name: "Parameter expansion: defaults, length and trimming"
+tests:
+  - name: "braces separate the name from what follows it"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "v=file\necho ${v}name\necho $v-name\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "filename\nfile-name"
+      exit_code: 0
+
+  - name: ":- supplies a default without assigning it"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "unset v\necho \"[${v:-fallback}]\"\necho \"[$v]\"\nv=set\necho \"[${v:-fallback}]\"\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "[fallback]\n[]\n[set]"
+      exit_code: 0
+
+  - name: "the colon is what makes an empty value count as missing"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "v=\necho colon=[${v:-d}]\necho nocolon=[${v-d}]\nunset v\necho unset-colon=[${v:-d}]\necho unset-nocolon=[${v-d}]\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "colon=[d]\nnocolon=[]\nunset-colon=[d]\nunset-nocolon=[d]"
+      exit_code: 0
+
+  - name: ":= assigns the default back into the variable"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "unset v\necho \"[${v:=assigned}]\"\necho \"[$v]\"\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "[assigned]\n[assigned]"
+      exit_code: 0
+
+  - name: ":+ is the mirror: it substitutes only when the value is there"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "v=x\necho \"[${v:+present}]\"\nunset v\necho \"[${v:+present}]\"\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "[present]\n[]"
+      exit_code: 0
+
+  - name: ":? stops the script and says why"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "unset v\necho ${v:?needs a value}\necho never\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: ""
+      stderr: { contains: "needs a value" }
+
+  - name: "${#v} is the length in characters"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "v=hello\necho ${#v}\nempty=\necho ${#empty}\nspaced='a b'\necho ${#spaced}\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "5\n0\n3"
+      exit_code: 0
+
+  - name: "# trims the shortest match from the front, ## the longest"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "p=/usr/local/bin/tool\necho ${p#*/}\necho ${p##*/}\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "usr/local/bin/tool\ntool"
+      exit_code: 0
+
+  - name: "% trims the shortest match from the end, %% the longest"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "f=archive.tar.gz\necho ${f%.*}\necho ${f%%.*}\np=/usr/local/bin/tool\necho ${p%/*}\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "archive.tar\narchive\n/usr/local/bin"
+      exit_code: 0
+
+  - name: "a pattern that does not match leaves the value alone"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "v=plain\necho ${v#zzz}\necho ${v%zzz}\necho ${v##*zzz*}\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "plain\nplain\nplain"
+      exit_code: 0
+
+  - name: "the trimming patterns are globs, like case's"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "v=abc123\necho ${v%%[0-9]*}\nn=file007\necho ${n#file}\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "abc\n007"
+      exit_code: 0
+
+  - name: "the word after :- is itself expanded"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "other=from-other\nunset v\necho ${v:-$other}\necho ${v:-$(echo from-command)}\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "from-other\nfrom-command"
+      exit_code: 0
+
+  - name: "expansion happens inside double quotes and not inside single quotes"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "v=x\necho \"${v:-d}\"\necho '${v:-d}'\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "x\n${v:-d}"
+      exit_code: 0
+
+  - name: "the expansions compose the way a real script uses them"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "path=/tmp/data/report.csv\nbase=${path##*/}\ndir=${path%/*}\nstem=${base%.*}\next=${base##*.}\necho dir=$dir base=$base stem=$stem ext=$ext\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "dir=/tmp/data base=report.csv stem=report ext=csv"
+      exit_code: 0

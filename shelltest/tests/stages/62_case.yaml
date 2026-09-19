@@ -1,0 +1,109 @@
+stage: 62
+name: "case: patterns, not equality"
+tests:
+  - name: "the first matching pattern runs and the rest are skipped"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "v=b\ncase $v in\n  a) echo was-a ;;\n  b) echo was-b ;;\n  b) echo second-b ;;\nesac\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "was-b"
+      exit_code: 0
+
+  - name: "* is the default, and it only runs when nothing above matched"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "for v in a z; do\n  case $v in\n    a) echo hit-a ;;\n    *) echo default-$v ;;\n  esac\ndone\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "hit-a\ndefault-z"
+      exit_code: 0
+
+  - name: "a pattern is a glob, not a literal"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "for v in cat.txt dog.md x; do\n  case $v in\n    *.txt) echo text-$v ;;\n    *.md) echo markdown-$v ;;\n    ?) echo single-$v ;;\n  esac\ndone\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "text-cat.txt\nmarkdown-dog.md\nsingle-x"
+      exit_code: 0
+
+  - name: "| separates alternatives in one clause"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "for v in yes y no; do\n  case $v in\n    yes|y) echo affirmative ;;\n    *) echo other ;;\n  esac\ndone\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "affirmative\naffirmative\nother"
+      exit_code: 0
+
+  - name: "a bracket class matches a range"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "for v in 5 b !; do\n  case $v in\n    [0-9]) echo digit ;;\n    [a-z]) echo letter ;;\n    *) echo symbol ;;\n  esac\ndone\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "digit\nletter\nsymbol"
+      exit_code: 0
+
+  - name: "a quoted pattern is literal, so the glob characters lose their power"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "v='*'\ncase $v in\n  \"*\") echo literal-star ;;\n  *) echo default ;;\nesac\ncase abc in\n  \"*\") echo bad ;;\n  *) echo abc-default ;;\nesac\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "literal-star\nabc-default"
+      exit_code: 0
+
+  - name: "the word is expanded but not split, so a value with a space still matches"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "v='a b'\ncase $v in\n  'a b') echo whole ;;\n  a) echo split ;;\n  *) echo other ;;\nesac\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "whole"
+      exit_code: 0
+
+  - name: "a clause with several commands runs all of them"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "case x in\n  x)\n    echo one\n    echo two\n    ;;\nesac\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "one\ntwo"
+      exit_code: 0
+
+  - name: "a case that matches nothing succeeds and runs nothing"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "false\ncase zzz in\n  a) echo bad ;;\nesac\necho status=$?\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "status=0"
+      exit_code: 0
+
+  - name: "the case's status is the status of the clause it ran"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "case x in\n  x) false ;;\nesac\necho status=$?\ncase x in\n  x) exit 9 ;;\nesac\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "status=1"
+      exit_code: 9
+
+  - name: "an empty clause is legal and does nothing"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "case x in\n  x) ;;\n  *) echo bad ;;\nesac\necho after\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "after"
+      exit_code: 0
+
+  - name: "case works on one line, the way it is written in a condition"
+    tags: [ext]
+    shell_args: ["-c", "case hello in h*) echo starts-with-h ;; *) echo no ;; esac"]
+    normalize: { strip_prompt: false }
+    expect:
+      stdout: "starts-with-h"
+      exit_code: 0

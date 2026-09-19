@@ -43,7 +43,11 @@ impl<'a> Normalizer<'a> {
     }
 
     pub fn apply(&self, text: &str) -> String {
-        let mut t = if self.strip_ansi { strip_ansi(text) } else { text.to_string() };
+        let mut t = if self.strip_ansi {
+            strip_ansi(text)
+        } else {
+            text.to_string()
+        };
         if self.strip_cr {
             t.retain(|c| c != '\r');
         }
@@ -56,7 +60,11 @@ impl<'a> Normalizer<'a> {
                         l = rest;
                     }
                 }
-                if self.trim_lines { l.trim_end().to_string() } else { l.to_string() }
+                if self.trim_lines {
+                    l.trim_end().to_string()
+                } else {
+                    l.to_string()
+                }
             })
             .collect();
         if self.trim_lines {
@@ -72,8 +80,14 @@ impl<'a> Normalizer<'a> {
 
 /// Normalization for expectation strings: only trailing whitespace and the final newline.
 pub fn normalize_expected(text: &str) -> String {
-    Normalizer { prompt: "", strip_prompt: false, strip_ansi: false, strip_cr: false, trim_lines: true }
-        .apply(text)
+    Normalizer {
+        prompt: "",
+        strip_prompt: false,
+        strip_ansi: false,
+        strip_cr: false,
+        trim_lines: true,
+    }
+    .apply(text)
 }
 
 /// Remove ANSI/VT escape sequences (CSI, OSC, and two-byte ESC sequences). BEL alone is kept.
@@ -154,7 +168,10 @@ mod tests {
     #[test]
     fn pty_mode_keeps_prompt_and_drops_ansi() {
         let n = Normalizer::pty("$ ", &NormalizeOpts::default());
-        assert_eq!(n.apply("\x1b[?2004h$ echo hi\r\nhi\r\n$ \x07"), "$ echo hi\nhi\n$ \x07");
+        assert_eq!(
+            n.apply("\x1b[?2004h$ echo hi\r\nhi\r\n$ \x07"),
+            "$ echo hi\nhi\n$ \x07"
+        );
     }
 
     #[test]
@@ -167,7 +184,9 @@ mod tests {
 
     #[test]
     fn placeholders() {
-        let p = Placeholders { pairs: vec![("{TMP}", "/t".into()), ("{BIN}", "/t/bin".into())] };
+        let p = Placeholders {
+            pairs: vec![("{TMP}", "/t".into()), ("{BIN}", "/t/bin".into())],
+        };
         assert_eq!(p.apply("{BIN}:{TMP}/x"), "/t/bin:/t/x");
         assert_eq!(p.apply("${TMP} {TMP} x${TMP}"), "${TMP} /t x${TMP}");
         assert_eq!(normalize_expected("hello\n"), "hello");

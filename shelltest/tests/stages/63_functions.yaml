@@ -1,0 +1,121 @@
+stage: 63
+name: "Functions: definition, arguments and return"
+tests:
+  - name: "a defined function can be called by name"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "greet() { echo hello; }\ngreet\ngreet\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "hello\nhello"
+      exit_code: 0
+
+  - name: "a function's arguments are its own positional parameters"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "show() { echo count=$# first=$1 second=$2; }\nshow a b\nshow x\n" }
+    shell_args: ["{TMP}/s.sh", "outer"]
+    expect:
+      stdout: "count=2 first=a second=b\ncount=1 first=x second="
+      exit_code: 0
+
+  - name: "the script's own parameters come back after the function returns"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "f() { echo inside=$1; }\nf inner\necho outside=$1\n" }
+    shell_args: ["{TMP}/s.sh", "script-arg"]
+    expect:
+      stdout: "inside=inner\noutside=script-arg"
+      exit_code: 0
+
+  - name: "return sets the function's status without leaving the shell"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "f() { return 3; }\nf\necho status=$?\necho still-here\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "status=3\nstill-here"
+      exit_code: 0
+
+  - name: "a function with no return has the status of its last command"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "ok() { true; }\nbad() { false; }\nok\necho ok=$?\nbad\necho bad=$?\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "ok=0\nbad=1"
+      exit_code: 0
+
+  - name: "return stops the body where it stands"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "f() { echo one; return 0; echo two; }\nf\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "one"
+      exit_code: 0
+
+  - name: "variables are shared with the caller unless the function is a subshell"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "v=before\nsetit() { v=after; }\nsetit\necho $v\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "after"
+      exit_code: 0
+
+  - name: "a function can call another, and itself"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "inner() { echo inner-$1; }\nouter() { inner $1; echo outer-$1; }\nouter x\ncountdown() { if [ $1 -gt 0 ]; then echo $1; countdown $(($1 - 1)); fi; }\ncountdown 3\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "inner-x\nouter-x\n3\n2\n1"
+      exit_code: 0
+
+  - name: "a function is found before an external program of the same name"
+    tags: [ext]
+    fixtures:
+      path_isolated: true
+      executables:
+        tool: "echo external"
+      files: { "s.sh": "tool\ntool() { echo function; }\ntool\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "external\nfunction"
+      exit_code: 0
+
+  - name: "calling a name that is not a function or a program fails with 127"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "no_such_function_here 2>/dev/null\necho status=$?\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "status=127"
+
+  - name: "exit inside a function ends the shell, unlike return"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "f() { echo in; exit 8; }\nf\necho never\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "in"
+      exit_code: 8
+
+  - name: "a redirection on the definition applies every time it is called"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "log() { echo \"$1\"; } > {TMP}/out.txt\nlog first\nlog second\necho on-stdout\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "on-stdout"
+      files:
+        "{TMP}/out.txt": "second\n"
+
+  - name: "a function defined and called in a single -c string"
+    tags: [ext]
+    shell_args: ["-c", "f() { echo $1-$2; }; f a b"]
+    normalize: { strip_prompt: false }
+    expect:
+      stdout: "a-b"
+      exit_code: 0

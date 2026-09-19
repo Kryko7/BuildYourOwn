@@ -125,7 +125,12 @@ fn find(hay: &[u8], needle: &[u8]) -> Option<usize> {
 }
 
 fn spawn(mut cmd: Command) -> Result<(OwnedFd, Child)> {
-    let ws = Winsize { ws_row: 24, ws_col: 120, ws_xpixel: 0, ws_ypixel: 0 };
+    let ws = Winsize {
+        ws_row: 24,
+        ws_col: 120,
+        ws_xpixel: 0,
+        ws_ypixel: 0,
+    };
     let pty = openpty(Some(&ws), None).context("openpty")?;
     cmd.stdin(Stdio::from(pty.slave.try_clone()?))
         .stdout(Stdio::from(pty.slave.try_clone()?))
@@ -168,7 +173,11 @@ pub fn run(cmd: Command, steps: &[Step], timeout: Duration) -> Result<Captured> 
                 break;
             }
             Err(StepError::Exited) => {
-                cap.step_error = Some(format!("shell exited before step {} could run: {}", i + 1, describe(step)));
+                cap.step_error = Some(format!(
+                    "shell exited before step {} could run: {}",
+                    i + 1,
+                    describe(step)
+                ));
                 break;
             }
         }
@@ -205,7 +214,11 @@ mod tests {
 
     fn sh() -> Command {
         let mut c = Command::new("/bin/sh");
-        c.arg("-i").env_clear().env("PS1", "$ ").env("PATH", "/usr/bin:/bin").env("TERM", "dumb");
+        c.arg("-i")
+            .env_clear()
+            .env("PS1", "$ ")
+            .env("PATH", "/usr/bin:/bin")
+            .env("TERM", "dumb");
         c
     }
 
@@ -239,7 +252,11 @@ mod tests {
 
     #[test]
     fn missing_text_times_out_with_partial_output() {
-        let steps = vec![Step::Wait("$ ".into()), Step::Send("echo abc\r".into()), Step::Wait("never-appears".into())];
+        let steps = vec![
+            Step::Wait("$ ".into()),
+            Step::Send("echo abc\r".into()),
+            Step::Wait("never-appears".into()),
+        ];
         let cap = run(sh(), &steps, Duration::from_millis(500)).unwrap();
         assert!(cap.timed_out);
         assert!(term(&cap).contains("abc"));
@@ -259,7 +276,10 @@ mod tests {
 
     #[test]
     fn is_controlling_terminal() {
-        let steps = vec![Step::Wait("$ ".into()), Step::Send("tty >/dev/null && echo istty; exit\r".into())];
+        let steps = vec![
+            Step::Wait("$ ".into()),
+            Step::Send("tty >/dev/null && echo istty; exit\r".into()),
+        ];
         let cap = run(sh(), &steps, Duration::from_secs(5)).unwrap();
         assert!(term(&cap).contains("istty\n"), "{:?}", term(&cap));
     }

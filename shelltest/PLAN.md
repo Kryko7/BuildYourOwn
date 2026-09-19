@@ -206,4 +206,62 @@ Run one stage: `shelltest --shell ./my_shell --stage 5` — everything so far: `
   - Unterminated quote → print `> ` and keep reading lines
   - waitpid every child (WNOHANG sweep for background ones); treat output as bytes, not text
 
-**57 stages, 428 tests.**
+## H. The shell as a language [ext]
+
+Stages 1–57 make an interactive shell. These make it a language you can write programs in:
+everything a real script uses and nothing the earlier sections already covered.
+
+- [ ] **Stage 58** — if, elif, else and the status that drives them **[ext]** (`58_conditionals.yaml`, 12 tests)
+  - The condition is a command list; its exit status is what decides, not a truthy value
+  - Zero is true; the `if` takes the status of whichever branch ran, or 0 when none did
+  - Redirection on the whole compound applies to every command inside it
+- [ ] **Stage 59** — test and [ : the conditions themselves **[ext]** (`59_test_builtin.yaml`, 10 tests)
+  - `[` is a builtin whose last argument must be `]`; a missing one is an error, not a false
+  - String, numeric (`-eq` and friends) and file (`-e -f -d -s`) tests, and `!`
+  - One bare argument is true when non-empty — which is why unquoted variables bite
+- [ ] **Stage 60** — while, until, break and continue **[ext]** (`60_loops.yaml`, 12 tests)
+  - `until` is `while` with the condition inverted, both testing before every pass
+  - `break n` / `continue n` act on the nth enclosing loop
+  - The loop's status is its last body command; a loop that never ran is 0
+- [ ] **Stage 61** — for: iterating a word list **[ext]** (`61_for_loops.yaml`, 12 tests)
+  - The list is expanded once, before the first pass, with splitting and globbing
+  - `for x; do` with no list walks the positional parameters
+  - The variable keeps the last word after the loop ends
+- [ ] **Stage 62** — case: patterns, not equality **[ext]** (`62_case.yaml`, 12 tests)
+  - Patterns are globs (`*`, `?`, `[a-z]`), alternatives joined by `|`, first match wins
+  - The word is expanded but never split, so a value with a space still matches
+  - Quoting a pattern makes its glob characters literal
+- [ ] **Stage 63** — Functions: definition, arguments and return **[ext]** (`63_functions.yaml`, 13 tests)
+  - A call swaps in new positional parameters and restores the old ones on return
+  - `return` sets the status and leaves the body; `exit` still leaves the shell
+  - Functions are looked up before external programs, and share the caller's variables
+- [ ] **Stage 64** — Positional parameters, $@ and shift **[ext]** (`64_positional_parameters.yaml`, 14 tests)
+  - `"$@"` is one word per parameter; `"$*"` is one word; unquoted, both just split
+  - `"$@"` with nothing to expand produces no word at all, where `"$*"` produces one empty one
+  - `shift [n]` renumbers and fails rather than emptying; `set --` replaces the list
+- [ ] **Stage 65** — Parameter expansion: defaults, length and trimming **[ext]** (`65_parameter_expansion.yaml`, 14 tests)
+  - `:-` `:=` `:+` `:?`, and what the colon changes about an empty-but-set value
+  - `${#v}` for length; `#` `##` `%` `%%` trim shortest and longest glob matches
+  - The replacement word is itself expanded
+- [ ] **Stage 66** — Arithmetic expansion with $(( )) **[ext]** (`66_arithmetic.yaml`, 13 tests)
+  - Integer arithmetic that truncates toward zero, with C precedence and a ternary
+  - Names inside need no `$`; unset and empty both count as zero
+  - Comparisons yield 1 and 0; division by zero is an error
+- [ ] **Stage 67** — Here-documents **[ext]** (`67_heredocs.yaml`, 12 tests)
+  - The body is read from the lines after the command, ending at the delimiter alone on a line
+  - An unquoted delimiter expands the body like a double-quoted string; quoting it stops that
+  - `<<-` strips leading tabs; two here-documents on one line are filled in order
+- [ ] **Stage 68** — read, IFS and field splitting **[ext]** (`68_read_and_ifs.yaml`, 12 tests)
+  - Fields split on `IFS`; the last variable keeps the remainder; read fails at end of input
+  - Whitespace `IFS` collapses runs and trims; other separators make empty fields real
+  - `-r` stops backslash from continuing lines and from being eaten
+- [ ] **Stage 69** — trap, exec and numbered file descriptors **[ext]** (`69_traps_and_fds.yaml`, 14 tests)
+  - `trap` on EXIT and on signals, `trap ''` to ignore, `trap -` to restore
+  - `exec 3>file` opens a descriptor for the shell itself; `3>&-` closes it
+  - Redirections apply left to right, which is what makes `2>&1 >f` differ from `>f 2>&1`
+- [ ] **Stage 70** — set -e, -u, -x and the option flags **[ext]** (`70_set_options.yaml`, 14 tests)
+  - `-e` exits on an untested failure, but a condition, `||`, `!` and a loop test are all tested
+  - `-u` makes an unset name an error; `-f` disables globbing; `-x` traces after expansion
+  - `$-` reports the flags; the same letters work on the command line
+
+**70 stages, 592 tests.**

@@ -109,7 +109,11 @@ pub fn run_test(tc: &TestCase, shell: &ShellDef, opts: &RunOptions) -> TestResul
     }
     match run_inner(tc, shell, opts) {
         Ok((failures, detail)) => {
-            result.status = if failures.is_empty() { Status::Pass } else { Status::Fail };
+            result.status = if failures.is_empty() {
+                Status::Pass
+            } else {
+                Status::Fail
+            };
             result.failures = failures;
             result.detail = Some(detail);
         }
@@ -166,10 +170,23 @@ fn run_inner(tc: &TestCase, shell: &ShellDef, opts: &RunOptions) -> Result<(Vec<
 
     let (cap, input_desc) = match tc.mode {
         Mode::Pipe => {
-            let mut input = tc.input.iter().map(|l| sub(l)).collect::<Vec<_>>().join("\n");
+            let mut input = tc
+                .input
+                .iter()
+                .map(|l| sub(l))
+                .collect::<Vec<_>>()
+                .join("\n");
             input.push('\n');
-            let cap = pipe::run(cmd, input.as_bytes(), timeout).context("launching shell (pipe mode)")?;
-            (cap, tc.input.iter().map(|l| sub(l)).collect::<Vec<_>>().join("\n"))
+            let cap =
+                pipe::run(cmd, input.as_bytes(), timeout).context("launching shell (pipe mode)")?;
+            (
+                cap,
+                tc.input
+                    .iter()
+                    .map(|l| sub(l))
+                    .collect::<Vec<_>>()
+                    .join("\n"),
+            )
         }
         Mode::Pty => {
             let steps: Vec<Step> = if tc.keys.is_empty() {
@@ -191,9 +208,17 @@ fn run_inner(tc: &TestCase, shell: &ShellDef, opts: &RunOptions) -> Result<(Vec<
     };
 
     let mut failures = Vec::new();
-    let detail = Detail { mode: Some(tc.mode), input: input_desc, sandbox: sb.kept_path().map(Into::into), ..Default::default() };
+    let detail = Detail {
+        mode: Some(tc.mode),
+        input: input_desc,
+        sandbox: sb.kept_path().map(Into::into),
+        ..Default::default()
+    };
     if cap.timed_out {
-        failures.push(format!("timed out after {} ms; shell was killed", timeout.as_millis()));
+        failures.push(format!(
+            "timed out after {} ms; shell was killed",
+            timeout.as_millis()
+        ));
     }
     if let Some(e) = &cap.step_error {
         failures.push(e.clone());
@@ -207,15 +232,33 @@ fn run_inner(tc: &TestCase, shell: &ShellDef, opts: &RunOptions) -> Result<(Vec<
             let n = Normalizer::pipe(&shell.prompt, &tc.normalize);
             let stdout = n.apply(&lossy(&cap.stdout));
             let stderr = n.apply(&lossy(&cap.stderr));
-            acc.check("stdout", tc.expect.stdout.as_ref(), &stdout, n.trim_lines, &sub);
-            acc.check("stderr", tc.expect.stderr.as_ref(), &stderr, n.trim_lines, &sub);
+            acc.check(
+                "stdout",
+                tc.expect.stdout.as_ref(),
+                &stdout,
+                n.trim_lines,
+                &sub,
+            );
+            acc.check(
+                "stderr",
+                tc.expect.stderr.as_ref(),
+                &stderr,
+                n.trim_lines,
+                &sub,
+            );
             actual_rows.push(("stdout".to_string(), stdout));
             actual_rows.push(("stderr".to_string(), stderr));
         }
         Mode::Pty => {
             let n = Normalizer::pty(&shell.prompt, &tc.normalize);
             let term = n.apply(&lossy(&cap.terminal));
-            acc.check("terminal", tc.expect.terminal.as_ref(), &term, n.trim_lines, &sub);
+            acc.check(
+                "terminal",
+                tc.expect.terminal.as_ref(),
+                &term,
+                n.trim_lines,
+                &sub,
+            );
             actual_rows.push(("terminal".to_string(), term));
         }
     }
@@ -232,12 +275,18 @@ fn run_inner(tc: &TestCase, shell: &ShellDef, opts: &RunOptions) -> Result<(Vec<
     }
     for path in &tc.expect.file_absent {
         let p = sb.resolve(path);
-        acc.detail.expected.push((format!("file {}", p.display()), "absent".into()));
+        acc.detail
+            .expected
+            .push((format!("file {}", p.display()), "absent".into()));
         if p.exists() {
-            acc.failures.push(format!("file {} should not exist", p.display()));
+            acc.failures
+                .push(format!("file {} should not exist", p.display()));
         }
     }
-    let Checks { mut failures, mut detail } = acc;
+    let Checks {
+        mut failures,
+        mut detail,
+    } = acc;
     let exit = cap.exit.clone().unwrap_or(ExitInfo::Killed);
     if let Some(code) = tc.expect.exit_code {
         detail.expected.push(("exit code".into(), code.to_string()));
@@ -257,15 +306,28 @@ struct Checks {
 
 impl Checks {
     /// Records the expectation and, on mismatch, a failure plus diff material.
-    fn check(&mut self, label: &str, m: Option<&Matcher>, actual: &str, trim: bool, sub: &dyn Fn(&str) -> String) {
+    fn check(
+        &mut self,
+        label: &str,
+        m: Option<&Matcher>,
+        actual: &str,
+        trim: bool,
+        sub: &dyn Fn(&str) -> String,
+    ) {
         let Some(m) = m else { return };
         let m = m.map_text(sub);
-        let m = if trim { m.map_exact(normalize_expected) } else { m };
+        let m = if trim {
+            m.map_exact(normalize_expected)
+        } else {
+            m
+        };
         self.detail.expected.push((label.to_string(), m.describe()));
         if let Err(why) = m.check(actual) {
             self.failures.push(format!("{label}: {why}"));
             if let Some(exp) = m.expected_text() {
-                self.detail.diffs.push((label.to_string(), exp, actual.to_string()));
+                self.detail
+                    .diffs
+                    .push((label.to_string(), exp, actual.to_string()));
             }
         }
     }
@@ -337,6 +399,9 @@ mod tests {
     fn exit_info_display() {
         assert_eq!(ExitInfo::Code(3).to_string(), "3");
         assert_eq!(ExitInfo::from(ExitStatus::from_raw(9)), ExitInfo::Signal(9));
-        assert_eq!(ExitInfo::from(ExitStatus::from_raw(3 << 8)), ExitInfo::Code(3));
+        assert_eq!(
+            ExitInfo::from(ExitStatus::from_raw(3 << 8)),
+            ExitInfo::Code(3)
+        );
     }
 }

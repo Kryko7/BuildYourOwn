@@ -1,0 +1,113 @@
+stage: 58
+name: "if, elif, else and the status that drives them"
+tests:
+  - name: "a true condition runs the then-branch"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "if true; then echo yes; fi\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "yes"
+      exit_code: 0
+
+  - name: "a false condition runs nothing and the if still succeeds"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "if false; then echo yes; fi\necho after\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "after"
+      exit_code: 0
+
+  - name: "else runs when the condition fails"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "if false; then echo yes; else echo no; fi\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "no"
+      exit_code: 0
+
+  - name: "elif is tried in order and only the first match runs"
+    tags: [ext]
+    fixtures:
+      files:
+        "s.sh": "if false; then echo a; elif false; then echo b; elif true; then echo c; elif true; then echo d; else echo e; fi\n"
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "c"
+      exit_code: 0
+
+  - name: "the condition is a command's status, not a truthy string"
+    tags: [ext]
+    fixtures:
+      path_isolated: true
+      executables:
+        yes_prog: "exit 0"
+        no_prog: "exit 1"
+      files: { "s.sh": "if yes_prog; then echo ran-yes; fi\nif no_prog; then echo ran-no; else echo skipped-no; fi\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "ran-yes\nskipped-no"
+      exit_code: 0
+
+  - name: "a whole pipeline can be the condition"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "if echo hello | grep -q hello; then echo found; fi\nif echo hello | grep -q zzz; then echo bad; else echo missing; fi\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "found\nmissing"
+      exit_code: 0
+
+  - name: "the if's own status is the status of the branch it ran"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "if true; then exit 7; fi\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      exit_code: 7
+
+  - name: "an if that runs no branch at all succeeds"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "false\nif false; then echo no; fi\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      exit_code: 0
+
+  - name: "ifs nest"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "if true; then\n  if false; then\n    echo inner-yes\n  else\n    echo inner-no\n  fi\nfi\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "inner-no"
+      exit_code: 0
+
+  - name: "a condition of several commands uses the last one's status"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "if false; true; then echo last-wins; fi\nif true; false; then echo bad; else echo last-lost; fi\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "last-wins\nlast-lost"
+      exit_code: 0
+
+  - name: "-c accepts a whole if on one line"
+    tags: [ext]
+    shell_args: ["-c", "if true; then echo from-c; fi"]
+    normalize: { strip_prompt: false }
+    expect:
+      stdout: "from-c"
+      exit_code: 0
+
+  - name: "redirection on the if applies to everything inside it"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "if true; then echo a; echo b; fi > {TMP}/out.txt\necho done\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "done"
+      files:
+        "{TMP}/out.txt": "a\nb\n"

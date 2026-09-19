@@ -1,0 +1,115 @@
+stage: 61
+name: "for: iterating a word list"
+tests:
+  - name: "for walks the words it is given"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "for x in a b c; do echo \"[$x]\"; done\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "[a]\n[b]\n[c]"
+      exit_code: 0
+
+  - name: "the variable keeps the last word after the loop"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "for x in a b c; do :; done\necho last=$x\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "last=c"
+      exit_code: 0
+
+  - name: "an empty list runs the body no times"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "for x in; do echo body; done\necho after=$?\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "after=0"
+      exit_code: 0
+
+  - name: "the list is expanded before the loop starts"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "list='p q'\nfor x in $list r; do echo \"[$x]\"; done\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "[p]\n[q]\n[r]"
+      exit_code: 0
+
+  - name: "a quoted word with a space is one iteration, unquoted is two"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "for x in \"a b\" c; do echo \"[$x]\"; done\necho --\nv='a b'\nfor x in $v; do echo \"[$x]\"; done\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "[a b]\n[c]\n--\n[a]\n[b]"
+      exit_code: 0
+
+  - name: "a glob in the list expands to the files it matches"
+    tags: [ext]
+    fixtures:
+      files:
+        "one.txt": ""
+        "two.txt": ""
+        "three.md": ""
+        "s.sh": "cd {TMP}\nfor f in *.txt; do echo \"[$f]\"; done\n"
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "[one.txt]\n[two.txt]"
+      exit_code: 0
+
+  - name: "for with no list walks the positional parameters"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "for x; do echo \"[$x]\"; done\n" }
+    shell_args: ["{TMP}/s.sh", "p1", "p2", "p3"]
+    expect:
+      stdout: "[p1]\n[p2]\n[p3]"
+      exit_code: 0
+
+  - name: "for in \"$@\" is the same walk, written out"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "for x in \"$@\"; do echo \"[$x]\"; done\n" }
+    shell_args: ["{TMP}/s.sh", "a b", "c"]
+    expect:
+      stdout: "[a b]\n[c]"
+      exit_code: 0
+
+  - name: "break and continue work the same in a for"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "for x in 1 2 3 4; do\n  if [ $x = 2 ]; then continue; fi\n  if [ $x = 4 ]; then break; fi\n  echo \"[$x]\"\ndone\necho end\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "[1]\n[3]\nend"
+      exit_code: 0
+
+  - name: "for loops nest, each with its own variable"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "for a in 1 2; do for b in x y; do echo $a$b; done; done\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "1x\n1y\n2x\n2y"
+      exit_code: 0
+
+  - name: "redirection on the for applies to the whole loop"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "for x in a b; do echo $x; done > {TMP}/out.txt\necho stdout-clear\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "stdout-clear"
+      files:
+        "{TMP}/out.txt": "a\nb\n"
+
+  - name: "a command substitution in the list is split into words"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "for x in $(echo w1 w2); do echo \"[$x]\"; done\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "[w1]\n[w2]"
+      exit_code: 0

@@ -1,0 +1,104 @@
+stage: 59
+name: "test and [ : the conditions themselves"
+tests:
+  - name: "string equality and inequality"
+    tags: [ext]
+    fixtures:
+      path_isolated: true
+      files: { "s.sh": "if [ abc = abc ]; then echo eq; fi\nif [ abc != abc ]; then echo bad; else echo ne-false; fi\nif [ abc != xyz ]; then echo ne-true; fi\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "eq\nne-false\nne-true"
+      exit_code: 0
+
+  - name: "-z is true for the empty string and -n for a non-empty one"
+    tags: [ext]
+    fixtures:
+      path_isolated: true
+      files: { "s.sh": "empty=\nfull=x\nif [ -z \"$empty\" ]; then echo z-empty; fi\nif [ -z \"$full\" ]; then echo bad; fi\nif [ -n \"$full\" ]; then echo n-full; fi\nif [ -n \"$empty\" ]; then echo bad2; fi\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "z-empty\nn-full"
+      exit_code: 0
+
+  - name: "the numeric comparisons compare numbers, not text"
+    tags: [ext]
+    fixtures:
+      path_isolated: true
+      files: { "s.sh": "if [ 10 -gt 9 ]; then echo gt; fi\nif [ 10 = 9 ]; then echo bad; fi\nif [ 007 -eq 7 ]; then echo eq; fi\nif [ 2 -lt 10 ]; then echo lt; fi\nif [ 3 -le 3 ]; then echo le; fi\nif [ 4 -ge 5 ]; then echo bad2; else echo ge-false; fi\nif [ 1 -ne 2 ]; then echo ne; fi\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "gt\neq\nlt\nle\nge-false\nne"
+      exit_code: 0
+
+  - name: "the file tests look at the filesystem"
+    tags: [ext]
+    fixtures:
+      path_isolated: true
+      files:
+        "have.txt": "x"
+        "empty.txt": ""
+        "s.sh": "if [ -e {TMP}/have.txt ]; then echo e; fi\nif [ -f {TMP}/have.txt ]; then echo f; fi\nif [ -d {TMP} ]; then echo d; fi\nif [ -f {TMP} ]; then echo bad; fi\nif [ -s {TMP}/have.txt ]; then echo s; fi\nif [ -s {TMP}/empty.txt ]; then echo bad2; else echo s-empty-false; fi\nif [ -e {TMP}/missing.txt ]; then echo bad3; else echo missing; fi\n"
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "e\nf\nd\ns\ns-empty-false\nmissing"
+      exit_code: 0
+
+  - name: "! negates, and negation nests with the rest"
+    tags: [ext]
+    fixtures:
+      path_isolated: true
+      files: { "s.sh": "if [ ! 1 = 2 ]; then echo not-eq; fi\nif ! [ 1 = 1 ]; then echo bad; else echo outer-not; fi\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "not-eq\nouter-not"
+      exit_code: 0
+
+  - name: "test is the same builtin as [ , without the bracket"
+    tags: [ext]
+    fixtures:
+      path_isolated: true
+      files: { "s.sh": "if test abc = abc; then echo test-eq; fi\nif test -n x; then echo test-n; fi\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "test-eq\ntest-n"
+      exit_code: 0
+
+  - name: "the status is 0 for true and 1 for false, and usable directly"
+    tags: [ext]
+    fixtures:
+      path_isolated: true
+      files: { "s.sh": "[ 1 = 1 ]\necho $?\n[ 1 = 2 ]\necho $?\ntest -n ''\necho $?\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "0\n1\n1"
+      exit_code: 0
+
+  - name: "one bare argument is true when it is not empty"
+    tags: [ext]
+    fixtures:
+      path_isolated: true
+      files: { "s.sh": "if [ x ]; then echo one-arg; fi\nif [ \"\" ]; then echo bad; else echo empty-false; fi\nif test; then echo bad2; else echo no-args-false; fi\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "one-arg\nempty-false\nno-args-false"
+      exit_code: 0
+
+  - name: "a missing ] is an error, not a false"
+    tags: [ext]
+    fixtures:
+      path_isolated: true
+      files: { "s.sh": "[ 1 = 1\necho status=$?\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: { regex: "status=[2-9][0-9]*" }
+
+  - name: "an unquoted empty variable is the classic trap, and quoting fixes it"
+    tags: [ext]
+    fixtures:
+      path_isolated: true
+      files: { "s.sh": "v=\nif [ -n \"$v\" ]; then echo bad; else echo quoted-ok; fi\nif [ \"$v\" = \"\" ]; then echo compares-empty; fi\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "quoted-ok\ncompares-empty"
+      exit_code: 0

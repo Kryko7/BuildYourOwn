@@ -1,0 +1,113 @@
+stage: 60
+name: "while, until, break and continue"
+tests:
+  - name: "a while loop runs while its condition succeeds"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "i=0\nwhile [ $i -lt 3 ]; do\n  echo i=$i\n  i=$((i + 1))\ndone\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "i=0\ni=1\ni=2"
+      exit_code: 0
+
+  - name: "a while whose condition is false from the start runs nothing"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "while false; do echo body; done\necho after\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "after"
+      exit_code: 0
+
+  - name: "until is while's mirror: it runs until the condition succeeds"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "i=0\nuntil [ $i -ge 3 ]; do\n  echo u=$i\n  i=$((i + 1))\ndone\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "u=0\nu=1\nu=2"
+      exit_code: 0
+
+  - name: "break leaves the loop at once"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "i=0\nwhile true; do\n  i=$((i + 1))\n  if [ $i -eq 3 ]; then break; fi\n  echo n=$i\ndone\necho done=$i\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "n=1\nn=2\ndone=3"
+      exit_code: 0
+
+  - name: "continue skips the rest of the body and tests again"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "i=0\nwhile [ $i -lt 5 ]; do\n  i=$((i + 1))\n  if [ $i -eq 3 ]; then continue; fi\n  echo n=$i\ndone\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "n=1\nn=2\nn=4\nn=5"
+      exit_code: 0
+
+  - name: "break with a count leaves that many loops"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "o=0\nwhile [ $o -lt 2 ]; do\n  o=$((o + 1))\n  j=0\n  while [ $j -lt 5 ]; do\n    j=$((j + 1))\n    echo o=$o.j=$j\n    break 2\n  done\ndone\necho end\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "o=1.j=1\nend"
+      exit_code: 0
+
+  - name: "a loop reading its stdin from a redirect sees every line"
+    tags: [ext]
+    fixtures:
+      files:
+        "in.txt": "alpha\nbeta\ngamma\n"
+        "s.sh": "while read line; do echo \"[$line]\"; done < {TMP}/in.txt\n"
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "[alpha]\n[beta]\n[gamma]"
+      exit_code: 0
+
+  - name: "a loop on the right of a pipe reads the pipe"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "printf 'a\\nb\\n' | while read x; do echo got-$x; done\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "got-a\ngot-b"
+      exit_code: 0
+
+  - name: "the loop's status is the last command the body ran"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "i=0\nwhile [ $i -lt 2 ]; do\n  i=$((i + 1))\n  false\ndone\necho status=$?\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "status=1"
+      exit_code: 0
+
+  - name: "an empty loop body is still a loop, and a loop that never ran succeeds"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "while false; do :; done\necho status=$?\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "status=0"
+      exit_code: 0
+
+  - name: "redirection on the whole loop applies to every iteration"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "i=0\nwhile [ $i -lt 3 ]; do echo line$i; i=$((i + 1)); done > {TMP}/out.txt\necho on-stdout\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "on-stdout"
+      files:
+        "{TMP}/out.txt": "line0\nline1\nline2\n"
+
+  - name: "exit inside a loop leaves the shell, not just the loop"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "while true; do echo once; exit 6; done\necho never\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "once"
+      exit_code: 6

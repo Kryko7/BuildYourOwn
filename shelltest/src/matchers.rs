@@ -14,7 +14,8 @@ pub enum Matcher {
     LinesOrderedSubset(Vec<String>),
 }
 
-const KEYS: &str = "exact | regex | contains | not_contains | lines_unordered | lines_ordered_subset";
+const KEYS: &str =
+    "exact | regex | contains | not_contains | lines_unordered | lines_ordered_subset";
 
 impl<'de> Deserialize<'de> for Matcher {
     fn deserialize<D: Deserializer<'de>>(d: D) -> std::result::Result<Self, D::Error> {
@@ -87,7 +88,9 @@ impl Matcher {
     /// Apply `f` only to text compared line-for-line (exact and line-list matchers).
     pub fn map_exact(&self, f: impl Fn(&str) -> String) -> Matcher {
         match self {
-            Matcher::Exact(_) | Matcher::LinesUnordered(_) | Matcher::LinesOrderedSubset(_) => self.map_text(f),
+            Matcher::Exact(_) | Matcher::LinesUnordered(_) | Matcher::LinesOrderedSubset(_) => {
+                self.map_text(f)
+            }
             other => other.clone(),
         }
     }
@@ -115,10 +118,14 @@ impl Matcher {
 
     pub fn check(&self, actual: &str) -> std::result::Result<(), String> {
         match self {
-            Matcher::Exact(e) => (actual == e).then_some(()).ok_or_else(|| "output differs".into()),
+            Matcher::Exact(e) => (actual == e)
+                .then_some(())
+                .ok_or_else(|| "output differs".into()),
             Matcher::Regex(r) => {
                 let re = regex::Regex::new(r).map_err(|e| e.to_string())?;
-                re.is_match(actual).then_some(()).ok_or_else(|| format!("regex {r:?} did not match"))
+                re.is_match(actual)
+                    .then_some(())
+                    .ok_or_else(|| format!("regex {r:?} did not match"))
             }
             Matcher::Contains(s) => actual
                 .contains(s.as_str())
@@ -132,7 +139,9 @@ impl Matcher {
                 let mut e: Vec<&str> = exp.iter().map(String::as_str).collect();
                 a.sort_unstable();
                 e.sort_unstable();
-                (a == e).then_some(()).ok_or_else(|| "line multiset differs".into())
+                (a == e)
+                    .then_some(())
+                    .ok_or_else(|| "line multiset differs".into())
             }
             Matcher::LinesOrderedSubset(exp) => {
                 let mut it = actual.lines();
@@ -160,12 +169,21 @@ mod tests {
         assert_eq!(m("hello"), Matcher::Exact("hello".into()));
         assert_eq!(m("0"), Matcher::Exact("0".into()));
         assert_eq!(m("{contains: hi}"), Matcher::Contains("hi".into()));
-        assert_eq!(m("{lines_unordered: [a, b]}"), Matcher::LinesUnordered(vec!["a".into(), "b".into()]));
+        assert_eq!(
+            m("{lines_unordered: [a, b]}"),
+            Matcher::LinesUnordered(vec!["a".into(), "b".into()])
+        );
         assert!(serde_yaml::from_str::<Matcher>("{bogus: x}").is_err());
         assert!(serde_yaml::from_str::<Matcher>("{contains: a, regex: b}").is_err());
         assert!(serde_yaml::from_str::<Matcher>("{regex: '('}").is_err());
-        assert_eq!(m("{contains: 'a '}").map_exact(|s| s.trim().into()), Matcher::Contains("a ".into()));
-        assert_eq!(m("'a '").map_exact(|s| s.trim().into()), Matcher::Exact("a".into()));
+        assert_eq!(
+            m("{contains: 'a '}").map_exact(|s| s.trim().into()),
+            Matcher::Contains("a ".into())
+        );
+        assert_eq!(
+            m("'a '").map_exact(|s| s.trim().into()),
+            Matcher::Exact("a".into())
+        );
     }
 
     #[test]
@@ -176,6 +194,8 @@ mod tests {
         assert!(m("{lines_unordered: [b, a]}").check("a\nb").is_ok());
         assert!(m("{lines_unordered: [b, a]}").check("a\nb\nc").is_err());
         assert!(m("{lines_ordered_subset: [a, c]}").check("a\nb\nc").is_ok());
-        assert!(m("{lines_ordered_subset: [c, a]}").check("a\nb\nc").is_err());
+        assert!(m("{lines_ordered_subset: [c, a]}")
+            .check("a\nb\nc")
+            .is_err());
     }
 }

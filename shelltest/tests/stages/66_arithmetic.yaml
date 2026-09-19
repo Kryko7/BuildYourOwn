@@ -1,0 +1,118 @@
+stage: 66
+name: "Arithmetic expansion with $(( ))"
+tests:
+  - name: "the four operations, and integer division that truncates"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "echo $((2 + 3))\necho $((10 - 4))\necho $((6 * 7))\necho $((7 / 2))\necho $((-7 / 2))\necho $((7 % 3))\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "5\n6\n42\n3\n-3\n1"
+      exit_code: 0
+
+  - name: "precedence and parentheses"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "echo $((2 + 3 * 4))\necho $(((2 + 3) * 4))\necho $((2 * 3 + 4 * 5))\necho $((-(2 + 3)))\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "14\n20\n26\n-5"
+      exit_code: 0
+
+  - name: "a variable inside needs no dollar, but takes one"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "a=4\nb=5\necho $((a + b))\necho $(($a + $b))\necho $((a * $b))\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "9\n9\n20"
+      exit_code: 0
+
+  - name: "an unset or empty variable counts as zero"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "unset u\ne=\necho $((u + 1))\necho $((e + 2))\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "1\n2"
+      exit_code: 0
+
+  - name: "the result is text, so it can be assigned and reused"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "i=0\ni=$((i + 1))\ni=$((i + 1))\necho i=$i\ntotal=$((i * 10))\necho total=$total\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "i=2\ntotal=20"
+      exit_code: 0
+
+  - name: "comparisons produce 1 for true and 0 for false"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "echo $((3 > 2))\necho $((3 < 2))\necho $((3 == 3))\necho $((3 != 3))\necho $((3 >= 3))\necho $((2 <= 1))\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "1\n0\n1\n0\n1\n0"
+      exit_code: 0
+
+  - name: "the logical operators short-circuit on those same ones and zeros"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "echo $((1 && 1))\necho $((1 && 0))\necho $((0 || 1))\necho $((0 || 0))\necho $((!0))\necho $((!5))\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "1\n0\n1\n0\n1\n0"
+      exit_code: 0
+
+  - name: "the bitwise operators are there too"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "echo $((6 & 3))\necho $((6 | 3))\necho $((6 ^ 3))\necho $((1 << 4))\necho $((32 >> 2))\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "2\n7\n5\n16\n8"
+      exit_code: 0
+
+  - name: "whitespace inside is free, and nested expansions are evaluated first"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "n=3\necho $((   n   *   2   ))\necho $(( $(echo 4) + 1 ))\necho $(( (n + 1) * (n - 1) ))\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "6\n5\n8"
+      exit_code: 0
+
+  - name: "arithmetic drives a loop and a condition"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "i=1\nsum=0\nwhile [ $i -le 5 ]; do\n  sum=$((sum + i))\n  i=$((i + 1))\ndone\necho sum=$sum\nif [ $((sum % 3)) -eq 0 ]; then echo divisible; else echo not-divisible; fi\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "sum=15\ndivisible"
+      exit_code: 0
+
+  - name: "dividing by zero is an error, not a zero"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "echo $((1 / 0)) 2>/dev/null\necho status=$?\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: { regex: "status=[1-9][0-9]*" }
+
+  - name: "a ternary picks between two arms"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "n=7\necho $((n > 5 ? 100 : 200))\nn=2\necho $((n > 5 ? 100 : 200))\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "100\n200"
+      exit_code: 0
+
+  - name: "large values stay exact well past what 32 bits would hold"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "echo $((1000000 * 1000000))\necho $((2147483647 + 1))\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "1000000000000\n2147483648"
+      exit_code: 0

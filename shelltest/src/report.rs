@@ -52,7 +52,11 @@ impl Reporter {
     }
 
     pub fn stage_header(&self, st: &Stage) {
-        self.out(&format!("\n{} {}", c(&format!("Stage {:02}", st.stage), Tint::Bold), c(&st.name, Tint::Cyan)));
+        self.out(&format!(
+            "\n{} {}",
+            c(&format!("Stage {:02}", st.stage), Tint::Bold),
+            c(&st.name, Tint::Cyan)
+        ));
     }
 
     pub fn test_result(&self, r: &TestResult) {
@@ -68,11 +72,21 @@ impl Reporter {
             }
             Status::Skip => {
                 let why = r.skip_reason.as_deref().unwrap_or("no reason given");
-                self.out(&format!("  {} {} {}", c("-", Tint::Yellow), r.name, c(&format!("skipped: {why}"), Tint::Yellow)));
+                self.out(&format!(
+                    "  {} {} {}",
+                    c("-", Tint::Yellow),
+                    r.name,
+                    c(&format!("skipped: {why}"), Tint::Yellow)
+                ));
             }
             Status::Fail => {
                 let tag = if self.validate { "SUITE BUG" } else { "FAIL" };
-                self.out(&format!("  {} {} {} {time}", c("✘", Tint::Red), r.name, c(tag, Tint::Red)));
+                self.out(&format!(
+                    "  {} {} {} {time}",
+                    c("✘", Tint::Red),
+                    r.name,
+                    c(tag, Tint::Red)
+                ));
                 for f in &r.failures {
                     self.out(&format!("      {}", c(f, Tint::Red)));
                 }
@@ -84,7 +98,11 @@ impl Reporter {
     }
 
     fn section(&self, title: &str) {
-        self.out(&format!("    {} {}", c("┌", Tint::Dim), c(title, Tint::Bold)));
+        self.out(&format!(
+            "    {} {}",
+            c("┌", Tint::Dim),
+            c(title, Tint::Bold)
+        ));
     }
 
     fn row(&self, text: &str) {
@@ -111,7 +129,11 @@ impl Reporter {
             _ => "input sent on stdin",
         };
         self.section(input_title);
-        self.row(if d.input.is_empty() { "(nothing)" } else { &d.input });
+        self.row(if d.input.is_empty() {
+            "(nothing)"
+        } else {
+            &d.input
+        });
         self.section("expected");
         for (label, desc) in &d.expected {
             self.row(&format!("{label}: {desc}"));
@@ -125,7 +147,10 @@ impl Reporter {
             self.row(&unified_diff(exp, act));
         }
         if let Some(p) = &d.sandbox {
-            self.out(&format!("    {}", c(&format!("sandbox kept at {}", p.display()), Tint::Yellow)));
+            self.out(&format!(
+                "    {}",
+                c(&format!("sandbox kept at {}", p.display()), Tint::Yellow)
+            ));
         }
     }
 
@@ -134,8 +159,17 @@ impl Reporter {
         let ran = passed + failed;
         let summary = format!("{passed}/{ran} passed");
         let tint = if failed == 0 { Tint::Green } else { Tint::Red };
-        let skip = if skipped > 0 { c(&format!("  ({skipped} skipped)"), Tint::Yellow) } else { String::new() };
-        self.out(&format!("{}  {:<34} {}{skip}", c(&format!("Stage {:02}", st.stage), Tint::Bold), st.name, c(&summary, tint)));
+        let skip = if skipped > 0 {
+            c(&format!("  ({skipped} skipped)"), Tint::Yellow)
+        } else {
+            String::new()
+        };
+        self.out(&format!(
+            "{}  {:<34} {}{skip}",
+            c(&format!("Stage {:02}", st.stage), Tint::Bold),
+            st.name,
+            c(&summary, tint)
+        ));
     }
 
     pub fn total(&self, all: &[(&Stage, Vec<TestResult>)], elapsed: Duration, shell: &str) -> bool {
@@ -144,7 +178,10 @@ impl Reporter {
         let failed = flat.iter().filter(|r| r.status == Status::Fail).count();
         let skipped = flat.iter().filter(|r| r.status == Status::Skip).count();
         let ran = passed + failed;
-        let line = format!("Total: {passed}/{ran} passed, {failed} failed, {skipped} skipped  ({:.1}s)", elapsed.as_secs_f64());
+        let line = format!(
+            "Total: {passed}/{ran} passed, {failed} failed, {skipped} skipped  ({:.1}s)",
+            elapsed.as_secs_f64()
+        );
         self.out("");
         self.out(&c(&line, if failed == 0 { Tint::Green } else { Tint::Red }));
         if failed > 0 && self.validate {
@@ -164,7 +201,9 @@ pub fn visible(s: &str) -> String {
     s.chars()
         .map(|c| match c {
             '\n' | '\t' => c.to_string(),
-            c if (c as u32) < 0x20 => format!("^{}", char::from_u32(c as u32 + 0x40).unwrap_or('?')),
+            c if (c as u32) < 0x20 => {
+                format!("^{}", char::from_u32(c as u32 + 0x40).unwrap_or('?'))
+            }
             '\x7f' => "^?".to_string(),
             c => c.to_string(),
         })
@@ -180,7 +219,11 @@ pub fn unified_diff(expected: &str, actual: &str) -> String {
     let e = format!("{expected}\n");
     let a = format!("{actual}\n");
     let diff = similar::TextDiff::from_lines(&e, &a);
-    let text = diff.unified_diff().context_radius(3).header("expected", "actual").to_string();
+    let text = diff
+        .unified_diff()
+        .context_radius(3)
+        .header("expected", "actual")
+        .to_string();
     text.lines()
         .map(|l| match l.chars().next() {
             Some('-') if !l.starts_with("---") => c(l, Tint::Red),
@@ -225,7 +268,13 @@ pub struct JsonTest {
     pub actual: Vec<(String, String)>,
 }
 
-pub fn write_json(path: &Path, shell: &str, validate: bool, all: &[(&Stage, Vec<TestResult>)], elapsed: Duration) -> anyhow::Result<()> {
+pub fn write_json(
+    path: &Path,
+    shell: &str,
+    validate: bool,
+    all: &[(&Stage, Vec<TestResult>)],
+    elapsed: Duration,
+) -> anyhow::Result<()> {
     let stages: Vec<JsonStage> = all
         .iter()
         .map(|(st, results)| {
@@ -246,7 +295,11 @@ pub fn write_json(path: &Path, shell: &str, validate: bool, all: &[(&Stage, Vec<
                         duration_ms: r.duration_ms,
                         failures: r.failures.clone(),
                         skip_reason: r.skip_reason.clone(),
-                        actual: r.detail.as_ref().map(|d| d.actual.clone()).unwrap_or_default(),
+                        actual: r
+                            .detail
+                            .as_ref()
+                            .map(|d| d.actual.clone())
+                            .unwrap_or_default(),
                     })
                     .collect(),
             }
@@ -284,7 +337,12 @@ mod tests {
 
     #[test]
     fn json_counts() {
-        let st = Stage { stage: 1, name: "x".into(), file: "01_x.yaml".into(), tests: vec![] };
+        let st = Stage {
+            stage: 1,
+            name: "x".into(),
+            file: "01_x.yaml".into(),
+            tests: vec![],
+        };
         let r = TestResult {
             name: "t".into(),
             status: Status::Fail,
@@ -297,7 +355,8 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let p = dir.path().join("r.json");
         write_json(&p, "bash", false, &[(&st, vec![r])], Duration::from_secs(1)).unwrap();
-        let v: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(p).unwrap()).unwrap();
+        let v: serde_json::Value =
+            serde_json::from_str(&std::fs::read_to_string(p).unwrap()).unwrap();
         assert_eq!(v["failed"], 1);
         assert_eq!(v["stages"][0]["tests"][0]["status"], "fail");
     }

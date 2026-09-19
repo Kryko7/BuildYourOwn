@@ -53,9 +53,15 @@ pub fn resolve_shell(spec: &str, shells: &BTreeMap<String, ShellDef>) -> Result<
             let path = Path::new(spec);
             if !path.exists() {
                 let known: Vec<_> = shells.keys().cloned().collect();
-                bail!("'{spec}' is neither a registered shell ({}) nor an existing path", known.join(", "));
+                bail!(
+                    "'{spec}' is neither a registered shell ({}) nor an existing path",
+                    known.join(", ")
+                );
             }
-            let name = path.file_stem().map(|s| s.to_string_lossy().to_string()).unwrap_or_default();
+            let name = path
+                .file_stem()
+                .map(|s| s.to_string_lossy().to_string())
+                .unwrap_or_default();
             ShellDef {
                 name,
                 pipe_command: vec![spec.to_string()],
@@ -75,7 +81,8 @@ pub fn resolve_shell(spec: &str, shells: &BTreeMap<String, ShellDef>) -> Result<
 pub fn resolve_program(prog: &str) -> Result<String> {
     let p = Path::new(prog);
     if prog.contains('/') {
-        let abs = std::fs::canonicalize(p).with_context(|| format!("shell binary not found: {prog}"))?;
+        let abs =
+            std::fs::canonicalize(p).with_context(|| format!("shell binary not found: {prog}"))?;
         return Ok(abs.to_string_lossy().to_string());
     }
     let path = std::env::var_os("PATH").unwrap_or_default();
@@ -88,7 +95,9 @@ pub fn resolve_program(prog: &str) -> Result<String> {
 
 fn is_executable(p: &Path) -> bool {
     use std::os::unix::fs::PermissionsExt;
-    p.metadata().map(|m| m.is_file() && m.permissions().mode() & 0o111 != 0).unwrap_or(false)
+    p.metadata()
+        .map(|m| m.is_file() && m.permissions().mode() & 0o111 != 0)
+        .unwrap_or(false)
 }
 
 #[cfg(test)]
@@ -99,7 +108,11 @@ mod tests {
     fn parses_shells_and_resolves_names() {
         let dir = tempfile::tempdir().unwrap();
         let f = dir.path().join("shells.yaml");
-        std::fs::write(&f, "shells:\n  sh:\n    pipe_command: [sh]\n    pty_command: [sh, -i]\n").unwrap();
+        std::fs::write(
+            &f,
+            "shells:\n  sh:\n    pipe_command: [sh]\n    pty_command: [sh, -i]\n",
+        )
+        .unwrap();
         let shells = load_shells(&f).unwrap();
         let def = resolve_shell("sh", &shells).unwrap();
         assert_eq!(def.name, "sh");

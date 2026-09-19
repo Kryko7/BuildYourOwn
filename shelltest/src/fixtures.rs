@@ -19,7 +19,10 @@ pub struct Sandbox {
 
 impl Sandbox {
     pub fn create(fx: &Fixtures, shell: &ShellDef, keep: bool) -> Result<Sandbox> {
-        let dir = tempfile::Builder::new().prefix("shelltest-").tempdir().context("creating sandbox dir")?;
+        let dir = tempfile::Builder::new()
+            .prefix("shelltest-")
+            .tempdir()
+            .context("creating sandbox dir")?;
         let tmp = std::fs::canonicalize(dir.path())?;
         let bin = tmp.join("bin");
         let home = tmp.join("home");
@@ -57,7 +60,11 @@ impl Sandbox {
             if !script.ends_with('\n') {
                 script.push('\n');
             }
-            let p = if name.contains('/') { resolve(name) } else { bin.join(name) };
+            let p = if name.contains('/') {
+                resolve(name)
+            } else {
+                bin.join(name)
+            };
             if let Some(parent) = p.parent() {
                 std::fs::create_dir_all(parent)?;
             }
@@ -90,11 +97,26 @@ impl Sandbox {
         for (k, v) in &fx.env {
             env.insert(k.clone(), vars.apply(v));
         }
-        let cwd = fx.cwd.as_deref().map(resolve).unwrap_or_else(|| tmp.clone());
+        let cwd = fx
+            .cwd
+            .as_deref()
+            .map(resolve)
+            .unwrap_or_else(|| tmp.clone());
         std::fs::create_dir_all(&cwd)?;
 
-        let dir = if keep { let _ = dir.keep(); None } else { Some(dir) };
-        Ok(Sandbox { tmp, cwd, env, vars, dir })
+        let dir = if keep {
+            let _ = dir.keep();
+            None
+        } else {
+            Some(dir)
+        };
+        Ok(Sandbox {
+            tmp,
+            cwd,
+            env,
+            vars,
+            dir,
+        })
     }
 
     pub fn kept_path(&self) -> Option<&Path> {
@@ -128,7 +150,10 @@ mod tests {
         )
         .unwrap();
         let sb = Sandbox::create(&fx, &shell(), false).unwrap();
-        assert_eq!(std::fs::read_to_string(sb.tmp.join("sub/a.txt")).unwrap(), "A");
+        assert_eq!(
+            std::fs::read_to_string(sb.tmp.join("sub/a.txt")).unwrap(),
+            "A"
+        );
         assert_eq!(std::fs::read_to_string(sb.tmp.join("home/b")).unwrap(), "B");
         assert!(sb.tmp.join("d1").is_dir());
         let greet = std::fs::read_to_string(sb.tmp.join("bin/greet")).unwrap();
@@ -136,8 +161,13 @@ mod tests {
         assert_eq!(sb.env["PATH"], sb.tmp.join("bin").to_string_lossy());
         assert_eq!(sb.env["FOO"], sb.env["PATH"]);
         assert_eq!(sb.env["PS1"], "$ ");
-        assert_eq!(std::fs::read_to_string(sb.tmp.join(".history")).unwrap(), "echo a\n");
-        assert!(std::fs::read_to_string(sb.tmp.join(".shelltest_init")).unwrap().contains(&sb.tmp.to_string_lossy().to_string()));
+        assert_eq!(
+            std::fs::read_to_string(sb.tmp.join(".history")).unwrap(),
+            "echo a\n"
+        );
+        assert!(std::fs::read_to_string(sb.tmp.join(".shelltest_init"))
+            .unwrap()
+            .contains(&sb.tmp.to_string_lossy().to_string()));
         assert_eq!(sb.cwd, sb.tmp.join("sub"));
         assert!(sb.kept_path().is_none());
         let path = sb.tmp.clone();

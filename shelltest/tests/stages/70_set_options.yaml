@@ -1,0 +1,140 @@
+stage: 70
+name: "set -e, -u, -x and the option flags"
+tests:
+  - name: "set -e stops the script at the first command that fails"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "set -e\necho one\nfalse\necho never\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "one"
+      exit_code: 1
+
+  - name: "the script exits with the status of the command that failed"
+    tags: [ext]
+    fixtures:
+      path_isolated: true
+      executables:
+        fail7: "exit 7"
+      files: { "s.sh": "set -e\nfail7\necho never\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: ""
+      exit_code: 7
+
+  - name: "a failure that is being tested does not trip set -e"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "set -e\nif false; then echo bad; fi\nfalse || echo handled\n! false\nwhile false; do :; done\necho survived\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "handled\nsurvived"
+      exit_code: 0
+
+  - name: "set +e turns it back off"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "set -e\nset +e\nfalse\necho still-here\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "still-here"
+      exit_code: 0
+
+  - name: "under set -e only the last command of a pipeline is judged"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "set -e\nfalse | true\necho pipeline-ok\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "pipeline-ok"
+      exit_code: 0
+
+  - name: "set -u makes an unset variable an error instead of an empty string"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "set -u\nunset v\necho \"[$v]\"\necho never\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: ""
+      stderr: { contains: "v" }
+
+  - name: "under set -u an empty value is still a value"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "set -u\nv=\necho \"[$v]\"\necho fine\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "[]\nfine"
+      exit_code: 0
+
+  - name: "a default makes a variable safe to read under set -u"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "set -u\nunset v\necho \"[${v:-default}]\"\necho fine\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "[default]\nfine"
+      exit_code: 0
+
+  - name: "set -x traces each command to stderr, after expansion"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "set -x\nv=world\necho hello $v\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "hello world"
+      stderr: { contains: "echo hello world" }
+
+  - name: "set -x can be turned off again and stops tracing"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "set -x\necho traced\nset +x\necho untraced\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "traced\nuntraced"
+      stderr: { not_contains: "echo untraced" }
+
+  - name: "set -f turns globbing off"
+    tags: [ext]
+    fixtures:
+      files:
+        "a.txt": ""
+        "b.txt": ""
+        "s.sh": "cd {TMP}\necho *.txt\nset -f\necho *.txt\nset +f\necho *.txt\n"
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "a.txt b.txt\n*.txt\na.txt b.txt"
+      exit_code: 0
+
+  - name: "$- names the flags that are currently on"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "case $- in *u*) echo u-before ;; *) echo no-u-before ;; esac\nset -u\ncase $- in *u*) echo u-after ;; *) echo no-u-after ;; esac\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "no-u-before\nu-after"
+      exit_code: 0
+
+  - name: "the flags can be set on the command line instead of in the script"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "echo one\nfalse\necho never\n" }
+    shell_args: ["-e", "{TMP}/s.sh"]
+    expect:
+      stdout: "one"
+      exit_code: 1
+
+  - name: "pipefail reports the first failing command in a pipeline"
+    tags: [ext]
+    skip_on: [dash]
+    reason: "set -o pipefail is a bash/zsh extension, not in POSIX, and dash does not have it"
+    fixtures:
+      path_isolated: true
+      executables:
+        fail3: "exit 3"
+        pass: "exit 0"
+      files: { "s.sh": "fail3 | pass\necho without=$?\nset -o pipefail\nfail3 | pass\necho with=$?\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "without=0\nwith=3"
+      exit_code: 0

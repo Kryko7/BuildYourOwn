@@ -1,0 +1,131 @@
+stage: 68
+name: "read, IFS and field splitting"
+tests:
+  - name: "read takes one line into one variable"
+    tags: [ext]
+    fixtures:
+      files:
+        "in.txt": "hello world\nsecond line\n"
+        "s.sh": "read a < {TMP}/in.txt\necho \"[$a]\"\n"
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "[hello world]"
+      exit_code: 0
+
+  - name: "several variables split the line on whitespace"
+    tags: [ext]
+    fixtures:
+      files:
+        "in.txt": "one two three\n"
+        "s.sh": "read a b c < {TMP}/in.txt\necho \"[$a][$b][$c]\"\n"
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "[one][two][three]"
+      exit_code: 0
+
+  - name: "the last variable keeps everything that is left, separators and all"
+    tags: [ext]
+    fixtures:
+      files:
+        "in.txt": "one two three four\n"
+        "s.sh": "read a b < {TMP}/in.txt\necho \"[$a][$b]\"\n"
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "[one][two three four]"
+      exit_code: 0
+
+  - name: "variables with nothing left to take end up empty"
+    tags: [ext]
+    fixtures:
+      files:
+        "in.txt": "only\n"
+        "s.sh": "read a b c < {TMP}/in.txt\necho \"[$a][$b][$c]\"\n"
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "[only][][]"
+      exit_code: 0
+
+  - name: "leading and trailing whitespace is not part of a field"
+    tags: [ext]
+    fixtures:
+      files:
+        "in.txt": "   padded   words   \n"
+        "s.sh": "read a b < {TMP}/in.txt\necho \"[$a][$b]\"\n"
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "[padded][words]"
+      exit_code: 0
+
+  - name: "read fails at end of input, which is what ends a read loop"
+    tags: [ext]
+    fixtures:
+      files:
+        "in.txt": "a\nb\n"
+        "s.sh": "exec < {TMP}/in.txt\nread x\necho \"1=$x $?\"\nread x\necho \"2=$x $?\"\nread x\necho \"3=[$x] $?\"\n"
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: { regex: "1=a 0\n2=b 0\n3=\\[\\] [1-9][0-9]*" }
+
+  - name: "IFS chooses the separator, so a colon-separated line splits on colons"
+    tags: [ext]
+    fixtures:
+      files:
+        "in.txt": "root:x:0:0:root:/root:/bin/sh\n"
+        "s.sh": "IFS=: read user pass uid rest < {TMP}/in.txt\necho \"[$user][$pass][$uid][$rest]\"\n"
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "[root][x][0][0:root:/root:/bin/sh]"
+      exit_code: 0
+
+  - name: "with a non-whitespace IFS, empty fields are real fields"
+    tags: [ext]
+    fixtures:
+      files:
+        "in.txt": "a::c\n"
+        "s.sh": "IFS=: read one two three < {TMP}/in.txt\necho \"[$one][$two][$three]\"\n"
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "[a][][c]"
+      exit_code: 0
+
+  - name: "IFS set for one command does not outlive it"
+    tags: [ext]
+    fixtures:
+      files:
+        "in.txt": "a:b\n"
+        "s.sh": "IFS=: read x y < {TMP}/in.txt\nv='p q'\nset -- $v\necho \"[$x][$y] then $# words\"\n"
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "[a][b] then 2 words"
+      exit_code: 0
+
+  - name: "a backslash continues the line unless -r says otherwise"
+    tags: [ext]
+    fixtures:
+      files:
+        "in.txt": "first\\\nsecond\n"
+        "s.sh": "read a < {TMP}/in.txt\necho \"[$a]\"\nread -r b < {TMP}/in.txt\necho \"[$b]\"\n"
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "[firstsecond]\n[first\\]"
+      exit_code: 0
+
+  - name: "read inside a loop walks a file to its end"
+    tags: [ext]
+    fixtures:
+      files:
+        "in.txt": "alpha 1\nbeta 2\ngamma 3\n"
+        "s.sh": "while read word n; do echo \"$n:$word\"; done < {TMP}/in.txt\n"
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "1:alpha\n2:beta\n3:gamma"
+      exit_code: 0
+
+  - name: "the same splitting rules apply when a variable is expanded unquoted"
+    tags: [ext]
+    fixtures:
+      files: { "s.sh": "v='a:b:c'\nset -- $v\necho unsplit=$#\nIFS=:\nset -- $v\necho split=$#\necho second=$2\n" }
+    shell_args: ["{TMP}/s.sh"]
+    expect:
+      stdout: "unsplit=1\nsplit=3\nsecond=b"
+      exit_code: 0
