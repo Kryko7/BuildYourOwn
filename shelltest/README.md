@@ -2,7 +2,7 @@
 
 A self-contained, stage-by-stage tester for POSIX shells, written in Rust. It drives
 **any** shell binary as a black box (stdin/stdout/stderr, or a real pseudo-terminal) and
-compares what it sees with a declarative YAML suite: 57 stages, 428 tests, all validated
+compares what it sees with a declarative YAML suite: 70 stages, 592 tests, all validated
 against bash 5.
 
 ```

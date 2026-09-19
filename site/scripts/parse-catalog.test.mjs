@@ -124,7 +124,7 @@ describe.skipIf(!hasShelltest)('the real shelltest suite', () => {
 		return { plan, yamlDocs };
 	}
 
-	it('parses 57 stages and 428 tests', async () => {
+	it('parses what the plan declares, down to the footer', async () => {
 		const { plan, yamlDocs } = await load();
 		const catalog = buildCatalog({
 			track: 'shell',
@@ -132,9 +132,12 @@ describe.skipIf(!hasShelltest)('the real shelltest suite', () => {
 			yamlDocs,
 			generatedAt: '2026-01-01T00:00:00.000Z'
 		});
-		expect(catalog.totals.stages).toBe(57);
-		expect(catalog.totals.tests).toBe(428);
-		expect(plan.declared).toEqual({ stages: 57, tests: 428 });
+		// Numbers counted from the suite, not written down here: the invariant worth holding
+		// is that the YAML on disk and PLAN.md's own footer agree, whatever the suite has
+		// grown to since.
+		expect(catalog.totals.stages).toBe(plan.declared.stages);
+		expect(catalog.totals.tests).toBe(plan.declared.tests);
+		expect(catalog.totals.stages).toBeGreaterThan(50);
 	});
 
 	it('agrees with PLAN.md on every per-stage test count', async () => {
@@ -161,10 +164,12 @@ describe.skipIf(!hasShelltest)('the real shelltest suite', () => {
 		expect(history.tests.some((t) => (t.skipOn ?? []).includes('zsh'))).toBe(true);
 	});
 
-	it('covers sections A..G with no stage left out', async () => {
+	it('covers a contiguous run of sections with no stage left out', async () => {
 		const { plan, yamlDocs } = await load();
 		const catalog = buildCatalog({ track: 'shell', plan, yamlDocs, generatedAt: 'x' });
-		expect(catalog.sections.map((s) => s.id)).toEqual(['A', 'B', 'C', 'D', 'E', 'F', 'G']);
+		const ids = catalog.sections.map((s) => s.id);
+		expect(ids[0]).toBe('A');
+		expect(ids).toEqual(ids.map((_, i) => String.fromCharCode('A'.charCodeAt(0) + i)));
 		const covered = catalog.sections.flatMap((s) => s.stages).sort((a, b) => a - b);
 		expect(covered).toEqual(catalog.stages.map((s) => s.number));
 	});
@@ -562,9 +567,15 @@ describe('the generated catalogs on disk', () => {
 		}
 	});
 
-	it('still has the two finished trails at full size', async () => {
-		expect((await catalogOf('kafka')).totals.stages).toBe(45);
-		expect((await catalogOf('shell')).totals.stages).toBe(57);
+	it('keeps every trail at the size its own tester reports', async () => {
+		for (const track of trackIds) {
+			const catalog = await catalogOf(track);
+			expect(catalog.totals.stages, track).toBe(catalog.stages.length);
+			expect(catalog.totals.stages, track).toBeGreaterThan(20);
+			expect(catalog.totals.tests, track).toBe(
+				catalog.stages.reduce((n, s) => n + (s.tests?.length ?? 0), 0)
+			);
+		}
 	});
 
 	it('has a resource file for every track, and every link points at a real stage', async () => {

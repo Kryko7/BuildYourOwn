@@ -37,7 +37,20 @@
 			49,
 			52,
 			53,
-			56
+			56,
+			58,
+			59,
+			60,
+			61,
+			62,
+			63,
+			64,
+			65,
+			66,
+			67,
+			68,
+			69,
+			70
 		],
 		"concepts": [
 			"posix",
@@ -275,7 +288,8 @@
 		"stages": [
 			15,
 			19,
-			20
+			20,
+			68
 		],
 		"concepts": [
 			"word-splitting",
@@ -320,7 +334,9 @@
 			21,
 			22,
 			23,
-			53
+			53,
+			65,
+			66
 		],
 		"concepts": [
 			"expansion-order",
@@ -341,7 +357,8 @@
 		"track": "shell",
 		"stages": [
 			20,
-			21
+			21,
+			65
 		],
 		"concepts": [
 			"variable-expansion",
@@ -406,7 +423,9 @@
 			27,
 			28,
 			29,
-			40
+			40,
+			67,
+			69
 		],
 		"concepts": [
 			"redirection",
@@ -473,7 +492,10 @@
 		"track": "shell",
 		"stages": [
 			39,
-			48
+			48,
+			58,
+			63,
+			70
 		],
 		"concepts": [
 			"exit-status",
@@ -530,7 +552,12 @@
 			44,
 			45,
 			46,
-			54
+			54,
+			59,
+			64,
+			68,
+			69,
+			70
 		],
 		"concepts": [
 			"builtins",
@@ -653,7 +680,8 @@
 		"stages": [
 			50,
 			51,
-			57
+			57,
+			69
 		],
 		"concepts": [
 			"signals",
@@ -917,7 +945,8 @@
 		"stages": [
 			8,
 			18,
-			56
+			56,
+			69
 		],
 		"concepts": [
 			"fork-exec",
@@ -1013,7 +1042,8 @@
 			27,
 			28,
 			29,
-			40
+			40,
+			69
 		],
 		"concepts": [
 			"dup2",
@@ -2186,5 +2216,615 @@
 		"minutes": 60,
 		"free": true,
 		"checkedAt": "2026-09-13"
+	},
+	{
+		"id": "posix-compound-commands",
+		"title": "Compound Commands (POSIX Shell Command Language 2.9.4)",
+		"url": "https://pubs.opengroup.org/onlinepubs/9799919799/utilities/V3_chap02.html#tag_19_09_04",
+		"type": "spec",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			58,
+			60,
+			61,
+			62
+		],
+		"concepts": [
+			"compound-commands",
+			"if",
+			"while",
+			"for",
+			"case"
+		],
+		"why": "The grammar for `if`, `while`, `until`, `for` and `case` in the words the tester was written from: what each reserved word may be followed by, where a `;` may stand in for a newline, and the rule that a compound command's exit status is the status of the last command it ran.",
+		"minutes": 12,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "posix-case-construct",
+		"title": "Case Conditional Construct (POSIX 2.9.4.3)",
+		"url": "https://pubs.opengroup.org/onlinepubs/9799919799/utilities/V3_chap02.html#tag_19_09_04_05",
+		"type": "spec",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			62
+		],
+		"concepts": [
+			"case",
+			"pattern-matching",
+			"glob"
+		],
+		"why": "Says the part learners get wrong: the patterns are the same globs as filename expansion, the word is expanded but never field-split, and the first match wins with no fallthrough.",
+		"minutes": 6,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "posix-function-definition",
+		"title": "Function Definition Command (POSIX 2.9.5)",
+		"url": "https://pubs.opengroup.org/onlinepubs/9799919799/utilities/V3_chap02.html#tag_19_09_05",
+		"type": "spec",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			63
+		],
+		"concepts": [
+			"functions",
+			"positional-parameters",
+			"return"
+		],
+		"why": "Defines what a call actually does to the shell's state: the positional parameters are replaced for the duration and restored afterwards, while variables are not — which is why a function can set a caller's variable but cannot see the caller's `$1`.",
+		"minutes": 8,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "posix-parameter-expansion",
+		"title": "Parameter Expansion (POSIX 2.6.2)",
+		"url": "https://pubs.opengroup.org/onlinepubs/9799919799/utilities/V3_chap02.html#tag_19_06_02",
+		"type": "spec",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			64,
+			65
+		],
+		"concepts": [
+			"parameter-expansion",
+			"defaults",
+			"prefix-suffix-removal"
+		],
+		"why": "The table stage 65 is built from: how `:-` `:=` `:?` `:+` differ, exactly what the colon changes for a variable that is set but empty, and that `#` `%` trim the shortest match while `##` `%%` trim the longest.",
+		"minutes": 14,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "posix-arithmetic-expansion",
+		"title": "Arithmetic Expansion (POSIX 2.6.4)",
+		"url": "https://pubs.opengroup.org/onlinepubs/9799919799/utilities/V3_chap02.html#tag_19_06_04",
+		"type": "spec",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			66
+		],
+		"concepts": [
+			"arithmetic",
+			"integer-arithmetic",
+			"signed-long"
+		],
+		"why": "Fixes the semantics stage 66 checks: signed long integer arithmetic with C's operators and precedence, names evaluated without a `$`, an unset or empty name treated as zero, and division by zero left as an error.",
+		"minutes": 7,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "posix-field-splitting",
+		"title": "Field Splitting (POSIX 2.6.5)",
+		"url": "https://pubs.opengroup.org/onlinepubs/9799919799/utilities/V3_chap02.html#tag_19_06_05",
+		"type": "spec",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			68
+		],
+		"concepts": [
+			"ifs",
+			"field-splitting",
+			"word-splitting"
+		],
+		"why": "The rule that makes `IFS=:` behave differently from the default: runs of IFS whitespace collapse and are trimmed at the ends, while any other IFS character separates exactly one field, so `a::c` is three fields and not two.",
+		"minutes": 8,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "posix-here-document",
+		"title": "Here-Document (POSIX 2.7.4)",
+		"url": "https://pubs.opengroup.org/onlinepubs/9799919799/utilities/V3_chap02.html#tag_19_07_04",
+		"type": "spec",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			67
+		],
+		"concepts": [
+			"here-document",
+			"redirection",
+			"quoting"
+		],
+		"why": "Says when the body is expanded (unquoted delimiter: like a double-quoted string), when it is not (any quoting on the delimiter), what `<<-` strips, and that the delimiter ends the body only when it is alone on a line.",
+		"minutes": 7,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "posix-test-utility",
+		"title": "test — evaluate expression (POSIX)",
+		"url": "https://pubs.opengroup.org/onlinepubs/9799919799/utilities/test.html",
+		"type": "spec",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			59
+		],
+		"concepts": [
+			"test",
+			"conditional-expression",
+			"exit-status"
+		],
+		"why": "The whole operator table, plus the part the stage turns into tests: how an expression is evaluated by the number of arguments, so a single non-empty argument is true and a missing `]` is a usage error rather than a false.",
+		"minutes": 12,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "posix-read-utility",
+		"title": "read — read a line from standard input (POSIX)",
+		"url": "https://pubs.opengroup.org/onlinepubs/9799919799/utilities/read.html",
+		"type": "spec",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			68
+		],
+		"concepts": [
+			"read",
+			"ifs",
+			"backslash"
+		],
+		"why": "Defines the last variable taking the remainder of the line, the non-zero status at end of input that ends a read loop, and what `-r` turns off — the backslash processing that otherwise joins continued lines and disappears.",
+		"minutes": 8,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "posix-trap-utility",
+		"title": "trap — trap signals (POSIX)",
+		"url": "https://pubs.opengroup.org/onlinepubs/9799919799/utilities/trap.html",
+		"type": "spec",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			69
+		],
+		"concepts": [
+			"trap",
+			"signals",
+			"exit-handler"
+		],
+		"why": "The three forms stage 69 exercises: an action that runs on a signal or on EXIT, an empty action that ignores the signal, and `-` that puts the default back.",
+		"minutes": 7,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "posix-set-utility",
+		"title": "set — set or unset options and positional parameters (POSIX)",
+		"url": "https://pubs.opengroup.org/onlinepubs/9799919799/utilities/set.html",
+		"type": "spec",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			64,
+			70
+		],
+		"concepts": [
+			"set",
+			"shell-options",
+			"positional-parameters"
+		],
+		"why": "Both halves of `set`: the option letters (`-e -u -x -f`) with the exact wording of which failures `-e` ignores, and `set --`, which is how a script replaces its own positional parameters.",
+		"minutes": 12,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "posix-exec-utility",
+		"title": "exec — execute commands and open, close or copy file descriptors (POSIX)",
+		"url": "https://pubs.opengroup.org/onlinepubs/9799919799/utilities/exec.html",
+		"type": "spec",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			69
+		],
+		"concepts": [
+			"exec",
+			"file-descriptors",
+			"redirection"
+		],
+		"why": "The one utility with two jobs: with a command it replaces the shell process, and with only redirections it applies them to the shell itself — which is what makes `exec 3>file` outlive the line it is written on.",
+		"minutes": 6,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "bash-conditional-constructs",
+		"title": "Conditional Constructs (Bash Reference Manual)",
+		"url": "https://www.gnu.org/software/bash/manual/html_node/Conditional-Constructs.html",
+		"type": "doc",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			58,
+			62
+		],
+		"concepts": [
+			"if",
+			"case",
+			"conditional-constructs"
+		],
+		"why": "The reference implementation's own description of `if` and `case`, worth reading next to the POSIX text because it is what bash — the shell `--validate` runs against — actually does.",
+		"minutes": 10,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "bash-looping-constructs",
+		"title": "Looping Constructs (Bash Reference Manual)",
+		"url": "https://www.gnu.org/software/bash/manual/html_node/Looping-Constructs.html",
+		"type": "doc",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			60,
+			61
+		],
+		"concepts": [
+			"while",
+			"until",
+			"for",
+			"break",
+			"continue"
+		],
+		"why": "Covers the detail stage 60 tests and most write-ups skip: `break` and `continue` take a count that says how many enclosing loops to act on.",
+		"minutes": 8,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "bash-shell-functions",
+		"title": "Shell Functions (Bash Reference Manual)",
+		"url": "https://www.gnu.org/software/bash/manual/html_node/Shell-Functions.html",
+		"type": "doc",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			63
+		],
+		"concepts": [
+			"functions",
+			"return",
+			"scope"
+		],
+		"why": "Spells out that a function is found before an external command of the same name, that `return` leaves the function while `exit` leaves the shell, and that a redirection written on the definition applies to every later call.",
+		"minutes": 9,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "bash-shell-arithmetic",
+		"title": "Shell Arithmetic (Bash Reference Manual)",
+		"url": "https://www.gnu.org/software/bash/manual/html_node/Shell-Arithmetic.html",
+		"type": "doc",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			66
+		],
+		"concepts": [
+			"arithmetic",
+			"operators",
+			"precedence"
+		],
+		"why": "The operator list in precedence order, including the ternary and the bitwise operators that stage 66 checks.",
+		"minutes": 7,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "bash-special-parameters",
+		"title": "Special Parameters (Bash Reference Manual)",
+		"url": "https://www.gnu.org/software/bash/manual/html_node/Special-Parameters.html",
+		"type": "doc",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			64
+		],
+		"concepts": [
+			"special-parameters",
+			"at-vs-star",
+			"exit-status"
+		],
+		"why": "The paragraph that settles `\"$@\"` against `\"$*\"`, including the case stage 64 turns into a test: with no positional parameters, `\"$@\"` expands to nothing at all while `\"$*\"` expands to one empty word.",
+		"minutes": 8,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "bash-positional-parameters",
+		"title": "Positional Parameters (Bash Reference Manual)",
+		"url": "https://www.gnu.org/software/bash/manual/html_node/Positional-Parameters.html",
+		"type": "doc",
+		"level": "intro",
+		"track": "shell",
+		"stages": [
+			64
+		],
+		"concepts": [
+			"positional-parameters",
+			"braces",
+			"shift"
+		],
+		"why": "Short and worth it for one rule: past the ninth, a positional parameter needs braces, so `$10` is `$1` followed by a `0` and `${10}` is the tenth argument.",
+		"minutes": 4,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wooledge-bash-pitfalls",
+		"title": "BashPitfalls (Greg's Wiki)",
+		"url": "https://mywiki.wooledge.org/BashPitfalls",
+		"type": "article",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			59,
+			64,
+			65,
+			68,
+			70
+		],
+		"concepts": [
+			"pitfalls",
+			"quoting",
+			"word-splitting"
+		],
+		"why": "Several dozen ways shell code goes wrong, each with the fix. The early entries are the ones these stages are about: unquoted expansions in `[`, `for f in $(ls)`, reading a file without `-r`, and trusting `set -e`.",
+		"minutes": 45,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wooledge-bash-guide",
+		"title": "BashGuide (Greg's Wiki)",
+		"url": "https://mywiki.wooledge.org/BashGuide",
+		"type": "article",
+		"level": "intro",
+		"track": "shell",
+		"stages": [
+			58,
+			60,
+			61,
+			62,
+			63
+		],
+		"concepts": [
+			"tutorial",
+			"control-flow",
+			"functions"
+		],
+		"why": "The best free tutorial on shell control flow, and the one to read first if `if`, loops and functions are new — it teaches the habits (quote expansions, test statuses not strings) the later stages assume.",
+		"minutes": 90,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wooledge-set-e-faq",
+		"title": "Why doesn't set -e do what I expected? (BashFAQ 105)",
+		"url": "https://mywiki.wooledge.org/BashFAQ/105",
+		"type": "article",
+		"level": "deep",
+		"track": "shell",
+		"stages": [
+			70
+		],
+		"concepts": [
+			"set-e",
+			"errexit",
+			"exit-status"
+		],
+		"why": "The long answer to why `set -e` is subtler than it looks, listing every context in which a failing command is 'being tested' and so does not exit the shell. Stage 70 tests exactly those contexts.",
+		"minutes": 25,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wooledge-read-loop-faq",
+		"title": "How can I read a file line by line? (BashFAQ 001)",
+		"url": "https://mywiki.wooledge.org/BashFAQ/001",
+		"type": "article",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			60,
+			68
+		],
+		"concepts": [
+			"read",
+			"while-read",
+			"ifs"
+		],
+		"why": "Why the canonical line-reading loop is written `while IFS= read -r line`, taking apart what each piece prevents: trimmed whitespace, eaten backslashes, and a last line without a newline.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wooledge-word-splitting",
+		"title": "WordSplitting (Greg's Wiki)",
+		"url": "https://mywiki.wooledge.org/WordSplitting",
+		"type": "article",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			61,
+			64,
+			68
+		],
+		"concepts": [
+			"word-splitting",
+			"ifs",
+			"quoting"
+		],
+		"why": "Walks through when splitting happens and when it does not, which is the difference between `for x in $v` and `for x in \"$v\"` that stage 61 tests.",
+		"minutes": 12,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wooledge-ifs",
+		"title": "IFS (Greg's Wiki)",
+		"url": "https://mywiki.wooledge.org/IFS",
+		"type": "article",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			68
+		],
+		"concepts": [
+			"ifs",
+			"field-splitting",
+			"read"
+		],
+		"why": "IFS on its own: whitespace versus non-whitespace separators, why `IFS=: read` on one line does not leak the setting, and what an empty IFS means.",
+		"minutes": 10,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wooledge-signal-trap",
+		"title": "SignalTrap (Greg's Wiki)",
+		"url": "https://mywiki.wooledge.org/SignalTrap",
+		"type": "article",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			69
+		],
+		"concepts": [
+			"trap",
+			"signals",
+			"cleanup"
+		],
+		"why": "Traps as they are actually used: a cleanup handler on EXIT, which signals can and cannot be trapped, and what happens to a trap while the shell waits on a child.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wooledge-file-descriptor",
+		"title": "FileDescriptor (Greg's Wiki)",
+		"url": "https://mywiki.wooledge.org/FileDescriptor",
+		"type": "article",
+		"level": "core",
+		"track": "shell",
+		"stages": [
+			69
+		],
+		"concepts": [
+			"file-descriptors",
+			"redirection",
+			"dup"
+		],
+		"why": "Numbered descriptors with pictures of the descriptor table, including the save-and-restore dance (`exec 4>&1`) and why the order of `>file 2>&1` matters.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "etalabs-sh-tricks",
+		"title": "Rich's sh (POSIX shell) tricks",
+		"url": "https://www.etalabs.net/sh_tricks.html",
+		"type": "article",
+		"level": "deep",
+		"track": "shell",
+		"stages": [
+			63,
+			64,
+			65,
+			67,
+			70
+		],
+		"concepts": [
+			"posix-sh",
+			"portability",
+			"idioms"
+		],
+		"why": "What experienced POSIX shell looks like when you cannot rely on a single shell's extensions: argument handling, quoting for re-evaluation, and safe temporary files, all built from exactly the constructs these stages add.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "grymoire-sh-tutorial",
+		"title": "Steve's Bourne / Bash Shell Scripting Tutorial",
+		"url": "https://www.grymoire.com/Unix/Sh.html",
+		"type": "article",
+		"level": "intro",
+		"track": "shell",
+		"stages": [
+			58,
+			60,
+			61,
+			62
+		],
+		"concepts": [
+			"tutorial",
+			"control-flow",
+			"scripting"
+		],
+		"why": "An older, patient tour of Bourne shell scripting that introduces each construct with a working script — useful as a second explanation when the spec's grammar is hard to picture.",
+		"minutes": 40,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "shellcheck-sc2086",
+		"title": "ShellCheck SC2086: quote to prevent splitting and globbing",
+		"url": "https://www.shellcheck.net/wiki/SC2086",
+		"type": "tool",
+		"level": "intro",
+		"track": "shell",
+		"stages": [
+			59,
+			65
+		],
+		"concepts": [
+			"quoting",
+			"word-splitting",
+			"linting"
+		],
+		"why": "One page on the single most common shell bug, and why `[ -n $v ]` breaks on an empty or spaced value while `[ -n \"$v\" ]` does not. ShellCheck itself is worth running over your own tests.",
+		"minutes": 5,
+		"free": true,
+		"checkedAt": "2026-09-19"
 	}
 ]

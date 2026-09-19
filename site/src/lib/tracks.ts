@@ -84,10 +84,10 @@ export const tracks: Record<TrackId, TrackMeta> = {
 		id: 'shell',
 		title: 'Build your own Shell',
 		short: 'Shell',
-		tagline: 'From a bare prompt to job control',
+		tagline: 'From a bare prompt to a language you can write in',
 		building: 'a POSIX shell',
 		blurb:
-			'A POSIX shell, written by you, driven as a black box over pipes and a real pseudo-terminal. 57 stages from printing `$ ` to pipelines, history and line editing.',
+			'A POSIX shell, written by you, driven as a black box over pipes and a real pseudo-terminal. 70 stages from printing `$ ` to pipelines, history and line editing — then the language half: conditionals, loops, functions, parameter expansion, here-documents and traps.',
 		glyph: '❯',
 		accent: 'var(--shell)',
 		accentBright: 'var(--shell-bright)',
@@ -111,7 +111,8 @@ export const tracks: Record<TrackId, TrackMeta> = {
 			D: { badge: 'Completion Grove', icon: '🌼' },
 			E: { badge: 'Pipeline Glade', icon: '🍃' },
 			F: { badge: 'Memory Meadow', icon: '🌸' },
-			G: { badge: 'The Orchard', icon: '🌳' }
+			G: { badge: 'The Orchard', icon: '🌳' },
+			H: { badge: 'The Grammar Wood', icon: '🌲' }
 		}
 	},
 	kafka: {

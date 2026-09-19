@@ -202,7 +202,8 @@ describe('catalog helpers', () => {
 		expect(stageOf('shell', 1)?.name).toBe('Print the prompt and wait for input');
 		expect(neighbours('shell', 1).prev).toBeUndefined();
 		expect(neighbours('shell', 1).next?.number).toBe(2);
-		expect(neighbours('shell', 57).next).toBeUndefined();
+		const last = getCatalog('shell').stages.at(-1)!.number;
+		expect(neighbours('shell', last).next).toBeUndefined();
 	});
 	it('names a badge for every section of both tracks', () => {
 		for (const track of ['shell', 'kafka'] as const) {

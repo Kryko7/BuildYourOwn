@@ -1,6 +1,6 @@
 {
 	"track": "shell",
-	"generatedAt": "2026-09-19T05:05:20.894Z",
+	"generatedAt": "2026-09-19T06:43:26.968Z",
 	"sections": [
 		{
 			"id": "A",
@@ -99,6 +99,25 @@
 				55,
 				56,
 				57
+			]
+		},
+		{
+			"id": "H",
+			"title": "The shell as a language",
+			"stages": [
+				58,
+				59,
+				60,
+				61,
+				62,
+				63,
+				64,
+				65,
+				66,
+				67,
+				68,
+				69,
+				70
 			]
 		}
 	],
@@ -9251,12 +9270,3305 @@
 					]
 				}
 			]
+		},
+		{
+			"number": 58,
+			"slug": "conditionals",
+			"name": "if, elif, else and the status that drives them",
+			"ext": true,
+			"section": "H",
+			"file": "58_conditionals.yaml",
+			"planDone": false,
+			"hints": [
+				"The condition is a command list; its exit status is what decides, not a truthy value",
+				"Zero is true; the `if` takes the status of whichever branch ran, or 0 when none did",
+				"Redirection on the whole compound applies to every command inside it"
+			],
+			"tests": [
+				{
+					"name": "a true condition runs the then-branch",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "yes"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "a false condition runs nothing and the if still succeeds",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "after"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "else runs when the condition fails",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "no"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "elif is tried in order and only the first match runs",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "c"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "the condition is a command's status, not a truthy string",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "ran-yes\nskipped-no"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "a whole pipeline can be the condition",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "found\nmissing"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "the if's own status is the status of the branch it ran",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "7"
+						}
+					]
+				},
+				{
+					"name": "an if that runs no branch at all succeeds",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "ifs nest",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "inner-no"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "a condition of several commands uses the last one's status",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "last-wins\nlast-lost"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "-c accepts a whole if on one line",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "from-c"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "redirection on the if applies to everything inside it",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "done"
+						},
+						{
+							"label": "file {TMP}/out.txt",
+							"kind": "exact",
+							"value": "a\nb\n"
+						}
+					]
+				}
+			]
+		},
+		{
+			"number": 59,
+			"slug": "test-builtin",
+			"name": "test and [ : the conditions themselves",
+			"ext": true,
+			"section": "H",
+			"file": "59_test_builtin.yaml",
+			"planDone": false,
+			"hints": [
+				"`[` is a builtin whose last argument must be `]`; a missing one is an error, not a false",
+				"String, numeric (`-eq` and friends) and file (`-e -f -d -s`) tests, and `!`",
+				"One bare argument is true when non-empty — which is why unquoted variables bite"
+			],
+			"tests": [
+				{
+					"name": "string equality and inequality",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "eq\nne-false\nne-true"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "-z is true for the empty string and -n for a non-empty one",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "z-empty\nn-full"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "the numeric comparisons compare numbers, not text",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "gt\neq\nlt\nle\nge-false\nne"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "the file tests look at the filesystem",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "e\nf\nd\ns\ns-empty-false\nmissing"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "! negates, and negation nests with the rest",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "not-eq\nouter-not"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "test is the same builtin as [ , without the bracket",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "test-eq\ntest-n"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "the status is 0 for true and 1 for false, and usable directly",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "0\n1\n1"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "one bare argument is true when it is not empty",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "one-arg\nempty-false\nno-args-false"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "a missing ] is an error, not a false",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "regex",
+							"value": "status=[2-9][0-9]*"
+						}
+					]
+				},
+				{
+					"name": "an unquoted empty variable is the classic trap, and quoting fixes it",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "quoted-ok\ncompares-empty"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				}
+			]
+		},
+		{
+			"number": 60,
+			"slug": "loops",
+			"name": "while, until, break and continue",
+			"ext": true,
+			"section": "H",
+			"file": "60_loops.yaml",
+			"planDone": false,
+			"hints": [
+				"`until` is `while` with the condition inverted, both testing before every pass",
+				"`break n` / `continue n` act on the nth enclosing loop",
+				"The loop's status is its last body command; a loop that never ran is 0"
+			],
+			"tests": [
+				{
+					"name": "a while loop runs while its condition succeeds",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "i=0\ni=1\ni=2"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "a while whose condition is false from the start runs nothing",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "after"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "until is while's mirror: it runs until the condition succeeds",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "u=0\nu=1\nu=2"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "break leaves the loop at once",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "n=1\nn=2\ndone=3"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "continue skips the rest of the body and tests again",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "n=1\nn=2\nn=4\nn=5"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "break with a count leaves that many loops",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "o=1.j=1\nend"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "a loop reading its stdin from a redirect sees every line",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "[alpha]\n[beta]\n[gamma]"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "a loop on the right of a pipe reads the pipe",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "got-a\ngot-b"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "the loop's status is the last command the body ran",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "status=1"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "an empty loop body is still a loop, and a loop that never ran succeeds",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "status=0"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "redirection on the whole loop applies to every iteration",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "on-stdout"
+						},
+						{
+							"label": "file {TMP}/out.txt",
+							"kind": "exact",
+							"value": "line0\nline1\nline2\n"
+						}
+					]
+				},
+				{
+					"name": "exit inside a loop leaves the shell, not just the loop",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "once"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "6"
+						}
+					]
+				}
+			]
+		},
+		{
+			"number": 61,
+			"slug": "for-loops",
+			"name": "for: iterating a word list",
+			"ext": true,
+			"section": "H",
+			"file": "61_for_loops.yaml",
+			"planDone": false,
+			"hints": [
+				"The list is expanded once, before the first pass, with splitting and globbing",
+				"`for x; do` with no list walks the positional parameters",
+				"The variable keeps the last word after the loop ends"
+			],
+			"tests": [
+				{
+					"name": "for walks the words it is given",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "[a]\n[b]\n[c]"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "the variable keeps the last word after the loop",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "last=c"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "an empty list runs the body no times",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "after=0"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "the list is expanded before the loop starts",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "[p]\n[q]\n[r]"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "a quoted word with a space is one iteration, unquoted is two",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "[a b]\n[c]\n--\n[a]\n[b]"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "a glob in the list expands to the files it matches",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "[one.txt]\n[two.txt]"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "for with no list walks the positional parameters",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "[p1]\n[p2]\n[p3]"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "for in \"$@\" is the same walk, written out",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "[a b]\n[c]"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "break and continue work the same in a for",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "[1]\n[3]\nend"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "for loops nest, each with its own variable",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "1x\n1y\n2x\n2y"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "redirection on the for applies to the whole loop",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "stdout-clear"
+						},
+						{
+							"label": "file {TMP}/out.txt",
+							"kind": "exact",
+							"value": "a\nb\n"
+						}
+					]
+				},
+				{
+					"name": "a command substitution in the list is split into words",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "[w1]\n[w2]"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				}
+			]
+		},
+		{
+			"number": 62,
+			"slug": "case",
+			"name": "case: patterns, not equality",
+			"ext": true,
+			"section": "H",
+			"file": "62_case.yaml",
+			"planDone": false,
+			"hints": [
+				"Patterns are globs (`*`, `?`, `[a-z]`), alternatives joined by `|`, first match wins",
+				"The word is expanded but never split, so a value with a space still matches",
+				"Quoting a pattern makes its glob characters literal"
+			],
+			"tests": [
+				{
+					"name": "the first matching pattern runs and the rest are skipped",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "was-b"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "* is the default, and it only runs when nothing above matched",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "hit-a\ndefault-z"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "a pattern is a glob, not a literal",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "text-cat.txt\nmarkdown-dog.md\nsingle-x"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "| separates alternatives in one clause",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "affirmative\naffirmative\nother"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "a bracket class matches a range",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "digit\nletter\nsymbol"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "a quoted pattern is literal, so the glob characters lose their power",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "literal-star\nabc-default"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "the word is expanded but not split, so a value with a space still matches",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "whole"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "a clause with several commands runs all of them",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "one\ntwo"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "a case that matches nothing succeeds and runs nothing",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "status=0"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "the case's status is the status of the clause it ran",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "status=1"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "9"
+						}
+					]
+				},
+				{
+					"name": "an empty clause is legal and does nothing",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "after"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "case works on one line, the way it is written in a condition",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "starts-with-h"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				}
+			]
+		},
+		{
+			"number": 63,
+			"slug": "functions",
+			"name": "Functions: definition, arguments and return",
+			"ext": true,
+			"section": "H",
+			"file": "63_functions.yaml",
+			"planDone": false,
+			"hints": [
+				"A call swaps in new positional parameters and restores the old ones on return",
+				"`return` sets the status and leaves the body; `exit` still leaves the shell",
+				"Functions are looked up before external programs, and share the caller's variables"
+			],
+			"tests": [
+				{
+					"name": "a defined function can be called by name",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "hello\nhello"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "a function's arguments are its own positional parameters",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "count=2 first=a second=b\ncount=1 first=x second="
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "the script's own parameters come back after the function returns",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "inside=inner\noutside=script-arg"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "return sets the function's status without leaving the shell",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "status=3\nstill-here"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "a function with no return has the status of its last command",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "ok=0\nbad=1"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "return stops the body where it stands",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "one"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "variables are shared with the caller unless the function is a subshell",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "after"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "a function can call another, and itself",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "inner-x\nouter-x\n3\n2\n1"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "a function is found before an external program of the same name",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "external\nfunction"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "calling a name that is not a function or a program fails with 127",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "status=127"
+						}
+					]
+				},
+				{
+					"name": "exit inside a function ends the shell, unlike return",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "in"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "8"
+						}
+					]
+				},
+				{
+					"name": "a redirection on the definition applies every time it is called",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "on-stdout"
+						},
+						{
+							"label": "file {TMP}/out.txt",
+							"kind": "exact",
+							"value": "second\n"
+						}
+					]
+				},
+				{
+					"name": "a function defined and called in a single -c string",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "a-b"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				}
+			]
+		},
+		{
+			"number": 64,
+			"slug": "positional-parameters",
+			"name": "Positional parameters, $@ and shift",
+			"ext": true,
+			"section": "H",
+			"file": "64_positional_parameters.yaml",
+			"planDone": false,
+			"hints": [
+				"`\"$@\"` is one word per parameter; `\"$*\"` is one word; unquoted, both just split",
+				"`\"$@\"` with nothing to expand produces no word at all, where `\"$*\"` produces one empty one",
+				"`shift [n]` renumbers and fails rather than emptying; `set --` replaces the list"
+			],
+			"tests": [
+				{
+					"name": "$# counts them and $1.. name them",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "count=3\none=a two=b three=c"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "a parameter that was never passed is empty, not an error",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "[][]\ncount=0"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "past the ninth, the number needs braces",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "tenth=TEN\nnine-then-zero=10"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "\"$@\" keeps every parameter a separate word, spaces and all",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "[a b]\n[c]\n[d e]"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "\"$*\" joins them into one word instead",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "[a b c]"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "unquoted, both split on whitespace and the difference disappears",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "at[a]\nat[b]\nat[c]\nstar[a]\nstar[b]\nstar[c]"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "\"$@\" with nothing to expand disappears rather than leaving an empty word",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "argc=0\nargc=1"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "shift drops the first and renumbers the rest",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "3 a b c\n2 b c\n1 c"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "shift takes a count",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "count=2 first=c"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "shifting further than there are parameters fails instead of emptying them",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "regex",
+							"value": "^status=[1-9][0-9]* count=2$"
+						}
+					]
+				},
+				{
+					"name": "set -- replaces the whole list",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "count=3 all=x y z\nafter=0"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "set -- takes values that look like options",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "one=-x two=--verbose count=2"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "$0 is the script, and it is not one of the parameters",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "zero-is-script\ncount=1"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "a loop can consume the parameters with shift",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "[p]\n[q]\n[r]\nleft=0"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				}
+			]
+		},
+		{
+			"number": 65,
+			"slug": "parameter-expansion",
+			"name": "Parameter expansion: defaults, length and trimming",
+			"ext": true,
+			"section": "H",
+			"file": "65_parameter_expansion.yaml",
+			"planDone": false,
+			"hints": [
+				"`:-` `:=` `:+` `:?`, and what the colon changes about an empty-but-set value",
+				"`${#v}` for length; `#` `##` `%` `%%` trim shortest and longest glob matches",
+				"The replacement word is itself expanded"
+			],
+			"tests": [
+				{
+					"name": "braces separate the name from what follows it",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "filename\nfile-name"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": ":- supplies a default without assigning it",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "[fallback]\n[]\n[set]"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "the colon is what makes an empty value count as missing",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "colon=[d]\nnocolon=[]\nunset-colon=[d]\nunset-nocolon=[d]"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": ":= assigns the default back into the variable",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "[assigned]\n[assigned]"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": ":+ is the mirror: it substitutes only when the value is there",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "[present]\n[]"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": ":? stops the script and says why",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": ""
+						},
+						{
+							"label": "stderr",
+							"kind": "contains",
+							"value": "needs a value"
+						}
+					]
+				},
+				{
+					"name": "${#v} is the length in characters",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "5\n0\n3"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "# trims the shortest match from the front, ## the longest",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "usr/local/bin/tool\ntool"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "% trims the shortest match from the end, %% the longest",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "archive.tar\narchive\n/usr/local/bin"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "a pattern that does not match leaves the value alone",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "plain\nplain\nplain"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "the trimming patterns are globs, like case's",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "abc\n007"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "the word after :- is itself expanded",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "from-other\nfrom-command"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "expansion happens inside double quotes and not inside single quotes",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "x\n${v:-d}"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "the expansions compose the way a real script uses them",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "dir=/tmp/data base=report.csv stem=report ext=csv"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				}
+			]
+		},
+		{
+			"number": 66,
+			"slug": "arithmetic",
+			"name": "Arithmetic expansion with $(( ))",
+			"ext": true,
+			"section": "H",
+			"file": "66_arithmetic.yaml",
+			"planDone": false,
+			"hints": [
+				"Integer arithmetic that truncates toward zero, with C precedence and a ternary",
+				"Names inside need no `$`; unset and empty both count as zero",
+				"Comparisons yield 1 and 0; division by zero is an error"
+			],
+			"tests": [
+				{
+					"name": "the four operations, and integer division that truncates",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "5\n6\n42\n3\n-3\n1"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "precedence and parentheses",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "14\n20\n26\n-5"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "a variable inside needs no dollar, but takes one",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "9\n9\n20"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "an unset or empty variable counts as zero",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "1\n2"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "the result is text, so it can be assigned and reused",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "i=2\ntotal=20"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "comparisons produce 1 for true and 0 for false",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "1\n0\n1\n0\n1\n0"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "the logical operators short-circuit on those same ones and zeros",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "1\n0\n1\n0\n1\n0"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "the bitwise operators are there too",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "2\n7\n5\n16\n8"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "whitespace inside is free, and nested expansions are evaluated first",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "6\n5\n8"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "arithmetic drives a loop and a condition",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "sum=15\ndivisible"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "dividing by zero is an error, not a zero",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "regex",
+							"value": "status=[1-9][0-9]*"
+						}
+					]
+				},
+				{
+					"name": "a ternary picks between two arms",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "100\n200"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "large values stay exact well past what 32 bits would hold",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "1000000000000\n2147483648"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				}
+			]
+		},
+		{
+			"number": 67,
+			"slug": "heredocs",
+			"name": "Here-documents",
+			"ext": true,
+			"section": "H",
+			"file": "67_heredocs.yaml",
+			"planDone": false,
+			"hints": [
+				"The body is read from the lines after the command, ending at the delimiter alone on a line",
+				"An unquoted delimiter expands the body like a double-quoted string; quoting it stops that",
+				"`<<-` strips leading tabs; two here-documents on one line are filled in order"
+			],
+			"tests": [
+				{
+					"name": "a here-document feeds the lines between the markers to stdin",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "line one\nline two"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "the body is expanded like a double-quoted string",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "hello world\nsum 4\nsub inner"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "quoting the delimiter turns expansion off",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "hello $name\nsum $((2 + 2))"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "<<- strips leading tabs from the body and the delimiter",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "indented body\nsecond line"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "an empty here-document sends nothing",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "after"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "the delimiter only ends the body when it is alone on its line",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "EOF not yet\n EOF"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "the marker can be any word",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "body\nafter"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "a here-document can be redirected to a file like any other input",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "done"
+						},
+						{
+							"label": "file {TMP}/out.txt",
+							"kind": "exact",
+							"value": "written\n"
+						}
+					]
+				},
+				{
+					"name": "two here-documents on one line have their bodies read in order",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "first body\nsecond body\nafter"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "a here-document works inside a loop, once per iteration",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "item 1\nitem 2"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "a while loop can read a here-document line by line",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "[alpha]\n[beta]"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "a backslash at the end of a body line joins it to the next",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "joined line"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				}
+			]
+		},
+		{
+			"number": 68,
+			"slug": "read-and-ifs",
+			"name": "read, IFS and field splitting",
+			"ext": true,
+			"section": "H",
+			"file": "68_read_and_ifs.yaml",
+			"planDone": false,
+			"hints": [
+				"Fields split on `IFS`; the last variable keeps the remainder; read fails at end of input",
+				"Whitespace `IFS` collapses runs and trims; other separators make empty fields real",
+				"`-r` stops backslash from continuing lines and from being eaten"
+			],
+			"tests": [
+				{
+					"name": "read takes one line into one variable",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "[hello world]"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "several variables split the line on whitespace",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "[one][two][three]"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "the last variable keeps everything that is left, separators and all",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "[one][two three four]"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "variables with nothing left to take end up empty",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "[only][][]"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "leading and trailing whitespace is not part of a field",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "[padded][words]"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "read fails at end of input, which is what ends a read loop",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "regex",
+							"value": "1=a 0\n2=b 0\n3=\\[\\] [1-9][0-9]*"
+						}
+					]
+				},
+				{
+					"name": "IFS chooses the separator, so a colon-separated line splits on colons",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "[root][x][0][0:root:/root:/bin/sh]"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "with a non-whitespace IFS, empty fields are real fields",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "[a][][c]"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "IFS set for one command does not outlive it",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "[a][b] then 2 words"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "a backslash continues the line unless -r says otherwise",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "[firstsecond]\n[first\\]"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "read inside a loop walks a file to its end",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "1:alpha\n2:beta\n3:gamma"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "the same splitting rules apply when a variable is expanded unquoted",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "unsplit=1\nsplit=3\nsecond=b"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				}
+			]
+		},
+		{
+			"number": 69,
+			"slug": "traps-and-fds",
+			"name": "trap, exec and numbered file descriptors",
+			"ext": true,
+			"section": "H",
+			"file": "69_traps_and_fds.yaml",
+			"planDone": false,
+			"hints": [
+				"`trap` on EXIT and on signals, `trap ''` to ignore, `trap -` to restore",
+				"`exec 3>file` opens a descriptor for the shell itself; `3>&-` closes it",
+				"Redirections apply left to right, which is what makes `2>&1 >f` differ from `>f 2>&1`"
+			],
+			"tests": [
+				{
+					"name": "a trap on EXIT runs when the shell leaves",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "working\ngoodbye"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "the EXIT trap runs on an explicit exit too, and keeps its status",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "cleanup"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "5"
+						}
+					]
+				},
+				{
+					"name": "trap - removes a handler that was set",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "done"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "setting a trap twice keeps only the second",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "body\ntwo"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "a trap on a signal runs when that signal arrives",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "caught-term\nstill-running"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "an ignored signal does not kill the shell",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "survived"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "the trap's cleanup can remove the file the script was using",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "data"
+						},
+						{
+							"label": "files absent",
+							"kind": "absent",
+							"value": "{TMP}/work.tmp"
+						}
+					]
+				},
+				{
+					"name": "exec opens a numbered descriptor that later writes go to",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "to-stdout"
+						},
+						{
+							"label": "file {TMP}/three.txt",
+							"kind": "exact",
+							"value": "to-three\nmore\n"
+						}
+					]
+				},
+				{
+					"name": "a closed descriptor is an error to write to",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "regex",
+							"value": "status=[1-9][0-9]*"
+						}
+					]
+				},
+				{
+					"name": "exec can open a descriptor for reading, and read follows it",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "[first][second]"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "a descriptor can be saved and put back, which is how stdout is borrowed",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "back-on-stdout"
+						},
+						{
+							"label": "file {TMP}/captured.txt",
+							"kind": "exact",
+							"value": "into-the-file\n"
+						}
+					]
+				},
+				{
+					"name": "exec with a command replaces the shell instead of forking",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "before\nreplaced"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "redirections are applied left to right, which is the whole 2>&1 trap",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "to-stderr"
+						},
+						{
+							"label": "file {TMP}/both.txt",
+							"kind": "exact",
+							"value": "[object Object]"
+						},
+						{
+							"label": "file {TMP}/only-out.txt",
+							"kind": "exact",
+							"value": "to-stdout\n"
+						}
+					]
+				},
+				{
+					"name": "a numbered descriptor duplicated per command keeps the target it had at that moment",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "file {TMP}/kept.txt",
+							"kind": "exact",
+							"value": "kept\nonce\nafter\n"
+						},
+						{
+							"label": "file {TMP}/other.txt",
+							"kind": "exact",
+							"value": ""
+						}
+					]
+				}
+			]
+		},
+		{
+			"number": 70,
+			"slug": "set-options",
+			"name": "set -e, -u, -x and the option flags",
+			"ext": true,
+			"section": "H",
+			"file": "70_set_options.yaml",
+			"planDone": false,
+			"hints": [
+				"`-e` exits on an untested failure, but a condition, `||`, `!` and a loop test are all tested",
+				"`-u` makes an unset name an error; `-f` disables globbing; `-x` traces after expansion",
+				"`$-` reports the flags; the same letters work on the command line"
+			],
+			"tests": [
+				{
+					"name": "set -e stops the script at the first command that fails",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "one"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "1"
+						}
+					]
+				},
+				{
+					"name": "the script exits with the status of the command that failed",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": ""
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "7"
+						}
+					]
+				},
+				{
+					"name": "a failure that is being tested does not trip set -e",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "handled\nsurvived"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "set +e turns it back off",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "still-here"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "under set -e only the last command of a pipeline is judged",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "pipeline-ok"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "set -u makes an unset variable an error instead of an empty string",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": ""
+						},
+						{
+							"label": "stderr",
+							"kind": "contains",
+							"value": "v"
+						}
+					]
+				},
+				{
+					"name": "under set -u an empty value is still a value",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "[]\nfine"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "a default makes a variable safe to read under set -u",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "[default]\nfine"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "set -x traces each command to stderr, after expansion",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "hello world"
+						},
+						{
+							"label": "stderr",
+							"kind": "contains",
+							"value": "echo hello world"
+						}
+					]
+				},
+				{
+					"name": "set -x can be turned off again and stops tracing",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "traced\nuntraced"
+						},
+						{
+							"label": "stderr",
+							"kind": "not_contains",
+							"value": "echo untraced"
+						}
+					]
+				},
+				{
+					"name": "set -f turns globbing off",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "a.txt b.txt\n*.txt\na.txt b.txt"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "$- names the flags that are currently on",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "no-u-before\nu-after"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				},
+				{
+					"name": "the flags can be set on the command line instead of in the script",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "one"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "1"
+						}
+					]
+				},
+				{
+					"name": "pipefail reports the first failing command in a pipeline",
+					"ext": true,
+					"tags": [
+						"ext"
+					],
+					"skipOn": [
+						"dash"
+					],
+					"reason": "set -o pipefail is a bash/zsh extension, not in POSIX, and dash does not have it",
+					"expect": [
+						{
+							"label": "stdout",
+							"kind": "exact",
+							"value": "without=0\nwith=3"
+						},
+						{
+							"label": "exit code",
+							"kind": "exact",
+							"value": "0"
+						}
+					]
+				}
+			]
 		}
 	],
 	"totals": {
-		"stages": 57,
-		"tests": 428,
-		"ext": 18
+		"stages": 70,
+		"tests": 592,
+		"ext": 31
 	},
 	"source": "shelltest/PLAN.md + tests/stages/*.yaml"
 }

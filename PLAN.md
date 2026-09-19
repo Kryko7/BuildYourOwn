@@ -4,7 +4,7 @@ Three deliverables in this repo (`~/Personal/BuildYourOwn`):
 
 | Dir | What | Status |
 |---|---|---|
-| `shelltest/` | Rust black-box tester for a POSIX shell, 57 stages / 428 tests, validated on bash | done (2026-09-12) |
+| `shelltest/` | Rust black-box tester for a POSIX shell, 70 stages / 592 tests, validated on bash | done (2026-09-12; section H added 2026-09-19) |
 | `kafkatest/` | Rust black-box tester for a Kafka broker, ~45 stages, validated on real Apache Kafka 4.1 (KRaft) | **to build** |
 | `site/` | the journey site — SvelteKit site: interactive journey map for BOTH tracks, what to build per stage, learning resources, live red/green from the testers' JSON reports | **to build** |
 
@@ -617,9 +617,9 @@ buildable at every step.
 | `dist` node | 15 / 128 | etcd 3.7.1 | 108 s |
 | `dist` cluster | 20 / 164 | etcd 3.7.1 | 859 s |
 
-With shell (57/428) and kafka (45/296) that is **2 453 tests over six tracks**, every one of
+With shell (70/592) and kafka (45/296) that is **2 617 tests over six tracks**, every one of
 them green against the real implementation. `byo` carries a six-entry registry (98 tests), the
-site renders six trails from those catalogs (311 stage pages prerendered), and `install.sh`
+site renders six trails from those catalogs (324 stage pages prerendered), and `install.sh`
 builds and installs all of it.
 
 Verified after the build, in a sandbox `BYO_HOME`: `install.sh --skip-site` → `byo tracks`
