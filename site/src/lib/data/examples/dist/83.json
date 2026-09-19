@@ -1,0 +1,24 @@
+[
+	{
+		"title": "A sender that dies halfway",
+		"kind": "primitives",
+		"request": "Process 0 broadcasts, one process gets it, then 0 crashes\n\n./your_program.sh broadcast\ninit 3\nmode best-effort\nbroadcast 0\nhand 1 1\ncrash 0\nsettle\ndelivered 1",
+		"request_hex": "2e2f796f75725f70726f6772616d2e73682062726f6164636173740a696e697420330a6d6f646520626573742d6566666f72740a62726f61646361737420300a68616e64203120310a637261736820300a736574746c650a64656c6976657265642031",
+		"response": "`delivered_to` is [0, 1] and `all_correct` is false — process 2 never gets it\n\n{\"mode\":\"best-effort\",\"ok\":true,\"processes\":3}\n{\"mode\":\"best-effort\",\"ok\":true}\n{\"id\":1,\"ok\":true,\"sent\":true}\n{\"handed\":true,\"id\":1,\"ok\":true,\"to\":1}\n{\"crashed\":0,\"ok\":true}\n{\"ok\":true,\"rounds\":0}\n{\"all_correct\":false,\"correct_processes\":[1],\"delivered_to\":[0,1],\"id\":1,\"ok\":true}",
+		"response_hex": "7b226d6f6465223a22626573742d6566666f7274222c226f6b223a747275652c2270726f636573736573223a337d0a7b226d6f6465223a22626573742d6566666f7274222c226f6b223a747275657d0a7b226964223a312c226f6b223a747275652c2273656e74223a747275657d0a7b2268616e646564223a747275652c226964223a312c226f6b223a747275652c22746f223a317d0a7b2263726173686564223a302c226f6b223a747275657d0a7b226f6b223a747275652c22726f756e6473223a307d0a7b22616c6c5f636f7272656374223a66616c73652c22636f72726563745f70726f636573736573223a5b315d2c2264656c6976657265645f746f223a5b302c315d2c226964223a312c226f6b223a747275657d",
+		"note": "Nothing went wrong that best-effort broadcast promised would not happen. Two correct processes now disagree about whether the message exists, which is fine until something is built on top that assumes they agree.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "The same run, one mode stronger",
+		"kind": "primitives",
+		"request": "The identical sequence under reliable broadcast\n\n./your_program.sh broadcast\ninit 3\nmode reliable\nbroadcast 0\nhand 1 1\ncrash 0\nsettle\ndelivered 1",
+		"request_hex": "2e2f796f75725f70726f6772616d2e73682062726f6164636173740a696e697420330a6d6f64652072656c6961626c650a62726f61646361737420300a68616e64203120310a637261736820300a736574746c650a64656c6976657265642031",
+		"response": "`all_correct` is true — process 1 relayed it to process 2\n\n{\"mode\":\"best-effort\",\"ok\":true,\"processes\":3}\n{\"mode\":\"reliable\",\"ok\":true}\n{\"id\":1,\"ok\":true,\"sent\":true}\n{\"handed\":true,\"id\":1,\"ok\":true,\"to\":1}\n{\"crashed\":0,\"ok\":true}\n{\"ok\":true,\"rounds\":1}\n{\"all_correct\":true,\"correct_processes\":[1,2],\"delivered_to\":[0,1,2],\"id\":1,\"ok\":true}",
+		"response_hex": "7b226d6f6465223a22626573742d6566666f7274222c226f6b223a747275652c2270726f636573736573223a337d0a7b226d6f6465223a2272656c6961626c65222c226f6b223a747275657d0a7b226964223a312c226f6b223a747275652c2273656e74223a747275657d0a7b2268616e646564223a747275652c226964223a312c226f6b223a747275652c22746f223a317d0a7b2263726173686564223a302c226f6b223a747275657d0a7b226f6b223a747275652c22726f756e6473223a317d0a7b22616c6c5f636f7272656374223a747275652c22636f72726563745f70726f636573736573223a5b312c325d2c2264656c6976657265645f746f223a5b302c312c325d2c226964223a312c226f6b223a747275657d",
+		"note": "The sender is just as dead. What changed is that delivery now means \"I will make sure everyone else gets this too\", so the broadcast is completed by its recipients. That is the whole implementation: relay on first delivery.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

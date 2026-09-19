@@ -1,0 +1,24 @@
+[
+	{
+		"title": "A stable snapshot while the world moves",
+		"kind": "primitives",
+		"request": "A long-running reader, and a writer that commits underneath it\n\n./your_program.sh snapshot\ninit\nbegin reader\nbegin writer\nwrite writer k 99\nprewrite writer\ncommit writer\nread reader k",
+		"request_hex": "2e2f796f75725f70726f6772616d2e736820736e617073686f740a696e69740a626567696e207265616465720a626567696e207772697465720a777269746520777269746572206b2039390a7072657772697465207772697465720a636f6d6d6974207772697465720a7265616420726561646572206b",
+		"response": "the reader still sees 0 — the value as of its own start timestamp\n\n{\"clock\":0,\"ok\":true}\n{\"ok\":true,\"start_ts\":1,\"transaction\":\"reader\"}\n{\"ok\":true,\"start_ts\":2,\"transaction\":\"writer\"}\n{\"buffered\":1,\"ok\":true}\n{\"locks\":1,\"ok\":true,\"prewritten\":true}\n{\"commit_ts\":3,\"committed\":true,\"ok\":true}\n{\"from\":\"snapshot\",\"ok\":true,\"start_ts\":1,\"value\":0}",
+		"response_hex": "7b22636c6f636b223a302c226f6b223a747275657d0a7b226f6b223a747275652c2273746172745f7473223a312c227472616e73616374696f6e223a22726561646572227d0a7b226f6b223a747275652c2273746172745f7473223a322c227472616e73616374696f6e223a22777269746572227d0a7b226275666665726564223a312c226f6b223a747275657d0a7b226c6f636b73223a312c226f6b223a747275652c227072657772697474656e223a747275657d0a7b22636f6d6d69745f7473223a332c22636f6d6d6974746564223a747275652c226f6b223a747275657d0a7b2266726f6d223a22736e617073686f74222c226f6b223a747275652c2273746172745f7473223a312c2276616c7565223a307d",
+		"note": "The reader is not stale by accident, it is stale on purpose and consistently so: every key it reads comes from the same instant. That is what makes a report running for ten minutes produce numbers that add up.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "Two writers, one key",
+		"kind": "primitives",
+		"request": "Two concurrent transactions writing the same key, a committing first\n\n./your_program.sh snapshot\ninit\nbegin a\nbegin b\nwrite a k 1\nwrite b k 2\nprewrite a\ncommit a\nprewrite b",
+		"request_hex": "2e2f796f75725f70726f6772616d2e736820736e617073686f740a696e69740a626567696e20610a626567696e20620a77726974652061206b20310a77726974652062206b20320a707265777269746520610a636f6d6d697420610a70726577726974652062",
+		"response": "b's prewrite fails with a write conflict\n\n{\"clock\":0,\"ok\":true}\n{\"ok\":true,\"start_ts\":1,\"transaction\":\"a\"}\n{\"ok\":true,\"start_ts\":2,\"transaction\":\"b\"}\n{\"buffered\":1,\"ok\":true}\n{\"buffered\":1,\"ok\":true}\n{\"locks\":1,\"ok\":true,\"prewritten\":true}\n{\"commit_ts\":3,\"committed\":true,\"ok\":true}\n{\"key\":\"k\",\"ok\":true,\"prewritten\":false,\"reason\":\"write conflict\"}",
+		"response_hex": "7b22636c6f636b223a302c226f6b223a747275657d0a7b226f6b223a747275652c2273746172745f7473223a312c227472616e73616374696f6e223a2261227d0a7b226f6b223a747275652c2273746172745f7473223a322c227472616e73616374696f6e223a2262227d0a7b226275666665726564223a312c226f6b223a747275657d0a7b226275666665726564223a312c226f6b223a747275657d0a7b226c6f636b73223a312c226f6b223a747275652c227072657772697474656e223a747275657d0a7b22636f6d6d69745f7473223a332c22636f6d6d6974746564223a747275652c226f6b223a747275657d0a7b226b6579223a226b222c226f6b223a747275652c227072657772697474656e223a66616c73652c22726561736f6e223a22777269746520636f6e666c696374227d",
+		"note": "b's snapshot predates a's commit, so letting b write would silently discard a's update — the lost update anomaly. Snapshot isolation catches it at prewrite by refusing any key with a version newer than the transaction's own start.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

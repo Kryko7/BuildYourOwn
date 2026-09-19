@@ -1,0 +1,24 @@
+[
+	{
+		"title": "A reply that overtakes its cause",
+		"kind": "primitives",
+		"request": "0 sends, 1 delivers it and sends a reply, and the reply reaches 2 first\n\n./your_program.sh ordering\ninit 3\norder causal\nsend 0\noffer 1 1\nsend 1\noffer 2 2\nlog 2\noffer 1 2\noffer 2 2\nlog 2",
+		"request_hex": "2e2f796f75725f70726f6772616d2e7368206f72646572696e670a696e697420330a6f726465722063617573616c0a73656e6420300a6f66666572203120310a73656e6420310a6f66666572203220320a6c6f6720320a6f66666572203120320a6f66666572203220320a6c6f672032",
+		"response": "the reply is held back, and is delivered only after the message it replies to\n\n{\"ok\":true,\"order\":\"fifo\",\"processes\":3}\n{\"ok\":true,\"order\":\"causal\"}\n{\"id\":1,\"ok\":true,\"seq\":1,\"slot\":1}\n{\"delivered\":true,\"id\":1,\"ok\":true,\"to\":1}\n{\"id\":2,\"ok\":true,\"seq\":1,\"slot\":2}\n{\"delivered\":false,\"ok\":true,\"order\":\"causal\",\"reason\":\"held back\"}\n{\"log\":[],\"ok\":true,\"process\":2}\n{\"delivered\":true,\"id\":1,\"ok\":true,\"to\":2}\n{\"delivered\":true,\"id\":2,\"ok\":true,\"to\":2}\n{\"log\":[1,2],\"ok\":true,\"process\":2}",
+		"response_hex": "7b226f6b223a747275652c226f72646572223a226669666f222c2270726f636573736573223a337d0a7b226f6b223a747275652c226f72646572223a2263617573616c227d0a7b226964223a312c226f6b223a747275652c22736571223a312c22736c6f74223a317d0a7b2264656c697665726564223a747275652c226964223a312c226f6b223a747275652c22746f223a317d0a7b226964223a322c226f6b223a747275652c22736571223a312c22736c6f74223a327d0a7b2264656c697665726564223a66616c73652c226f6b223a747275652c226f72646572223a2263617573616c222c22726561736f6e223a2268656c64206261636b227d0a7b226c6f67223a5b5d2c226f6b223a747275652c2270726f63657373223a327d0a7b2264656c697665726564223a747275652c226964223a312c226f6b223a747275652c22746f223a327d0a7b2264656c697665726564223a747275652c226964223a322c226f6b223a747275652c22746f223a327d0a7b226c6f67223a5b312c325d2c226f6b223a747275652c2270726f63657373223a327d",
+		"note": "Process 2 sees the answer before the question — over a network that reorders, which is every network. Causal order is the machinery that makes that impossible to observe, and the vector clock on the message is what carries the information needed to spot it.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "Total order means identical logs",
+		"kind": "primitives",
+		"request": "Two messages from different senders, offered to one process out of order\n\n./your_program.sh ordering\ninit 3\norder total\nsend 0\nsend 1\noffer 2 1\noffer 1 1\noffer 2 1\nlog 1",
+		"request_hex": "2e2f796f75725f70726f6772616d2e7368206f72646572696e670a696e697420330a6f7264657220746f74616c0a73656e6420300a73656e6420310a6f66666572203220310a6f66666572203120310a6f66666572203220310a6c6f672031",
+		"response": "the second message is held back until the first has been delivered\n\n{\"ok\":true,\"order\":\"fifo\",\"processes\":3}\n{\"ok\":true,\"order\":\"total\"}\n{\"id\":1,\"ok\":true,\"seq\":1,\"slot\":1}\n{\"id\":2,\"ok\":true,\"seq\":1,\"slot\":2}\n{\"delivered\":false,\"ok\":true,\"order\":\"total\",\"reason\":\"held back\"}\n{\"delivered\":true,\"id\":1,\"ok\":true,\"to\":1}\n{\"delivered\":true,\"id\":2,\"ok\":true,\"to\":1}\n{\"log\":[1,2],\"ok\":true,\"process\":1}",
+		"response_hex": "7b226f6b223a747275652c226f72646572223a226669666f222c2270726f636573736573223a337d0a7b226f6b223a747275652c226f72646572223a22746f74616c227d0a7b226964223a312c226f6b223a747275652c22736571223a312c22736c6f74223a317d0a7b226964223a322c226f6b223a747275652c22736571223a312c22736c6f74223a327d0a7b2264656c697665726564223a66616c73652c226f6b223a747275652c226f72646572223a22746f74616c222c22726561736f6e223a2268656c64206261636b227d0a7b2264656c697665726564223a747275652c226964223a312c226f6b223a747275652c22746f223a317d0a7b2264656c697665726564223a747275652c226964223a322c226f6b223a747275652c22746f223a317d0a7b226c6f67223a5b312c325d2c226f6b223a747275652c2270726f63657373223a317d",
+		"note": "Under FIFO or causal these two are unrelated and either order would be fine. Total order refuses anyway, because every process has to end up with the same log — and that agreement is the part that cannot be done without consensus.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

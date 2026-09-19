@@ -1,0 +1,24 @@
+[
+	{
+		"title": "Eventually perfect, before and after",
+		"kind": "primitives",
+		"request": "A three-process group where one crashes, under ◇P\n\n./your_program.sh detector\ninit 3\nclass eventually-perfect\ncrash 2\nproperties\nstabilise\nproperties",
+		"request_hex": "2e2f796f75725f70726f6772616d2e7368206465746563746f720a696e697420330a636c617373206576656e7475616c6c792d706572666563740a637261736820320a70726f706572746965730a73746162696c6973650a70726f70657274696573",
+		"response": "before stabilising, accuracy is false; after, it is true — completeness holds throughout\n\n{\"class\":\"P\",\"ok\":true,\"processes\":3}\n{\"class\":\"eventually-perfect\",\"ok\":true,\"stable\":false}\n{\"crashed\":2,\"ok\":true}\n{\"class\":\"eventually-perfect\",\"ok\":true,\"stable\":false,\"strong_accuracy\":false,\"strong_completeness\":true,\"weak_accuracy\":false}\n{\"ok\":true,\"stable\":true}\n{\"class\":\"eventually-perfect\",\"ok\":true,\"stable\":true,\"strong_accuracy\":true,\"strong_completeness\":true,\"weak_accuracy\":true}",
+		"response_hex": "7b22636c617373223a2250222c226f6b223a747275652c2270726f636573736573223a337d0a7b22636c617373223a226576656e7475616c6c792d70657266656374222c226f6b223a747275652c22737461626c65223a66616c73657d0a7b2263726173686564223a322c226f6b223a747275657d0a7b22636c617373223a226576656e7475616c6c792d70657266656374222c226f6b223a747275652c22737461626c65223a66616c73652c227374726f6e675f6163637572616379223a66616c73652c227374726f6e675f636f6d706c6574656e657373223a747275652c227765616b5f6163637572616379223a66616c73657d0a7b226f6b223a747275652c22737461626c65223a747275657d0a7b22636c617373223a226576656e7475616c6c792d70657266656374222c226f6b223a747275652c22737461626c65223a747275652c227374726f6e675f6163637572616379223a747275652c227374726f6e675f636f6d706c6574656e657373223a747275652c227765616b5f6163637572616379223a747275657d",
+		"note": "The unstable phase is not a bug to be engineered away: any detector built on timeouts has one, because a slow process and a dead process look identical for as long as the timeout allows. What ◇P promises is that the phase ends, not when.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "Why ◇S is enough",
+		"kind": "primitives",
+		"request": "Four correct processes under ◇S, after stabilisation\n\n./your_program.sh detector\ninit 4\nclass eventually-strong\nstabilise\nsuspects 1\nproperties",
+		"request_hex": "2e2f796f75725f70726f6772616d2e7368206465746563746f720a696e697420340a636c617373206576656e7475616c6c792d7374726f6e670a73746162696c6973650a737573706563747320310a70726f70657274696573",
+		"response": "process 1 suspects other correct processes, but strong accuracy is false while weak accuracy is true\n\n{\"class\":\"P\",\"ok\":true,\"processes\":4}\n{\"class\":\"eventually-strong\",\"ok\":true,\"stable\":false}\n{\"ok\":true,\"stable\":true}\n{\"ok\":true,\"process\":1,\"suspects\":[2,3]}\n{\"class\":\"eventually-strong\",\"ok\":true,\"stable\":true,\"strong_accuracy\":false,\"strong_completeness\":true,\"weak_accuracy\":true}",
+		"response_hex": "7b22636c617373223a2250222c226f6b223a747275652c2270726f636573736573223a347d0a7b22636c617373223a226576656e7475616c6c792d7374726f6e67222c226f6b223a747275652c22737461626c65223a66616c73657d0a7b226f6b223a747275652c22737461626c65223a747275657d0a7b226f6b223a747275652c2270726f63657373223a312c227375737065637473223a5b322c335d7d0a7b22636c617373223a226576656e7475616c6c792d7374726f6e67222c226f6b223a747275652c22737461626c65223a747275652c227374726f6e675f6163637572616379223a66616c73652c227374726f6e675f636f6d706c6574656e657373223a747275652c227765616b5f6163637572616379223a747275657d",
+		"note": "A detector this inaccurate still suspects correct processes for ever — and one correct process is never suspected by anyone. Elect that one and it is never deposed, so the protocol makes progress. Chandra and Toueg's result is that nothing weaker will do.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

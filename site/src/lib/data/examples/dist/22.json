@@ -4,8 +4,8 @@
 		"kind": "node",
 		"request": "`foo` set to `bar`, both base64\n\nPOST /v3/kv/put\n{\n  \"key\": \"Zm9v\",\n  \"value\": \"YmFy\"\n}",
 		"request_hex": "7b226b6579223a225a6d3976222c2276616c7565223a22596d4679227d",
-		"response": "a header whose revision is the store's clock after the write\n\nHTTP 200 OK\n{\n  \"header\": {\n    \"cluster_id\": \"8509255696011739095\",\n    \"member_id\": \"13213900263410094331\",\n    \"raft_term\": \"2\",\n    \"revision\": \"2\"\n  }\n}",
-		"response_hex": "7b22686561646572223a7b22636c75737465725f6964223a2238353039323535363936303131373339303935222c226d656d6265725f6964223a223133323133393030323633343130303934333331222c227265766973696f6e223a2232222c22726166745f7465726d223a2232227d7d",
+		"response": "a header whose revision is the store's clock after the write\n\nHTTP 200 OK\n{\n  \"header\": {\n    \"cluster_id\": \"7498597165056757145\",\n    \"member_id\": \"3992769929546801462\",\n    \"raft_term\": \"2\",\n    \"revision\": \"2\"\n  }\n}",
+		"response_hex": "7b22686561646572223a7b22636c75737465725f6964223a2237343938353937313635303536373537313435222c226d656d6265725f6964223a2233393932373639393239353436383031343632222c227265766973696f6e223a2232222c22726166745f7465726d223a2232227d7d",
 		"note": "There is no body beyond the header: a put tells you when it happened, not what it wrote. Ask for `prev_kv` when you want the value that was there before.",
 		"request_fields": [
 			{
@@ -26,7 +26,7 @@
 				"offset": 1,
 				"length": 8,
 				"field": "response.header",
-				"value": "{\"cluster_id\":\"8509255696011739095\",\"member_id\":\"13213900263410094331\",\"raft_term\":\"2\",\"revision\":\"2\"}",
+				"value": "{\"cluster_id\":\"7498597165056757145\",\"member_id\":\"3992769929546801462\",\"raft_term\":\"2\",\"revision\":\"2\"}",
 				"varies": true
 			}
 		]
@@ -36,8 +36,8 @@
 		"kind": "node",
 		"request": "a point read of the same key\n\nPOST /v3/kv/range\n{\n  \"key\": \"Zm9v\"\n}",
 		"request_hex": "7b226b6579223a225a6d3976227d",
-		"response": "one kv with create_revision, mod_revision and version, and count 1\n\nHTTP 200 OK\n{\n  \"header\": {\n    \"cluster_id\": \"8522501995138264593\",\n    \"member_id\": \"5653746159478339910\",\n    \"raft_term\": \"2\",\n    \"revision\": \"1\"\n  }\n}",
-		"response_hex": "7b22686561646572223a7b22636c75737465725f6964223a2238353232353031393935313338323634353933222c226d656d6265725f6964223a2235363533373436313539343738333339393130222c227265766973696f6e223a2231222c22726166745f7465726d223a2232227d7d",
+		"response": "one kv with create_revision, mod_revision and version, and count 1\n\nHTTP 200 OK\n{\n  \"header\": {\n    \"cluster_id\": \"6206401200602049117\",\n    \"member_id\": \"7393275895991077388\",\n    \"raft_term\": \"2\",\n    \"revision\": \"1\"\n  }\n}",
+		"response_hex": "7b22686561646572223a7b22636c75737465725f6964223a2236323036343031323030363032303439313137222c226d656d6265725f6964223a2237333933323735383935393931303737333838222c227265766973696f6e223a2231222c22726166745f7465726d223a2232227d7d",
 		"note": "create_revision is set once and never moves; mod_revision follows every put; version counts the puts since the key was created, so it is 1 after the first.",
 		"request_fields": [
 			{
@@ -52,7 +52,7 @@
 				"offset": 1,
 				"length": 8,
 				"field": "response.header",
-				"value": "{\"cluster_id\":\"8522501995138264593\",\"member_id\":\"5653746159478339910\",\"raft_term\":\"2\",\"revision\":\"1\"}",
+				"value": "{\"cluster_id\":\"6206401200602049117\",\"member_id\":\"7393275895991077388\",\"raft_term\":\"2\",\"revision\":\"1\"}",
 				"varies": true
 			}
 		]

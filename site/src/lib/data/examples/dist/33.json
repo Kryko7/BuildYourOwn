@@ -4,8 +4,8 @@
 		"kind": "node",
 		"request": "an ordinary put, sent while a watch on `wk` is open\n\nPOST /v3/kv/put\n{\n  \"key\": \"d2s=\",\n  \"value\": \"djE=\"\n}",
 		"request_hex": "7b226b6579223a226432733d222c2276616c7565223a22646a453d227d",
-		"response": "the put's own header — and, on the open stream, one event at that revision\n\nHTTP 200 OK\n{\n  \"header\": {\n    \"cluster_id\": \"8928134771492664557\",\n    \"member_id\": \"8987648678396340321\",\n    \"raft_term\": \"2\",\n    \"revision\": \"2\"\n  }\n}",
-		"response_hex": "7b22686561646572223a7b22636c75737465725f6964223a2238393238313334373731343932363634353537222c226d656d6265725f6964223a2238393837363438363738333936333430333231222c227265766973696f6e223a2232222c22726166745f7465726d223a2232227d7d",
+		"response": "the put's own header — and, on the open stream, one event at that revision\n\nHTTP 200 OK\n{\n  \"header\": {\n    \"cluster_id\": \"17458808145326109114\",\n    \"member_id\": \"15034652533188154217\",\n    \"raft_term\": \"2\",\n    \"revision\": \"2\"\n  }\n}",
+		"response_hex": "7b22686561646572223a7b22636c75737465725f6964223a223137343538383038313435333236313039313134222c226d656d6265725f6964223a223135303334363532353333313838313534323137222c227265766973696f6e223a2232222c22726166745f7465726d223a2232227d7d",
 		"note": "The watcher's stream carries `{\"result\":{\"header\":{...,\"revision\":\"N\"},\"events\":[{\"kv\":{\"key\":\"d2s=\",\"create_revision\":\"N\",\"mod_revision\":\"N\",\"version\":\"1\",\"value\":\"djE=\"}}]}}`, where N is the revision in this response. There is no `type`: PUT is the zero value of that enum, so it is left out.",
 		"request_fields": [
 			{
@@ -26,7 +26,7 @@
 				"offset": 1,
 				"length": 8,
 				"field": "response.header",
-				"value": "{\"cluster_id\":\"8928134771492664557\",\"member_id\":\"8987648678396340321\",\"raft_term\":\"2\",\"revision\":\"2\"}",
+				"value": "{\"cluster_id\":\"17458808145326109114\",\"member_id\":\"15034652533188154217\",\"raft_term\":\"2\",\"revision\":\"2\"}",
 				"varies": true
 			}
 		]
@@ -36,8 +36,8 @@
 		"kind": "node",
 		"request": "the delete of the same key, again with a watch open\n\nPOST /v3/kv/deleterange\n{\n  \"key\": \"d2s=\"\n}",
 		"request_hex": "7b226b6579223a226432733d227d",
-		"response": "`deleted: 1` here, and a second event on the stream\n\nHTTP 200 OK\n{\n  \"deleted\": \"1\",\n  \"header\": {\n    \"cluster_id\": \"569780211084922371\",\n    \"member_id\": \"16362890499939358125\",\n    \"raft_term\": \"2\",\n    \"revision\": \"3\"\n  }\n}",
-		"response_hex": "7b22686561646572223a7b22636c75737465725f6964223a22353639373830323131303834393232333731222c226d656d6265725f6964223a223136333632383930343939393339333538313235222c227265766973696f6e223a2233222c22726166745f7465726d223a2232227d2c2264656c65746564223a2231227d",
+		"response": "`deleted: 1` here, and a second event on the stream\n\nHTTP 200 OK\n{\n  \"deleted\": \"1\",\n  \"header\": {\n    \"cluster_id\": \"4704235433995004981\",\n    \"member_id\": \"1499079932785646282\",\n    \"raft_term\": \"2\",\n    \"revision\": \"3\"\n  }\n}",
+		"response_hex": "7b22686561646572223a7b22636c75737465725f6964223a2234373034323335343333393935303034393831222c226d656d6265725f6964223a2231343939303739393332373835363436323832222c227265766973696f6e223a2233222c22726166745f7465726d223a2232227d2c2264656c65746564223a2231227d",
 		"note": "That event is `{\"type\":\"DELETE\",\"kv\":{\"key\":\"d2s=\",\"mod_revision\":\"N\"}}`: the key, the revision it went at, and nothing else. A watcher that expects a value here, or expects `version` to be there, breaks on the first delete it sees.",
 		"request_fields": [
 			{
@@ -52,7 +52,7 @@
 				"offset": 1,
 				"length": 8,
 				"field": "response.header",
-				"value": "{\"cluster_id\":\"569780211084922371\",\"member_id\":\"16362890499939358125\",\"raft_term\":\"2\",\"revision\":\"3\"}",
+				"value": "{\"cluster_id\":\"4704235433995004981\",\"member_id\":\"1499079932785646282\",\"raft_term\":\"2\",\"revision\":\"3\"}",
 				"varies": true
 			},
 			{

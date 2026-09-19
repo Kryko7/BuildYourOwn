@@ -106,6 +106,12 @@ mod s79_session_guarantees;
 mod s80_abd_register;
 mod s81_chain_replication;
 mod s82_raft_reads_and_prevote;
+mod s83_reliable_broadcast;
+mod s84_ordered_broadcast;
+mod s85_failure_detectors;
+mod s86_byzantine_quorums;
+mod s87_commit_wait;
+mod s88_snapshot_isolation;
 
 /// Every implemented stage, in ascending order.
 pub fn all() -> Vec<Stage> {
@@ -192,6 +198,12 @@ pub fn all() -> Vec<Stage> {
         s80_abd_register::stage(),
         s81_chain_replication::stage(),
         s82_raft_reads_and_prevote::stage(),
+        s83_reliable_broadcast::stage(),
+        s84_ordered_broadcast::stage(),
+        s85_failure_detectors::stage(),
+        s86_byzantine_quorums::stage(),
+        s87_commit_wait::stage(),
+        s88_snapshot_isolation::stage(),
     ];
     v.sort_by_key(|s| s.number);
     v
@@ -326,6 +338,16 @@ pub fn sections() -> &'static [Section] {
             id: "n",
             title: "Algorithms: replication strategies",
             stages: &[80, 81, 82],
+        },
+        Section {
+            id: "o",
+            title: "Algorithms: broadcast and detection",
+            stages: &[83, 84, 85],
+        },
+        Section {
+            id: "p",
+            title: "Algorithms: trust, time and transactions",
+            stages: &[86, 87, 88],
         },
     ]
 }

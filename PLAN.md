@@ -613,13 +613,13 @@ buildable at every step.
 | `tls` | 48 / 343 | `openssl s_server` 3.6.4 | 75 s (1 documented skip) |
 | `link` | 42 / 341 | GNU ld 2.47 | 4 s |
 | `dist` primitives | 20 / 183 | `examples/reference_primitives` | 5 s |
-| `dist` algorithms | 27 / 295 | `examples/reference_algorithms` | 0.5 s |
+| `dist` algorithms | 33 / 355 | `examples/reference_algorithms` | 0.7 s |
 | `dist` node | 15 / 128 | etcd 3.7.1 | 108 s |
 | `dist` cluster | 20 / 164 | etcd 3.7.1 | 859 s |
 
-With shell (70/592) and kafka (45/296) that is **2 723 tests over six tracks**, every one of
+With shell (70/592) and kafka (45/296) that is **2 783 tests over six tracks**, every one of
 them green against the real implementation. `byo` carries a six-entry registry (98 tests), the
-site renders six trails from those catalogs (340 stage pages prerendered), and `install.sh`
+site renders six trails from those catalogs (346 stage pages prerendered), and `install.sh`
 builds and installs all of it.
 
 Verified after the build, in a sandbox `BYO_HOME`: `install.sh --skip-site` → `byo tracks`

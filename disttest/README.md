@@ -16,8 +16,8 @@ disttest --list --json > catalog.json            # the stage catalog the site re
 Nothing here implements the thing you are building. This repository holds the harness, the
 suite, the oracles, the fault injector and the docs.
 
-**82 stages, 770 tests.** 20 stages on the primitives ladder, 27 on the algorithms
-ladder, 15 on the node ladder, 20 on the cluster ladder; 496 of the tests are the core
+**88 stages, 830 tests.** 20 stages on the primitives ladder, 33 on the algorithms
+ladder, 15 on the node ladder, 20 on the cluster ladder; 544 of the tests are the core
 track and the rest are `[ext]`.
 
 ---
@@ -33,7 +33,7 @@ in `catalog.json`.
 | ladder | stages | what your program is | reference for `--validate` |
 |---|---|---|---|
 | `primitives` | 01–20 | a line-oriented CLI, one JSON object per command | `reference_primitives` (this crate's own example) |
-| `algorithms` | 56–82 | the same CLI, one topic per classic algorithm or pattern | `reference_algorithms` (this crate's own example) |
+| `algorithms` | 56–88 | the same CLI, one topic per classic algorithm or pattern | `reference_algorithms` (this crate's own example) |
 | `node` | 21–35 | one server speaking a subset of the etcd v3 HTTP/JSON API | real **etcd 3.7.1** |
 | `cluster` | 36–55 | three or five of those servers, replicating | real **etcd 3.7.1** |
 
@@ -1298,7 +1298,7 @@ disttest/
 
 **Stage numbers are append-only.** The site's resource library cites them, so a new stage
 takes the next free number whatever ladder it belongs to; the `ladder` field and the section
-letter are what place it. That is why the algorithms ladder is stages 56–82 and still sits
+letter are what place it. That is why the algorithms ladder is stages 56–88 and still sits
 second in every listing.
 
 A stage looks like this:

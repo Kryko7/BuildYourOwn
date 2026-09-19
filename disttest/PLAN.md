@@ -485,3 +485,47 @@ the parts of production Raft the paper leaves to its last section.
   - Pre-vote asks for votes without raising the term, and only increments when the answer would be yes — a node that cannot win leaves the cluster's term alone
   - ReadIndex has two conditions and needs both: a heartbeat quorum proving the leader is still the leader, and the state machine having applied everything committed
   - Leadership transfer does not hold an election: the term moves once, to a named successor, with no timeout in between
+
+## O. Algorithms: broadcast and detection
+
+The abstractions every consensus protocol is built on and most courses skip past: what
+"send it to everyone" actually promises, what ordering costs, and what a failure detector
+has to guarantee for any of it to terminate.
+
+- [ ] **Stage 83** — Broadcast: best-effort, reliable, uniform (`src/stages/s83_reliable_broadcast.rs`, 10 tests)
+  - Topic `broadcast`: `mode <best-effort|reliable|uniform>`, `broadcast <from>`, `hand <id> <to>` for one network delivery, `crash <p>`, `settle` to run to quiet
+  - All three modes deliver at most once and never invent a message; they differ only in what a sender's crash costs
+  - Reliable broadcast is built by relaying on first delivery, so the guarantee holds among correct processes without the sender being alive to finish
+  - Uniform adds the promise that a delivery by a process that then crashes still obliges everyone else — the difference matters when delivering has a visible effect
+- [ ] **Stage 84** — Ordered delivery: FIFO, causal, total (`src/stages/s84_ordered_broadcast.rs`, 10 tests)
+  - Topic `ordering`: `order <fifo|causal|total>`, `send <from>`, `offer <id> <to>` to try a delivery, `log <p>` for what a process has delivered
+  - A message that may not be delivered yet is *held back*, not refused — it waits in a queue until what it depends on has arrived
+  - FIFO needs one sequence number per sender; causal needs what the sender had already delivered, which is exactly a vector clock
+  - Total order means every process's log is identical, which is why it cannot be done without agreement — it is consensus wearing a different name
+- [ ] **Stage 85** — Failure detectors: completeness, accuracy and ◇S (`src/stages/s85_failure_detectors.rs`, 10 tests)
+  - Topic `detector`: `class <P|eventually-perfect|eventually-strong>`, `crash <p>`, `stabilise` to make time pass, `suspects <p>`, `properties` for the verdict
+  - Strong completeness — every crashed process eventually suspected by every correct one — is common to all three classes; only accuracy differs
+  - The ◇ means the guarantee holds only after some unknown time, so before `stabilise` a detector may suspect anybody at all
+  - ◇S promises only that *one* correct process is eventually never suspected, and that is exactly enough to elect a leader nobody deposes
+
+## P. Algorithms: trust, time and transactions
+
+Three assumptions the rest of the track quietly makes, each examined on its own: that a
+failed replica goes quiet rather than lying, that clocks can be compared, and that a
+transaction spanning several keys can be made to look instantaneous.
+
+- [ ] **Stage 86** — Byzantine quorums: sizing for replicas that lie (`src/stages/s86_byzantine_quorums.rs`, 10 tests)
+  - Topic `byzantine`: `init <nodes> <faults>`, `quorum`, `intersect`, `safe`, and `decide <reply>...` for what a client may believe
+  - Two quorums must share more than f nodes so that at least one shared node is honest: q > (n + f) / 2
+  - A quorum must also be reachable while f nodes are silent, so q ≤ n − f; the two bounds together require n > 3f
+  - With f = 0 the rule collapses to the ordinary majority, which is why crash-fault systems are sized 2f + 1 and Byzantine ones 3f + 1
+- [ ] **Stage 87** — Clock uncertainty and commit-wait (`src/stages/s87_commit_wait.rs`, 10 tests)
+  - Topic `commit-wait`: `init <epsilon>` sets the uncertainty, `now` returns the interval, `commit <name>` takes a timestamp, `tick <ms>` moves time on
+  - The timestamp is the *latest* the clock could be, so it is never in the past for any node in the system
+  - Commit-wait holds the commit until the *earliest* possible now is past that timestamp — a wait of 2ε, not ε
+  - `external-order` asks the question that matters: does the timestamp order agree with the order an outside observer saw the commits happen
+- [ ] **Stage 88** — Snapshot isolation, and the skew it allows (`src/stages/s88_snapshot_isolation.rs`, 10 tests)
+  - Topic `snapshot`: `begin <txn>` takes a start timestamp, `read`/`write` are against it, `prewrite` takes the locks and finds conflicts, `commit` makes the writes visible
+  - A read is always as of the transaction's start timestamp, so a long transaction sees a consistent world no matter what commits while it runs — plus its own writes
+  - Prewrite aborts on two things: a key locked by somebody else, and a version committed after this transaction's start timestamp
+  - Writes become visible only at the commit timestamp, all at once — a reader at a timestamp between start and commit sees none of them

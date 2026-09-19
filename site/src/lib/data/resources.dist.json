@@ -39,7 +39,10 @@
 			63,
 			69,
 			78,
-			79
+			79,
+			83,
+			84,
+			85
 		],
 		"concepts": [
 			"logical-clocks",
@@ -71,7 +74,9 @@
 			73,
 			74,
 			78,
-			79
+			79,
+			83,
+			85
 		],
 		"concepts": [
 			"consistency-models",
@@ -180,7 +185,10 @@
 			71,
 			78,
 			79,
-			81
+			81,
+			86,
+			87,
+			88
 		],
 		"concepts": [
 			"replication",
@@ -227,7 +235,8 @@
 		"stages": [
 			4,
 			51,
-			72
+			72,
+			87
 		],
 		"concepts": [
 			"clock-skew",
@@ -635,7 +644,8 @@
 		"track": "dist",
 		"stages": [
 			20,
-			74
+			74,
+			85
 		],
 		"concepts": [
 			"swim",
@@ -1210,7 +1220,8 @@
 			52,
 			54,
 			78,
-			79
+			79,
+			88
 		],
 		"concepts": [
 			"consistency-models",
@@ -1234,7 +1245,8 @@
 			38,
 			54,
 			78,
-			80
+			80,
+			84
 		],
 		"concepts": [
 			"linearizability",
@@ -2298,6 +2310,148 @@
 			"leases"
 		],
 		"why": "Why a system usually runs a small consensus cluster beside a large data cluster rather than putting everything through consensus — the practical framing for why stage 80's consensus-free register and stage 82's ReadIndex both exist.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-cachin-book",
+		"title": "Introduction to Reliable and Secure Distributed Programming",
+		"url": "https://www.distributedprogramming.net/",
+		"type": "book",
+		"level": "core",
+		"track": "dist",
+		"stages": [
+			83,
+			84,
+			85
+		],
+		"concepts": [
+			"broadcast",
+			"abstractions",
+			"failure-detectors"
+		],
+		"why": "The book these three stages come from. It builds every abstraction as a module with stated properties and an algorithm that implements it — best-effort to uniform broadcast, then the ordering layers, then the detector classes — which is exactly the shape of section O.",
+		"minutes": 600,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-aspnes-failure-detectors",
+		"title": "Failure detectors (Aspnes, Yale CS notes)",
+		"url": "https://www.cs.yale.edu/homes/aspnes/pinewiki/FailureDetectors.html",
+		"type": "doc",
+		"level": "core",
+		"track": "dist",
+		"stages": [
+			85
+		],
+		"concepts": [
+			"failure-detectors",
+			"completeness",
+			"accuracy"
+		],
+		"why": "The classes on one page: the completeness/accuracy grid, why ◇W and ◇S are equivalent, and a sketch of the reduction showing ◇S is the weakest class that solves consensus — the Chandra–Toueg result, without the paywall the paper itself sits behind.",
+		"minutes": 25,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-pbft-paper",
+		"title": "Practical Byzantine Fault Tolerance (Castro and Liskov)",
+		"url": "https://www.scs.stanford.edu/nyu/03sp/sched/bfs.pdf",
+		"type": "paper",
+		"level": "deep",
+		"track": "dist",
+		"stages": [
+			86
+		],
+		"concepts": [
+			"byzantine",
+			"pbft",
+			"quorums"
+		],
+		"why": "Where the 3f + 1 sizing stops being arithmetic and becomes a protocol. Section 4 shows the three-phase message pattern the quorum bound forces, and why two rounds are needed where a crash-fault protocol manages with one.",
+		"minutes": 90,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-spanner-paper",
+		"title": "Spanner: Google's Globally-Distributed Database",
+		"url": "https://research.google/pubs/spanner-googles-globally-distributed-database-2/",
+		"type": "paper",
+		"level": "deep",
+		"track": "dist",
+		"stages": [
+			87
+		],
+		"concepts": [
+			"truetime",
+			"external-consistency",
+			"commit-wait"
+		],
+		"why": "Section 3 is the TrueTime API — an interval, not an instant — and section 4.1.2 is commit-wait in a page. The rest of the paper is what becomes possible once a database can compare timestamps across continents.",
+		"minutes": 90,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-percolator-paper",
+		"title": "Large-scale Incremental Processing Using Distributed Transactions and Notifications",
+		"url": "https://research.google/pubs/large-scale-incremental-processing-using-distributed-transactions-and-notifications/",
+		"type": "paper",
+		"level": "core",
+		"track": "dist",
+		"stages": [
+			88
+		],
+		"concepts": [
+			"snapshot-isolation",
+			"two-phase-commit",
+			"mvcc"
+		],
+		"why": "Percolator: snapshot isolation built on a key/value store with nothing but timestamps, locks and two-phase commit. Section 2.2 is the algorithm stage 88 implements, including the primary lock that makes a crashed client's transaction recoverable.",
+		"minutes": 60,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-tikv-percolator",
+		"title": "Percolator, walked through (TiKV deep dive)",
+		"url": "https://tikv.org/deep-dive/distributed-transaction/percolator/",
+		"type": "doc",
+		"level": "intro",
+		"track": "dist",
+		"stages": [
+			88
+		],
+		"concepts": [
+			"snapshot-isolation",
+			"percolator",
+			"locks"
+		],
+		"why": "The same algorithm with diagrams of the lock and write columns at each step, from a database that actually implements it. Read this first and the paper second.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-bailis-linearizability-serializability",
+		"title": "Linearizability versus Serializability (Bailis)",
+		"url": "https://www.bailis.org/blog/linearizability-versus-serializability/",
+		"type": "article",
+		"level": "core",
+		"track": "dist",
+		"stages": [
+			88
+		],
+		"concepts": [
+			"linearizability",
+			"serializability",
+			"isolation"
+		],
+		"why": "Two words used interchangeably and meaning different things: one is about single objects and real time, the other about transactions and equivalence to some serial order. Stage 78 checks the first and stage 88 the second, and this is the page that keeps them apart.",
 		"minutes": 15,
 		"free": true,
 		"checkedAt": "2026-09-19"

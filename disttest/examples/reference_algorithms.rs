@@ -13,6 +13,8 @@
 use serde_json::{json, Value};
 use std::io::{BufRead, Write};
 
+#[path = "alg/broadcast.rs"]
+mod broadcast;
 #[path = "alg/commit.rs"]
 mod commit;
 #[path = "alg/consistency.rs"]
@@ -27,6 +29,8 @@ mod raft;
 mod replication;
 #[path = "alg/resilience.rs"]
 mod resilience;
+#[path = "alg/trust.rs"]
+mod trust;
 
 /// One topic's state machine: a command in, one JSON object out.
 pub trait Topic {
@@ -114,9 +118,11 @@ pub fn flag(args: &[&str], i: usize, truthy: &str, falsy: &str) -> Result<bool, 
 fn make(topic: &str) -> Option<Box<dyn Topic>> {
     raft::make(topic)
         .or_else(|| paxos::make(topic))
+        .or_else(|| broadcast::make(topic))
         .or_else(|| commit::make(topic))
         .or_else(|| consistency::make(topic))
         .or_else(|| replication::make(topic))
+        .or_else(|| trust::make(topic))
         .or_else(|| patterns::make(topic))
         .or_else(|| resilience::make(topic))
 }

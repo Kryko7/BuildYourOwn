@@ -4,8 +4,8 @@
 		"kind": "node",
 		"request": "one ordinary write, answered with one ordinary header\n\nPOST /v3/kv/put\n{\n  \"key\": \"ZHVyYWJsZQ==\",\n  \"value\": \"c3Vydml2ZSBtZQ==\"\n}",
 		"request_hex": "7b226b6579223a225a48567959574a735a513d3d222c2276616c7565223a2263335679646d6c325a5342745a513d3d227d",
-		"response": "HTTP 200 — which is the store saying this write is on the disk\n\nHTTP 200 OK\n{\n  \"header\": {\n    \"cluster_id\": \"9338712227051830497\",\n    \"member_id\": \"3821479469485797322\",\n    \"raft_term\": \"2\",\n    \"revision\": \"2\"\n  }\n}",
-		"response_hex": "7b22686561646572223a7b22636c75737465725f6964223a2239333338373132323237303531383330343937222c226d656d6265725f6964223a2233383231343739343639343835373937333232222c227265766973696f6e223a2232222c22726166745f7465726d223a2232227d7d",
+		"response": "HTTP 200 — which is the store saying this write is on the disk\n\nHTTP 200 OK\n{\n  \"header\": {\n    \"cluster_id\": \"14886983703075489168\",\n    \"member_id\": \"3678814221770810079\",\n    \"raft_term\": \"2\",\n    \"revision\": \"2\"\n  }\n}",
+		"response_hex": "7b22686561646572223a7b22636c75737465725f6964223a223134383836393833373033303735343839313638222c226d656d6265725f6964223a2233363738383134323231373730383130303739222c227265766973696f6e223a2232222c22726166745f7465726d223a2232227d7d",
 		"note": "Nothing in this exchange says anything about fsync, and that is the point: the only place durability is visible is in what the store is still able to answer after it has been killed. A store that answers this a millisecond sooner by writing later passes every earlier stage and fails this one.",
 		"request_fields": [
 			{
@@ -26,7 +26,7 @@
 				"offset": 1,
 				"length": 8,
 				"field": "response.header",
-				"value": "{\"cluster_id\":\"9338712227051830497\",\"member_id\":\"3821479469485797322\",\"raft_term\":\"2\",\"revision\":\"2\"}",
+				"value": "{\"cluster_id\":\"14886983703075489168\",\"member_id\":\"3678814221770810079\",\"raft_term\":\"2\",\"revision\":\"2\"}",
 				"varies": true
 			}
 		]
@@ -36,8 +36,8 @@
 		"kind": "node",
 		"request": "the same point read the suite sends once the process has been killed and started again\n\nPOST /v3/kv/range\n{\n  \"key\": \"ZHVyYWJsZQ==\"\n}",
 		"request_hex": "7b226b6579223a225a48567959574a735a513d3d227d",
-		"response": "the value, with the create_revision, mod_revision and version it had before\n\nHTTP 200 OK\n{\n  \"count\": \"1\",\n  \"header\": {\n    \"cluster_id\": \"7000136863416034610\",\n    \"member_id\": \"3759927357881042125\",\n    \"raft_term\": \"2\",\n    \"revision\": \"2\"\n  },\n  \"kvs\": [\n    {\n      \"create_revision\": \"2\",\n      \"key\": \"ZHVyYWJsZQ==\",\n      \"mod_revision\": \"2\",\n      \"value\": \"c3Vydml2ZSBtZQ==\",\n      \"version\": \"1\"\n    }\n  ]\n}",
-		"response_hex": "7b22686561646572223a7b22636c75737465725f6964223a2237303030313336383633343136303334363130222c226d656d6265725f6964223a2233373539393237333537383831303432313235222c227265766973696f6e223a2232222c22726166745f7465726d223a2232227d2c226b7673223a5b7b226b6579223a225a48567959574a735a513d3d222c226372656174655f7265766973696f6e223a2232222c226d6f645f7265766973696f6e223a2232222c2276657273696f6e223a2231222c2276616c7565223a2263335679646d6c325a5342745a513d3d227d5d2c22636f756e74223a2231227d",
+		"response": "the value, with the create_revision, mod_revision and version it had before\n\nHTTP 200 OK\n{\n  \"count\": \"1\",\n  \"header\": {\n    \"cluster_id\": \"10343463156792091365\",\n    \"member_id\": \"8429268797793863050\",\n    \"raft_term\": \"2\",\n    \"revision\": \"2\"\n  },\n  \"kvs\": [\n    {\n      \"create_revision\": \"2\",\n      \"key\": \"ZHVyYWJsZQ==\",\n      \"mod_revision\": \"2\",\n      \"value\": \"c3Vydml2ZSBtZQ==\",\n      \"version\": \"1\"\n    }\n  ]\n}",
+		"response_hex": "7b22686561646572223a7b22636c75737465725f6964223a223130333433343633313536373932303931333635222c226d656d6265725f6964223a2238343239323638373937373933383633303530222c227265766973696f6e223a2232222c22726166745f7465726d223a2232227d2c226b7673223a5b7b226b6579223a225a48567959574a735a513d3d222c226372656174655f7265766973696f6e223a2232222c226d6f645f7265766973696f6e223a2232222c2276657273696f6e223a2231222c2276616c7565223a2263335679646d6c325a5342745a513d3d227d5d2c22636f756e74223a2231227d",
 		"note": "The harness sends this against a process that has been `SIGKILL`ed and restarted from the same --data-dir. The revisions have to match the ones from before the kill: a store that reloads its keys but renumbers them has lost the history every watcher and every compare-and-swap depends on.",
 		"request_fields": [
 			{
@@ -52,17 +52,17 @@
 				"offset": 1,
 				"length": 8,
 				"field": "response.header",
-				"value": "{\"cluster_id\":\"7000136863416034610\",\"member_id\":\"3759927357881042125\",\"raft_term\":\"2\",\"revision\":\"2\"}",
+				"value": "{\"cluster_id\":\"10343463156792091365\",\"member_id\":\"8429268797793863050\",\"raft_term\":\"2\",\"revision\":\"2\"}",
 				"varies": true
 			},
 			{
-				"offset": 112,
+				"offset": 113,
 				"length": 5,
 				"field": "response.kvs",
 				"value": "[{\"create_revision\":\"2\",\"key\":\"ZHVyYWJsZQ==\",\"mod_revision\":\"2\",\"value\":\"c3Vydml2ZSBtZQ==\",\"version\":\"1\"}]"
 			},
 			{
-				"offset": 225,
+				"offset": 226,
 				"length": 7,
 				"field": "response.count",
 				"value": "\"1\""

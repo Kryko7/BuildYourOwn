@@ -1,6 +1,6 @@
 {
 	"track": "dist",
-	"generatedAt": "2026-09-19T07:44:26.404Z",
+	"generatedAt": "2026-09-19T08:35:07.787Z",
 	"sections": [
 		{
 			"id": "A",
@@ -166,6 +166,24 @@
 				80,
 				81,
 				82
+			]
+		},
+		{
+			"id": "O",
+			"title": "Algorithms: broadcast and detection",
+			"stages": [
+				83,
+				84,
+				85
+			]
+		},
+		{
+			"id": "P",
+			"title": "Algorithms: trust, time and transactions",
+			"stages": [
+				86,
+				87,
+				88
 			]
 		}
 	],
@@ -6621,11 +6639,497 @@
 				}
 			],
 			"exampleCount": 2
+		},
+		{
+			"number": 83,
+			"slug": "reliable_broadcast",
+			"name": "Broadcast: best-effort, reliable, uniform",
+			"ext": false,
+			"section": "O",
+			"file": "src/stages/s83_reliable_broadcast.rs",
+			"planDone": false,
+			"ladder": "algorithms",
+			"hints": [
+				"Topic `broadcast`: `mode <best-effort|reliable|uniform>`, `broadcast <from>`, `hand <id> <to>` for one network delivery, `crash <p>`, `settle` to run to quiet",
+				"All three modes deliver at most once and never invent a message; they differ only in what a sender's crash costs",
+				"Reliable broadcast is built by relaying on first delivery, so the guarantee holds among correct processes without the sender being alive to finish",
+				"Uniform adds the promise that a delivery by a process that then crashes still obliges everyone else — the difference matters when delivering has a visible effect"
+			],
+			"tests": [
+				{
+					"name": "a broadcast with nobody failing reaches everyone",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a message is never delivered twice",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "best-effort loses what the sender never sent",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "reliable finishes what the sender started",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "but only when a correct process delivered first",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "uniform obliges everyone once anyone has delivered",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "which is the one case where uniform and reliable differ",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a dropped message is simply not delivered",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a crashed sender cannot broadcast at all",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "twenty seeded runs never deliver to a process twice",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 84,
+			"slug": "ordered_broadcast",
+			"name": "Ordered delivery: FIFO, causal, total",
+			"ext": false,
+			"section": "O",
+			"file": "src/stages/s84_ordered_broadcast.rs",
+			"planDone": false,
+			"ladder": "algorithms",
+			"hints": [
+				"Topic `ordering`: `order <fifo|causal|total>`, `send <from>`, `offer <id> <to>` to try a delivery, `log <p>` for what a process has delivered",
+				"A message that may not be delivered yet is *held back*, not refused — it waits in a queue until what it depends on has arrived",
+				"FIFO needs one sequence number per sender; causal needs what the sender had already delivered, which is exactly a vector clock",
+				"Total order means every process's log is identical, which is why it cannot be done without agreement — it is consensus wearing a different name"
+			],
+			"tests": [
+				{
+					"name": "with nothing held back, order is whatever arrives",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "FIFO holds back a message that overtook its predecessor",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "and releases it once the gap is filled",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "FIFO says nothing about two different senders",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "causal holds back a reply until the message it replies to arrives",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "and lets concurrent messages through in any order",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "total order gives every process the same log",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "which FIFO and causal both allow to differ",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a message is never delivered twice",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "under total order, a gap blocks everything behind it",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 85,
+			"slug": "failure_detectors",
+			"name": "Failure detectors: completeness, accuracy and ◇S",
+			"ext": false,
+			"section": "O",
+			"file": "src/stages/s85_failure_detectors.rs",
+			"planDone": false,
+			"ladder": "algorithms",
+			"hints": [
+				"Topic `detector`: `class <P|eventually-perfect|eventually-strong>`, `crash <p>`, `stabilise` to make time pass, `suspects <p>`, `properties` for the verdict",
+				"Strong completeness — every crashed process eventually suspected by every correct one — is common to all three classes; only accuracy differs",
+				"The ◇ means the guarantee holds only after some unknown time, so before `stabilise` a detector may suspect anybody at all",
+				"◇S promises only that *one* correct process is eventually never suspected, and that is exactly enough to elect a leader nobody deposes"
+			],
+			"tests": [
+				{
+					"name": "a perfect detector suspects exactly the dead",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "and never suspects a correct process",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "an eventually-perfect detector may be wrong at first",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "and is right once it has stabilised",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "an eventually-strong detector stays wrong about some processes",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "but leaves one correct process unsuspected, which is the whole point",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "completeness holds in every class, before and after stabilising",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a detector that suspects nobody fails completeness",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "nobody suspects themselves",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "the three classes are ordered by strength, not by completeness",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 86,
+			"slug": "byzantine_quorums",
+			"name": "Byzantine quorums: sizing for replicas that lie",
+			"ext": false,
+			"section": "P",
+			"file": "src/stages/s86_byzantine_quorums.rs",
+			"planDone": false,
+			"ladder": "algorithms",
+			"hints": [
+				"Topic `byzantine`: `init <nodes> <faults>`, `quorum`, `intersect`, `safe`, and `decide <reply>...` for what a client may believe",
+				"Two quorums must share more than f nodes so that at least one shared node is honest: q > (n + f) / 2",
+				"A quorum must also be reachable while f nodes are silent, so q ≤ n − f; the two bounds together require n > 3f",
+				"With f = 0 the rule collapses to the ordinary majority, which is why crash-fault systems are sized 2f + 1 and Byzantine ones 3f + 1"
+			],
+			"tests": [
+				{
+					"name": "with no Byzantine faults it is a plain majority",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "one liar in four needs three, not three of five",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "two quorums always share an honest node",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "three nodes cannot tolerate one liar",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "but four can, and seven can tolerate two",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a single reply is never enough to believe",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "f + 1 matching replies are",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a majority of replies is not the same as f + 1 of them",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "quorum size grows with f, not with n alone",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "the three-way trade-off, tabulated",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 87,
+			"slug": "commit_wait",
+			"name": "Clock uncertainty and commit-wait",
+			"ext": false,
+			"section": "P",
+			"file": "src/stages/s87_commit_wait.rs",
+			"planDone": false,
+			"ladder": "algorithms",
+			"hints": [
+				"Topic `commit-wait`: `init <epsilon>` sets the uncertainty, `now` returns the interval, `commit <name>` takes a timestamp, `tick <ms>` moves time on",
+				"The timestamp is the *latest* the clock could be, so it is never in the past for any node in the system",
+				"Commit-wait holds the commit until the *earliest* possible now is past that timestamp — a wait of 2ε, not ε",
+				"`external-order` asks the question that matters: does the timestamp order agree with the order an outside observer saw the commits happen"
+			],
+			"tests": [
+				{
+					"name": "a clock is an interval, not a number",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a commit timestamp is the latest possible now",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "committing waits out the uncertainty",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "two commits in a row are ordered by their timestamps",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "without the wait, two commits can share a timestamp",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "and an outside observer can see the contradiction",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a tighter clock means a shorter wait",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a perfect clock needs no wait at all",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "time never runs backwards",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "ten commits in a row keep external order",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 88,
+			"slug": "snapshot_isolation",
+			"name": "Snapshot isolation, and the skew it allows",
+			"ext": false,
+			"section": "P",
+			"file": "src/stages/s88_snapshot_isolation.rs",
+			"planDone": false,
+			"ladder": "algorithms",
+			"hints": [
+				"Topic `snapshot`: `begin <txn>` takes a start timestamp, `read`/`write` are against it, `prewrite` takes the locks and finds conflicts, `commit` makes the writes visible",
+				"A read is always as of the transaction's start timestamp, so a long transaction sees a consistent world no matter what commits while it runs — plus its own writes",
+				"Prewrite aborts on two things: a key locked by somebody else, and a version committed after this transaction's start timestamp",
+				"Writes become visible only at the commit timestamp, all at once — a reader at a timestamp between start and commit sees none of them"
+			],
+			"tests": [
+				{
+					"name": "a transaction reads the world as of its start",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "and sees its own writes before anyone else does",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a concurrent commit is invisible to a transaction already running",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "uncommitted writes are invisible to everybody else",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "two transactions writing the same key: one of them aborts",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "a lock held by another transaction blocks prewrite",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "an aborted transaction leaves no lock behind",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "committing without prewriting is refused",
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "writes become visible all at once, at the commit timestamp",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				},
+				{
+					"name": "write skew: two transactions that never touch the same key",
+					"ext": true,
+					"tags": [
+						"algorithms"
+					]
+				}
+			],
+			"exampleCount": 2
 		}
 	],
 	"totals": {
-		"stages": 82,
-		"tests": 770,
+		"stages": 88,
+		"tests": 830,
 		"ext": 38
 	},
 	"source": "disttest/catalog.json"

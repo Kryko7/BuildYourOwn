@@ -1,0 +1,24 @@
+[
+	{
+		"title": "Why 3f + 1 and not 2f + 1",
+		"kind": "primitives",
+		"request": "One Byzantine fault, first with three nodes and then with four\n\n./your_program.sh byzantine\ninit 3 1\nsafe\nintersect\ninit 4 1\nsafe\nintersect",
+		"request_hex": "2e2f796f75725f70726f6772616d2e73682062797a616e74696e650a696e6974203320310a736166650a696e746572736563740a696e6974203420310a736166650a696e74657273656374",
+		"response": "three nodes is not safe; four gives a quorum of three sharing two nodes, one of them certainly honest\n\n{\"faults\":1,\"nodes\":3,\"ok\":true,\"quorum\":3,\"safe\":false}\n{\"have\":3,\"needed\":4,\"ok\":true,\"safe\":false}\n{\"enough\":true,\"honest_shared\":2,\"ok\":true,\"quorum\":3,\"shared\":3}\n{\"faults\":1,\"nodes\":4,\"ok\":true,\"quorum\":3,\"safe\":true}\n{\"have\":4,\"needed\":4,\"ok\":true,\"safe\":true}\n{\"enough\":true,\"honest_shared\":1,\"ok\":true,\"quorum\":3,\"shared\":2}",
+		"response_hex": "7b226661756c7473223a312c226e6f646573223a332c226f6b223a747275652c2271756f72756d223a332c2273616665223a66616c73657d0a7b2268617665223a332c226e6565646564223a342c226f6b223a747275652c2273616665223a66616c73657d0a7b22656e6f756768223a747275652c22686f6e6573745f736861726564223a322c226f6b223a747275652c2271756f72756d223a332c22736861726564223a337d0a7b226661756c7473223a312c226e6f646573223a342c226f6b223a747275652c2271756f72756d223a332c2273616665223a747275657d0a7b2268617665223a342c226e6565646564223a342c226f6b223a747275652c2273616665223a747275657d0a7b22656e6f756768223a747275652c22686f6e6573745f736861726564223a312c226f6b223a747275652c2271756f72756d223a332c22736861726564223a327d",
+		"note": "With three nodes and one liar, a quorum would have to be all three — and then nothing is available while one node is merely slow. Four is the first size where a quorum is both reachable and guaranteed to overlap another quorum in an honest node.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "What a client may believe",
+		"kind": "primitives",
+		"request": "Three replies that mostly agree, then three that do not\n\n./your_program.sh byzantine\ninit 4 1\ndecide red red blue\ndecide red blue green",
+		"request_hex": "2e2f796f75725f70726f6772616d2e73682062797a616e74696e650a696e6974203420310a646563696465207265642072656420626c75650a6465636964652072656420626c756520677265656e",
+		"response": "the first decides `red` on two matching replies; the second decides nothing\n\n{\"faults\":1,\"nodes\":4,\"ok\":true,\"quorum\":3,\"safe\":true}\n{\"decided\":true,\"matching\":2,\"needed\":2,\"ok\":true,\"value\":\"red\"}\n{\"decided\":false,\"needed\":2,\"ok\":true,\"reason\":\"no value has f + 1 matching replies\"}",
+		"response_hex": "7b226661756c7473223a312c226e6f646573223a342c226f6b223a747275652c2271756f72756d223a332c2273616665223a747275657d0a7b2264656369646564223a747275652c226d61746368696e67223a322c226e6565646564223a322c226f6b223a747275652c2276616c7565223a22726564227d0a7b2264656369646564223a66616c73652c226e6565646564223a322c226f6b223a747275652c22726561736f6e223a226e6f2076616c7565206861732066202b2031206d61746368696e67207265706c696573227d",
+		"note": "Two matching replies with f = 1 means at least one honest node said it, which is enough. Three different answers means at most one of them came from an honest node and there is no way to tell which — so the client must wait for more replies rather than pick the most popular.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

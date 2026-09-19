@@ -4,8 +4,8 @@
 		"kind": "node",
 		"request": "one key, base64, and nothing else\n\nPOST /v3/kv/range\n{\n  \"key\": \"b25l\"\n}",
 		"request_hex": "7b226b6579223a226232356c227d",
-		"response": "one kv with its three revisions, and a count of 1\n\nHTTP 200 OK\n{\n  \"count\": \"1\",\n  \"header\": {\n    \"cluster_id\": \"11236071488372861999\",\n    \"member_id\": \"4574727983333357924\",\n    \"raft_term\": \"2\",\n    \"revision\": \"2\"\n  },\n  \"kvs\": [\n    {\n      \"create_revision\": \"2\",\n      \"key\": \"b25l\",\n      \"mod_revision\": \"2\",\n      \"value\": \"Zmlyc3Q=\",\n      \"version\": \"1\"\n    }\n  ]\n}",
-		"response_hex": "7b22686561646572223a7b22636c75737465725f6964223a223131323336303731343838333732383631393939222c226d656d6265725f6964223a2234353734373237393833333333333537393234222c227265766973696f6e223a2232222c22726166745f7465726d223a2232227d2c226b7673223a5b7b226b6579223a226232356c222c226372656174655f7265766973696f6e223a2232222c226d6f645f7265766973696f6e223a2232222c2276657273696f6e223a2231222c2276616c7565223a225a6d6c796333513d227d5d2c22636f756e74223a2231227d",
+		"response": "one kv with its three revisions, and a count of 1\n\nHTTP 200 OK\n{\n  \"count\": \"1\",\n  \"header\": {\n    \"cluster_id\": \"16066593496311503178\",\n    \"member_id\": \"12560058368028128354\",\n    \"raft_term\": \"2\",\n    \"revision\": \"2\"\n  },\n  \"kvs\": [\n    {\n      \"create_revision\": \"2\",\n      \"key\": \"b25l\",\n      \"mod_revision\": \"2\",\n      \"value\": \"Zmlyc3Q=\",\n      \"version\": \"1\"\n    }\n  ]\n}",
+		"response_hex": "7b22686561646572223a7b22636c75737465725f6964223a223136303636353933343936333131353033313738222c226d656d6265725f6964223a223132353630303538333638303238313238333534222c227265766973696f6e223a2232222c22726166745f7465726d223a2232227d2c226b7673223a5b7b226b6579223a226232356c222c226372656174655f7265766973696f6e223a2232222c226d6f645f7265766973696f6e223a2232222c2276657273696f6e223a2231222c2276616c7565223a225a6d6c796333513d227d5d2c22636f756e74223a2231227d",
 		"note": "version is 1 after the first put, not 0: it counts the puts the key has seen since it was created, which is why comparing version against 0 is how a transaction asks whether a key exists at all.",
 		"request_fields": [
 			{
@@ -20,17 +20,17 @@
 				"offset": 1,
 				"length": 8,
 				"field": "response.header",
-				"value": "{\"cluster_id\":\"11236071488372861999\",\"member_id\":\"4574727983333357924\",\"raft_term\":\"2\",\"revision\":\"2\"}",
+				"value": "{\"cluster_id\":\"16066593496311503178\",\"member_id\":\"12560058368028128354\",\"raft_term\":\"2\",\"revision\":\"2\"}",
 				"varies": true
 			},
 			{
-				"offset": 113,
+				"offset": 114,
 				"length": 5,
 				"field": "response.kvs",
 				"value": "[{\"create_revision\":\"2\",\"key\":\"b25l\",\"mod_revision\":\"2\",\"value\":\"Zmlyc3Q=\",\"version\":\"1\"}]"
 			},
 			{
-				"offset": 210,
+				"offset": 211,
 				"length": 7,
 				"field": "response.count",
 				"value": "\"1\""
@@ -42,8 +42,8 @@
 		"kind": "node",
 		"request": "a key that was never written\n\nPOST /v3/kv/range\n{\n  \"key\": \"Z29uZTIz\"\n}",
 		"request_hex": "7b226b6579223a225a3239755a54497a227d",
-		"response": "a header, and nothing else at all\n\nHTTP 200 OK\n{\n  \"header\": {\n    \"cluster_id\": \"15141918916620190684\",\n    \"member_id\": \"5774501981105981910\",\n    \"raft_term\": \"2\",\n    \"revision\": \"1\"\n  }\n}",
-		"response_hex": "7b22686561646572223a7b22636c75737465725f6964223a223135313431393138393136363230313930363834222c226d656d6265725f6964223a2235373734353031393831313035393831393130222c227265766973696f6e223a2231222c22726166745f7465726d223a2232227d7d",
+		"response": "a header, and nothing else at all\n\nHTTP 200 OK\n{\n  \"header\": {\n    \"cluster_id\": \"12607863889349149623\",\n    \"member_id\": \"7615239189561705077\",\n    \"raft_term\": \"2\",\n    \"revision\": \"1\"\n  }\n}",
+		"response_hex": "7b22686561646572223a7b22636c75737465725f6964223a223132363037383633383839333439313439363233222c226d656d6265725f6964223a2237363135323339313839353631373035303737222c227265766973696f6e223a2231222c22726166745f7465726d223a2232227d7d",
 		"note": "This is a success, not an error. count is 0 and kvs is empty, and because a field at its zero value may be omitted, both disappear from the body entirely.",
 		"request_fields": [
 			{
@@ -58,7 +58,7 @@
 				"offset": 1,
 				"length": 8,
 				"field": "response.header",
-				"value": "{\"cluster_id\":\"15141918916620190684\",\"member_id\":\"5774501981105981910\",\"raft_term\":\"2\",\"revision\":\"1\"}",
+				"value": "{\"cluster_id\":\"12607863889349149623\",\"member_id\":\"7615239189561705077\",\"raft_term\":\"2\",\"revision\":\"1\"}",
 				"varies": true
 			}
 		]

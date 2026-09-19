@@ -58,8 +58,8 @@ describe('the ladders on a track page', () => {
 		const text = (i: number) =>
 			host.querySelectorAll<HTMLElement>('article.rung')[i].querySelector('.rsec')!.textContent!;
 		// The rung climbed second is numbered last: that is exactly why the range is printed.
-		expect(text(1)).toContain('stages 56–82');
-		expect(text(1)).toContain('sections I, J, K, L, M, N');
+		expect(text(1)).toContain('stages 56–88');
+		expect(text(1)).toContain('sections I, J, K, L, M, N, O, P');
 		expect(text(0)).toContain('stages 1–20');
 		expect(text(2)).toContain('stages 21–35');
 		expect(text(3)).toContain('stages 36–55');

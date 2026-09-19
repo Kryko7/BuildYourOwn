@@ -1,0 +1,24 @@
+[
+	{
+		"title": "Waiting out the uncertainty",
+		"kind": "primitives",
+		"request": "A clock uncertain by ±5, and one transaction committing\n\n./your_program.sh commit-wait\ninit 5\nnow\ncommit t1\nstate",
+		"request_hex": "2e2f796f75725f70726f6772616d2e736820636f6d6d69742d776169740a696e697420350a6e6f770a636f6d6d69742074310a7374617465",
+		"response": "the timestamp is the top of the interval, and the commit is released 2ε later\n\n{\"commit_wait\":true,\"epsilon\":5,\"ok\":true}\n{\"earliest\":95,\"latest\":105,\"ok\":true,\"uncertainty\":10}\n{\"ok\":true,\"released_at\":110,\"transaction\":\"t1\",\"ts\":105,\"waited\":10}\n{\"commit_wait\":true,\"committed\":[{\"name\":\"t1\",\"released_at\":110,\"ts\":105}],\"epsilon\":5,\"now\":110,\"ok\":true}",
+		"response_hex": "7b22636f6d6d69745f77616974223a747275652c22657073696c6f6e223a352c226f6b223a747275657d0a7b226561726c69657374223a39352c226c6174657374223a3130352c226f6b223a747275652c22756e6365727461696e7479223a31307d0a7b226f6b223a747275652c2272656c65617365645f6174223a3131302c227472616e73616374696f6e223a227431222c227473223a3130352c22776169746564223a31307d0a7b22636f6d6d69745f77616974223a747275652c22636f6d6d6974746564223a5b7b226e616d65223a227431222c2272656c65617365645f6174223a3131302c227473223a3130357d5d2c22657073696c6f6e223a352c226e6f77223a3131302c226f6b223a747275657d",
+		"note": "The transaction is done well before it is announced. That gap is the price of being able to compare timestamps across machines that have never spoken to each other — and it is why the engineering effort goes into shrinking ε with GPS and atomic clocks rather than into the algorithm.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "The same two commits without the wait",
+		"kind": "primitives",
+		"request": "Two transactions committing back to back with commit-wait disabled\n\n./your_program.sh commit-wait\ninit 5\ncommit-wait off\ncommit t1\ncommit t2\nexternal-order",
+		"request_hex": "2e2f796f75725f70726f6772616d2e736820636f6d6d69742d776169740a696e697420350a636f6d6d69742d77616974206f66660a636f6d6d69742074310a636f6d6d69742074320a65787465726e616c2d6f72646572",
+		"response": "both take the same timestamp and `external-order` reports a violation\n\n{\"commit_wait\":true,\"epsilon\":5,\"ok\":true}\n{\"commit_wait\":false,\"ok\":true}\n{\"ok\":true,\"released_at\":100,\"transaction\":\"t1\",\"ts\":105,\"waited\":0}\n{\"ok\":true,\"released_at\":100,\"transaction\":\"t2\",\"ts\":105,\"waited\":0}\n{\"holds\":false,\"ok\":true,\"violations\":[{\"earlier\":\"t1\",\"earlier_ts\":105,\"later\":\"t2\",\"later_ts\":105}]}",
+		"response_hex": "7b22636f6d6d69745f77616974223a747275652c22657073696c6f6e223a352c226f6b223a747275657d0a7b22636f6d6d69745f77616974223a66616c73652c226f6b223a747275657d0a7b226f6b223a747275652c2272656c65617365645f6174223a3130302c227472616e73616374696f6e223a227431222c227473223a3130352c22776169746564223a307d0a7b226f6b223a747275652c2272656c65617365645f6174223a3130302c227472616e73616374696f6e223a227432222c227473223a3130352c22776169746564223a307d0a7b22686f6c6473223a66616c73652c226f6b223a747275652c2276696f6c6174696f6e73223a5b7b226561726c696572223a227431222c226561726c6965725f7473223a3130352c226c61746572223a227432222c226c617465725f7473223a3130357d5d7d",
+		"note": "t2 began after t1 had finished, and their timestamps say they are simultaneous. Nothing inside the system notices; an observer who watched t1 commit and then started t2 sees a database that disagrees with the order they watched happen.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]
