@@ -262,3 +262,25 @@ See README.md, "Examples".
   - The same module with the same arguments must print byte-identical output every single time — determinism is the one thing a runtime may never trade for speed
   - Integer arithmetic wraps and is exact; float arithmetic is IEEE-754 to the letter, so summing the first ten million integers in f64 gives exactly 50000005000000 and nothing near it
   - Growing a memory to eight megabytes and touching every byte is a normal thing for a module to do — keep the pages in one allocation and index it, do not copy on grow more than you must
+
+## I. Vector instructions (SIMD) [ext]
+
+Stages 1-45 cover the runtime a 2019 reader would call complete. Fixed-width SIMD has been
+part of the standard since WebAssembly 2.0, and a runtime without it cannot run most of
+what modern toolchains emit: these three stages are the v128 half of the instruction set.
+
+- [ ] **Stage 46** — v128: constants, lanes and splats **[ext]** (`src/stages/s46_v128_lanes.rs`, 10 tests)
+  - A v128 value is sixteen bytes and nothing else; the shape (i8x16, i32x4, f64x2) lives in the instruction, not in the value
+  - v128.const carries its sixteen bytes as immediates in memory order, so lane 0 is the first byte and the low end of the printed number
+  - extract_lane on i8x16 and i16x8 has _s and _u forms because the lane is narrower than the i32 it lands in; i32x4 and i64x2 need no such choice
+  - splat copies one scalar into every lane; i8x16.splat takes an i32 and keeps only its low eight bits
+- [ ] **Stage 47** — Vector arithmetic, shape by shape **[ext]** (`src/stages/s47_v128_arithmetic.rs`, 12 tests)
+  - Every lane is independent: nothing carries from one lane into the next, which is the whole point of the shape
+  - add, sub and mul wrap within the lane — i8x16.add of 127 and 1 is -128, not 128 and not a trap
+  - add_sat_s clamps to the lane's signed range and add_sat_u to its unsigned range; these have no scalar equivalent in WebAssembly
+  - A shift count is an i32 operand and is taken modulo the lane width, so i32x4.shl by 32 shifts by nothing at all
+- [ ] **Stage 48** — Lanewise comparison, bitwise logic and the reductions **[ext]** (`src/stages/s48_v128_compare_and_bitwise.rs`, 12 tests)
+  - A comparison writes all-ones or all-zeros per lane, never 1 and 0 — the result is a mask meant to be used with bitselect
+  - v128.bitselect(a, b, mask) takes a bit from a where the mask bit is 1 and from b where it is 0
+  - any_true asks about the whole vector's bits; all_true asks about each lane being non-zero — different questions with different answers
+  - i8x16.shuffle indexes the two operands as one 32-byte array with sixteen immediate indices; swizzle takes its indices at runtime and gives zero for any index past the end

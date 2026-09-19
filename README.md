@@ -7,14 +7,14 @@ it right, and one site that shows you what to build next and how far you have co
 |---|---|---|
 | [`shelltest/`](shelltest/README.md) | a POSIX **shell** — 70 stages, 592 tests | bash 5.3 |
 | [`kafkatest/`](kafkatest/README.md) | a **Kafka broker** — 45 stages, 296 tests | Apache Kafka 4.1.2 (KRaft) |
-| [`wasmtest/`](wasmtest/README.md) | a **WebAssembly runtime** — 45 stages, 347 tests | wasmtime 48.0.2 |
+| [`wasmtest/`](wasmtest/README.md) | a **WebAssembly runtime** — 48 stages, 381 tests | wasmtime 48.0.2 |
 | [`tlstest/`](tlstest/README.md) | a **TLS 1.3 server** (RFC 8446) — 45 stages, 321 tests | `openssl s_server` 3.6 |
 | [`linktest/`](linktest/README.md) | an **ELF64 linker** for x86-64 — 42 stages, 341 tests | GNU ld 2.47 |
 | [`disttest/`](disttest/README.md) | a **distributed key/value store**, in four ladders — 77 stages, 720 tests | etcd 3.7.1 |
 | [`site/`](site/README.md) | — | the journey site: a trail per track, what to build per stage, worked examples, resources, playgrounds |
 | [`byo/`](byo/README.md) | — | the `byo` command: runs the right tester, keeps progress in SQLite, serves the site and its [JSON API](byo/API.md) |
 
-**2 617 tests across six tracks.** You write the shell, the broker, the runtime, the server,
+**2 651 tests across six tracks.** You write the shell, the broker, the runtime, the server,
 the linker and the cluster. Nothing in this repo is an implementation of any of them — every
 tester is a black box harness, and every one of them is proved by pointing it at the real
 thing and watching it come back all green.

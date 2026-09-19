@@ -155,7 +155,7 @@ export const tracks: Record<TrackId, TrackMeta> = {
 		tagline: 'From four magic bytes to a running program',
 		building: 'a WebAssembly runtime',
 		blurb:
-			'A binary decoder, a validator, an interpreter and a WASI preview1 layer — checked against wasmtime. Every module in the suite is real bytes the harness encoded itself, so a failure can show you the hex.',
+			'A binary decoder, a validator, an interpreter, a WASI preview1 layer and the v128 instruction set — checked against wasmtime. Every module in the suite is real bytes the harness encoded itself, so a failure can show you the hex.',
 		glyph: '⬡',
 		accent: 'var(--wasm)',
 		accentBright: 'var(--wasm-bright)',
@@ -171,7 +171,7 @@ export const tracks: Record<TrackId, TrackMeta> = {
 		reference: 'wasmtime 48.0.2',
 		reportPath: '/__reports/wasm.json',
 		examples: 'bytes',
-		plannedStages: 45,
+		plannedStages: 48,
 		sectionBadges: {
 			A: { badge: 'Preamble Path', icon: '🌱' },
 			B: { badge: 'Typecheck Thicket', icon: '🌿' },
@@ -180,7 +180,8 @@ export const tracks: Record<TrackId, TrackMeta> = {
 			E: { badge: 'Memory Marsh', icon: '💧' },
 			F: { badge: 'Table Terrace', icon: '🌾' },
 			G: { badge: 'The Walled Garden', icon: '🧺' },
-			H: { badge: 'The Far Orchard', icon: '🍎' }
+			H: { badge: 'The Far Orchard', icon: '🍎' },
+			I: { badge: 'The Lane Terraces', icon: '🪷' }
 		}
 	},
 	tls: {

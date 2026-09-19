@@ -434,6 +434,44 @@ pub fn case_f64(name: impl Into<String>, body: Expr, want: f64) -> Case {
     Case::new(name, ftype(&[], &[ValType::F64]), body, &[&show_f64(want)])
 }
 
+/// A `() -> v128` case that must print `want`.
+///
+/// A runtime prints a `v128` result as one unsigned 128-bit decimal, so lane 0 — the lowest
+/// address — is the *low* end of that number. Writing the expectation as a `u128` keeps the
+/// test readable next to the lanes it came from.
+pub fn case_v128(name: impl Into<String>, body: Expr, want: u128) -> Case {
+    Case::new(
+        name,
+        ftype(&[], &[ValType::V128]),
+        body,
+        &[&want.to_string()],
+    )
+}
+
+/// The `u128` a runtime prints for a vector built from four i32 lanes, lane 0 first.
+pub fn v128_of_i32x4(lanes: [i32; 4]) -> u128 {
+    lanes
+        .iter()
+        .enumerate()
+        .fold(0u128, |acc, (i, l)| acc | ((*l as u32 as u128) << (i * 32)))
+}
+
+/// The `u128` a runtime prints for a vector built from sixteen i8 lanes, lane 0 first.
+pub fn v128_of_i8x16(lanes: [i8; 16]) -> u128 {
+    lanes
+        .iter()
+        .enumerate()
+        .fold(0u128, |acc, (i, l)| acc | ((*l as u8 as u128) << (i * 8)))
+}
+
+/// The `u128` a runtime prints for a vector built from eight i16 lanes, lane 0 first.
+pub fn v128_of_i16x8(lanes: [i16; 8]) -> u128 {
+    lanes
+        .iter()
+        .enumerate()
+        .fold(0u128, |acc, (i, l)| acc | ((*l as u16 as u128) << (i * 16)))
+}
+
 /// A `() -> i32` case that must trap for the given canonical reason.
 pub fn case_trap(name: impl Into<String>, body: Expr, reasons: &[&str]) -> Case {
     Case::new(name, ftype(&[], &[ValType::I32]), body, &[]).traps(reasons)

@@ -1,6 +1,6 @@
 {
 	"track": "wasm",
-	"generatedAt": "2026-09-19T05:05:20.894Z",
+	"generatedAt": "2026-09-19T07:01:00.545Z",
 	"sections": [
 		{
 			"id": "A",
@@ -93,6 +93,15 @@
 				43,
 				44,
 				45
+			]
+		},
+		{
+			"id": "I",
+			"title": "Vector instructions (SIMD)",
+			"stages": [
+				46,
+				47,
+				48
 			]
 		}
 	],
@@ -2191,12 +2200,202 @@
 				}
 			],
 			"exampleCount": 2
+		},
+		{
+			"number": 46,
+			"slug": "v128_lanes",
+			"name": "v128: constants, lanes and splats",
+			"ext": true,
+			"section": "I",
+			"file": "src/stages/s46_v128_lanes.rs",
+			"planDone": false,
+			"hints": [
+				"A v128 value is sixteen bytes and nothing else; the shape (i8x16, i32x4, f64x2) lives in the instruction, not in the value",
+				"v128.const carries its sixteen bytes as immediates in memory order, so lane 0 is the first byte and the low end of the printed number",
+				"extract_lane on i8x16 and i16x8 has _s and _u forms because the lane is narrower than the i32 it lands in; i32x4 and i64x2 need no such choice",
+				"splat copies one scalar into every lane; i8x16.splat takes an i32 and keeps only its low eight bits"
+			],
+			"tests": [
+				{
+					"name": "a v128 constant comes back byte for byte",
+					"ext": true
+				},
+				{
+					"name": "lane 0 is the lowest byte of the value",
+					"ext": true
+				},
+				{
+					"name": "i32x4 lanes are extracted exactly",
+					"ext": true
+				},
+				{
+					"name": "i64x2 halves the vector",
+					"ext": true
+				},
+				{
+					"name": "a narrow lane is sign- or zero-extended on the way out",
+					"ext": true
+				},
+				{
+					"name": "replace_lane changes one lane and leaves the rest",
+					"ext": true
+				},
+				{
+					"name": "splat fills every lane with the same scalar",
+					"ext": true
+				},
+				{
+					"name": "splat of a wide scalar keeps only the low bits of each lane",
+					"ext": true
+				},
+				{
+					"name": "float lanes are the same bytes read differently",
+					"ext": true
+				},
+				{
+					"name": "a v128 survives a round trip through memory",
+					"ext": true
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 47,
+			"slug": "v128_arithmetic",
+			"name": "Vector arithmetic, shape by shape",
+			"ext": true,
+			"section": "I",
+			"file": "src/stages/s47_v128_arithmetic.rs",
+			"planDone": false,
+			"hints": [
+				"Every lane is independent: nothing carries from one lane into the next, which is the whole point of the shape",
+				"add, sub and mul wrap within the lane — i8x16.add of 127 and 1 is -128, not 128 and not a trap",
+				"add_sat_s clamps to the lane's signed range and add_sat_u to its unsigned range; these have no scalar equivalent in WebAssembly",
+				"A shift count is an i32 operand and is taken modulo the lane width, so i32x4.shl by 32 shifts by nothing at all"
+			],
+			"tests": [
+				{
+					"name": "i32x4 add, sub and mul work lane by lane",
+					"ext": true
+				},
+				{
+					"name": "nothing carries from one lane into the next",
+					"ext": true
+				},
+				{
+					"name": "byte lanes wrap inside the byte",
+					"ext": true
+				},
+				{
+					"name": "the saturating adds clamp instead of wrapping",
+					"ext": true
+				},
+				{
+					"name": "the saturating subtracts clamp at the other end",
+					"ext": true
+				},
+				{
+					"name": "i16x8 and i64x2 do the same in their own widths",
+					"ext": true
+				},
+				{
+					"name": "neg and abs are lanewise too",
+					"ext": true
+				},
+				{
+					"name": "min_s and max_s pick per lane",
+					"ext": true
+				},
+				{
+					"name": "a shift count is taken modulo the lane width",
+					"ext": true
+				},
+				{
+					"name": "the logical and arithmetic right shifts differ on a negative lane",
+					"ext": true
+				},
+				{
+					"name": "f32x4 arithmetic is four f32 operations",
+					"ext": true
+				},
+				{
+					"name": "a NaN lane stays NaN through min and max",
+					"ext": true
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 48,
+			"slug": "v128_compare_and_bitwise",
+			"name": "Lanewise comparison, bitwise logic and the reductions",
+			"ext": true,
+			"section": "I",
+			"file": "src/stages/s48_v128_compare_and_bitwise.rs",
+			"planDone": false,
+			"hints": [
+				"A comparison writes all-ones or all-zeros per lane, never 1 and 0 — the result is a mask meant to be used with bitselect",
+				"v128.bitselect(a, b, mask) takes a bit from a where the mask bit is 1 and from b where it is 0",
+				"any_true asks about the whole vector's bits; all_true asks about each lane being non-zero — different questions with different answers",
+				"i8x16.shuffle indexes the two operands as one 32-byte array with sixteen immediate indices; swizzle takes its indices at runtime and gives zero for any index past the end"
+			],
+			"tests": [
+				{
+					"name": "a comparison produces all-ones, not one",
+					"ext": true
+				},
+				{
+					"name": "every integer comparison agrees on that shape",
+					"ext": true
+				},
+				{
+					"name": "float comparison masks are integer masks",
+					"ext": true
+				},
+				{
+					"name": "and, or, xor and not ignore lanes entirely",
+					"ext": true
+				},
+				{
+					"name": "andnot subtracts one vector's bits from another",
+					"ext": true
+				},
+				{
+					"name": "bitselect picks per bit from the mask",
+					"ext": true
+				},
+				{
+					"name": "a comparison and a bitselect together are a lanewise if",
+					"ext": true
+				},
+				{
+					"name": "any_true looks at the whole vector",
+					"ext": true
+				},
+				{
+					"name": "all_true looks at each lane in turn",
+					"ext": true
+				},
+				{
+					"name": "bitmask gathers one sign bit per lane",
+					"ext": true
+				},
+				{
+					"name": "shuffle reads its immediates from both vectors",
+					"ext": true
+				},
+				{
+					"name": "swizzle takes its indices at run time and zeroes the rest",
+					"ext": true
+				}
+			],
+			"exampleCount": 2
 		}
 	],
 	"totals": {
-		"stages": 45,
-		"tests": 347,
-		"ext": 16
+		"stages": 48,
+		"tests": 381,
+		"ext": 19
 	},
 	"source": "wasmtest/catalog.json"
 }

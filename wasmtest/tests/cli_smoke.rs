@@ -63,7 +63,10 @@ fn list_json_prints_the_catalog_on_stdout() {
     let v: serde_json::Value =
         serde_json::from_str(&stdout(&out)).expect("--list --json must print JSON");
     assert_eq!(v["track"], "wasm");
-    assert_eq!(v["stages"].as_array().map(Vec::len), Some(45));
+    assert_eq!(
+        v["stages"].as_array().map(Vec::len),
+        Some(wasmtest::stages::all().len())
+    );
 }
 
 #[test]

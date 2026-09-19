@@ -6,8 +6,9 @@
 //! show next to the hex.
 //!
 //! Single-byte opcodes are [`Op`] constants in [`op`]; the `0xfc`-prefixed ones (saturating
-//! truncation and the bulk-memory family) are [`Op2`] constants in [`op2`]. Anything the
-//! suite has no constant for can still be written with [`Expr::bytes`].
+//! truncation and the bulk-memory family) are [`Op2`] constants in [`op2`], and the
+//! `0xfd`-prefixed vector instructions are [`OpV`] constants in [`opv`]. Anything the suite
+//! has no constant for can still be written with [`Expr::bytes`].
 
 use super::encode::{sleb, uleb, Func, ValType};
 
@@ -18,6 +19,10 @@ pub struct Op(pub u8, pub &'static str);
 /// A `0xfc`-prefixed opcode (its sub-index is a uLEB128) and its spec mnemonic.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Op2(pub u32, pub &'static str);
+
+/// A `0xfd`-prefixed vector opcode (its sub-index is a uLEB128) and its spec mnemonic.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct OpV(pub u32, pub &'static str);
 
 /// The block type of a `block`, `loop` or `if`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -206,6 +211,73 @@ impl Expr {
         let mut b = vec![0xfc];
         b.extend_from_slice(&uleb(o.0 as u64));
         self.push(&b, o.1)
+    }
+
+    /// Any `0xfd`-prefixed vector opcode from [`opv`] with no immediates.
+    pub fn opv(self, o: OpV) -> Expr {
+        let mut b = vec![0xfd];
+        b.extend_from_slice(&uleb(o.0 as u64));
+        self.push(&b, o.1)
+    }
+
+    /// A vector opcode that takes a lane index, such as `i32x4.extract_lane 2`.
+    pub fn opv_lane(self, o: OpV, lane: u8) -> Expr {
+        let mut b = vec![0xfd];
+        b.extend_from_slice(&uleb(o.0 as u64));
+        b.push(lane);
+        self.push(&b, format!("{} {lane}", o.1))
+    }
+
+    /// A vector opcode that takes a memarg, such as `v128.load align=16 offset=0`.
+    pub fn opv_mem(self, o: OpV, align: u32, offset: u32) -> Expr {
+        let mut b = vec![0xfd];
+        b.extend_from_slice(&uleb(o.0 as u64));
+        b.extend_from_slice(&uleb(align as u64));
+        b.extend_from_slice(&uleb(offset as u64));
+        self.push(
+            &b,
+            format!("{} align={} offset={offset}", o.1, 1u32 << align),
+        )
+    }
+
+    /// `v128.const` with the sixteen bytes written out in memory order.
+    pub fn v128_const(self, bytes: [u8; 16]) -> Expr {
+        let mut b = vec![0xfd];
+        b.extend_from_slice(&uleb(opv::V128_CONST.0 as u64));
+        b.extend_from_slice(&bytes);
+        let lanes: Vec<String> = bytes
+            .chunks(4)
+            .map(|c| i32::from_le_bytes([c[0], c[1], c[2], c[3]]).to_string())
+            .collect();
+        self.push(&b, format!("v128.const i32x4 {}", lanes.join(" ")))
+    }
+
+    /// `v128.const` written as four i32 lanes, lane 0 first.
+    pub fn v128_const_i32x4(self, lanes: [i32; 4]) -> Expr {
+        let mut bytes = [0u8; 16];
+        for (i, l) in lanes.iter().enumerate() {
+            bytes[i * 4..i * 4 + 4].copy_from_slice(&l.to_le_bytes());
+        }
+        self.v128_const(bytes)
+    }
+
+    /// `i8x16.shuffle` with its sixteen lane indices.
+    pub fn i8x16_shuffle(self, lanes: [u8; 16]) -> Expr {
+        let mut b = vec![0xfd];
+        b.extend_from_slice(&uleb(opv::I8X16_SHUFFLE.0 as u64));
+        b.extend_from_slice(&lanes);
+        let text: Vec<String> = lanes.iter().map(|l| l.to_string()).collect();
+        self.push(&b, format!("i8x16.shuffle {}", text.join(" ")))
+    }
+
+    /// `v128.load` with the natural alignment.
+    pub fn v128_load(self, offset: u32) -> Expr {
+        self.opv_mem(opv::V128_LOAD, 4, offset)
+    }
+
+    /// `v128.store` with the natural alignment.
+    pub fn v128_store(self, offset: u32) -> Expr {
+        self.opv_mem(opv::V128_STORE, 4, offset)
     }
 
     /// `nop`.
@@ -738,6 +810,102 @@ pub mod op2 {
     pub const I64_TRUNC_SAT_F32_U: Op2 = Op2(5, "i64.trunc_sat_f32_u");
     pub const I64_TRUNC_SAT_F64_S: Op2 = Op2(6, "i64.trunc_sat_f64_s");
     pub const I64_TRUNC_SAT_F64_U: Op2 = Op2(7, "i64.trunc_sat_f64_u");
+}
+
+/// The `0xfd`-prefixed vector opcodes the suite uses, by their sub-index in the spec's
+/// instruction table. Only the ones the stages exercise are listed; `Expr::bytes` covers
+/// anything else.
+#[allow(missing_docs)]
+pub mod opv {
+    use super::OpV;
+
+    pub const V128_LOAD: OpV = OpV(0, "v128.load");
+    pub const V128_STORE: OpV = OpV(11, "v128.store");
+    pub const V128_CONST: OpV = OpV(12, "v128.const");
+    pub const I8X16_SHUFFLE: OpV = OpV(13, "i8x16.shuffle");
+    pub const I8X16_SWIZZLE: OpV = OpV(14, "i8x16.swizzle");
+
+    pub const I8X16_SPLAT: OpV = OpV(15, "i8x16.splat");
+    pub const I16X8_SPLAT: OpV = OpV(16, "i16x8.splat");
+    pub const I32X4_SPLAT: OpV = OpV(17, "i32x4.splat");
+    pub const I64X2_SPLAT: OpV = OpV(18, "i64x2.splat");
+    pub const F32X4_SPLAT: OpV = OpV(19, "f32x4.splat");
+    pub const F64X2_SPLAT: OpV = OpV(20, "f64x2.splat");
+
+    pub const I8X16_EXTRACT_LANE_S: OpV = OpV(21, "i8x16.extract_lane_s");
+    pub const I8X16_EXTRACT_LANE_U: OpV = OpV(22, "i8x16.extract_lane_u");
+    pub const I8X16_REPLACE_LANE: OpV = OpV(23, "i8x16.replace_lane");
+    pub const I16X8_EXTRACT_LANE_S: OpV = OpV(24, "i16x8.extract_lane_s");
+    pub const I16X8_EXTRACT_LANE_U: OpV = OpV(25, "i16x8.extract_lane_u");
+    pub const I16X8_REPLACE_LANE: OpV = OpV(26, "i16x8.replace_lane");
+    pub const I32X4_EXTRACT_LANE: OpV = OpV(27, "i32x4.extract_lane");
+    pub const I32X4_REPLACE_LANE: OpV = OpV(28, "i32x4.replace_lane");
+    pub const I64X2_EXTRACT_LANE: OpV = OpV(29, "i64x2.extract_lane");
+    pub const I64X2_REPLACE_LANE: OpV = OpV(30, "i64x2.replace_lane");
+    pub const F32X4_EXTRACT_LANE: OpV = OpV(31, "f32x4.extract_lane");
+    pub const F32X4_REPLACE_LANE: OpV = OpV(32, "f32x4.replace_lane");
+    pub const F64X2_EXTRACT_LANE: OpV = OpV(33, "f64x2.extract_lane");
+    pub const F64X2_REPLACE_LANE: OpV = OpV(34, "f64x2.replace_lane");
+
+    pub const I8X16_EQ: OpV = OpV(35, "i8x16.eq");
+    pub const I8X16_LT_S: OpV = OpV(37, "i8x16.lt_s");
+    pub const I32X4_EQ: OpV = OpV(55, "i32x4.eq");
+    pub const I32X4_NE: OpV = OpV(56, "i32x4.ne");
+    pub const I32X4_LT_S: OpV = OpV(57, "i32x4.lt_s");
+    pub const I32X4_GT_S: OpV = OpV(59, "i32x4.gt_s");
+    pub const F32X4_EQ: OpV = OpV(65, "f32x4.eq");
+    pub const F32X4_LT: OpV = OpV(67, "f32x4.lt");
+
+    pub const V128_NOT: OpV = OpV(77, "v128.not");
+    pub const V128_AND: OpV = OpV(78, "v128.and");
+    pub const V128_ANDNOT: OpV = OpV(79, "v128.andnot");
+    pub const V128_OR: OpV = OpV(80, "v128.or");
+    pub const V128_XOR: OpV = OpV(81, "v128.xor");
+    pub const V128_BITSELECT: OpV = OpV(82, "v128.bitselect");
+    pub const V128_ANY_TRUE: OpV = OpV(83, "v128.any_true");
+
+    pub const I8X16_ABS: OpV = OpV(96, "i8x16.abs");
+    pub const I8X16_NEG: OpV = OpV(97, "i8x16.neg");
+    pub const I8X16_ALL_TRUE: OpV = OpV(99, "i8x16.all_true");
+    pub const I8X16_BITMASK: OpV = OpV(100, "i8x16.bitmask");
+    pub const I8X16_ADD: OpV = OpV(110, "i8x16.add");
+    pub const I8X16_ADD_SAT_S: OpV = OpV(111, "i8x16.add_sat_s");
+    pub const I8X16_ADD_SAT_U: OpV = OpV(112, "i8x16.add_sat_u");
+    pub const I8X16_SUB: OpV = OpV(113, "i8x16.sub");
+    pub const I8X16_SUB_SAT_S: OpV = OpV(114, "i8x16.sub_sat_s");
+    pub const I8X16_SUB_SAT_U: OpV = OpV(115, "i8x16.sub_sat_u");
+    pub const I8X16_MIN_S: OpV = OpV(118, "i8x16.min_s");
+    pub const I8X16_MAX_S: OpV = OpV(120, "i8x16.max_s");
+
+    pub const I16X8_ALL_TRUE: OpV = OpV(131, "i16x8.all_true");
+    pub const I16X8_BITMASK: OpV = OpV(132, "i16x8.bitmask");
+    pub const I16X8_ADD: OpV = OpV(142, "i16x8.add");
+    pub const I16X8_SUB: OpV = OpV(145, "i16x8.sub");
+    pub const I16X8_MUL: OpV = OpV(149, "i16x8.mul");
+
+    pub const I32X4_ALL_TRUE: OpV = OpV(163, "i32x4.all_true");
+    pub const I32X4_BITMASK: OpV = OpV(164, "i32x4.bitmask");
+    pub const I32X4_SHL: OpV = OpV(171, "i32x4.shl");
+    pub const I32X4_SHR_S: OpV = OpV(172, "i32x4.shr_s");
+    pub const I32X4_SHR_U: OpV = OpV(173, "i32x4.shr_u");
+    pub const I32X4_ADD: OpV = OpV(174, "i32x4.add");
+    pub const I32X4_SUB: OpV = OpV(177, "i32x4.sub");
+    pub const I32X4_MUL: OpV = OpV(181, "i32x4.mul");
+    pub const I32X4_MIN_S: OpV = OpV(182, "i32x4.min_s");
+    pub const I32X4_MAX_S: OpV = OpV(184, "i32x4.max_s");
+
+    pub const I64X2_ADD: OpV = OpV(206, "i64x2.add");
+    pub const I64X2_MUL: OpV = OpV(213, "i64x2.mul");
+
+    pub const F32X4_ADD: OpV = OpV(228, "f32x4.add");
+    pub const F32X4_SUB: OpV = OpV(229, "f32x4.sub");
+    pub const F32X4_MUL: OpV = OpV(230, "f32x4.mul");
+    pub const F32X4_DIV: OpV = OpV(231, "f32x4.div");
+    pub const F32X4_MIN: OpV = OpV(232, "f32x4.min");
+    pub const F32X4_MAX: OpV = OpV(233, "f32x4.max");
+
+    pub const F64X2_ADD: OpV = OpV(240, "f64x2.add");
+    pub const F64X2_MUL: OpV = OpV(242, "f64x2.mul");
 }
 
 #[cfg(test)]

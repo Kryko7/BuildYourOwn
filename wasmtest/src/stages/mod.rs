@@ -64,6 +64,9 @@ mod s42_wasi_io_and_imports;
 mod s43_fuzz;
 mod s44_scale;
 mod s45_soak;
+mod s46_v128_lanes;
+mod s47_v128_arithmetic;
+mod s48_v128_compare_and_bitwise;
 
 /// Every implemented stage, in ascending order.
 pub fn all() -> Vec<Stage> {
@@ -113,6 +116,9 @@ pub fn all() -> Vec<Stage> {
         s43_fuzz::stage(),
         s44_scale::stage(),
         s45_soak::stage(),
+        s46_v128_lanes::stage(),
+        s47_v128_arithmetic::stage(),
+        s48_v128_compare_and_bitwise::stage(),
     ];
     v.sort_by_key(|s| s.number);
     v
@@ -171,6 +177,11 @@ pub fn sections() -> &'static [Section] {
             id: "h",
             title: "Robustness & scale",
             stages: &[43, 44, 45],
+        },
+        Section {
+            id: "i",
+            title: "Vector instructions (SIMD)",
+            stages: &[46, 47, 48],
         },
     ]
 }
@@ -497,7 +508,12 @@ mod tests {
     #[test]
     fn every_stage_is_unique_and_ordered() {
         let stages = all();
-        assert_eq!(stages.len(), 45);
+        let planned: usize = sections().iter().map(|s| s.stages.len()).sum();
+        assert_eq!(
+            stages.len(),
+            planned,
+            "every planned stage is implemented, and no more"
+        );
         let mut last = 0;
         for s in &stages {
             assert!(s.number > last, "stage {} is out of order", s.number);
@@ -618,7 +634,11 @@ mod tests {
     fn sections_cover_the_whole_plan_once() {
         let mut numbers: Vec<u32> = sections().iter().flat_map(|s| s.stages.to_vec()).collect();
         numbers.sort_unstable();
-        assert_eq!(numbers, (1..=45).collect::<Vec<u32>>());
+        assert_eq!(
+            numbers,
+            (1..=numbers.len() as u32).collect::<Vec<u32>>(),
+            "the sections must cover 1..=n once each, with no gap and no repeat"
+        );
     }
 
     #[test]

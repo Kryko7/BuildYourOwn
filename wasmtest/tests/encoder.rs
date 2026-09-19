@@ -189,6 +189,43 @@ fn the_reference_runs_every_example_module() {
                     s.number, spec.title
                 );
             }
+            // An example that is meant to *run* also has to print what it claims. The
+            // `output` field is documentation the site shows verbatim, so a number typed by
+            // hand and never checked is a lie with a long half-life.
+            // Only when `output` is a single literal token — a number, a name — rather than
+            // prose like "nothing at all, and an exit status of 0".
+            let literal = {
+                let o = spec.output.trim();
+                !o.is_empty() && !o.contains(char::is_whitespace)
+            };
+            if !rejected_for_shape && !says_so && literal {
+                let argv: Vec<String> = spec
+                    .command
+                    .split_whitespace()
+                    .map(|a| {
+                        if a.ends_with(".wasm") {
+                            path.to_string_lossy().to_string()
+                        } else {
+                            a.to_string()
+                        }
+                    })
+                    .collect();
+                let run = Command::new(&exe)
+                    .args(&argv)
+                    .output()
+                    .expect("wasmtime must be runnable");
+                let printed = String::from_utf8_lossy(&run.stdout).trim().to_string();
+                assert_eq!(
+                    printed,
+                    spec.output.trim(),
+                    "stage {} example '{}' prints something other than its documented output\n\
+                     command: {}\nstderr: {}",
+                    s.number,
+                    spec.title,
+                    spec.command,
+                    String::from_utf8_lossy(&run.stderr)
+                );
+            }
             checked += 1;
         }
     }

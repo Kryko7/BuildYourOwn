@@ -93,7 +93,8 @@
 			10,
 			35,
 			37,
-			38
+			38,
+			46
 		],
 		"concepts": [
 			"value-types",
@@ -123,7 +124,10 @@
 			29,
 			33,
 			34,
-			37
+			37,
+			46,
+			47,
+			48
 		],
 		"concepts": [
 			"opcodes",
@@ -255,7 +259,8 @@
 			3,
 			5,
 			6,
-			43
+			43,
+			46
 		],
 		"concepts": [
 			"wasm-validate",
@@ -344,7 +349,9 @@
 		"stages": [
 			3,
 			12,
-			43
+			43,
+			47,
+			48
 		],
 		"concepts": [
 			"spec-tests",
@@ -526,7 +533,10 @@
 			22,
 			23,
 			25,
-			27
+			27,
+			46,
+			47,
+			48
 		],
 		"concepts": [
 			"type-checking",
@@ -643,7 +653,8 @@
 		"stages": [
 			7,
 			10,
-			27
+			27,
+			46
 		],
 		"concepts": [
 			"value-types",
@@ -1283,6 +1294,198 @@
 		],
 		"why": "What is and is not deterministic in wasm, and what an engine has to pin down to get the same answer twice. Exactly the property stage 45 soaks for over thousands of repetitions.",
 		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wasm-spec-vector-instructions-syntax",
+		"title": "Vector Instructions (WebAssembly Core Specification)",
+		"url": "https://webassembly.github.io/spec/core/syntax/instructions.html#vector-instructions",
+		"type": "spec",
+		"level": "core",
+		"track": "wasm",
+		"stages": [
+			46,
+			47,
+			48
+		],
+		"concepts": [
+			"simd",
+			"v128",
+			"lane-shapes"
+		],
+		"why": "The whole v128 instruction set laid out by shape, which is the list to work down: it makes plain that the shape belongs to the instruction rather than to the value, and that every lanewise operation is just the scalar one repeated.",
+		"minutes": 25,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wasm-spec-vector-binary",
+		"title": "Vector Instruction Encodings (WebAssembly Core Specification)",
+		"url": "https://webassembly.github.io/spec/core/binary/instructions.html#vector-instructions",
+		"type": "spec",
+		"level": "core",
+		"track": "wasm",
+		"stages": [
+			46,
+			47,
+			48
+		],
+		"concepts": [
+			"binary-format",
+			"opcodes",
+			"leb128"
+		],
+		"why": "Every vector opcode is the prefix 0xfd followed by a uLEB128 sub-index, and the immediates differ per instruction — sixteen bytes for v128.const, one lane index for extract_lane, a memarg for v128.load. A decoder written for one-byte opcodes stops dead here.",
+		"minutes": 12,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wasm-simd-proposal",
+		"title": "Fixed-width SIMD proposal: the overview document",
+		"url": "https://github.com/WebAssembly/simd/blob/main/proposals/simd/SIMD.md",
+		"type": "spec",
+		"level": "core",
+		"track": "wasm",
+		"stages": [
+			46,
+			47,
+			48
+		],
+		"concepts": [
+			"simd",
+			"proposal",
+			"design-rationale"
+		],
+		"why": "The design document behind the instructions, and the place the reasoning lives: why the comparisons produce masks instead of booleans, why the saturating forms exist at all, and why swizzle returns zero out of range rather than trapping.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wasm-simd-implementation-status",
+		"title": "Fixed-width SIMD: implementation status",
+		"url": "https://github.com/WebAssembly/simd/blob/main/proposals/simd/ImplementationStatus.md",
+		"type": "doc",
+		"level": "intro",
+		"track": "wasm",
+		"stages": [
+			46
+		],
+		"concepts": [
+			"simd",
+			"engines",
+			"portability"
+		],
+		"why": "A per-engine table of what shipped when — useful for placing v128 in time, and for seeing that the instruction set your runtime must implement is the one everybody already agreed on.",
+		"minutes": 5,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wasm-spec-simd-testsuite",
+		"title": "The spec test suite's own SIMD .wast files",
+		"url": "https://github.com/WebAssembly/spec/blob/main/test/core/simd/simd_i32x4_arith.wast",
+		"type": "repo",
+		"level": "deep",
+		"track": "wasm",
+		"stages": [
+			47,
+			48
+		],
+		"concepts": [
+			"conformance",
+			"test-suite",
+			"edge-cases"
+		],
+		"why": "What official conformance looks like for one shape: thousands of assertions on i32x4 arithmetic alone, including the boundary lanes. Worth skimming for the cases your own runtime has not thought about yet.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "v8-wasm-simd",
+		"title": "WebAssembly SIMD, explained (V8)",
+		"url": "https://v8.dev/features/simd",
+		"type": "article",
+		"level": "intro",
+		"track": "wasm",
+		"stages": [
+			46,
+			47
+		],
+		"concepts": [
+			"simd",
+			"introduction",
+			"performance"
+		],
+		"why": "The gentlest introduction: what a 128-bit lane vector is, why four adds in one instruction is the point, and what the shapes mean, with pictures rather than grammar.",
+		"minutes": 12,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "emscripten-simd-porting",
+		"title": "Porting SIMD code to WebAssembly (Emscripten)",
+		"url": "https://emscripten.org/docs/porting/simd.html",
+		"type": "doc",
+		"level": "core",
+		"track": "wasm",
+		"stages": [
+			47,
+			48
+		],
+		"concepts": [
+			"simd",
+			"codegen",
+			"intrinsics"
+		],
+		"why": "Maps each wasm vector instruction onto the SSE intrinsic it came from and onto the ARM instruction it lowers to — the clearest way to see why these particular instructions are in the set and what a compiler expects them to cost.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "rust-core-arch-wasm32",
+		"title": "core::arch::wasm32 — the v128 intrinsics in Rust",
+		"url": "https://doc.rust-lang.org/core/arch/wasm32/index.html",
+		"type": "doc",
+		"level": "core",
+		"track": "wasm",
+		"stages": [
+			46,
+			47,
+			48
+		],
+		"concepts": [
+			"intrinsics",
+			"rust",
+			"v128"
+		],
+		"why": "One typed function per vector instruction, with the signature spelling out what each takes and returns. Handy while writing the interpreter: if you are unsure whether a shift count is an immediate or an operand, the signature says.",
+		"minutes": 10,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "simd-visual-guide",
+		"title": "SIMD instruction tables, drawn",
+		"url": "https://www.officedaytime.com/simd512e/",
+		"type": "doc",
+		"level": "intro",
+		"track": "wasm",
+		"stages": [
+			47,
+			48
+		],
+		"concepts": [
+			"simd",
+			"lanes",
+			"reference"
+		],
+		"why": "Lane-by-lane diagrams of what each family of SIMD operations does to its inputs. Written for x86, but shuffle, saturating arithmetic and the mask-and-select pattern are the same ideas wasm inherited.",
+		"minutes": 15,
 		"free": true,
 		"checkedAt": "2026-09-19"
 	}

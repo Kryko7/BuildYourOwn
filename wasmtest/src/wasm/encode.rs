@@ -410,6 +410,8 @@ pub enum ValType {
     FuncRef,
     /// A reference to a host value.
     ExternRef,
+    /// A 128-bit vector (the SIMD proposal, standard since WebAssembly 2.0).
+    V128,
 }
 
 impl ValType {
@@ -422,6 +424,7 @@ impl ValType {
             ValType::F64 => 0x7c,
             ValType::FuncRef => 0x70,
             ValType::ExternRef => 0x6f,
+            ValType::V128 => 0x7b,
         }
     }
 
@@ -434,6 +437,7 @@ impl ValType {
             ValType::F64 => "f64",
             ValType::FuncRef => "funcref",
             ValType::ExternRef => "externref",
+            ValType::V128 => "v128",
         }
     }
 }

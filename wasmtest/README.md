@@ -3,7 +3,7 @@
 A self-contained, stage-by-stage conformance tester for **WebAssembly runtimes**, written in
 Rust. It drives any runtime binary as a black box through a small subset of `wasmtime`'s
 command line — real modules, real bytes, real traps — and compares what comes back with a
-suite written in Rust: 45 stages, 347 tests, all validated against `wasmtime` 48.0.2.
+suite written in Rust: 48 stages, 381 tests, all validated against `wasmtime` 48.0.2.
 Every module the suite runs is **built by this crate's own encoder**, so a failure can print
 the exact bytes it ran, annotated section by section.
 
