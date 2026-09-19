@@ -1,1 +1,1283 @@
-[]
+[
+	{
+		"id": "tls-illustrated-tls13-connection",
+		"title": "The Illustrated TLS 1.3 Connection: Every Byte Explained",
+		"url": "https://tls13.xargs.org/",
+		"type": "doc",
+		"level": "intro",
+		"track": "tls",
+		"stages": [
+			2,
+			5,
+			6,
+			8,
+			12,
+			17,
+			20,
+			22,
+			24,
+			25,
+			27,
+			30,
+			32
+		],
+		"concepts": [
+			"record-layer",
+			"handshake",
+			"byte-level",
+			"key-schedule",
+			"tls13",
+			"wire-format"
+		],
+		"why": "One real handshake, every byte clickable and annotated — read it end to end before stage 2 so that the five-byte record header, the ClientHello body and the encrypted flight are things you have already seen, not things you are decoding for the first time out of a hex dump the tester printed at you.",
+		"minutes": 60,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "tls-beej-network-programming",
+		"title": "Beej's Guide to Network Programming",
+		"url": "https://beej.us/guide/bgnet/html/",
+		"type": "doc",
+		"level": "intro",
+		"track": "tls",
+		"stages": [
+			1,
+			7,
+			39
+		],
+		"concepts": [
+			"sockets",
+			"tcp",
+			"accept-loop",
+			"concurrency",
+			"so-reuseaddr"
+		],
+		"why": "The socket plumbing stage 1 needs and nothing more: bind/listen/accept, SO_REUSEADDR so a re-run is not refused, why recv() returns short, and the fork-or-thread-per-connection patterns that stage 39's fifty simultaneous clients will lean on.",
+		"minutes": 120,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "tls-openssl-s-server",
+		"title": "openssl-s_server",
+		"url": "https://docs.openssl.org/3.5/man1/openssl-s_server/",
+		"type": "doc",
+		"level": "core",
+		"track": "tls",
+		"stages": [
+			1,
+			30,
+			39,
+			45
+		],
+		"concepts": [
+			"reference-server",
+			"cli",
+			"openssl",
+			"interop"
+		],
+		"why": "Your program is driven with the same flags the reference is: `-accept PORT -cert C -key K -rev`. This page defines what each of those means — including that `-rev` echoes the line back reversed — so your argument parsing matches the contract the harness actually invokes.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "tls-rfc8446",
+		"title": "RFC 8446: The Transport Layer Security (TLS) Protocol Version 1.3",
+		"url": "https://www.rfc-editor.org/rfc/rfc8446",
+		"type": "spec",
+		"level": "core",
+		"track": "tls",
+		"stages": [
+			2,
+			8,
+			17,
+			24,
+			30,
+			36,
+			41
+		],
+		"concepts": [
+			"rfc8446",
+			"tls13",
+			"handshake",
+			"record-layer",
+			"normative"
+		],
+		"why": "The document the tester was written against, start to finish. Read sections 2 and 4 once before you write any code so the shape of the flight is in your head; after that every failure in this track is a pointer back into a numbered section of this page.",
+		"minutes": 480,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "tls-rfc8446-record-layer",
+		"title": "RFC 8446 - 5.1. Record Layer",
+		"url": "https://www.rfc-editor.org/rfc/rfc8446#section-5.1",
+		"type": "spec",
+		"level": "core",
+		"track": "tls",
+		"stages": [
+			2,
+			3,
+			5,
+			6,
+			33
+		],
+		"concepts": [
+			"record-layer",
+			"tlsplaintext",
+			"framing",
+			"legacy-record-version",
+			"coalescing"
+		],
+		"why": "The normative five-byte header, the 2^14 fragment ceiling, and the two rules stages 5 and 6 exist to test: one record may carry several handshake messages and one handshake message may be split across records — so you must reassemble by handshake length, never by record boundary.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "tls-rfc8446-record-payload-protection",
+		"title": "RFC 8446 - 5.2. Record Payload Protection",
+		"url": "https://www.rfc-editor.org/rfc/rfc8446#section-5.2",
+		"type": "spec",
+		"level": "core",
+		"track": "tls",
+		"stages": [
+			20,
+			30,
+			32,
+			35
+		],
+		"concepts": [
+			"aead",
+			"tlsinnerplaintext",
+			"additional-data",
+			"record-protection"
+		],
+		"why": "Spells out the TLSInnerPlaintext struct, that the outer opaque_type is always application_data(23), and that the AEAD's additional data is the five header bytes with the ciphertext length in them — the exact detail that makes a first encrypted record decrypt or fail to.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "tls-rfc8446-per-record-nonce",
+		"title": "RFC 8446 - 5.3. Per-Record Nonce",
+		"url": "https://www.rfc-editor.org/rfc/rfc8446#section-5.3",
+		"type": "spec",
+		"level": "core",
+		"track": "tls",
+		"stages": [
+			20,
+			23,
+			42
+		],
+		"concepts": [
+			"nonce",
+			"sequence-number",
+			"iv",
+			"aead"
+		],
+		"why": "Half a page that says the whole nonce rule: pad the 64-bit sequence number to the IV length, XOR it into the static IV, and reset the counter to zero on every key change. Read it beside stage 23 when record two decrypts but record three does not.",
+		"minutes": 10,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "tls-rfc8446-record-padding",
+		"title": "RFC 8446 - 5.4. Record Padding",
+		"url": "https://www.rfc-editor.org/rfc/rfc8446#section-5.4",
+		"type": "spec",
+		"level": "core",
+		"track": "tls",
+		"stages": [
+			32,
+			33
+		],
+		"concepts": [
+			"padding",
+			"tlsinnerplaintext",
+			"content-type",
+			"record-sizes"
+		],
+		"why": "The scan-back-past-the-zeros rule for finding the real content type, the statement that any amount of padding is legal, and the note that an all-zero plaintext has no type at all — which is the unexpected_message case stage 32 checks.",
+		"minutes": 10,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "tls-rfc8446-state-machine",
+		"title": "RFC 8446 - Appendix A. State Machine",
+		"url": "https://www.rfc-editor.org/rfc/rfc8446#appendix-A",
+		"type": "spec",
+		"level": "core",
+		"track": "tls",
+		"stages": [
+			7,
+			29,
+			34,
+			37
+		],
+		"concepts": [
+			"state-machine",
+			"flight-order",
+			"handshake",
+			"robustness"
+		],
+		"why": "The server's state diagram on one page. Use it to decide what your server does with a message that arrives in the wrong state — stage 29's out-of-order flights and stage 37's truncated messages are both just 'no transition from here', and the diagram tells you so.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "tls-rfc8446-closure-alerts",
+		"title": "RFC 8446 - 6.1. Closure Alerts",
+		"url": "https://www.rfc-editor.org/rfc/rfc8446#section-6.1",
+		"type": "spec",
+		"level": "core",
+		"track": "tls",
+		"stages": [
+			7,
+			34
+		],
+		"concepts": [
+			"close-notify",
+			"alerts",
+			"half-close",
+			"shutdown"
+		],
+		"why": "close_notify is a warning-level alert with real semantics: you must answer one, you may then close your write side, and data after it is discarded. Stage 34 tests both directions, and this section is where 'both directions' is defined.",
+		"minutes": 10,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "tls-rfc8446-error-alerts",
+		"title": "RFC 8446 - 6.2. Error Alerts",
+		"url": "https://www.rfc-editor.org/rfc/rfc8446#section-6.2",
+		"type": "spec",
+		"level": "core",
+		"track": "tls",
+		"stages": [
+			3,
+			4,
+			9,
+			11,
+			35,
+			36,
+			37
+		],
+		"concepts": [
+			"alerts",
+			"error-handling",
+			"bad-record-mac",
+			"handshake-failure",
+			"unexpected-message"
+		],
+		"why": "The table of which failure gets which alert code. Stages 4, 9, 11, 35 and 37 each assert one specific number out of this table — decode_error vs unexpected_message vs illegal_parameter is not a style choice, and this is the page that settles the argument.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "tls-rfc8446-implementation-pitfalls",
+		"title": "RFC 8446 - C.3. Implementation Pitfalls",
+		"url": "https://www.rfc-editor.org/rfc/rfc8446#appendix-C.3",
+		"type": "spec",
+		"level": "deep",
+		"track": "tls",
+		"stages": [
+			4,
+			37,
+			40
+		],
+		"concepts": [
+			"robustness",
+			"parsing",
+			"length-checks",
+			"fuzzing"
+		],
+		"why": "A checklist of the mistakes implementers actually make — trusting a length field, reading past a buffer, forgetting that vectors have bounds. Work through it before stage 40 fires four hundred mutated hellos at you; most of them are aiming at exactly these.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "tls-wireshark-tls",
+		"title": "TLS - Wireshark Wiki",
+		"url": "https://wiki.wireshark.org/TLS",
+		"type": "tool",
+		"level": "core",
+		"track": "tls",
+		"stages": [
+			19,
+			30,
+			35,
+			45
+		],
+		"concepts": [
+			"debugging",
+			"packet-capture",
+			"sslkeylogfile",
+			"decryption"
+		],
+		"why": "How to point Wireshark at an SSLKEYLOGFILE and watch your own connection in cleartext. When your Finished verify fails and you cannot tell whether the transcript or the keys are wrong, a dissected capture of the same handshake settles it in a minute.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "tls-rfc8446-client-hello",
+		"title": "RFC 8446 - 4.1.2. Client Hello",
+		"url": "https://www.rfc-editor.org/rfc/rfc8446#section-4.1.2",
+		"type": "spec",
+		"level": "core",
+		"track": "tls",
+		"stages": [
+			8,
+			10,
+			11,
+			14,
+			16,
+			38
+		],
+		"concepts": [
+			"client-hello",
+			"parsing",
+			"legacy-session-id",
+			"unknown-extensions",
+			"renegotiation"
+		],
+		"why": "Field by field, plus the three rules stages 14, 16 and 38 lean on: unknown extensions are ignored, legacy_session_id is echoed verbatim, and a ClientHello arriving after the handshake is unexpected_message rather than a renegotiation.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "tls-rfc8446-supported-versions",
+		"title": "RFC 8446 - 4.2.1. Supported Versions",
+		"url": "https://www.rfc-editor.org/rfc/rfc8446#section-4.2.1",
+		"type": "spec",
+		"level": "core",
+		"track": "tls",
+		"stages": [
+			8,
+			9,
+			17
+		],
+		"concepts": [
+			"supported-versions",
+			"version-negotiation",
+			"legacy-version",
+			"protocol-version"
+		],
+		"why": "Why legacy_version is frozen at 0x0303 and the real answer lives in an extension, and what a server owes a client that offers only TLS 1.2 — stage 9's refusal is this section read strictly, not an invented policy.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "tls-rfc8446-extensions",
+		"title": "RFC 8446 - 4.2. Extensions",
+		"url": "https://www.rfc-editor.org/rfc/rfc8446#section-4.2",
+		"type": "spec",
+		"level": "core",
+		"track": "tls",
+		"stages": [
+			14,
+			15,
+			16,
+			22
+		],
+		"concepts": [
+			"extensions",
+			"duplicate-extensions",
+			"illegal-parameter",
+			"encrypted-extensions"
+		],
+		"why": "The table saying which extension may appear in which message, and the rule that a duplicate extension is illegal_parameter. Stage 16 sends duplicates and lying lengths; stage 22 asks which extensions belong in EncryptedExtensions rather than the ServerHello, and the table answers both.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "tls-rfc8446-key-share",
+		"title": "RFC 8446 - 4.2.8. Key Share",
+		"url": "https://www.rfc-editor.org/rfc/rfc8446#section-4.2.8",
+		"type": "spec",
+		"level": "core",
+		"track": "tls",
+		"stages": [
+			12,
+			41
+		],
+		"concepts": [
+			"key-share",
+			"x25519",
+			"secp256r1",
+			"ecdhe",
+			"point-encoding"
+		],
+		"why": "The KeyShareEntry encodings you must parse: 32 raw bytes for x25519, a 65-byte uncompressed point starting 0x04 for secp256r1 — and the HelloRetryRequest variant that carries a selected_group and no share at all.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "tls-rfc8446-signature-algorithms",
+		"title": "RFC 8446 - 4.2.3. Signature Algorithms",
+		"url": "https://www.rfc-editor.org/rfc/rfc8446#section-4.2.3",
+		"type": "spec",
+		"level": "core",
+		"track": "tls",
+		"stages": [
+			13,
+			26
+		],
+		"concepts": [
+			"signature-algorithms",
+			"signature-scheme",
+			"rsa-pss",
+			"ecdsa",
+			"ed25519"
+		],
+		"why": "The SignatureScheme enum with the code points, and the rule that binds stage 13 to stage 26: you may only pick a scheme the client offered *and* your key can produce, so an RSA key and a client offering only ECDSA is a handshake_failure, not a guess.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "tls-iana-tls-parameters",
+		"title": "Transport Layer Security (TLS) Parameters",
+		"url": "https://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml",
+		"type": "doc",
+		"level": "core",
+		"track": "tls",
+		"stages": [
+			10,
+			12,
+			13,
+			14,
+			26,
+			36
+		],
+		"concepts": [
+			"iana",
+			"registry",
+			"cipher-suites",
+			"named-groups",
+			"alert-codes",
+			"code-points"
+		],
+		"why": "The authoritative number-to-name tables. When a test says you sent 0x1302 and it wanted 0x1301, or the alert byte was 47 and should have been 50, this is where you look the value up instead of grepping headers.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "tls-rfc8447",
+		"title": "RFC 8447: IANA Registry Updates for TLS and DTLS",
+		"url": "https://www.rfc-editor.org/rfc/rfc8447",
+		"type": "spec",
+		"level": "deep",
+		"track": "tls",
+		"stages": [
+			14,
+			26
+		],
+		"concepts": [
+			"iana",
+			"registry",
+			"grease",
+			"recommended-column",
+			"code-points"
+		],
+		"why": "Explains how those registries are governed — what the Recommended column means, and how the reserved GREASE values got there. Read it once so that ignoring an unknown code point at stage 14 feels like the designed behaviour it is.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "tls-rfc8701",
+		"title": "RFC 8701: Applying Generate Random Extensions And Sustain Extensibility (GREASE) to TLS Extensibility",
+		"url": "https://www.rfc-editor.org/rfc/rfc8701",
+		"type": "spec",
+		"level": "core",
+		"track": "tls",
+		"stages": [
+			14,
+			16,
+			40
+		],
+		"concepts": [
+			"grease",
+			"extensibility",
+			"unknown-extensions",
+			"robustness"
+		],
+		"why": "Names the exact reserved values real browsers sprinkle into cipher suite lists, groups and extensions, and why. Stage 14 sends them at you: a server that chokes on one would be broken against Chrome on day one, and this is the document that says so.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "tls-rfc6066",
+		"title": "RFC 6066: Transport Layer Security (TLS) Extensions: Extension Definitions",
+		"url": "https://www.rfc-editor.org/rfc/rfc6066",
+		"type": "spec",
+		"level": "core",
+		"track": "tls",
+		"stages": [
+			15
+		],
+		"concepts": [
+			"sni",
+			"server-name",
+			"extensions",
+			"hostname"
+		],
+		"why": "Section 3 is the wire format of server_name — a list that in practice holds exactly one host_name — and the rule that a server which used the SNI answers with an empty server_name extension. Stage 15 checks that empty echo, which is easy to forget.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "tls-rfc7301",
+		"title": "RFC 7301: Transport Layer Security (TLS) Application-Layer Protocol Negotiation Extension",
+		"url": "https://www.rfc-editor.org/rfc/rfc7301",
+		"type": "spec",
+		"level": "core",
+		"track": "tls",
+		"stages": [
+			15
+		],
+		"concepts": [
+			"alpn",
+			"extensions",
+			"protocol-negotiation"
+		],
+		"why": "The ALPN extension in full: a list of length-prefixed protocol names in, exactly one name back, and no_application_protocol(120) when nothing matches. In TLS 1.3 the answer goes in EncryptedExtensions, which is the half of stage 15 people get wrong.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "tls-cloudflare-rfc8446-detailed-look",
+		"title": "A Detailed Look at RFC 8446 (a.k.a. TLS 1.3)",
+		"url": "https://blog.cloudflare.com/rfc-8446-aka-tls-1-3/",
+		"type": "article",
+		"level": "intro",
+		"track": "tls",
+		"stages": [
+			8,
+			17,
+			41,
+			43
+		],
+		"concepts": [
+			"tls13",
+			"design-rationale",
+			"handshake",
+			"resumption",
+			"overview"
+		],
+		"why": "A guided tour of the RFC by people who shipped it: what each flight is for, why the handshake shrank to one round trip, and where HelloRetryRequest and tickets fit. The cheapest way to get the whole map before you start negotiating section B.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "tls-rfc8446-server-hello",
+		"title": "RFC 8446 - 4.1.3. Server Hello",
+		"url": "https://www.rfc-editor.org/rfc/rfc8446#section-4.1.3",
+		"type": "spec",
+		"level": "core",
+		"track": "tls",
+		"stages": [
+			17,
+			21,
+			41
+		],
+		"concepts": [
+			"server-hello",
+			"downgrade-protection",
+			"legacy-session-id-echo",
+			"random"
+		],
+		"why": "Every field stage 17 checks, including the two that are not random at all: the legacy_session_id_echo you must copy back, and the downgrade-protection sentinel the last eight bytes of Random must *not* contain when you really are speaking TLS 1.3.",
+		"minutes": 25,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "tls-rfc8446-key-schedule",
+		"title": "RFC 8446 - 7.1. Key Schedule",
+		"url": "https://www.rfc-editor.org/rfc/rfc8446#section-7.1",
+		"type": "spec",
+		"level": "core",
+		"track": "tls",
+		"stages": [
+			18,
+			19,
+			20,
+			43
+		],
+		"concepts": [
+			"key-schedule",
+			"hkdf-expand-label",
+			"derive-secret",
+			"early-secret",
+			"handshake-secret"
+		],
+		"why": "The ladder diagram to keep open beside your HKDF-Expand-Label code: every Extract, every Derive-Secret, every label spelled out, and the 'derived' step over the *empty* transcript that is the single most common reason a Finished verify fails.",
+		"minutes": 45,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "tls-rfc8446-traffic-key-calculation",
+		"title": "RFC 8446 - 7.3. Traffic Key Calculation",
+		"url": "https://www.rfc-editor.org/rfc/rfc8446#section-7.3",
+		"type": "spec",
+		"level": "core",
+		"track": "tls",
+		"stages": [
+			20,
+			23
+		],
+		"concepts": [
+			"traffic-keys",
+			"hkdf-expand-label",
+			"iv",
+			"key-length"
+		],
+		"why": "Six lines: key = HKDF-Expand-Label(secret, \"key\", \"\", key_length), iv = the same with \"iv\" and length 12, context empty for both. Stage 20 fails on exactly this when the context is accidentally the transcript hash instead of the empty string.",
+		"minutes": 10,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "tls-rfc8446-transcript-hash",
+		"title": "RFC 8446 - 4.4.1. The Transcript Hash",
+		"url": "https://www.rfc-editor.org/rfc/rfc8446#section-4.4.1",
+		"type": "spec",
+		"level": "core",
+		"track": "tls",
+		"stages": [
+			19,
+			25,
+			27,
+			41
+		],
+		"concepts": [
+			"transcript-hash",
+			"handshake-context",
+			"message-hash",
+			"hello-retry-request"
+		],
+		"why": "Defines the hash as running over complete handshake messages including their four-byte headers, and defines the synthetic `message_hash` substitution for HelloRetryRequest. Stage 19 checks the hash at every boundary; stage 41 checks the substitution nobody guesses.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "tls-rfc5869",
+		"title": "RFC 5869: HMAC-based Extract-and-Expand Key Derivation Function (HKDF)",
+		"url": "https://www.rfc-editor.org/rfc/rfc5869",
+		"type": "spec",
+		"level": "core",
+		"track": "tls",
+		"stages": [
+			18,
+			20
+		],
+		"concepts": [
+			"hkdf",
+			"extract",
+			"expand",
+			"test-vectors",
+			"kdf"
+		],
+		"why": "The Extract/Expand primitive the whole TLS 1.3 key schedule is built from, with test vectors in Appendix A. Make your HKDF pass those vectors first — debugging the schedule on top of an HKDF you have not verified wastes a day.",
+		"minutes": 40,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "tls-rfc8448",
+		"title": "RFC 8448: Example Handshake Traces for TLS 1.3",
+		"url": "https://www.rfc-editor.org/rfc/rfc8448",
+		"type": "spec",
+		"level": "core",
+		"track": "tls",
+		"stages": [
+			17,
+			18,
+			19,
+			20,
+			25,
+			27,
+			28
+		],
+		"concepts": [
+			"test-vectors",
+			"key-schedule",
+			"transcript-hash",
+			"traffic-keys",
+			"worked-example"
+		],
+		"why": "Section 3's simple 1-RTT handshake, with every secret, every transcript hash and both Finished values printed. This is a unit test kit: feed the published ClientHello and private keys into your schedule and compare intermediate values until the first one diverges.",
+		"minutes": 90,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "tls-rfc8448-resumed-0rtt",
+		"title": "RFC 8448 - 4. Resumed 0-RTT Handshake",
+		"url": "https://www.rfc-editor.org/rfc/rfc8448#section-4",
+		"type": "spec",
+		"level": "core",
+		"track": "tls",
+		"stages": [
+			43,
+			44
+		],
+		"concepts": [
+			"resumption",
+			"psk",
+			"binder",
+			"early-data",
+			"test-vectors"
+		],
+		"why": "A ticket issued on one connection and used on the next, with the resumption PSK, the binder computation and the early-data secrets all written out. The reference to check your binder against before you decide the client is at fault.",
+		"minutes": 40,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "tls-rfc8446-encrypted-extensions",
+		"title": "RFC 8446 - 4.3.1. Encrypted Extensions",
+		"url": "https://www.rfc-editor.org/rfc/rfc8446#section-4.3.1",
+		"type": "spec",
+		"level": "core",
+		"track": "tls",
+		"stages": [
+			22
+		],
+		"concepts": [
+			"encrypted-extensions",
+			"extensions",
+			"handshake-encryption",
+			"alpn",
+			"sni"
+		],
+		"why": "Short and absolute: EncryptedExtensions is sent immediately after the ServerHello, carries every negotiated extension that is not needed to establish keys, and must be present even when it is empty. Stage 22 checks all three of those.",
+		"minutes": 10,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "tls-rfc8446-middlebox-compatibility",
+		"title": "RFC 8446 - D.4. Middlebox Compatibility Mode",
+		"url": "https://www.rfc-editor.org/rfc/rfc8446#appendix-D.4",
+		"type": "spec",
+		"level": "core",
+		"track": "tls",
+		"stages": [
+			21
+		],
+		"concepts": [
+			"change-cipher-spec",
+			"middlebox-compat",
+			"legacy",
+			"record-layer"
+		],
+		"why": "Why a protocol that abolished ChangeCipherSpec still sends one, where in the flight it goes, and the rule that a receiver must silently drop it rather than treat it as a message. That 'silently' is the whole of stage 21.",
+		"minutes": 10,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "tls-rustls-key-schedule",
+		"title": "rustls/src/tls13/key_schedule.rs",
+		"url": "https://github.com/rustls/rustls/blob/main/rustls/src/tls13/key_schedule.rs",
+		"type": "repo",
+		"level": "deep",
+		"track": "tls",
+		"stages": [
+			18,
+			20,
+			42
+		],
+		"concepts": [
+			"key-schedule",
+			"implementation",
+			"rust",
+			"hkdf-expand-label",
+			"key-update"
+		],
+		"why": "A production key schedule written as a type-state machine, so each secret can only be derived from the previous one in the right order. Worth reading once at stage 18 for the idea alone: it makes the class of bug where you expand from the wrong secret unrepresentable.",
+		"minutes": 45,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "tls-rfc8446-certificate",
+		"title": "RFC 8446 - 4.4.2. Certificate",
+		"url": "https://www.rfc-editor.org/rfc/rfc8446#section-4.4.2",
+		"type": "spec",
+		"level": "core",
+		"track": "tls",
+		"stages": [
+			24,
+			29
+		],
+		"concepts": [
+			"certificate",
+			"certificate-entry",
+			"certificate-request-context",
+			"der"
+		],
+		"why": "The message is a certificate_request_context (empty for a server) and a list of CertificateEntry, each an opaque DER blob with its own extensions vector. Two nested length prefixes and an empty extensions field per entry: that is where stage 24 usually catches people.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "tls-rfc8446-certificate-verify",
+		"title": "RFC 8446 - 4.4.3. Certificate Verify",
+		"url": "https://www.rfc-editor.org/rfc/rfc8446#section-4.4.3",
+		"type": "spec",
+		"level": "core",
+		"track": "tls",
+		"stages": [
+			25,
+			26
+		],
+		"concepts": [
+			"certificate-verify",
+			"signature",
+			"context-string",
+			"transcript-hash"
+		],
+		"why": "The exact bytes you sign: 64 octets of 0x20, then \"TLS 1.3, server CertificateVerify\", then one 0x00, then the transcript hash as it stood *before* this message. Copy the construction from here character for character — the space count and the trailing NUL are both load-bearing.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "tls-rfc8446-finished",
+		"title": "RFC 8446 - 4.4.4. Finished",
+		"url": "https://www.rfc-editor.org/rfc/rfc8446#section-4.4.4",
+		"type": "spec",
+		"level": "core",
+		"track": "tls",
+		"stages": [
+			27,
+			28,
+			29
+		],
+		"concepts": [
+			"finished",
+			"verify-data",
+			"finished-key",
+			"hmac",
+			"decrypt-error"
+		],
+		"why": "finished_key = HKDF-Expand-Label(traffic_secret, \"finished\", \"\", Hash.length), verify_data = HMAC over the transcript hash — plus the requirement that a wrong client Finished is a fatal decrypt_error, which is the second half of stage 28.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "tls-rfc5280",
+		"title": "RFC 5280: Internet X.509 Public Key Infrastructure Certificate and CRL Profile",
+		"url": "https://www.rfc-editor.org/rfc/rfc5280",
+		"type": "spec",
+		"level": "deep",
+		"track": "tls",
+		"stages": [
+			24
+		],
+		"concepts": [
+			"x509",
+			"der",
+			"certificate",
+			"pki",
+			"asn1"
+		],
+		"why": "What is actually inside the opaque blob you are putting on the wire at stage 24: the TBSCertificate fields, the SubjectPublicKeyInfo your CertificateVerify key has to match, and the extensions a real client will check.",
+		"minutes": 180,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "tls-rfc8017",
+		"title": "RFC 8017: PKCS #1: RSA Cryptography Specifications Version 2.2",
+		"url": "https://www.rfc-editor.org/rfc/rfc8017",
+		"type": "spec",
+		"level": "deep",
+		"track": "tls",
+		"stages": [
+			26
+		],
+		"concepts": [
+			"rsa-pss",
+			"mgf1",
+			"salt-length",
+			"signature-schemes"
+		],
+		"why": "The RSASSA-PSS definition behind rsa_pss_rsae_sha256: MGF1 with the same hash and a salt as long as the digest. TLS 1.3 forbids PKCS#1 v1.5 signatures, so if your crypto library defaults to them, this is the section that tells you which knobs to change.",
+		"minutes": 60,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "tls-rfc8032",
+		"title": "RFC 8032: Edwards-Curve Digital Signature Algorithm (EdDSA)",
+		"url": "https://www.rfc-editor.org/rfc/rfc8032",
+		"type": "spec",
+		"level": "deep",
+		"track": "tls",
+		"stages": [
+			26
+		],
+		"concepts": [
+			"ed25519",
+			"eddsa",
+			"signature-schemes",
+			"pure-signature"
+		],
+		"why": "Ed25519 as TLS uses it: PureEdDSA, which signs the message itself rather than a hash of it, and always produces 64 bytes. Stage 26 fails loudly if you pre-hash the CertificateVerify content the way you do for the ECDSA and RSA schemes.",
+		"minutes": 60,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "tls-rfc8446-security-properties",
+		"title": "RFC 8446 - E.1. Handshake",
+		"url": "https://www.rfc-editor.org/rfc/rfc8446#appendix-E.1",
+		"type": "spec",
+		"level": "deep",
+		"track": "tls",
+		"stages": [
+			27,
+			28,
+			38
+		],
+		"concepts": [
+			"security-properties",
+			"authentication",
+			"downgrade-protection",
+			"design-rationale"
+		],
+		"why": "The goals the flight you just implemented is supposed to achieve — key secrecy, peer authentication, downgrade protection, transcript integrity. Read it after stage 27 so you can say what the Finished message actually buys, and why renegotiation had to go.",
+		"minutes": 45,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "tls-dowling-tls13-handshake-analysis",
+		"title": "A Cryptographic Analysis of the TLS 1.3 Handshake Protocol Candidates",
+		"url": "https://eprint.iacr.org/2015/914",
+		"type": "paper",
+		"level": "deep",
+		"track": "tls",
+		"stages": [
+			18,
+			27
+		],
+		"concepts": [
+			"formal-analysis",
+			"provable-security",
+			"key-exchange",
+			"handshake",
+			"design-rationale"
+		],
+		"why": "The proof-side view of the same key schedule: what each derivation step is assumed to provide and why the handshake is analysed as multi-stage. Slow going, but it explains why the design separates handshake and application secrets instead of reusing one.",
+		"minutes": 180,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "tls-bearssl-constant-time",
+		"title": "BearSSL - Constant-Time Crypto",
+		"url": "https://bearssl.org/constanttime.html",
+		"type": "doc",
+		"level": "deep",
+		"track": "tls",
+		"stages": [
+			28,
+			35
+		],
+		"concepts": [
+			"constant-time",
+			"side-channels",
+			"timing-attacks",
+			"comparison"
+		],
+		"why": "Why `memcmp` on a MAC is a bug and what to write instead, from a library that takes it seriously throughout. Applies directly to stage 28's Finished comparison and stage 35's requirement that a bad tag, a bad length and a bad type all fail identically.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "tls-openssl-s-client",
+		"title": "openssl-s_client",
+		"url": "https://docs.openssl.org/3.5/man1/openssl-s_client/",
+		"type": "doc",
+		"level": "core",
+		"track": "tls",
+		"stages": [
+			30,
+			43,
+			45
+		],
+		"concepts": [
+			"interop",
+			"cli",
+			"openssl",
+			"resumption",
+			"debugging"
+		],
+		"why": "The shortest complete TLS 1.3 client you have. `-ciphersuites` and `-groups` pin the negotiation so you can drive one path at a time, and `-sess_out` then `-sess_in` proves resumption end to end — the second run prints `Reused` when your ticket was really accepted.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "tls-rfc8439",
+		"title": "RFC 8439: ChaCha20 and Poly1305 for IETF Protocols",
+		"url": "https://www.rfc-editor.org/rfc/rfc8439",
+		"type": "spec",
+		"level": "core",
+		"track": "tls",
+		"stages": [
+			31
+		],
+		"concepts": [
+			"chacha20-poly1305",
+			"aead",
+			"cipher-suites",
+			"test-vectors"
+		],
+		"why": "The AEAD construction behind TLS_CHACHA20_POLY1305_SHA256, with test vectors. Section 2.8 is the one that matters: how the key, the 96-bit nonce and the additional data combine, and why the ciphertext is exactly plaintext length plus a 16-byte tag.",
+		"minutes": 60,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "tls-nist-sp-800-38d",
+		"title": "NIST SP 800-38D: Recommendation for Block Cipher Modes of Operation: Galois/Counter Mode (GCM) and GMAC",
+		"url": "https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-38d.pdf",
+		"type": "spec",
+		"level": "deep",
+		"track": "tls",
+		"stages": [
+			31,
+			35
+		],
+		"concepts": [
+			"aes-gcm",
+			"aead",
+			"authentication-tag",
+			"nonce-reuse"
+		],
+		"why": "The normative definition of the mode two of your three cipher suites use, including the part stage 35 depends on: the tag check is all-or-nothing, and the catastrophic consequence of ever repeating a nonce under one key — which is why the sequence number rule is not negotiable.",
+		"minutes": 120,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "tls-tlsfuzzer",
+		"title": "tlsfuzzer: SSL and TLS protocol test suite and fuzzer",
+		"url": "https://github.com/tlsfuzzer/tlsfuzzer",
+		"type": "repo",
+		"level": "deep",
+		"track": "tls",
+		"stages": [
+			40
+		],
+		"concepts": [
+			"fuzzing",
+			"conformance-testing",
+			"robustness",
+			"negative-testing"
+		],
+		"why": "A large corpus of deliberately malformed TLS exchanges with a script per bug class. After stage 40 goes green, run a few of its TLS 1.3 scripts against your server for a second opinion — and read the scripts for ideas about what else is worth breaking.",
+		"minutes": 60,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "tls-rustls",
+		"title": "rustls: a modern TLS library in Rust",
+		"url": "https://github.com/rustls/rustls",
+		"type": "repo",
+		"level": "deep",
+		"track": "tls",
+		"stages": [
+			30,
+			39
+		],
+		"concepts": [
+			"implementation",
+			"rust",
+			"api-design",
+			"concurrency",
+			"buffering"
+		],
+		"why": "A whole TLS stack organised as a sans-io state machine with the buffering pushed to the edges. That separation is exactly what makes stage 39's fifty concurrent connections easy, and worth stealing even if you are writing in another language.",
+		"minutes": 60,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "tls-rfc8446-hello-retry-request",
+		"title": "RFC 8446 - 4.1.4. Hello Retry Request",
+		"url": "https://www.rfc-editor.org/rfc/rfc8446#section-4.1.4",
+		"type": "spec",
+		"level": "core",
+		"track": "tls",
+		"stages": [
+			41
+		],
+		"concepts": [
+			"hello-retry-request",
+			"key-share",
+			"cookie",
+			"second-client-hello"
+		],
+		"why": "HRR is a ServerHello with a fixed magic Random, carrying a selected_group and no share. This section also lists exactly what the second ClientHello may differ in, which is the check stage 41 makes when it sends you a retry you should reject.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "tls-rfc8446-key-update",
+		"title": "RFC 8446 - 4.6.3. Key and Initialization Vector Update",
+		"url": "https://www.rfc-editor.org/rfc/rfc8446#section-4.6.3",
+		"type": "spec",
+		"level": "core",
+		"track": "tls",
+		"stages": [
+			42
+		],
+		"concepts": [
+			"key-update",
+			"traffic-upd",
+			"sequence-number",
+			"post-handshake"
+		],
+		"why": "One-byte message, one-line derivation: the next secret is HKDF-Expand-Label(old, \"traffic upd\", \"\", Hash.length), only the sender's direction changes, and the sequence number restarts at zero. The ping-pong rule for update_requested is here too.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "tls-rfc8446-new-session-ticket",
+		"title": "RFC 8446 - 4.6.1. New Session Ticket Message",
+		"url": "https://www.rfc-editor.org/rfc/rfc8446#section-4.6.1",
+		"type": "spec",
+		"level": "core",
+		"track": "tls",
+		"stages": [
+			43
+		],
+		"concepts": [
+			"new-session-ticket",
+			"resumption",
+			"ticket-nonce",
+			"psk"
+		],
+		"why": "The ticket message's fields and the derivation that makes each one distinct: PSK = HKDF-Expand-Label(resumption_master_secret, \"resumption\", ticket_nonce, Hash.length). Stage 43 issues two tickets on one connection, so the nonce is what keeps them apart.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "tls-rfc8446-pre-shared-key-extension",
+		"title": "RFC 8446 - 4.2.11. Pre-Shared Key Extension",
+		"url": "https://www.rfc-editor.org/rfc/rfc8446#section-4.2.11",
+		"type": "spec",
+		"level": "core",
+		"track": "tls",
+		"stages": [
+			43
+		],
+		"concepts": [
+			"psk",
+			"binder",
+			"truncated-transcript",
+			"resumption",
+			"extension-order"
+		],
+		"why": "Where the binder rules live: pre_shared_key must be the last extension, and the binder is an HMAC over the ClientHello truncated just before the binders list. Compute it over the wrong prefix and every resumption fails identically, so read the truncation rule carefully.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "tls-rfc8446-early-data-indication",
+		"title": "RFC 8446 - 4.2.10. Early Data Indication",
+		"url": "https://www.rfc-editor.org/rfc/rfc8446#section-4.2.10",
+		"type": "spec",
+		"level": "core",
+		"track": "tls",
+		"stages": [
+			44
+		],
+		"concepts": [
+			"early-data",
+			"zero-rtt",
+			"end-of-early-data",
+			"encrypted-extensions"
+		],
+		"why": "How 0-RTT is offered and, more usefully for stage 44, how it is refused: leave early_data out of EncryptedExtensions, expect no EndOfEarlyData, and skip the early records you cannot decrypt. Refusing correctly is a real code path, not a no-op.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "tls-rfc8446-replay-attacks-0rtt",
+		"title": "RFC 8446 - E.5. Replay Attacks on 0-RTT",
+		"url": "https://www.rfc-editor.org/rfc/rfc8446#appendix-E.5",
+		"type": "spec",
+		"level": "deep",
+		"track": "tls",
+		"stages": [
+			44
+		],
+		"concepts": [
+			"zero-rtt",
+			"replay",
+			"anti-replay",
+			"security-rationale"
+		],
+		"why": "Several pages on why 0-RTT data can be replayed and what an implementation would have to do to make that safe. This is the argument for stage 44's position that refusing early data is always allowed and usually the right default.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "tls-cloudflare-0rtt-resumption",
+		"title": "Introducing Zero Round Trip Time Resumption (0-RTT)",
+		"url": "https://blog.cloudflare.com/introducing-0-rtt/",
+		"type": "article",
+		"level": "intro",
+		"track": "tls",
+		"stages": [
+			44
+		],
+		"concepts": [
+			"zero-rtt",
+			"resumption",
+			"replay",
+			"latency"
+		],
+		"why": "The readable version of the 0-RTT trade-off — what it saves, what it risks, and how one large deployment decided which requests to allow. Read it before the RFC appendix so stage 44's 'just refuse it' has a reason attached.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	}
+]

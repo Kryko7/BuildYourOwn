@@ -7,7 +7,7 @@ import {
 	resourcesForStage,
 	resourcesForTrack
 } from './resources';
-import { getCatalog } from './catalog';
+import { getCatalog, trackIds } from './catalog';
 import type { Resource } from './types';
 
 function res(partial: Partial<Resource> & { id: string }): Resource {
@@ -102,8 +102,25 @@ describe('the real resource library', () => {
 	const all = allResources();
 
 	it('has at least 40 entries per track, as the plan asks', () => {
-		expect(resourcesForTrack('shell').length).toBeGreaterThanOrEqual(40);
-		expect(resourcesForTrack('kafka').length).toBeGreaterThanOrEqual(40);
+		// Every track, not just the two that had a library first: an empty reading list is
+		// the failure this catches, and four tracks shipped with one.
+		for (const track of trackIds) {
+			const n = resourcesForTrack(track).length;
+			expect({ track, enough: n >= 40 }).toEqual({ track, enough: true });
+		}
+	});
+
+	it('gives every stage of every track something to read', () => {
+		for (const track of trackIds) {
+			for (const stage of getCatalog(track).stages) {
+				const list = resourcesForStage(track, stage.number);
+				expect({ track, stage: stage.number, some: list.length > 0 }).toEqual({
+					track,
+					stage: stage.number,
+					some: true
+				});
+			}
+		}
 	});
 
 	it('only cites stages the site can actually open', () => {

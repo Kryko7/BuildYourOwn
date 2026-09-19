@@ -1,1 +1,1244 @@
-[]
+[
+	{
+		"id": "link-elf5-manpage",
+		"title": "elf(5) — format of Executable and Linking Format (ELF) files",
+		"url": "https://man7.org/linux/man-pages/man5/elf.5.html",
+		"type": "spec",
+		"level": "intro",
+		"track": "link",
+		"stages": [
+			1,
+			2,
+			3,
+			4,
+			5,
+			8,
+			13
+		],
+		"concepts": [
+			"elf64",
+			"elf-header",
+			"section-headers",
+			"symbol-table",
+			"string-tables"
+		],
+		"why": "The one page that gives you every struct you are about to write a parser for — Elf64_Ehdr, Elf64_Shdr, Elf64_Sym, Elf64_Rela — with each field's meaning in one line. Keep it open in a tab for the whole of section A; it is faster to check e_shstrndx or SHT_NOBITS here than anywhere else.",
+		"minutes": 40,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "link-csapp-linking-lecture",
+		"title": "Linking — CMU 15-213 lecture 13 (Computer Systems: A Programmer's Perspective, ch. 7)",
+		"url": "https://www.cs.cmu.edu/afs/cs/academic/class/15213-f15/www/lectures/13-linking.pdf",
+		"type": "course",
+		"level": "intro",
+		"track": "link",
+		"stages": [
+			1,
+			16,
+			32
+		],
+		"concepts": [
+			"static-linking",
+			"symbol-resolution",
+			"relocations",
+			"archives"
+		],
+		"why": "Bryant and O'Hallaron's own slides for chapter 7, and the cheapest hour you can spend before stage 1: what a relocatable object is, why symbol resolution and relocation are two separate passes, and where archives fit. Read it once so the rest of the track is detail rather than discovery.",
+		"minutes": 60,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "link-levine-linkers-and-loaders",
+		"title": "Linkers and Loaders (John R. Levine)",
+		"url": "https://www.iecc.com/linker/",
+		"type": "book",
+		"level": "core",
+		"track": "link",
+		"stages": [
+			1,
+			32,
+			34
+		],
+		"concepts": [
+			"static-linking",
+			"archives",
+			"link-order",
+			"object-formats"
+		],
+		"why": "The only book-length treatment of the job you are doing, and the place to go when you want to know why linkers work this way at all — why archives are scanned once in command-line order, why symbol resolution is a single left-to-right pass. The manuscript chapters are no longer downloadable from this page, so treat it as a library or bookshop pointer.",
+		"free": false,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "link-eli-static-linked-run",
+		"title": "How statically linked programs run on Linux (Eli Bendersky)",
+		"url": "https://eli.thegreenplace.net/2012/08/13/how-statically-linked-programs-run-on-linux/",
+		"type": "article",
+		"level": "intro",
+		"track": "link",
+		"stages": [
+			1,
+			10,
+			37
+		],
+		"concepts": [
+			"kernel-loader",
+			"entry-point",
+			"process-startup",
+			"freestanding"
+		],
+		"why": "Walks a static binary from execve to the first instruction at e_entry, with the actual disassembly of _start. Read it before stage 1 so you know exactly how little the kernel needs from you: a PT_LOAD or two, an entry address, and an execute bit.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "link-lattimore-video-wild",
+		"title": "Video: Rust Sydney — A linker in the Wild (David Lattimore)",
+		"url": "https://davidlattimore.github.io/posts/2024/04/17/video-rust-syd-wild-linker.html",
+		"type": "video",
+		"level": "intro",
+		"track": "link",
+		"stages": [
+			1,
+			37
+		],
+		"concepts": [
+			"static-linking",
+			"linker-design",
+			"rust"
+		],
+		"why": "Half an hour of someone who is writing a Linux linker from scratch explaining the shape of the program: what passes it has, what it holds in memory, what turned out to be hard. A good orientation to the architecture you are about to grow, and a reassuring one at stage 37 when six objects start to feel like a real linker.",
+		"minutes": 35,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "link-gabi-contents",
+		"title": "System V ABI — the generic ABI (gABI), current draft",
+		"url": "https://www.sco.com/developers/gabi/latest/contents.html",
+		"type": "spec",
+		"level": "core",
+		"track": "link",
+		"stages": [
+			1,
+			3,
+			5
+		],
+		"concepts": [
+			"elf64",
+			"generic-abi",
+			"object-formats"
+		],
+		"why": "The live home of the generic ELF specification — the processor-independent half of everything the tester checks. Bookmark this contents page rather than the old refspecs.linuxfoundation.org copy, which is gone; chapters 4 and 5 here are cited individually throughout this list.",
+		"minutes": 120,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "link-gabi-elf-header",
+		"title": "gABI: ELF header",
+		"url": "https://www.sco.com/developers/gabi/latest/ch4.eheader.html",
+		"type": "spec",
+		"level": "core",
+		"track": "link",
+		"stages": [
+			2,
+			3,
+			8
+		],
+		"concepts": [
+			"elf-header",
+			"e-ident",
+			"et-exec",
+			"em-x86-64"
+		],
+		"why": "Field by field for the 64 bytes you parse at stage 3 and write at stage 8: what e_ident's magic, class and data bytes must hold, what ET_REL and ET_EXEC mean, and the e_shoff/e_shentsize/e_shnum/e_shstrndx quartet you need before you can find a single section. Stage 2's refusals are exactly this table read as a set of preconditions.",
+		"minutes": 25,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "link-gabi-sections",
+		"title": "gABI: sections",
+		"url": "https://www.sco.com/developers/gabi/latest/ch4.sheader.html",
+		"type": "spec",
+		"level": "core",
+		"track": "link",
+		"stages": [
+			5,
+			7,
+			14,
+			15
+		],
+		"concepts": [
+			"section-headers",
+			"sh-flags",
+			"sh-addralign",
+			"shf-alloc",
+			"sht-nobits"
+		],
+		"why": "The section header table's normative rules: which sh_type values carry file bytes, what SHF_ALLOC actually promises, that sh_addralign of 0 and 1 both mean no constraint, and what index 0 is reserved for. Stage 5 is a list of the ways an input can violate this page, and stages 14–15 are the ways your output can.",
+		"minutes": 35,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "link-gabi-string-tables",
+		"title": "gABI: string table",
+		"url": "https://www.sco.com/developers/gabi/latest/ch4.strtab.html",
+		"type": "spec",
+		"level": "core",
+		"track": "link",
+		"stages": [
+			4
+		],
+		"concepts": [
+			"string-tables",
+			"shstrtab",
+			"null-termination"
+		],
+		"why": "Two screens that settle stage 4 completely: index 0 is the empty string, indexes point into the middle of the table as often as at its start, and nothing promises a terminating NUL past the end. Read it before you write the accessor, not after it walks off the end of a truncated .shstrtab.",
+		"minutes": 10,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "link-gabi-symbol-table",
+		"title": "gABI: symbol table",
+		"url": "https://www.sco.com/developers/gabi/latest/ch4.symtab.html",
+		"type": "spec",
+		"level": "core",
+		"track": "link",
+		"stages": [
+			4,
+			16,
+			19,
+			21,
+			22
+		],
+		"concepts": [
+			"symbol-table",
+			"st-info",
+			"st-shndx",
+			"shn-common",
+			"visibility"
+		],
+		"why": "The definition of every field you will branch on for the whole of section C: st_info packing bind and type into one byte, locals required to come before globals with sh_info marking the split, SHN_ABS and SHN_COMMON, and st_other holding visibility. The SHN_COMMON paragraph — st_value is an alignment, not an address — is the one stage 21 hinges on.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "link-gabi-relocation",
+		"title": "gABI: relocation",
+		"url": "https://www.sco.com/developers/gabi/latest/ch4.reloc.html",
+		"type": "spec",
+		"level": "core",
+		"track": "link",
+		"stages": [
+			24,
+			25,
+			28,
+			29
+		],
+		"concepts": [
+			"relocations",
+			"rela",
+			"r-info",
+			"addends",
+			"section-symbols"
+		],
+		"why": "Where Elf64_Rela is defined and where the r_info split into symbol index and type is spelled out, along with the meaning of the addend in a RELA entry. Stage 29 is really a question about this page: a relocation against a section symbol names the section, and the offset into it lives entirely in r_addend.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "link-gabi-program-headers",
+		"title": "gABI: program header",
+		"url": "https://www.sco.com/developers/gabi/latest/ch5.pheader.html",
+		"type": "spec",
+		"level": "core",
+		"track": "link",
+		"stages": [
+			9,
+			11,
+			12,
+			13
+		],
+		"concepts": [
+			"program-headers",
+			"pt-load",
+			"segment-permissions",
+			"page-alignment"
+		],
+		"why": "The normative text for every invariant the tester asserts about your segments: p_filesz versus p_memsz for .bss, p_flags for the W^X rule, and the sentence stage 12 exists for — loadable segments must have congruent values for p_vaddr and p_offset, modulo the page size.",
+		"minutes": 25,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "link-fasterthanli-executable-packer",
+		"title": "What's in a Linux executable? (Making our own executable packer, part 1)",
+		"url": "https://fasterthanli.me/series/making-our-own-executable-packer/part-1",
+		"type": "article",
+		"level": "core",
+		"track": "link",
+		"stages": [
+			2,
+			3,
+			5,
+			6
+		],
+		"concepts": [
+			"elf-parsing",
+			"elf-header",
+			"validation",
+			"rust"
+		],
+		"why": "Someone parsing ELF from zero, in Rust, narrating each decision: check the magic before anything else, treat every offset as untrusted, refuse early with a message rather than indexing into a slice. That posture is precisely what stages 2, 5 and 6 grade — the tester feeds you headers that lie and files that stop mid-struct.",
+		"minutes": 45,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "link-readelf-manpage",
+		"title": "readelf(1)",
+		"url": "https://man7.org/linux/man-pages/man1/readelf.1.html",
+		"type": "doc",
+		"level": "core",
+		"track": "link",
+		"stages": [
+			5,
+			6,
+			42
+		],
+		"concepts": [
+			"toolchain-interop",
+			"debugging",
+			"section-headers"
+		],
+		"why": "Your second opinion. `readelf -a` on the fixture that just failed tells you in seconds whether the input really is malformed or your parser is; at stage 42 the tester runs this very program and requires that its view of your output and yours agree, so learn what each column means now.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "link-elf-linking-paper",
+		"title": "The Missing Link: Explaining ELF Static Linking, Semantically (Kell, Mulligan, Sewell)",
+		"url": "https://www.cl.cam.ac.uk/~pes20/rems/papers/oopsla-elf-linking-2016.pdf",
+		"type": "paper",
+		"level": "deep",
+		"track": "link",
+		"stages": [
+			6,
+			7,
+			40
+		],
+		"concepts": [
+			"elf-semantics",
+			"validation",
+			"formal-methods",
+			"fuzzing"
+		],
+		"why": "An executable formal model of what static linking means, built by reverse-engineering GNU ld and checking it against real objects. Read it when stages 6, 7 and 40 stop being about crashes and start being about the question the fuzz stage really asks: which inputs are legal, which are merely unusual, and where is the line you must refuse at.",
+		"minutes": 90,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "link-lwn-elf-binaries",
+		"title": "How programs get run: ELF binaries (LWN)",
+		"url": "https://lwn.net/Articles/631631/",
+		"type": "article",
+		"level": "core",
+		"track": "link",
+		"stages": [
+			9,
+			11,
+			12
+		],
+		"concepts": [
+			"kernel-loader",
+			"pt-load",
+			"mmap",
+			"page-alignment"
+		],
+		"why": "The kernel side of your output file: how load_elf_binary walks the program headers and mmaps each PT_LOAD. Once you see that each segment becomes an mmap with the file offset and the address both rounded down to a page, stage 12's congruence rule stops being an arbitrary assertion.",
+		"minutes": 25,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "link-ilt-linkers-part8",
+		"title": "Linkers part 8: ELF segments (Ian Lance Taylor)",
+		"url": "https://www.airs.com/blog/archives/45",
+		"type": "article",
+		"level": "core",
+		"track": "link",
+		"stages": [
+			9,
+			11,
+			12
+		],
+		"concepts": [
+			"program-headers",
+			"pt-load",
+			"segment-permissions",
+			"layout"
+		],
+		"why": "The clearest short statement of the twist at the heart of section B: object files are read through the section table, executables are loaded through the segment table, and it is your job to group the input sections into a handful of PT_LOADs by permission. Read it before you choose your layout at stage 9.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "link-teensy-elf",
+		"title": "A Whirlwind Tutorial on Creating Really Teensy ELF Executables for Linux",
+		"url": "https://www.muppetlabs.com/~breadbox/software/tiny/teensy.html",
+		"type": "article",
+		"level": "core",
+		"track": "link",
+		"stages": [
+			8,
+			9,
+			12
+		],
+		"concepts": [
+			"elf-header",
+			"pt-load",
+			"entry-point",
+			"layout"
+		],
+		"why": "Brian Raiter shrinks a working executable to a few dozen bytes, and every byte he removes is a field you are about to fill in. It is the fastest way to learn which header fields the kernel genuinely reads at exec time and which ones only the tools care about — exactly the split you need at stages 8 and 9.",
+		"minutes": 40,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "link-binfmt-elf-source",
+		"title": "fs/binfmt_elf.c — the Linux ELF loader",
+		"url": "https://elixir.bootlin.com/linux/latest/source/fs/binfmt_elf.c",
+		"type": "repo",
+		"level": "deep",
+		"track": "link",
+		"stages": [
+			9,
+			12,
+			13
+		],
+		"concepts": [
+			"kernel-loader",
+			"pt-load",
+			"bss",
+			"page-alignment"
+		],
+		"why": "The actual arbiter. When you want to know whether your segment layout is legal, read load_elf_binary: the ELF_PAGESTART rounding, the total_mapping_size computation, and padzero, which is the only reason your .bss comes up zeroed at stage 13. No prose description of the loader can contradict this file.",
+		"minutes": 45,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "link-psabi-process-init",
+		"title": "x86-64 psABI §3.4 Process Initialization",
+		"url": "https://gitlab.com/x86-psABIs/x86-64-ABI/-/jobs/artifacts/master/raw/x86-64-ABI/abi.pdf?job=build",
+		"type": "spec",
+		"level": "core",
+		"track": "link",
+		"stages": [
+			10,
+			37
+		],
+		"concepts": [
+			"process-startup",
+			"entry-point",
+			"initial-stack",
+			"syscalls"
+		],
+		"why": "Section 3.4.1 draws the stack as it looks the instant _start is entered: argc at (%rsp), then argv, then the environment. The tester's fixtures are freestanding and call write and exit themselves, so this figure — not any libc convention — is the contract your entry point has to honour at stage 10.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "link-nullprogram-crt-free",
+		"title": "CRT-free in 2023: tips and tricks (Chris Wellons)",
+		"url": "https://nullprogram.com/blog/2023/02/15/",
+		"type": "article",
+		"level": "core",
+		"track": "link",
+		"stages": [
+			10,
+			37
+		],
+		"concepts": [
+			"freestanding",
+			"process-startup",
+			"syscalls",
+			"entry-point"
+		],
+		"why": "Building real programs with no C runtime: writing _start yourself, making raw syscalls, and the traps that follow from having no crt1.o. The tester's fixtures are built exactly this way, so this is a tour of the world your linker's output lives in at stages 10 and 37.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "link-ld-entry-point",
+		"title": "GNU ld manual: Entry Point",
+		"url": "https://sourceware.org/binutils/docs/ld/Entry-Point.html",
+		"type": "doc",
+		"level": "core",
+		"track": "link",
+		"stages": [
+			10,
+			23
+		],
+		"concepts": [
+			"entry-point",
+			"e-entry",
+			"command-line-options"
+		],
+		"why": "Five lines that define the behaviour stage 23 grades: the entry symbol comes from -e if given, otherwise the symbol _start, and the address of that symbol becomes e_entry. The reference linker's fallback chain is written out here, so you can decide deliberately which parts of it you implement.",
+		"minutes": 10,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "link-ld-scripts",
+		"title": "GNU ld manual: Linker Scripts",
+		"url": "https://sourceware.org/binutils/docs/ld/Scripts.html",
+		"type": "doc",
+		"level": "deep",
+		"track": "link",
+		"stages": [
+			14,
+			15
+		],
+		"concepts": [
+			"output-sections",
+			"section-concatenation",
+			"alignment",
+			"layout"
+		],
+		"why": "You never take a -T script in this track, but every linker has a default one, and this chapter is the vocabulary for what yours is doing implicitly: output sections built by matching input sections in order, the location counter advancing, alignment applied per output section. Read it when stage 15's empty and over-aligned sections make you wonder what the rule should be.",
+		"minutes": 60,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "link-ilt-linkers-part3",
+		"title": "Linkers part 3: address spaces (Ian Lance Taylor)",
+		"url": "https://www.airs.com/blog/archives/40",
+		"type": "article",
+		"level": "core",
+		"track": "link",
+		"stages": [
+			14,
+			30
+		],
+		"concepts": [
+			"address-assignment",
+			"section-concatenation",
+			"layout",
+			"relocations"
+		],
+		"why": "Names the three address spaces a linker juggles — each input object's, the output file's, and the process's at run time — and shows that concatenating sections is really a mapping between the first two. Stage 30's cross-section references are only hard until you keep that mapping explicitly instead of in your head.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "link-ilt-linkers-part12",
+		"title": "Linkers part 12: symbol resolution (Ian Lance Taylor)",
+		"url": "https://www.airs.com/blog/archives/49",
+		"type": "article",
+		"level": "core",
+		"track": "link",
+		"stages": [
+			16,
+			17,
+			18,
+			20,
+			21
+		],
+		"concepts": [
+			"symbol-resolution",
+			"undefined-symbols",
+			"duplicate-definition",
+			"weak-symbols",
+			"common-symbols"
+		],
+		"why": "The author of gold calls symbol resolution the trickiest part of a linker and then lays out the whole decision table: strong versus weak, defined versus common versus undefined, and which combinations are an error rather than a choice. This single post covers stages 16 through 21; read it before you write the symbol table, not after the duplicate-definition test fails.",
+		"minutes": 25,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "link-maskray-symbol-processing",
+		"title": "Symbol processing (MaskRay)",
+		"url": "https://maskray.me/blog/2021-06-20-symbol-processing",
+		"type": "article",
+		"level": "deep",
+		"track": "link",
+		"stages": [
+			16,
+			17,
+			18,
+			19,
+			20,
+			22
+		],
+		"concepts": [
+			"symbol-resolution",
+			"local-symbols",
+			"weak-symbols",
+			"visibility",
+			"archives"
+		],
+		"why": "How a modern linker actually stores and resolves symbols: one global table keyed by name, locals deliberately kept out of it, and a precise account of what a weak definition, a weak reference and a hidden symbol each do to resolution. The 'locals never enter the map' point is the whole of stage 19.",
+		"minutes": 40,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "link-nm-manpage",
+		"title": "nm(1)",
+		"url": "https://man7.org/linux/man-pages/man1/nm.1.html",
+		"type": "doc",
+		"level": "core",
+		"track": "link",
+		"stages": [
+			16,
+			19,
+			42
+		],
+		"concepts": [
+			"symbol-table",
+			"toolchain-interop",
+			"debugging"
+		],
+		"why": "The symbol-type letter table — T, t, D, B, C, U, W, w — is a compact summary of everything section C asks you to distinguish, and it is how you will read your own .symtab while debugging stage 16. At stage 42 nm's answer about your output has to match your own parse, so know what each letter commits you to.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "link-maskray-weak-symbol",
+		"title": "Weak symbol (MaskRay)",
+		"url": "https://maskray.me/blog/2021-04-25-weak-symbol",
+		"type": "article",
+		"level": "deep",
+		"track": "link",
+		"stages": [
+			20
+		],
+		"concepts": [
+			"weak-symbols",
+			"symbol-resolution",
+			"undefined-symbols"
+		],
+		"why": "Stage 20 in one page: a weak definition loses to a strong one and never causes a duplicate-definition error, and an unresolved weak reference is not an error at all — it resolves to zero. It also covers the cases that trip people up, like a weak definition in an archive member that is therefore never pulled in.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "link-maskray-common-symbols",
+		"title": "All about common symbols (MaskRay)",
+		"url": "https://maskray.me/blog/2022-02-06-all-about-common-symbols",
+		"type": "article",
+		"level": "deep",
+		"track": "link",
+		"stages": [
+			21
+		],
+		"concepts": [
+			"common-symbols",
+			"shn-common",
+			"bss",
+			"symbol-resolution"
+		],
+		"why": "Everything SHN_COMMON does to a linker: st_value is the alignment and st_size the size, commons merge with each other by taking the maximum size, a real definition beats them all, and whatever survives is allocated in .bss. Exactly the rules stage 21 tests, plus the history of why -fno-common became the default.",
+		"minutes": 25,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "link-maskray-comdat",
+		"title": "COMDAT and section group (MaskRay)",
+		"url": "https://maskray.me/blog/2021-07-25-comdat-and-section-group",
+		"type": "article",
+		"level": "deep",
+		"track": "link",
+		"stages": [
+			18
+		],
+		"concepts": [
+			"comdat",
+			"section-groups",
+			"duplicate-definition",
+			"signature-symbols"
+		],
+		"why": "The mechanism that lets the same inline function appear in twenty objects without stage 18's duplicate-definition error: GRP_COMDAT groups keyed by a signature symbol, with the linker keeping the first group of each signature and dropping the rest. Read it to understand why a duplicate is sometimes an error and sometimes the plan.",
+		"minutes": 25,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "link-gcc-visibility",
+		"title": "GCC wiki: Visibility",
+		"url": "https://gcc.gnu.org/wiki/Visibility",
+		"type": "doc",
+		"level": "core",
+		"track": "link",
+		"stages": [
+			22
+		],
+		"concepts": [
+			"visibility",
+			"st-other",
+			"hidden-symbols",
+			"symbol-resolution"
+		],
+		"why": "What STV_DEFAULT, STV_HIDDEN, STV_PROTECTED and STV_INTERNAL mean to the producer of the objects you are reading, and why a hidden symbol is still a global that resolves normally inside the link. Stage 22 wants you to carry st_other through without pretending hidden means local.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "link-ld-manpage",
+		"title": "ld(1)",
+		"url": "https://man7.org/linux/man-pages/man1/ld.1.html",
+		"type": "doc",
+		"level": "core",
+		"track": "link",
+		"stages": [
+			23,
+			34,
+			35
+		],
+		"concepts": [
+			"command-line-options",
+			"link-order",
+			"library-search-path",
+			"entry-point"
+		],
+		"why": "The reference implementation's own description of the flag subset you must accept: -o, -e and --entry=, -L and -l, and the paragraph that says objects and libraries are processed in the order they appear. When the tester and your linker disagree about an option, this is the document the tester was written from.",
+		"minutes": 90,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "link-psabi-relocation-types",
+		"title": "x86-64 psABI Table 4.9: Relocation Types",
+		"url": "https://gitlab.com/x86-psABIs/x86-64-ABI/-/jobs/artifacts/master/raw/x86-64-ABI/abi.pdf?job=build",
+		"type": "spec",
+		"level": "core",
+		"track": "link",
+		"stages": [
+			24,
+			25,
+			26,
+			28,
+			29
+		],
+		"concepts": [
+			"relocations",
+			"pc32",
+			"plt32",
+			"addends",
+			"elf64"
+		],
+		"why": "The table that defines the arithmetic: R_X86_64_64 is S + A, PC32 and PLT32 are S + A - P, 32 and 32S are S + A with a width. Copy the field-width column into your code as a comment — the classic stage 28 failure is dropping A, and the classic stage 24 failure is forgetting that P is the address of the relocated field itself, not of the instruction.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "link-psabi-relocation-overflow",
+		"title": "x86-64 psABI §4.4.1: truncation and the range check",
+		"url": "https://gitlab.com/x86-psABIs/x86-64-ABI/-/jobs/artifacts/master/raw/x86-64-ABI/abi.pdf?job=build",
+		"type": "spec",
+		"level": "deep",
+		"track": "link",
+		"stages": [
+			26,
+			27
+		],
+		"concepts": [
+			"overflow",
+			"r-x86-64-32s",
+			"relocations",
+			"error-reporting"
+		],
+		"why": "The paragraph that makes stage 27 a hard error rather than a judgement call: R_X86_64_32 must zero-extend and R_X86_64_32S must sign-extend back to the original 64-bit value, and the linker must verify it. Read it before you decide your arithmetic is wrong — often the addend is right and the fixture is meant to overflow.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "link-psabi-gotpcrelx",
+		"title": "x86-64 psABI Appendix B.2: Optimize GOTPCRELX Relocations",
+		"url": "https://gitlab.com/x86-psABIs/x86-64-ABI/-/jobs/artifacts/master/raw/x86-64-ABI/abi.pdf?job=build",
+		"type": "spec",
+		"level": "deep",
+		"track": "link",
+		"stages": [
+			31
+		],
+		"concepts": [
+			"gotpcrel",
+			"relaxation",
+			"got",
+			"instruction-encoding"
+		],
+		"why": "The exact byte-level recipe for stage 31's relaxation: which instruction bytes precede the relocation offset for each GOTPCRELX flavour, and what mov-through-the-GOT is rewritten into when the target is known. If you choose to build a real GOT entry instead, this appendix still tells you what the compiler assumed when it emitted the sequence.",
+		"minutes": 25,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "link-ilt-linkers-part6",
+		"title": "Linkers part 6: relocations (Ian Lance Taylor)",
+		"url": "https://www.airs.com/blog/archives/43",
+		"type": "article",
+		"level": "core",
+		"track": "link",
+		"stages": [
+			24,
+			25,
+			28
+		],
+		"concepts": [
+			"relocations",
+			"addends",
+			"pc-relative",
+			"symbol-resolution"
+		],
+		"why": "Relocations explained as what they are — a small computation over a symbol value, an addend and the address of the field — with worked PC-relative examples. Read it alongside the psABI table at stage 24: the spec gives you S + A - P, this gives you the reason each term is there.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "link-cloudflare-execute-object-file-2",
+		"title": "How to execute an object file: Part 2 — handling relocations (Cloudflare)",
+		"url": "https://blog.cloudflare.com/how-to-execute-an-object-file-part-2/",
+		"type": "article",
+		"level": "core",
+		"track": "link",
+		"stages": [
+			24,
+			25,
+			29
+		],
+		"concepts": [
+			"relocations",
+			"rela",
+			"section-symbols",
+			"pc-relative"
+		],
+		"why": "Someone applying x86-64 relocations by hand, in C, printing the values as they go: reading r_info, looking the symbol up, computing S + A - P and patching the bytes. The worked example against a section symbol is the clearest illustration of what stage 29 is testing.",
+		"minutes": 35,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "link-eli-code-models",
+		"title": "Understanding the x64 code models (Eli Bendersky)",
+		"url": "https://eli.thegreenplace.net/2012/01/03/understanding-the-x64-code-models",
+		"type": "article",
+		"level": "core",
+		"track": "link",
+		"stages": [
+			26,
+			27
+		],
+		"concepts": [
+			"code-models",
+			"overflow",
+			"r-x86-64-32s",
+			"relocations"
+		],
+		"why": "Why a 64-bit target keeps emitting 32-bit relocations at all: the small code model promises every symbol lands in the low 2GB, which is the assumption R_X86_64_32S encodes. Read it at stage 26 to understand what the sign-extension check is protecting, and at stage 27 to see which fixtures break that promise deliberately.",
+		"minutes": 25,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "link-maskray-relocation-overflow",
+		"title": "Relocation overflow and code models (MaskRay)",
+		"url": "https://maskray.me/blog/2023-05-14-relocation-overflow-and-code-models",
+		"type": "article",
+		"level": "deep",
+		"track": "link",
+		"stages": [
+			27
+		],
+		"concepts": [
+			"overflow",
+			"code-models",
+			"relocations",
+			"error-reporting"
+		],
+		"why": "What a real linker prints when a relocation does not fit, and why the fix is usually a different code model rather than different linker arithmetic. Useful at stage 27 both for the diagnostic wording — name the symbol and the relocation — and for understanding which of the tester's fixtures are meant to be unlinkable.",
+		"minutes": 25,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "link-maskray-got",
+		"title": "All about Global Offset Table (MaskRay)",
+		"url": "https://maskray.me/blog/2021-08-29-all-about-global-offset-table",
+		"type": "article",
+		"level": "deep",
+		"track": "link",
+		"stages": [
+			31
+		],
+		"concepts": [
+			"got",
+			"gotpcrel",
+			"relaxation",
+			"relocations"
+		],
+		"why": "What a GOT entry actually is, why a static non-PIE link can usually skip it entirely, and how GOTPCREL relaxation turns an indirection into a direct address. Stage 31 accepts either answer, so read this to choose between them knowingly instead of guessing.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "link-objdump-manpage",
+		"title": "objdump(1)",
+		"url": "https://man7.org/linux/man-pages/man1/objdump.1.html",
+		"type": "doc",
+		"level": "core",
+		"track": "link",
+		"stages": [
+			24,
+			42
+		],
+		"concepts": [
+			"toolchain-interop",
+			"disassembly",
+			"relocations",
+			"debugging"
+		],
+		"why": "`objdump -dr` on an input object shows each relocation printed against the instruction it patches, which is the fastest way to see what value stage 24 expects at that offset — and `objdump -d` on your output shows whether you wrote it there. Stage 42 then requires objdump's reading of your file to agree with yours.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "link-ilt-linkers-part11",
+		"title": "Linkers part 11: archives (Ian Lance Taylor)",
+		"url": "https://www.airs.com/blog/archives/48",
+		"type": "article",
+		"level": "core",
+		"track": "link",
+		"stages": [
+			32,
+			33,
+			34
+		],
+		"concepts": [
+			"archives",
+			"archive-symbol-index",
+			"member-selection",
+			"link-order"
+		],
+		"why": "The rule the whole of section E turns on, stated plainly: when the linker reaches an archive it pulls in only those members that define a currently undefined symbol, and it does so in one pass at the point the archive appears on the command line. Stages 33 and 34 are that sentence made into tests.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "link-ar-manpage",
+		"title": "ar(1)",
+		"url": "https://man7.org/linux/man-pages/man1/ar.1.html",
+		"type": "doc",
+		"level": "core",
+		"track": "link",
+		"stages": [
+			32,
+			33
+		],
+		"concepts": [
+			"archives",
+			"archive-symbol-index",
+			"toolchain-interop"
+		],
+		"why": "What the s flag does, what the archive's symbol index is for, and how members are named and ordered. Read the description of the index before stage 32: it is a map from symbol name to member offset, and your only job is to use it to decide which members to load.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "link-ar-file-format",
+		"title": "ar (Unix) — the archive file format",
+		"url": "https://en.wikipedia.org/wiki/Ar_(Unix)",
+		"type": "article",
+		"level": "intro",
+		"track": "link",
+		"stages": [
+			32,
+			36
+		],
+		"concepts": [
+			"archives",
+			"archive-format",
+			"long-names",
+			"parsing"
+		],
+		"why": "The byte layout nobody else writes down in one place: the \"!<arch>\\n\" magic, the fixed 60-byte member header with its space-padded ASCII fields, even-byte alignment, and the System V conventions for the \"/\" symbol index and the \"//\" long-name table. This is the reference for writing the archive reader at stage 32 and for surviving the broken indexes at stage 36.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "link-binutils-ar-cmdline",
+		"title": "GNU binutils: ar command line",
+		"url": "https://sourceware.org/binutils/docs/binutils/ar-cmdline.html",
+		"type": "doc",
+		"level": "core",
+		"track": "link",
+		"stages": [
+			32,
+			41
+		],
+		"concepts": [
+			"archives",
+			"determinism",
+			"archive-symbol-index",
+			"timestamps"
+		],
+		"why": "The definition of deterministic mode (D): zeroed timestamps, uids and modes in the member headers. It matters twice — at stage 32 because it tells you which header fields carry no information you should trust, and at stage 41 because the same discipline is what makes your own output byte-identical across runs.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "link-eli-library-order",
+		"title": "Library order in static linking (Eli Bendersky)",
+		"url": "https://eli.thegreenplace.net/2013/07/09/library-order-in-static-linking",
+		"type": "article",
+		"level": "core",
+		"track": "link",
+		"stages": [
+			33,
+			34,
+			35
+		],
+		"concepts": [
+			"link-order",
+			"archives",
+			"member-selection",
+			"undefined-symbols"
+		],
+		"why": "Why putting -lfoo before the object that uses it fails, demonstrated with a tiny example and the undefined-symbol error it produces. Stage 34 exists to check you reproduce this behaviour rather than helpfully re-scanning; read this to be sure the behaviour is intentional.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "link-ld-start-group",
+		"title": "GNU ld manual: --start-group and --end-group",
+		"url": "https://sourceware.org/binutils/docs/ld/Options.html#index-_002d_002dstart_002dgroup",
+		"type": "doc",
+		"level": "deep",
+		"track": "link",
+		"stages": [
+			36
+		],
+		"concepts": [
+			"start-group",
+			"archives",
+			"link-order",
+			"circular-dependencies"
+		],
+		"why": "The definition of the group semantics stage 36 asks for: the archives between the two markers are searched repeatedly until no new undefined symbol is resolved. The manual is also blunt about the cost, which is worth knowing before you make repeated scanning your default.",
+		"minutes": 10,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "link-maskray-gnu-ld-options",
+		"title": "Explain GNU style linker options (MaskRay)",
+		"url": "https://maskray.me/blog/2020-11-15-explain-gnu-linker-options",
+		"type": "article",
+		"level": "deep",
+		"track": "link",
+		"stages": [
+			34,
+			35,
+			36
+		],
+		"concepts": [
+			"command-line-options",
+			"library-search-path",
+			"link-order",
+			"start-group"
+		],
+		"why": "A working linker author going through the option surface one flag at a time, including what -L search order really is, how -l maps to a filename, and what --start-group costs. The most efficient way to check your section E behaviour against a second implementation's understanding of the same flags.",
+		"minutes": 40,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "link-mold-repo",
+		"title": "mold — a modern linker",
+		"url": "https://github.com/rui314/mold",
+		"type": "repo",
+		"level": "core",
+		"track": "link",
+		"stages": [
+			38,
+			39
+		],
+		"concepts": [
+			"linker-design",
+			"performance",
+			"scale",
+			"parallelism"
+		],
+		"why": "The README's \"why is mold so fast\" section is a short list of the decisions that matter once you have two hundred objects and a five-megabyte section: do one pass, precompute output offsets, copy with as few passes over the data as possible. Read it at stage 38 when your quadratic symbol lookup starts to show.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "link-maskray-lld-faster",
+		"title": "Why isn't ld.lld faster? (MaskRay)",
+		"url": "https://maskray.me/blog/2021-12-19-why-isnt-ld.lld-faster",
+		"type": "article",
+		"level": "deep",
+		"track": "link",
+		"stages": [
+			38,
+			39
+		],
+		"concepts": [
+			"performance",
+			"scale",
+			"linker-design",
+			"profiling"
+		],
+		"why": "A careful account of where a real linker's time actually goes — symbol resolution, relocation application, and simply writing the output — with measurements. The right frame for stages 38 and 39: find out which phase is slow before you rewrite the one that isn't.",
+		"minutes": 25,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "link-lld-elf-source",
+		"title": "lld/ELF — the LLVM ELF linker",
+		"url": "https://github.com/llvm/llvm-project/tree/main/lld/ELF",
+		"type": "repo",
+		"level": "deep",
+		"track": "link",
+		"stages": [
+			30,
+			38
+		],
+		"concepts": [
+			"linker-design",
+			"relocations",
+			"output-sections",
+			"implementation"
+		],
+		"why": "A production static linker small enough to read: InputSection.cpp for how input sections become output sections, Relocations.cpp for the dispatch you are writing at stage 30, Writer.cpp for the layout pass. Use it to check a design decision against one that survived contact with real programs.",
+		"minutes": 60,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "link-wild-linker",
+		"title": "wild — a fast Linux linker written in Rust",
+		"url": "https://github.com/davidlattimore/wild",
+		"type": "repo",
+		"level": "core",
+		"track": "link",
+		"stages": [
+			37,
+			41
+		],
+		"concepts": [
+			"linker-design",
+			"rust",
+			"determinism",
+			"implementation"
+		],
+		"why": "A from-scratch Linux linker being written in the open, in the same language as this tester, and readable in an evening. Its architecture — parse, resolve, assign addresses, write — is a working answer to the structural question stage 37 poses when six objects stop fitting in your original design.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "link-lattimore-testing-a-linker",
+		"title": "Testing a linker (David Lattimore)",
+		"url": "https://davidlattimore.github.io/posts/2024/07/17/testing-a-linker.html",
+		"type": "article",
+		"level": "core",
+		"track": "link",
+		"stages": [
+			40,
+			41,
+			42
+		],
+		"concepts": [
+			"testing",
+			"fuzzing",
+			"determinism",
+			"toolchain-interop"
+		],
+		"why": "How someone building a linker decides it is correct: run the linked program, diff your output against GNU ld's on properties rather than bytes, and cross-check with the binutils tools. It is the rationale for stages 40 to 42 from the other side of the fence, and a good source of extra checks to run on yourself.",
+		"minutes": 25,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "link-structure-aware-fuzzing",
+		"title": "Structure-aware fuzzing (google/fuzzing)",
+		"url": "https://github.com/google/fuzzing/blob/master/docs/structure-aware-fuzzing.md",
+		"type": "doc",
+		"level": "core",
+		"track": "link",
+		"stages": [
+			40
+		],
+		"concepts": [
+			"fuzzing",
+			"validation",
+			"robustness",
+			"error-reporting"
+		],
+		"why": "Random bytes bounce off an ELF parser at the magic number; useful fuzzing mutates a valid object into a nearly valid one, which is exactly what stage 40 does to you. This is the technique written up properly, and it tells you what to do with the crashes: never panic, always refuse with a message that names the file.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "link-chibicc",
+		"title": "chibicc — a small C compiler",
+		"url": "https://github.com/rui314/chibicc",
+		"type": "repo",
+		"level": "intro",
+		"track": "link",
+		"stages": [
+			37
+		],
+		"concepts": [
+			"toolchain",
+			"code-generation",
+			"relocations",
+			"freestanding"
+		],
+		"why": "The other end of the pipeline, small enough to read in a sitting: it shows where the symbols and relocations in your input objects come from and why the compiler cannot know a final address. Worth a browse at stage 37, when a six-object program makes the compiler-linker division of labour concrete.",
+		"minutes": 40,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	}
+]

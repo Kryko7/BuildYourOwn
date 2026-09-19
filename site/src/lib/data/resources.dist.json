@@ -1,1 +1,1501 @@
-[]
+[
+	{
+		"id": "dist-lamport-time-clocks",
+		"title": "Time, Clocks, and the Ordering of Events in a Distributed System",
+		"url": "https://lamport.azurewebsites.net/pubs/time-clocks.pdf",
+		"type": "paper",
+		"level": "core",
+		"track": "dist",
+		"stages": [
+			1,
+			2,
+			17,
+			18
+		],
+		"concepts": [
+			"lamport-clocks",
+			"happens-before",
+			"causality",
+			"total-order"
+		],
+		"why": "Stage 1 is this paper's section 2 turned into four commands: read it for the happens-before relation itself, so `recv` becoming max(local, incoming) + 1 is a consequence you can derive rather than a rule you memorised.",
+		"minutes": 45,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-kleppmann-distsys-notes",
+		"title": "Distributed Systems - Cambridge lecture notes",
+		"url": "https://www.cl.cam.ac.uk/teaching/2122/ConcDisSys/dist-sys-notes.pdf",
+		"type": "book",
+		"level": "intro",
+		"track": "dist",
+		"stages": [
+			1,
+			2,
+			3,
+			18,
+			38
+		],
+		"concepts": [
+			"logical-clocks",
+			"vector-clocks",
+			"causal-broadcast",
+			"broadcast-protocols",
+			"linearizability"
+		],
+		"why": "The clearest short treatment of everything the first ladder asks for: chapter 3 gives Lamport and vector clocks with worked diagrams, and chapter 4 gives the causal-broadcast delivery rule that stage 18's buffer has to implement exactly.",
+		"minutes": 120,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-mixu-distsys-fun-profit",
+		"title": "Distributed systems for fun and profit",
+		"url": "https://book.mixu.net/distsys/single-page.html",
+		"type": "book",
+		"level": "intro",
+		"track": "dist",
+		"stages": [
+			1,
+			8,
+			18,
+			36
+		],
+		"concepts": [
+			"consistency-models",
+			"replication",
+			"quorums",
+			"time-and-order"
+		],
+		"why": "Read chapters 2 and 3 before you start: they set up time, order and replication in the vocabulary the rest of this track uses, so quorums and causality are already familiar words by the time a stage demands them.",
+		"minutes": 90,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-maelstrom",
+		"title": "Maelstrom - a workbench for distributed systems exercises",
+		"url": "https://github.com/jepsen-io/maelstrom",
+		"type": "tool",
+		"level": "intro",
+		"track": "dist",
+		"stages": [
+			1,
+			2,
+			18,
+			36
+		],
+		"concepts": [
+			"testing",
+			"workbench",
+			"broadcast-protocols",
+			"gossip"
+		],
+		"why": "A second playground for the same primitives, with its own checker: building a broadcast or a counter node here is the cheapest way to see whether your mental model of message passing survives contact with a network that reorders and drops.",
+		"minutes": 60,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-mattern-virtual-time",
+		"title": "Virtual Time and Global States of Distributed Systems",
+		"url": "https://courses.csail.mit.edu/6.852/01/papers/VirtTime_GlobState.pdf",
+		"type": "paper",
+		"level": "deep",
+		"track": "dist",
+		"stages": [
+			2,
+			17
+		],
+		"concepts": [
+			"vector-clocks",
+			"partial-order",
+			"consistent-cuts",
+			"global-state"
+		],
+		"why": "The source for the vector-clock comparison stage 2 asks you to implement - strictly-less-than componentwise, incomparable means concurrent - and, in its second half, the consistent-cut argument that makes stage 17's snapshot meaningful.",
+		"minutes": 60,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-dynamo-paper",
+		"title": "Dynamo: Amazon's Highly Available Key-value Store",
+		"url": "https://www.allthingsdistributed.com/files/amazon-dynamo-sosp2007.pdf",
+		"type": "paper",
+		"level": "core",
+		"track": "dist",
+		"stages": [
+			3,
+			5,
+			8,
+			9,
+			13
+		],
+		"concepts": [
+			"version-vectors",
+			"consistent-hashing",
+			"quorums",
+			"hinted-handoff",
+			"anti-entropy",
+			"sloppy-quorum"
+		],
+		"why": "One paper covers five of the primitives stages: section 4.2 is stage 3's version vectors and siblings, 4.3 is the ring, 4.5 is N/R/W, 4.6 is sloppy quorums and hinted handoff, and 4.7 is Merkle anti-entropy.",
+		"minutes": 90,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-ddia-book",
+		"title": "Designing Data-Intensive Applications",
+		"url": "https://dataintensive.net/",
+		"type": "book",
+		"level": "core",
+		"track": "dist",
+		"stages": [
+			3,
+			8,
+			26,
+			38,
+			40
+		],
+		"concepts": [
+			"replication",
+			"quorums",
+			"consistency-models",
+			"linearizability",
+			"mvcc"
+		],
+		"why": "Chapter 5 on leaderless replication is the readable version of the quorum arithmetic in stage 8, and chapter 9 on linearizability is worth having read before the cluster ladder tells you a read has to reflect a write that happened on another member.",
+		"free": false,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-hlc-paper",
+		"title": "Logical Physical Clocks and Consistent Snapshotting in Globally Distributed Databases",
+		"url": "https://cse.buffalo.edu/tech-reports/2014-04.pdf",
+		"type": "paper",
+		"level": "core",
+		"track": "dist",
+		"stages": [
+			4,
+			51
+		],
+		"concepts": [
+			"hybrid-logical-clocks",
+			"clock-skew",
+			"causality",
+			"physical-time"
+		],
+		"why": "The algorithm listing in section 4 is exactly what stage 4's `now` and `recv` must compute, including the case where the wall clock has gone backwards and the counter has to carry the causality instead.",
+		"minutes": 50,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-spanner-truetime",
+		"title": "Spanner: Google's Globally-Distributed Database",
+		"url": "https://static.googleusercontent.com/media/research.google.com/en//archive/spanner-osdi2012.pdf",
+		"type": "paper",
+		"level": "deep",
+		"track": "dist",
+		"stages": [
+			4,
+			51
+		],
+		"concepts": [
+			"clock-skew",
+			"truetime",
+			"physical-time",
+			"external-consistency"
+		],
+		"why": "Section 3 is the other answer to the problem stage 4 poses and stage 51 stresses: bound the clock error and wait it out. Read it to see the cost of using real time for ordering, which is why your HLC does not.",
+		"minutes": 75,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-karger-consistent-hashing",
+		"title": "Consistent Hashing and Random Trees",
+		"url": "https://www.cs.princeton.edu/courses/archive/fall09/cos518/papers/chash.pdf",
+		"type": "paper",
+		"level": "core",
+		"track": "dist",
+		"stages": [
+			5,
+			6
+		],
+		"concepts": [
+			"consistent-hashing",
+			"hash-ring",
+			"virtual-nodes",
+			"key-movement"
+		],
+		"why": "Section 4 defines the ring and proves the property stage 6 measures: adding one node to n moves about 1/(n+1) of the keys and no others, which is the claim the tester simulates against your ring.",
+		"minutes": 60,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-rendezvous-hrw",
+		"title": "A Name-Based Mapping Scheme for Rendezvous",
+		"url": "http://www.eecs.umich.edu/techreports/cse/96/CSE-TR-316-96.pdf",
+		"type": "paper",
+		"level": "core",
+		"track": "dist",
+		"stages": [
+			7
+		],
+		"concepts": [
+			"rendezvous-hashing",
+			"hrw",
+			"key-placement"
+		],
+		"why": "The original HRW paper, and the reason stage 7 asks for `locate-k` as well as `locate`: the ordering by descending weight is the whole scheme, and it hands you a replica list for free where a ring needs extra rules.",
+		"minutes": 45,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-riak-replication-nrw",
+		"title": "Replication - Riak KV concepts",
+		"url": "https://docs.riak.com/riak/kv/latest/learn/concepts/replication/index.html",
+		"type": "doc",
+		"level": "core",
+		"track": "dist",
+		"stages": [
+			8,
+			9
+		],
+		"concepts": [
+			"quorums",
+			"n-r-w",
+			"sloppy-quorum",
+			"hinted-handoff"
+		],
+		"why": "A production system's plain-English account of N, R and W and of what happens when a node is down - useful at stage 9, where the point is that a sloppy quorum accepts the write but is not a quorum.",
+		"minutes": 25,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-bloom-filter-tutorial",
+		"title": "Bloom Filters by Example",
+		"url": "https://llimllib.github.io/bloomfilter-tutorial/",
+		"type": "article",
+		"level": "intro",
+		"track": "dist",
+		"stages": [
+			10
+		],
+		"concepts": [
+			"bloom-filter",
+			"probabilistic-data-structures",
+			"false-positives"
+		],
+		"why": "An interactive page where you can watch bits get set and a false positive appear; ten minutes here before stage 10 saves you from the usual bug of hashing once and reusing the value.",
+		"minutes": 10,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-bloom-1970",
+		"title": "Space/Time Trade-offs in Hash Coding with Allowable Errors",
+		"url": "http://crystal.uta.edu/~mcguigan/cse6350/papers/Bloom.pdf",
+		"type": "paper",
+		"level": "core",
+		"track": "dist",
+		"stages": [
+			10
+		],
+		"concepts": [
+			"bloom-filter",
+			"false-positives",
+			"probabilistic-data-structures"
+		],
+		"why": "Bloom's own four pages, which is where the error-rate formula the tester holds you to comes from - the suite checks your measured false-positive rate against (1 - e^(-kn/m))^k, so it helps to know what each letter means.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-hyperloglog-paper",
+		"title": "HyperLogLog: the analysis of a near-optimal cardinality estimation algorithm",
+		"url": "https://algo.inria.fr/flajolet/Publications/FlFuGaMe07.pdf",
+		"type": "paper",
+		"level": "core",
+		"track": "dist",
+		"stages": [
+			11
+		],
+		"concepts": [
+			"hyperloglog",
+			"cardinality-estimation",
+			"harmonic-mean"
+		],
+		"why": "Figure 3 is the algorithm stage 11 grades: the harmonic mean, the alpha_m constant and the small-range correction. The tester checks your estimate against a 1.04/sqrt(m) envelope, which is this paper's own error bound.",
+		"minutes": 60,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-hyperloglog-in-practice",
+		"title": "HyperLogLog in Practice: Algorithmic Engineering of a State of the Art Cardinality Estimation Algorithm",
+		"url": "https://static.googleusercontent.com/media/research.google.com/en//pubs/archive/40671.pdf",
+		"type": "paper",
+		"level": "deep",
+		"track": "dist",
+		"stages": [
+			11
+		],
+		"concepts": [
+			"hyperloglog",
+			"cardinality-estimation",
+			"bias-correction",
+			"sparse-representation"
+		],
+		"why": "Google's corrections to the original: 64-bit hashes instead of the large-range fix, empirical bias correction and a sparse representation. Reach for it if your stage 11 estimate is fine in the middle and wrong at the ends.",
+		"minutes": 50,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-rfc6962-merkle-hashing",
+		"title": "RFC 6962: Certificate Transparency",
+		"url": "https://www.rfc-editor.org/rfc/rfc6962",
+		"type": "spec",
+		"level": "core",
+		"track": "dist",
+		"stages": [
+			12,
+			13
+		],
+		"concepts": [
+			"merkle-tree",
+			"hash-prefix",
+			"domain-separation",
+			"audit-proof"
+		],
+		"why": "Section 2.1 specifies exactly the hashing this track pins - 0x00 before a leaf, 0x01 before an internal node - and explains the domain separation that makes it safe, so stage 12's root hash matches the tester's the first time.",
+		"minutes": 40,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-cassandra-repair",
+		"title": "Repair - Apache Cassandra",
+		"url": "https://cassandra.apache.org/doc/latest/cassandra/managing/operating/repair.html",
+		"type": "doc",
+		"level": "core",
+		"track": "dist",
+		"stages": [
+			13
+		],
+		"concepts": [
+			"merkle-tree",
+			"anti-entropy",
+			"repair",
+			"round-trips"
+		],
+		"why": "The Merkle-diff stage in production form: how a real store builds trees over token ranges and exchanges only the differing subtrees, which is the round-trip discipline stage 13 scores you on with its `compared` count.",
+		"minutes": 25,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-crdt-tech",
+		"title": "About CRDTs",
+		"url": "https://crdt.tech/",
+		"type": "doc",
+		"level": "intro",
+		"track": "dist",
+		"stages": [
+			14,
+			15,
+			16
+		],
+		"concepts": [
+			"crdts",
+			"state-based",
+			"operation-based",
+			"convergence"
+		],
+		"why": "The index of the field, with the state-based versus operation-based split stated plainly - worth ten minutes before stage 14 so you know which kind you are building when the tester asks for `state` and `merge`.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-crdt-comprehensive-study",
+		"title": "A comprehensive study of Convergent and Commutative Replicated Data Types",
+		"url": "https://inria.hal.science/inria-00555588/document",
+		"type": "paper",
+		"level": "core",
+		"track": "dist",
+		"stages": [
+			14,
+			15,
+			16
+		],
+		"concepts": [
+			"crdts",
+			"join-semilattice",
+			"or-set",
+			"lww-register",
+			"rga",
+			"convergence"
+		],
+		"why": "The catalogue these three stages are drawn from: G-Counter and PN-Counter in section 3, LWW-Register and OR-Set in section 3.3, RGA in section 4. Every specification here is a merge that is commutative, associative and idempotent, which is precisely what the tester replays permutations to check.",
+		"minutes": 120,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-crdt-sss-paper",
+		"title": "Conflict-free Replicated Data Types",
+		"url": "https://inria.hal.science/inria-00609399v1/document",
+		"type": "paper",
+		"level": "deep",
+		"track": "dist",
+		"stages": [
+			14,
+			15
+		],
+		"concepts": [
+			"crdts",
+			"strong-eventual-consistency",
+			"join-semilattice",
+			"monotonicity"
+		],
+		"why": "The shorter SSS paper, which proves the thing the longer study assumes: monotone states joined by a least upper bound converge whatever order updates arrive in. Read it if you want to know why your merge is correct rather than just observed to pass.",
+		"minutes": 60,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-kleppmann-crdt-hard-parts",
+		"title": "CRDTs: The Hard Parts",
+		"url": "https://martin.kleppmann.com/2020/07/06/crdt-hard-parts-hydra.html",
+		"type": "video",
+		"level": "core",
+		"track": "dist",
+		"stages": [
+			16
+		],
+		"concepts": [
+			"crdts",
+			"rga",
+			"sequence-crdt",
+			"interleaving"
+		],
+		"why": "A talk about sequence CRDTs specifically, which is the one stage 16 asks for: it shows why insertion needs a stable identifier for the element you are inserting after, and what goes wrong with the naive designs.",
+		"minutes": 60,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-chandy-lamport-snapshots",
+		"title": "Distributed Snapshots: Determining Global States of Distributed Systems",
+		"url": "https://lamport.azurewebsites.net/pubs/chandy.pdf",
+		"type": "paper",
+		"level": "core",
+		"track": "dist",
+		"stages": [
+			17
+		],
+		"concepts": [
+			"global-snapshot",
+			"marker-protocol",
+			"channel-state",
+			"consistent-cuts"
+		],
+		"why": "The marker rule in section 3 is stage 17 in full: record your own state when you first see a marker, then record each incoming channel until its marker arrives. The conserved total the tester checks is this paper's section 5 argument.",
+		"minutes": 50,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-stripe-rate-limiters",
+		"title": "Scaling your API with rate limiters",
+		"url": "https://stripe.com/blog/rate-limiters",
+		"type": "article",
+		"level": "intro",
+		"track": "dist",
+		"stages": [
+			19
+		],
+		"concepts": [
+			"rate-limiting",
+			"token-bucket",
+			"leaky-bucket",
+			"backpressure"
+		],
+		"why": "Why a token bucket is the shape you want - a steady rate plus a burst allowance - explained from the operator's side, which makes stage 19's `take` semantics obvious before you write them.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-brandur-rate-limiting-gcra",
+		"title": "Rate Limiting, Cells, and GCRA",
+		"url": "https://brandur.org/rate-limiting",
+		"type": "article",
+		"level": "core",
+		"track": "dist",
+		"stages": [
+			19
+		],
+		"concepts": [
+			"rate-limiting",
+			"leaky-bucket",
+			"gcra",
+			"token-bucket"
+		],
+		"why": "The careful comparison of the two buckets stage 19 implements, including the arithmetic that lets you keep a bucket as one timestamp instead of a level you have to tick - and why refilling by elapsed time, never by a timer, is what makes it testable.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-aws-builders-timeouts-retries",
+		"title": "Timeouts, retries, and backoff with jitter",
+		"url": "https://aws.amazon.com/builders-library/timeouts-retries-and-backoff-with-jitter/",
+		"type": "article",
+		"level": "intro",
+		"track": "dist",
+		"stages": [
+			20
+		],
+		"concepts": [
+			"retries",
+			"backoff",
+			"jitter",
+			"timeouts"
+		],
+		"why": "The operational case for the primitives in stage 20: what a retry storm looks like, why a capped exponential delay is not enough on its own, and why every client adding randomness is what actually spreads the load.",
+		"minutes": 25,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-aws-exponential-backoff-jitter",
+		"title": "Exponential Backoff And Jitter",
+		"url": "https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/",
+		"type": "article",
+		"level": "core",
+		"track": "dist",
+		"stages": [
+			20
+		],
+		"concepts": [
+			"backoff",
+			"jitter",
+			"full-jitter",
+			"retries"
+		],
+		"why": "The post that named \"full jitter\", which is the exact formula stage 20 grades - u * min(cap, base * 2^attempt) - with the simulations showing why it beats both no jitter and equal jitter.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-swim-paper",
+		"title": "SWIM: Scalable Weakly-consistent Infection-style Process Group Membership Protocol",
+		"url": "http://www.cs.cornell.edu/projects/Quicksilver/public_pdfs/SWIM.pdf",
+		"type": "paper",
+		"level": "core",
+		"track": "dist",
+		"stages": [
+			20
+		],
+		"concepts": [
+			"swim",
+			"failure-detection",
+			"suspicion",
+			"gossip",
+			"membership"
+		],
+		"why": "Section 4.2 introduces the suspicion mechanism stage 20 models: a missed ack makes a member suspect, not dead, and only the timeout promotes it - which is why your `status` has three answers and not two.",
+		"minutes": 60,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-phi-accrual-failure-detector",
+		"title": "The phi Accrual Failure Detector",
+		"url": "https://dspace.jaist.ac.jp/dspace/bitstream/10119/4784/1/IS-RR-2004-010.pdf",
+		"type": "paper",
+		"level": "deep",
+		"track": "dist",
+		"stages": [
+			20
+		],
+		"concepts": [
+			"phi-accrual",
+			"failure-detection",
+			"heartbeats",
+			"suspicion"
+		],
+		"why": "Section 3 derives phi from the distribution of past heartbeat intervals, which is what stage 20's `phi` command must return: a suspicion level that rises with the silence, not a boolean someone else had to pick a timeout for.",
+		"minutes": 50,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-etcd-grpc-gateway",
+		"title": "Why gRPC gateway - etcd",
+		"url": "https://etcd.io/docs/v3.7/dev-guide/api_grpc_gateway/",
+		"type": "doc",
+		"level": "intro",
+		"track": "dist",
+		"stages": [
+			21,
+			22,
+			23
+		],
+		"concepts": [
+			"etcd-v3-api",
+			"http-json-gateway",
+			"base64",
+			"curl"
+		],
+		"why": "The page that explains the exact wire format ladder B is written against, with curl examples showing keys and values base64-encoded in a JSON body - start here at stage 21 and keep it open through stage 23.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-etcd-api-reference-v3",
+		"title": "API reference - etcd",
+		"url": "https://etcd.io/docs/v3.7/dev-guide/api_reference_v3/",
+		"type": "spec",
+		"level": "core",
+		"track": "dist",
+		"stages": [
+			22,
+			23,
+			24,
+			25,
+			26,
+			27,
+			28,
+			29,
+			30,
+			31,
+			32,
+			33,
+			34
+		],
+		"concepts": [
+			"etcd-v3-api",
+			"kv-api",
+			"lease-api",
+			"watch-api",
+			"request-fields"
+		],
+		"why": "The generated message-by-message reference: every field of PutRequest, RangeRequest, TxnRequest, LeaseGrantRequest and WatchCreateRequest with its meaning. When a stage sends a field you have not implemented, this is the page that tells you what it is supposed to do.",
+		"minutes": 90,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-etcd-learning-api",
+		"title": "etcd API - etcd",
+		"url": "https://etcd.io/docs/v3.7/learning/api/",
+		"type": "doc",
+		"level": "core",
+		"track": "dist",
+		"stages": [
+			22,
+			24,
+			25,
+			26,
+			27,
+			28,
+			29,
+			30,
+			31,
+			33
+		],
+		"concepts": [
+			"etcd-v3-api",
+			"revisions",
+			"range-requests",
+			"transactions",
+			"watch-api",
+			"leases"
+		],
+		"why": "The prose companion to the reference, and the most useful single page of the node ladder: the response header and its revision, how a range end makes a prefix, what a txn compares, how a watch is created and cancelled, and what compaction does to old revisions.",
+		"minutes": 75,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-protobuf-json-mapping",
+		"title": "ProtoJSON Format - Protocol Buffers",
+		"url": "https://protobuf.dev/programming-guides/json/",
+		"type": "spec",
+		"level": "core",
+		"track": "dist",
+		"stages": [
+			21,
+			22,
+			34
+		],
+		"concepts": [
+			"protobuf-json",
+			"int64-as-string",
+			"default-values",
+			"wire-format"
+		],
+		"why": "Explains the two rules that trip up every hand-written node: 64-bit integers are JSON strings, and a field at its default value may be omitted entirely - so \"no count\" and \"count zero\" are the same answer.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-rfc4648-base64",
+		"title": "RFC 4648: The Base16, Base32, and Base64 Data Encodings",
+		"url": "https://www.rfc-editor.org/rfc/rfc4648",
+		"type": "spec",
+		"level": "intro",
+		"track": "dist",
+		"stages": [
+			22,
+			23
+		],
+		"concepts": [
+			"base64",
+			"encoding",
+			"padding"
+		],
+		"why": "Section 4 is the encoding every key and value crosses the wire in; read the padding rules once so a key whose length is not a multiple of three does not become a decoding bug you chase through three stages.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-etcd-data-model",
+		"title": "Data model - etcd",
+		"url": "https://etcd.io/docs/v3.7/learning/data_model/",
+		"type": "doc",
+		"level": "core",
+		"track": "dist",
+		"stages": [
+			26,
+			27,
+			30
+		],
+		"concepts": [
+			"mvcc",
+			"revisions",
+			"create-revision",
+			"mod-revision",
+			"compaction"
+		],
+		"why": "The page that defines the revision as a store-wide counter and distinguishes create_revision, mod_revision and version per key - the three numbers stage 26 reads history with and stage 27 hands back in prev_kv.",
+		"minutes": 25,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-etcd-api-guarantees",
+		"title": "etcd API guarantees - etcd",
+		"url": "https://etcd.io/docs/v3.7/learning/api_guarantees/",
+		"type": "doc",
+		"level": "core",
+		"track": "dist",
+		"stages": [
+			26,
+			30,
+			33,
+			38
+		],
+		"concepts": [
+			"linearizability",
+			"serializable-reads",
+			"watch-guarantees",
+			"durability"
+		],
+		"why": "States precisely what a client is owed: writes are linearizable, reads are linearizable unless you ask for serializable, and watch events for one key arrive in revision order without gaps. Stage 38 is this page turned into a test.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-etcd-maintenance-compaction",
+		"title": "Maintenance - etcd",
+		"url": "https://etcd.io/docs/v3.7/op-guide/maintenance/",
+		"type": "doc",
+		"level": "core",
+		"track": "dist",
+		"stages": [
+			30
+		],
+		"concepts": [
+			"compaction",
+			"revisions",
+			"errcompacted",
+			"history-retention"
+		],
+		"why": "The operator's view of compaction, which is what stage 30 asks you to implement: history below the compacted revision is gone, reads of it fail rather than silently returning the latest value, and the current revision is unaffected.",
+		"minutes": 25,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-grpc-status-codes",
+		"title": "Status Codes - gRPC",
+		"url": "https://grpc.io/docs/guides/status-codes/",
+		"type": "doc",
+		"level": "intro",
+		"track": "dist",
+		"stages": [
+			30,
+			31,
+			34
+		],
+		"concepts": [
+			"error-codes",
+			"status-codes",
+			"invalid-argument",
+			"out-of-range"
+		],
+		"why": "The numbers stage 34 checks are gRPC's, not HTTP's: 3 invalid argument, 5 not found, 8 resource exhausted, 11 out of range, 14 unavailable. One table, and it makes every error response in the suite predictable.",
+		"minutes": 10,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-gray-cheriton-leases",
+		"title": "Leases: An Efficient Fault-Tolerant Mechanism for Distributed File Cache Consistency",
+		"url": "https://www.cs.cmu.edu/~15712/papers/gray89.pdf",
+		"type": "paper",
+		"level": "deep",
+		"track": "dist",
+		"stages": [
+			31,
+			32
+		],
+		"concepts": [
+			"leases",
+			"ttl",
+			"clock-skew",
+			"fault-tolerance"
+		],
+		"why": "The paper that introduced the lease, including the part stages 31 and 32 make you live with: expiry may be late but must never be early, because the holder and the grantor do not share a clock.",
+		"minutes": 50,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-rfc9112-http11-chunked",
+		"title": "RFC 9112: HTTP/1.1",
+		"url": "https://www.rfc-editor.org/rfc/rfc9112",
+		"type": "spec",
+		"level": "deep",
+		"track": "dist",
+		"stages": [
+			21,
+			32,
+			33
+		],
+		"concepts": [
+			"http11",
+			"chunked-encoding",
+			"streaming",
+			"persistent-connections"
+		],
+		"why": "Section 7 is the chunked transfer coding that the watch and keepalive streams are delivered over, and section 9 is the connection reuse the harness depends on - the two parts of HTTP you cannot fake your way past on this ladder.",
+		"minutes": 45,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-fowler-write-ahead-log",
+		"title": "Write-Ahead Log - Patterns of Distributed Systems",
+		"url": "https://martinfowler.com/articles/patterns-of-distributed-systems/write-ahead-log.html",
+		"type": "article",
+		"level": "intro",
+		"track": "dist",
+		"stages": [
+			35,
+			44
+		],
+		"concepts": [
+			"write-ahead-log",
+			"durability",
+			"fsync",
+			"crash-recovery"
+		],
+		"why": "The shortest correct description of the mechanism stage 35 kills you for not having: append the record, flush it, then answer. Read it before you write a store that acknowledges from memory.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-fsync-failures-paper",
+		"title": "Can Applications Recover from fsync Failures?",
+		"url": "https://www.usenix.org/system/files/atc20-rebello.pdf",
+		"type": "paper",
+		"level": "deep",
+		"track": "dist",
+		"stages": [
+			35
+		],
+		"concepts": [
+			"fsync",
+			"durability",
+			"error-handling",
+			"crash-consistency"
+		],
+		"why": "What happens after fsync returns an error, which most code treats as impossible: the dirty pages may already be gone. Read it once you pass stage 35 and want to know how much of your durability story is still an assumption.",
+		"minutes": 50,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-raft-site",
+		"title": "The Raft Consensus Algorithm",
+		"url": "https://raft.github.io/",
+		"type": "doc",
+		"level": "intro",
+		"track": "dist",
+		"stages": [
+			36
+		],
+		"concepts": [
+			"raft",
+			"consensus",
+			"leader-election",
+			"implementations"
+		],
+		"why": "The front door: a one-paragraph summary, the visualisations, and the list of existing implementations you can read side by side when your own election will not converge at stage 36.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-raft-visualization",
+		"title": "Raft: Understandable Distributed Consensus",
+		"url": "https://thesecretlivesofdata.com/raft/",
+		"type": "video",
+		"level": "intro",
+		"track": "dist",
+		"stages": [
+			36,
+			43
+		],
+		"concepts": [
+			"raft",
+			"leader-election",
+			"log-replication",
+			"terms"
+		],
+		"why": "An animated walk through election and replication, including a leader failing and a new term starting - twenty minutes here makes stages 36 and 43 concrete before you read a line of the paper.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-raft-extended-paper",
+		"title": "In Search of an Understandable Consensus Algorithm (Extended Version)",
+		"url": "https://raft.github.io/raft.pdf",
+		"type": "paper",
+		"level": "core",
+		"track": "dist",
+		"stages": [
+			36,
+			37,
+			39,
+			42,
+			43,
+			44,
+			45,
+			53
+		],
+		"concepts": [
+			"raft",
+			"consensus",
+			"leader-election",
+			"log-replication",
+			"terms",
+			"commit-index"
+		],
+		"why": "Figure 2 alone is the state machine your leader election has to match before you debug anything else; then section 5.4 is why stage 44's acknowledged write cannot be lost, and section 5.3's idempotent AppendEntries is why stage 53's duplicated messages are harmless.",
+		"minutes": 150,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-etcd-raft-library",
+		"title": "etcd-io/raft",
+		"url": "https://github.com/etcd-io/raft",
+		"type": "repo",
+		"level": "deep",
+		"track": "dist",
+		"stages": [
+			36,
+			37,
+			46,
+			47,
+			53
+		],
+		"concepts": [
+			"raft",
+			"implementation",
+			"snapshots",
+			"message-handling"
+		],
+		"why": "The raft library the reference implementation actually runs, with the design the paper leaves out: raft as a pure state machine that emits messages, so the transport, the disk and the clock stay outside it. Read `raft.go` when your own replication turns into tangled callbacks.",
+		"minutes": 90,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-paxos-made-simple",
+		"title": "Paxos Made Simple",
+		"url": "https://lamport.azurewebsites.net/pubs/paxos-simple.pdf",
+		"type": "paper",
+		"level": "deep",
+		"track": "dist",
+		"stages": [
+			36
+		],
+		"concepts": [
+			"paxos",
+			"consensus",
+			"majority-quorums",
+			"proposals"
+		],
+		"why": "The other consensus algorithm, in fourteen pages. Read it beside Raft at stage 36 for the invariant they share - any two majorities intersect, so a value chosen by one is seen by the next - stripped of the leader and the log.",
+		"minutes": 60,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-fowler-high-water-mark",
+		"title": "High-Water Mark - Patterns of Distributed Systems",
+		"url": "https://martinfowler.com/articles/patterns-of-distributed-systems/high-watermark.html",
+		"type": "article",
+		"level": "core",
+		"track": "dist",
+		"stages": [
+			37,
+			42,
+			44
+		],
+		"concepts": [
+			"commit-index",
+			"replication",
+			"log-replication",
+			"durability"
+		],
+		"why": "Names the line stages 37 and 44 live on: the highest log index known to be on a majority, and therefore the furthest a member may let a client see. Everything above it is written but not yet committed.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-fowler-generation-clock",
+		"title": "Generation Clock - Patterns of Distributed Systems",
+		"url": "https://martinfowler.com/articles/patterns-of-distributed-systems/generation-clock.html",
+		"type": "article",
+		"level": "core",
+		"track": "dist",
+		"stages": [
+			39,
+			45
+		],
+		"concepts": [
+			"terms",
+			"epochs",
+			"stale-leader",
+			"fencing"
+		],
+		"why": "Why a term number only ever increases and why every message carries it: it is what lets the cluster in stage 45 recognise a returning old leader as stale rather than believing its log.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-raft-tla-spec",
+		"title": "raft.tla - the Raft specification in TLA+",
+		"url": "https://github.com/ongardie/raft.tla",
+		"type": "repo",
+		"level": "deep",
+		"track": "dist",
+		"stages": [
+			39,
+			44,
+			45
+		],
+		"concepts": [
+			"tla-plus",
+			"formal-specification",
+			"raft",
+			"model-checking"
+		],
+		"why": "Ongaro's own TLA+ spec, and the fastest way to get precise about the invariants stages 39, 44 and 45 test - leader completeness and state-machine safety as formulas you can run TLC against rather than sentences you hope you implemented.",
+		"minutes": 90,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-jepsen-consistency-models",
+		"title": "Consistency Models - Jepsen",
+		"url": "https://jepsen.io/consistency",
+		"type": "doc",
+		"level": "intro",
+		"track": "dist",
+		"stages": [
+			38,
+			52,
+			54
+		],
+		"concepts": [
+			"consistency-models",
+			"linearizability",
+			"totality",
+			"availability"
+		],
+		"why": "An interactive lattice of models with a page for each, including which of them survive a partition - the precise vocabulary for saying what your cluster promises in stages 38 and 54, instead of \"strongly consistent\".",
+		"minutes": 25,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-herlihy-wing-linearizability",
+		"title": "Linearizability: A Correctness Condition for Concurrent Objects",
+		"url": "https://cs.brown.edu/~mph/HerlihyW90/p463-herlihy.pdf",
+		"type": "paper",
+		"level": "core",
+		"track": "dist",
+		"stages": [
+			38,
+			54
+		],
+		"concepts": [
+			"linearizability",
+			"histories",
+			"concurrent-objects",
+			"correctness-conditions"
+		],
+		"why": "The definition stage 54's checker implements: each operation takes effect at one instant inside its own call/return window, and the resulting sequential history must be legal. Section 2 is what you need; the rest is why it composes.",
+		"minutes": 75,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-gilbert-lynch-cap",
+		"title": "Brewer's Conjecture and the Feasibility of Consistent, Available, Partition-Tolerant Web Services",
+		"url": "https://users.ece.cmu.edu/~adrian/731-sp04/readings/GL-cap.pdf",
+		"type": "paper",
+		"level": "core",
+		"track": "dist",
+		"stages": [
+			40,
+			41
+		],
+		"concepts": [
+			"cap-theorem",
+			"partitions",
+			"availability",
+			"linearizability"
+		],
+		"why": "The proof behind stage 40: if the minority answered writes during a partition, the majority could not stay linearizable. Read section 3 and the refusal your node has to produce stops feeling like a limitation.",
+		"minutes": 45,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-kleppmann-stop-cp-or-ap",
+		"title": "Please stop calling databases CP or AP",
+		"url": "https://martin.kleppmann.com/2015/05/11/please-stop-calling-databases-cp-or-ap.html",
+		"type": "article",
+		"level": "intro",
+		"track": "dist",
+		"stages": [
+			40,
+			41
+		],
+		"concepts": [
+			"cap-theorem",
+			"consistency-models",
+			"availability",
+			"partitions"
+		],
+		"why": "A short corrective to read alongside the CAP proof: the theorem's \"available\" is a far stronger claim than what stage 41's majority does when it keeps serving, and conflating the two will muddle how you describe your own system.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-etcd-failure-modes",
+		"title": "Failure modes - etcd",
+		"url": "https://etcd.io/docs/v3.7/op-guide/failures/",
+		"type": "doc",
+		"level": "intro",
+		"track": "dist",
+		"stages": [
+			40,
+			43,
+			50
+		],
+		"concepts": [
+			"failure-modes",
+			"quorum-loss",
+			"leader-failure",
+			"cluster-restart"
+		],
+		"why": "Catalogues what the reference does when a minority fails, a leader fails, or the whole cluster restarts - which is the behaviour stages 40, 43 and 50 were written against. Read it before you decide what your node should do without a quorum.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-jepsen-etcd-and-consul",
+		"title": "Jepsen: etcd and Consul",
+		"url": "https://aphyr.com/posts/316-call-me-maybe-etcd-and-consul",
+		"type": "article",
+		"level": "core",
+		"track": "dist",
+		"stages": [
+			40,
+			52
+		],
+		"concepts": [
+			"jepsen",
+			"partitions",
+			"stale-reads",
+			"fault-injection"
+		],
+		"why": "The analysis that found stale reads in an earlier etcd because a read served locally by an isolated leader looks fine and is not - the exact mistake stages 40 and 52 are built to catch in your implementation.",
+		"minutes": 40,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-ongaro-dissertation",
+		"title": "Consensus: Bridging Theory and Practice",
+		"url": "https://web.stanford.edu/~ouster/cgi-bin/papers/OngaroPhD.pdf",
+		"type": "book",
+		"level": "deep",
+		"track": "dist",
+		"stages": [
+			42,
+			46,
+			47,
+			48,
+			49
+		],
+		"concepts": [
+			"raft",
+			"membership-changes",
+			"snapshots",
+			"log-compaction",
+			"catch-up"
+		],
+		"why": "The long version of Raft, and the only source that treats the four hardest cluster stages properly: chapter 4 on single-server membership changes, chapter 5 on snapshotting and how a far-behind follower is caught up by one.",
+		"minutes": 240,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-etcd-disaster-recovery",
+		"title": "Disaster recovery - etcd",
+		"url": "https://etcd.io/docs/v3.7/op-guide/recovery/",
+		"type": "doc",
+		"level": "core",
+		"track": "dist",
+		"stages": [
+			47,
+			50
+		],
+		"concepts": [
+			"snapshots",
+			"restore",
+			"cluster-restart",
+			"durability"
+		],
+		"why": "How a snapshot is taken and what restoring it does to member identity and cluster id - background for stage 47's snapshot catch-up, and for what stage 50 expects every member to still have after a full restart.",
+		"minutes": 25,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-etcd-learner-design",
+		"title": "etcd learner design - etcd",
+		"url": "https://etcd.io/docs/v3.7/learning/design-learner/",
+		"type": "doc",
+		"level": "deep",
+		"track": "dist",
+		"stages": [
+			47,
+			48
+		],
+		"concepts": [
+			"membership-changes",
+			"learners",
+			"snapshots",
+			"quorum-safety"
+		],
+		"why": "Why adding a voting member to a healthy cluster can break it, and how a non-voting learner that catches up first avoids that - the reasoning behind the \"unhealthy cluster\" refusals stage 48 has to keep re-offering its change through.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-etcd-runtime-reconfiguration",
+		"title": "Runtime reconfiguration - etcd",
+		"url": "https://etcd.io/docs/v3.7/op-guide/runtime-configuration/",
+		"type": "doc",
+		"level": "core",
+		"track": "dist",
+		"stages": [
+			48,
+			49
+		],
+		"concepts": [
+			"membership-changes",
+			"member-add",
+			"member-remove",
+			"cluster-state-existing"
+		],
+		"why": "The exact sequence stages 48 and 49 perform: member add first, then start the new node with --initial-cluster-state existing, and remove before shutdown - plus why the cluster refuses a change it considers unsafe.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-porcupine-checker",
+		"title": "Porcupine - a fast linearizability checker in Go",
+		"url": "https://github.com/anishathalye/porcupine",
+		"type": "tool",
+		"level": "core",
+		"track": "dist",
+		"stages": [
+			54
+		],
+		"concepts": [
+			"linearizability",
+			"checker",
+			"wing-and-gong",
+			"model-checking"
+		],
+		"why": "The implementation this track's own checker is shaped after; read the model interface and the memoisation in `checker.go` to see the two optimisations that make the search finish on histories of real size.",
+		"minutes": 45,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-wing-gong-testing-concurrent-objects",
+		"title": "Testing and Verifying Concurrent Objects",
+		"url": "https://www.cs.cmu.edu/~wing/publications/WingGong93.pdf",
+		"type": "paper",
+		"level": "deep",
+		"track": "dist",
+		"stages": [
+			54
+		],
+		"concepts": [
+			"linearizability",
+			"checker",
+			"search-algorithm",
+			"histories"
+		],
+		"why": "The original linearizability search - take a minimal operation, try it against the model, recurse, backtrack - which is the algorithm stage 54's checker runs over your history. Read it to understand why an operation whose response was lost has to be treated as optional.",
+		"minutes": 60,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-lowe-testing-for-linearizability",
+		"title": "Testing for Linearizability",
+		"url": "https://www.cs.ox.ac.uk/people/gavin.lowe/LinearizabiltyTesting/paper.pdf",
+		"type": "paper",
+		"level": "deep",
+		"track": "dist",
+		"stages": [
+			54
+		],
+		"concepts": [
+			"linearizability",
+			"checker",
+			"search-algorithm",
+			"performance"
+		],
+		"why": "Lowe's comparison of linearizability-testing algorithms, including the Wing and Gong search with memoisation that makes it tractable - the reference for why stage 54 can check a history of hundreds of operations at all.",
+		"minutes": 60,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-jepsen-etcd-343",
+		"title": "Jepsen: etcd 3.4.3",
+		"url": "https://jepsen.io/analyses/etcd-3.4.3",
+		"type": "article",
+		"level": "core",
+		"track": "dist",
+		"stages": [
+			44,
+			54,
+			55
+		],
+		"concepts": [
+			"jepsen",
+			"linearizability",
+			"fault-injection",
+			"lost-updates",
+			"watch-api"
+		],
+		"why": "The most recent full analysis of the exact system this ladder is validated against: which faults were injected, which anomalies turned up, and how a suspected lost update was traced. It is the closest thing to a worked answer for stages 54 and 55.",
+		"minutes": 60,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-etcd-robustness-tests",
+		"title": "etcd robustness tests",
+		"url": "https://github.com/etcd-io/etcd/tree/main/tests/robustness",
+		"type": "repo",
+		"level": "deep",
+		"track": "dist",
+		"stages": [
+			54,
+			55
+		],
+		"concepts": [
+			"fault-injection",
+			"linearizability",
+			"testing",
+			"randomized-workloads"
+		],
+		"why": "etcd's own version of stages 54 and 55: randomized traffic, a failpoint-driven fault schedule and a linearizability check of the resulting history. Read the `traffic` and `validate` packages for what a mature version of your own harness looks like.",
+		"minutes": 60,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-elle-checker",
+		"title": "Elle - a transactional consistency checker",
+		"url": "https://github.com/jepsen-io/elle",
+		"type": "tool",
+		"level": "deep",
+		"track": "dist",
+		"stages": [
+			55
+		],
+		"concepts": [
+			"consistency-checking",
+			"cycle-detection",
+			"anomalies",
+			"testing"
+		],
+		"why": "The other half of Jepsen's checking story: instead of searching for a linearization, Elle infers a dependency graph and looks for cycles, which scales to histories where stage 54's search would not finish. Worth knowing once stage 55 makes you want longer runs.",
+		"minutes": 45,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	}
+]
