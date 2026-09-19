@@ -1,1 +1,1289 @@
-[]
+[
+	{
+		"id": "wasm-spec-binary-conventions",
+		"title": "Conventions (Binary Format)",
+		"url": "https://webassembly.github.io/spec/core/binary/conventions.html",
+		"type": "spec",
+		"level": "core",
+		"track": "wasm",
+		"stages": [
+			1,
+			2,
+			3
+		],
+		"concepts": [
+			"grammar-notation",
+			"byte-sequences",
+			"vector-encoding"
+		],
+		"why": "Explains the grammar notation the rest of the binary chapter is written in, including that vec(B) means a u32 count followed by exactly that many elements - the rule every section decoder from stage 3 onward repeats.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wasm-spec-binary-modules",
+		"title": "Modules (Binary Format)",
+		"url": "https://webassembly.github.io/spec/core/binary/modules.html",
+		"type": "spec",
+		"level": "core",
+		"track": "wasm",
+		"stages": [
+			1,
+			3,
+			4,
+			5,
+			6,
+			7,
+			32,
+			35,
+			38,
+			39
+		],
+		"concepts": [
+			"magic-number",
+			"section-ids",
+			"section-size",
+			"code-section",
+			"export-section",
+			"binary-format"
+		],
+		"why": "The exact grammar for the section you are about to parse: the \\0asm header, the id order, and the size prefix that must match the bytes that follow - the size-prefix rule alone catches most first decoders, and stages 1, 3 and 5 are graded against this page.",
+		"minutes": 45,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wasm-spec-binary-values",
+		"title": "Values (Binary Format)",
+		"url": "https://webassembly.github.io/spec/core/binary/values.html",
+		"type": "spec",
+		"level": "core",
+		"track": "wasm",
+		"stages": [
+			2,
+			5,
+			6,
+			18,
+			19
+		],
+		"concepts": [
+			"leb128",
+			"uleb128",
+			"sleb128",
+			"ieee-754",
+			"utf8",
+			"name-encoding"
+		],
+		"why": "The normative LEB128 rules: how many bytes a u32 may occupy, which trailing bits must be zero or sign-extended, and why an over-long encoding is a decode error rather than a wide number. Stage 2's edge cases come straight from here.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wasm-spec-binary-types",
+		"title": "Types (Binary Format)",
+		"url": "https://webassembly.github.io/spec/core/binary/types.html",
+		"type": "spec",
+		"level": "core",
+		"track": "wasm",
+		"stages": [
+			6,
+			7,
+			10,
+			35,
+			37,
+			38
+		],
+		"concepts": [
+			"value-types",
+			"function-types",
+			"limits",
+			"reference-types",
+			"global-types"
+		],
+		"why": "The one-byte codes for i32/i64/f32/f64 and funcref, the 0x60 functype form, and the limits encoding with its optional maximum flag - you need all three before the type section in stage 6 will decode.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wasm-spec-binary-instructions",
+		"title": "Instructions (Binary Format)",
+		"url": "https://webassembly.github.io/spec/core/binary/instructions.html",
+		"type": "spec",
+		"level": "core",
+		"track": "wasm",
+		"stages": [
+			13,
+			16,
+			21,
+			23,
+			28,
+			29,
+			33,
+			34,
+			37
+		],
+		"concepts": [
+			"opcodes",
+			"immediates",
+			"memarg",
+			"prefixed-opcodes"
+		],
+		"why": "Every opcode byte and the immediates that follow it, including the memarg pair behind each load and store and the 0xFC prefix family that carries memory.init, memory.copy and the table operations - the decoding table for stage 13 onward.",
+		"minutes": 40,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wasm-spec-appendix-custom",
+		"title": "Custom Sections",
+		"url": "https://webassembly.github.io/spec/core/appendix/custom.html",
+		"type": "spec",
+		"level": "core",
+		"track": "wasm",
+		"stages": [
+			4
+		],
+		"concepts": [
+			"custom-sections",
+			"name-section",
+			"name-subsections"
+		],
+		"why": "The name section's subsection layout - the only custom section with a standard meaning, and the one stage 4 asks you to read or skip cleanly instead of choking on.",
+		"minutes": 12,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wasm-leb128-primer",
+		"title": "LEB128",
+		"url": "https://en.wikipedia.org/wiki/LEB128",
+		"type": "article",
+		"level": "intro",
+		"track": "wasm",
+		"stages": [
+			2
+		],
+		"concepts": [
+			"leb128",
+			"varint",
+			"sign-extension"
+		],
+		"why": "A five-minute picture of the encoding with worked examples in both the signed and unsigned forms; read this first if 'shift by seven, stop when the high bit clears' has not clicked yet.",
+		"minutes": 8,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wasm-code-explorer",
+		"title": "WebAssembly Code Explorer",
+		"url": "https://wasdk.github.io/wasmcodeexplorer/",
+		"type": "tool",
+		"level": "intro",
+		"track": "wasm",
+		"stages": [
+			1,
+			3,
+			5
+		],
+		"concepts": [
+			"hex-view",
+			"section-inspection",
+			"binary-format"
+		],
+		"why": "Drop a .wasm in and it highlights the byte range of each section beside the disassembly - the fastest way to see whether your section framing in stage 3 agrees with what a real decoder sees.",
+		"minutes": 10,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wasm-wat2wasm-demo",
+		"title": "wat2wasm demo",
+		"url": "https://webassembly.github.io/wabt/demo/wat2wasm/",
+		"type": "tool",
+		"level": "intro",
+		"track": "wasm",
+		"stages": [
+			1,
+			2,
+			6
+		],
+		"concepts": [
+			"wat",
+			"assembling",
+			"hex-dump"
+		],
+		"why": "Type a .wat on the left and watch the bytes appear on the right: the quickest way to build a known-good minimal module for stage 1 and to see exactly what a small signed integer looks like in LEB128.",
+		"minutes": 10,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wasm-wabt",
+		"title": "wabt: The WebAssembly Binary Toolkit",
+		"url": "https://github.com/WebAssembly/wabt",
+		"type": "tool",
+		"level": "core",
+		"track": "wasm",
+		"stages": [
+			1,
+			4,
+			6,
+			29
+		],
+		"concepts": [
+			"wasm-objdump",
+			"wat2wasm",
+			"wasm-validate",
+			"tooling"
+		],
+		"why": "wasm-objdump -x prints a section-by-section dump of any module and wat2wasm builds fixtures by hand - keep both on your PATH from stage 1 so you can always compare your decoder's view with a reference one.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wasm-wasm-tools",
+		"title": "wasm-tools",
+		"url": "https://github.com/bytecodealliance/wasm-tools",
+		"type": "tool",
+		"level": "core",
+		"track": "wasm",
+		"stages": [
+			3,
+			5,
+			6,
+			43
+		],
+		"concepts": [
+			"wasm-validate",
+			"wasm-print",
+			"tooling",
+			"fuzzing"
+		],
+		"why": "`wasm-tools validate` gives you a second opinion on whether a module you built should be rejected, and `wasm-tools print` turns bytes back into .wat - the two commands to reach for whenever stage 3 or stage 5 disagrees with you.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wasm-wasmparser",
+		"title": "wasmparser",
+		"url": "https://docs.rs/wasmparser/latest/wasmparser/",
+		"type": "doc",
+		"level": "deep",
+		"track": "wasm",
+		"stages": [
+			3,
+			5,
+			7
+		],
+		"concepts": [
+			"streaming-decoder",
+			"section-reader",
+			"validation",
+			"rust"
+		],
+		"why": "A production streaming decoder read as a design: see how it separates 'section header' from 'section payload' and where it enforces the declared size, a shape worth copying when stage 5's truncation handling gets tangled.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wasm-spec-repo",
+		"title": "WebAssembly/spec",
+		"url": "https://github.com/WebAssembly/spec",
+		"type": "repo",
+		"level": "core",
+		"track": "wasm",
+		"stages": [
+			1
+		],
+		"concepts": [
+			"spec-source",
+			"proposals",
+			"reference-interpreter"
+		],
+		"why": "The source of most of this list: the spec text, the OCaml reference interpreter and the core test suite live in one repository, so you can always go from a sentence in the spec to the code that implements it.",
+		"minutes": 10,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wasm-reference-interpreter",
+		"title": "WebAssembly reference interpreter",
+		"url": "https://github.com/WebAssembly/spec/tree/main/interpreter",
+		"type": "repo",
+		"level": "deep",
+		"track": "wasm",
+		"stages": [
+			3,
+			8,
+			12
+		],
+		"concepts": [
+			"reference-interpreter",
+			"ocaml",
+			"decoding",
+			"validation"
+		],
+		"why": "A few thousand lines of OCaml that decode, then validate, then run - in that order. When you cannot tell whether a module should be rejected at validation time or trap at run time, this is the tie-breaker you can actually read.",
+		"minutes": 60,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wasm-testsuite",
+		"title": "WebAssembly/testsuite",
+		"url": "https://github.com/WebAssembly/testsuite",
+		"type": "repo",
+		"level": "core",
+		"track": "wasm",
+		"stages": [
+			3,
+			12,
+			43
+		],
+		"concepts": [
+			"spec-tests",
+			"wast",
+			"conformance"
+		],
+		"why": "The official .wast conformance corpus. Even before you can run it, its assert_malformed and assert_invalid cases are a catalogue of exactly the bad modules stages 3, 5 and 11 will throw at you.",
+		"minutes": 25,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wasm-design-binary-encoding",
+		"title": "BinaryEncoding.md",
+		"url": "https://github.com/WebAssembly/design/blob/main/BinaryEncoding.md",
+		"type": "doc",
+		"level": "deep",
+		"track": "wasm",
+		"stages": [
+			1,
+			3
+		],
+		"concepts": [
+			"binary-format",
+			"design-rationale",
+			"section-ids"
+		],
+		"why": "Why the format looks the way it does: why sections are size-prefixed, why their order is fixed, why an unknown id is an error while a custom section is not. Read it the moment stage 3 makes you ask 'why is that a rule?'",
+		"minutes": 25,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wasm-write-by-hand",
+		"title": "Writing WebAssembly By Hand",
+		"url": "https://blog.scottlogic.com/2018/04/26/webassembly-by-hand.html",
+		"type": "article",
+		"level": "intro",
+		"track": "wasm",
+		"stages": [
+			6
+		],
+		"concepts": [
+			"wat",
+			"hand-assembly",
+			"minimal-module"
+		],
+		"why": "Builds a working module byte by byte in a hex editor, section by section. Doing this once by hand makes the type/function/export triple in stage 6 feel obvious instead of arbitrary.",
+		"minutes": 25,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wasm-mdn-text-format",
+		"title": "Understanding WebAssembly text format",
+		"url": "https://developer.mozilla.org/en-US/docs/WebAssembly/Guides/Understanding_the_text_format",
+		"type": "doc",
+		"level": "intro",
+		"track": "wasm",
+		"stages": [
+			6,
+			21,
+			22
+		],
+		"concepts": [
+			"wat",
+			"s-expressions",
+			"folded-instructions"
+		],
+		"why": "You will be reading .wat constantly - in the spec tests, in wasm-tools output, in your own failure dumps. This is the gentlest correct explanation of what those parentheses mean and how folded form maps back to a flat instruction list.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wasm-ground-up-book",
+		"title": "WebAssembly from the Ground Up",
+		"url": "https://wasmgroundup.com/",
+		"type": "book",
+		"level": "core",
+		"track": "wasm",
+		"stages": [
+			2,
+			6,
+			21
+		],
+		"concepts": [
+			"interpreter",
+			"wat",
+			"stack-machine",
+			"encoding"
+		],
+		"why": "Builds a wasm compiler and runtime from nothing, and its early chapters walk the section encodings and LEB128 in more detail than any free tutorial. Paid, but the closest thing to this track in book form.",
+		"minutes": 600,
+		"free": false,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wasm-runtime-in-rust",
+		"title": "Writing A Wasm Runtime In Rust",
+		"url": "https://skanehira.github.io/writing-a-wasm-runtime-in-rust/",
+		"type": "book",
+		"level": "core",
+		"track": "wasm",
+		"stages": [
+			6,
+			7,
+			21,
+			26,
+			40
+		],
+		"concepts": [
+			"interpreter",
+			"decoder",
+			"call-stack",
+			"wasi"
+		],
+		"why": "A complete small runtime built in the same order this track walks it - decoder, then execution, then calls and frames, then a minimal fd_write - with the code shown at each step, so you can compare structure rather than guess at it.",
+		"minutes": 180,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wasm-pywasm",
+		"title": "pywasm",
+		"url": "https://github.com/mohanson/pywasm",
+		"type": "repo",
+		"level": "core",
+		"track": "wasm",
+		"stages": [
+			21,
+			28,
+			36
+		],
+		"concepts": [
+			"interpreter",
+			"python",
+			"execution"
+		],
+		"why": "A readable pure-Python interpreter. When the spec's reduction rules for br or call_indirect are hard to turn into code, this shows one straightforward and complete way to do it.",
+		"minutes": 45,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wasm-spec-valid-index",
+		"title": "Validation",
+		"url": "https://webassembly.github.io/spec/core/valid/index.html",
+		"type": "spec",
+		"level": "intro",
+		"track": "wasm",
+		"stages": [
+			7,
+			12
+		],
+		"concepts": [
+			"validation",
+			"typing-rules",
+			"soundness"
+		],
+		"why": "The one-page statement of what validation is for: a module either type-checks completely before anything runs, or it is rejected whole. That is precisely the property stage 12 tests.",
+		"minutes": 8,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wasm-spec-valid-instructions",
+		"title": "Instructions (Validation)",
+		"url": "https://webassembly.github.io/spec/core/valid/instructions.html",
+		"type": "spec",
+		"level": "core",
+		"track": "wasm",
+		"stages": [
+			7,
+			8,
+			9,
+			10,
+			11,
+			22,
+			23,
+			25,
+			27
+		],
+		"concepts": [
+			"type-checking",
+			"stack-types",
+			"stack-polymorphism",
+			"label-types"
+		],
+		"why": "The typing rule for every instruction, including the stack-polymorphic ones. This is what stages 7 to 11 are graded against, and the only place the select and br_table rules are stated precisely enough to implement.",
+		"minutes": 60,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wasm-spec-appendix-algorithm",
+		"title": "Validation Algorithm",
+		"url": "https://webassembly.github.io/spec/core/appendix/algorithm.html",
+		"type": "spec",
+		"level": "core",
+		"track": "wasm",
+		"stages": [
+			8,
+			9,
+			10,
+			24
+		],
+		"concepts": [
+			"type-checker",
+			"stack-polymorphism",
+			"unreachable",
+			"control-stack"
+		],
+		"why": "Pseudocode for the actual one-pass checker: an operand stack whose entries may be Unknown, a control stack, and the unreachable flag that lets anything after a br type-check. Implement stages 8 and 9 from this page, not from the typing rules.",
+		"minutes": 40,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wasm-spec-valid-modules",
+		"title": "Modules (Validation)",
+		"url": "https://webassembly.github.io/spec/core/valid/modules.html",
+		"type": "spec",
+		"level": "core",
+		"track": "wasm",
+		"stages": [
+			11,
+			12,
+			32,
+			35,
+			38,
+			39
+		],
+		"concepts": [
+			"module-validation",
+			"immutable-globals",
+			"start-function",
+			"constant-expressions"
+		],
+		"why": "The module-level rules in one place: index spaces must be in range, a start function takes and returns nothing, and a global initialiser is a constant expression that may only read imported immutable globals - stage 11 and stage 39 both live here.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wasm-spec-valid-types",
+		"title": "Types (Validation)",
+		"url": "https://webassembly.github.io/spec/core/valid/types.html",
+		"type": "spec",
+		"level": "core",
+		"track": "wasm",
+		"stages": [
+			11,
+			30,
+			37
+		],
+		"concepts": [
+			"limits",
+			"memory-types",
+			"table-types"
+		],
+		"why": "Why a memory whose minimum exceeds its maximum is invalid, and where the hard page ceiling comes from - the limits rules stage 11 rejects on and stage 30 grows against.",
+		"minutes": 12,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wasm-spec-valid-matching",
+		"title": "Matching",
+		"url": "https://webassembly.github.io/spec/core/valid/matching.html",
+		"type": "spec",
+		"level": "deep",
+		"track": "wasm",
+		"stages": [
+			9,
+			25,
+			39
+		],
+		"concepts": [
+			"subtyping",
+			"bottom-type",
+			"reference-types"
+		],
+		"why": "Where the bottom type used by unreachable code and the subtyping between reference types are defined - the formal backing for why stage 9's polymorphic stack is sound rather than just convenient.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wasm-spec-syntax-types",
+		"title": "Types",
+		"url": "https://webassembly.github.io/spec/core/syntax/types.html",
+		"type": "spec",
+		"level": "core",
+		"track": "wasm",
+		"stages": [
+			7,
+			10,
+			27
+		],
+		"concepts": [
+			"value-types",
+			"result-types",
+			"block-types",
+			"function-types"
+		],
+		"why": "A blocktype is a function type, not a single result. Read this before stage 10 so the shorthand encodings make sense, and again before stage 27's blocks that take parameters as well as return them.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wasm-pldi-2017",
+		"title": "Bringing the Web up to Speed with WebAssembly",
+		"url": "https://people.mpi-sws.org/~rossberg/papers/Haas,%20Rossberg,%20Schuff,%20Titzer,%20Gohman,%20Wagner,%20Zakai,%20Bastien,%20Holman%20-%20Bringing%20the%20Web%20up%20to%20Speed%20with%20WebAssembly.pdf",
+		"type": "paper",
+		"level": "deep",
+		"track": "wasm",
+		"stages": [
+			9,
+			12
+		],
+		"concepts": [
+			"formal-semantics",
+			"type-soundness",
+			"design-rationale"
+		],
+		"why": "The PLDI 2017 paper that introduced the language and proved its type system sound. Read the semantics section when you want to know why validation lets your interpreter skip run-time type checks entirely - the guarantee stage 12 depends on.",
+		"minutes": 90,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wasm-mechanising-spec",
+		"title": "Mechanising and Verifying the WebAssembly Specification",
+		"url": "https://www.cl.cam.ac.uk/~caw77/papers/mechanising-and-verifying-the-webassembly-specification.pdf",
+		"type": "paper",
+		"level": "deep",
+		"track": "wasm",
+		"stages": [
+			9,
+			12
+		],
+		"concepts": [
+			"formal-semantics",
+			"isabelle",
+			"type-soundness",
+			"verified-interpreter"
+		],
+		"why": "The mechanisation that found real bugs in the published spec, and that includes a verified type checker and interpreter. The deep end for anyone who wants stage 9's polymorphic-stack rules justified rather than asserted.",
+		"minutes": 90,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wasm-design-semantics",
+		"title": "Semantics.md",
+		"url": "https://github.com/WebAssembly/design/blob/main/Semantics.md",
+		"type": "doc",
+		"level": "core",
+		"track": "wasm",
+		"stages": [
+			8,
+			13,
+			28,
+			31
+		],
+		"concepts": [
+			"stack-machine",
+			"design-rationale",
+			"traps",
+			"alignment"
+		],
+		"why": "Plain-English semantics from the design phase: the stack machine, what traps and when, why alignment is a hint rather than a constraint. Far easier reading than the formal rules while you are still building intuition for stages 8 and 13.",
+		"minutes": 40,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wasm-design-rationale",
+		"title": "Rationale.md",
+		"url": "https://github.com/WebAssembly/design/blob/main/Rationale.md",
+		"type": "doc",
+		"level": "core",
+		"track": "wasm",
+		"stages": [
+			15,
+			19,
+			20,
+			30,
+			45
+		],
+		"concepts": [
+			"design-rationale",
+			"nan",
+			"traps",
+			"determinism"
+		],
+		"why": "Answers the 'why on earth' questions stages 15 to 20 raise: why division overflow traps instead of wrapping, why NaN payloads are only partly determined, why trunc traps where trunc_sat saturates, and where determinism stops.",
+		"minutes": 35,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wasm-spec-exec-numerics",
+		"title": "Numerics",
+		"url": "https://webassembly.github.io/spec/core/exec/numerics.html",
+		"type": "spec",
+		"level": "core",
+		"track": "wasm",
+		"stages": [
+			13,
+			14,
+			15,
+			16,
+			17,
+			18,
+			19,
+			20
+		],
+		"concepts": [
+			"integer-arithmetic",
+			"float-arithmetic",
+			"nan-propagation",
+			"rounding",
+			"trunc-sat"
+		],
+		"why": "Every arithmetic operator defined as a mathematical function, including the NaN propagation rule and the round-to-nearest-ties-to-even used throughout. This single page decides the outcome of stages 13 through 20.",
+		"minutes": 90,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wasm-spec-index-instructions",
+		"title": "Index of Instructions",
+		"url": "https://webassembly.github.io/spec/core/appendix/index-instructions.html",
+		"type": "spec",
+		"level": "core",
+		"track": "wasm",
+		"stages": [
+			13,
+			14,
+			16,
+			17,
+			20,
+			28,
+			31,
+			34,
+			36,
+			37
+		],
+		"concepts": [
+			"opcode-table",
+			"instruction-index",
+			"signatures"
+		],
+		"why": "One table with opcode byte, name, type signature and links to the validation and execution rules for each. Keep it open for the whole numeric and memory sections - it is the fastest lookup in the spec.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wasm-mdn-numeric",
+		"title": "WebAssembly numeric instructions",
+		"url": "https://developer.mozilla.org/en-US/docs/WebAssembly/Reference/Numeric",
+		"type": "doc",
+		"level": "intro",
+		"track": "wasm",
+		"stages": [
+			13,
+			16,
+			17
+		],
+		"concepts": [
+			"integer-arithmetic",
+			"comparisons",
+			"bit-counting"
+		],
+		"why": "A short, example-led list of what each numeric opcode does. Faster than the spec when you only need to remember which of shr_s and shr_u is the arithmetic shift, or what rotl does at the edges.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wasm-spec-syntax-values",
+		"title": "Values",
+		"url": "https://webassembly.github.io/spec/core/syntax/values.html",
+		"type": "spec",
+		"level": "core",
+		"track": "wasm",
+		"stages": [
+			2,
+			18,
+			19
+		],
+		"concepts": [
+			"integers",
+			"floating-point",
+			"nan",
+			"names"
+		],
+		"why": "Defines wasm's number types before any encoding gets involved: which NaNs count as canonical and which as arithmetic, and what a name is. Stage 19's expectations about NaN are stated here, not in the numerics page.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wasm-ieee-754",
+		"title": "IEEE 754",
+		"url": "https://en.wikipedia.org/wiki/IEEE_754",
+		"type": "article",
+		"level": "core",
+		"track": "wasm",
+		"stages": [
+			18,
+			19
+		],
+		"concepts": [
+			"ieee-754",
+			"nan",
+			"signed-zero",
+			"subnormals",
+			"rounding"
+		],
+		"why": "The bit layouts, the special values and the rounding modes in one place. Stage 19 is largely a quiz on this article plus wasm's choice of round-to-nearest-ties-to-even and its min/max treatment of zeros.",
+		"minutes": 45,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wasm-goldberg-float",
+		"title": "What Every Computer Scientist Should Know About Floating-Point Arithmetic",
+		"url": "https://docs.oracle.com/cd/E19957-01/806-3568/ncg_goldberg.html",
+		"type": "article",
+		"level": "deep",
+		"track": "wasm",
+		"stages": [
+			18,
+			19
+		],
+		"concepts": [
+			"ieee-754",
+			"rounding",
+			"precision",
+			"nan"
+		],
+		"why": "The classic. Read the rounding-error and special-values sections when stage 18's results come out close-but-not-equal and you need to decide whether your arithmetic or your printing is at fault.",
+		"minutes": 180,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wasm-spec-exec-instructions",
+		"title": "Instructions (Execution)",
+		"url": "https://webassembly.github.io/spec/core/exec/instructions.html",
+		"type": "spec",
+		"level": "core",
+		"track": "wasm",
+		"stages": [
+			13,
+			15,
+			21,
+			22,
+			23,
+			24,
+			25,
+			26,
+			28,
+			31,
+			33,
+			34,
+			36
+		],
+		"concepts": [
+			"reduction-rules",
+			"traps",
+			"labels",
+			"frames"
+		],
+		"why": "The small-step rules: what each instruction pops, what it pushes, and the precise condition under which it traps. Also the authority for the canonical trap wording the tester greps your stderr for.",
+		"minutes": 90,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wasm-spec-exec-runtime",
+		"title": "Runtime Structure",
+		"url": "https://webassembly.github.io/spec/core/exec/runtime.html",
+		"type": "spec",
+		"level": "core",
+		"track": "wasm",
+		"stages": [
+			21,
+			24,
+			26,
+			30,
+			35
+		],
+		"concepts": [
+			"store",
+			"operand-stack",
+			"labels",
+			"frames",
+			"instances"
+		],
+		"why": "Defines the store, frames and labels - the data structures your interpreter must already have before block, return or call can mean anything at all. Read it before you write a line of stage 21.",
+		"minutes": 40,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wasm-titzer-in-place",
+		"title": "A fast in-place interpreter for WebAssembly",
+		"url": "https://arxiv.org/abs/2205.01183",
+		"type": "paper",
+		"level": "deep",
+		"track": "wasm",
+		"stages": [
+			21,
+			23,
+			26,
+			44
+		],
+		"concepts": [
+			"interpreter-design",
+			"side-table",
+			"control-flow",
+			"performance"
+		],
+		"why": "Explains the side-table trick that makes a br to an outer block O(1) without rewriting the bytecode - the single best idea to have in your head before stage 23's br_table and before stage 44's deep nesting makes scanning for matching ends expensive.",
+		"minutes": 60,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wasm-wasm3-interpreter",
+		"title": "wasm3: interpreter design",
+		"url": "https://github.com/wasm3/wasm3/blob/main/docs/Interpreter.md",
+		"type": "doc",
+		"level": "deep",
+		"track": "wasm",
+		"stages": [
+			26,
+			44
+		],
+		"concepts": [
+			"dispatch",
+			"tail-calls",
+			"operand-stack",
+			"performance"
+		],
+		"why": "Why a naive switch-on-opcode loop is slow and what wasm3 does instead. The design note to read before you try to make anything faster for stage 44 - and before you conclude your call overhead in stage 26 is unavoidable.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wasm-spec-syntax-modules",
+		"title": "Modules",
+		"url": "https://webassembly.github.io/spec/core/syntax/modules.html",
+		"type": "spec",
+		"level": "core",
+		"track": "wasm",
+		"stages": [
+			6,
+			28,
+			32,
+			35,
+			38,
+			39
+		],
+		"concepts": [
+			"memories",
+			"data-segments",
+			"element-segments",
+			"globals",
+			"start-function"
+		],
+		"why": "What a module contains, abstractly: memories with limits, active and passive data and element segments, globals, the start function. The mental model stages 28 to 39 keep sending you back to.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wasm-spec-exec-modules",
+		"title": "Modules (Execution)",
+		"url": "https://webassembly.github.io/spec/core/exec/modules.html",
+		"type": "spec",
+		"level": "core",
+		"track": "wasm",
+		"stages": [
+			32,
+			38,
+			39
+		],
+		"concepts": [
+			"instantiation",
+			"data-segments",
+			"element-segments",
+			"start-function"
+		],
+		"why": "The instantiation algorithm in order - allocate, initialise element segments, initialise data segments, then run start - including the rule that an out-of-range active segment fails instantiation after validation has already passed. Stages 32 and 39 in one page.",
+		"minutes": 40,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wasm-surma-raw-wasm",
+		"title": "Raw WebAssembly",
+		"url": "https://surma.dev/things/raw-wasm/",
+		"type": "article",
+		"level": "core",
+		"track": "wasm",
+		"stages": [
+			28,
+			29
+		],
+		"concepts": [
+			"linear-memory",
+			"loads-stores",
+			"wat",
+			"alignment"
+		],
+		"why": "Writes directly against linear memory in hand-written wat, which makes the offset immediate and the little-endian byte layout concrete before stage 29 starts testing them one byte at a time.",
+		"minutes": 40,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wasm-nullprogram-allocator",
+		"title": "WebAssembly: How to allocate your allocator",
+		"url": "https://nullprogram.com/blog/2025/04/19/",
+		"type": "article",
+		"level": "deep",
+		"track": "wasm",
+		"stages": [
+			30
+		],
+		"concepts": [
+			"memory-grow",
+			"linear-memory",
+			"allocation"
+		],
+		"why": "What memory.grow means to the program sitting on top of it, and why the page granularity and the -1 failure return matter to a guest. Good context for stage 30's grow-beyond-maximum cases.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wasm-wasi-dev",
+		"title": "WASI",
+		"url": "https://wasi.dev/",
+		"type": "doc",
+		"level": "intro",
+		"track": "wasm",
+		"stages": [
+			40
+		],
+		"concepts": [
+			"wasi",
+			"capabilities",
+			"system-interface"
+		],
+		"why": "What WASI is and why it is capability-based, in a few screens. Read it before stage 40 so that 'preview1' and 'the component model' stop sounding like two names for the same thing.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wasm-wasi-preview1-docs",
+		"title": "WASI preview1 API documentation",
+		"url": "https://github.com/WebAssembly/WASI/blob/snapshot-01/phases/snapshot/docs.md",
+		"type": "spec",
+		"level": "core",
+		"track": "wasm",
+		"stages": [
+			40,
+			41,
+			42
+		],
+		"concepts": [
+			"wasi-preview1",
+			"fd-write",
+			"ciovec",
+			"errno",
+			"proc-exit"
+		],
+		"why": "The function-by-function reference for wasi_snapshot_preview1: the exact signature of fd_write, what a ciovec array looks like in linear memory, the full errno list, and what args_sizes_get must write back. Stages 40 to 42 are implemented straight from this page.",
+		"minutes": 60,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wasm-wasi-preview1-witx",
+		"title": "wasi_snapshot_preview1.witx",
+		"url": "https://github.com/WebAssembly/WASI/blob/snapshot-01/phases/snapshot/witx/wasi_snapshot_preview1.witx",
+		"type": "spec",
+		"level": "deep",
+		"track": "wasm",
+		"stages": [
+			40,
+			41,
+			42
+		],
+		"concepts": [
+			"witx",
+			"wasi-preview1",
+			"signatures"
+		],
+		"why": "The machine-readable source those docs are generated from - reach for it when you need parameter order and the pointer/length pairing spelled out with no prose in the way, as in stage 41's args_get.",
+		"minutes": 25,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wasm-wasi-rust-bindings",
+		"title": "wasi 0.11 (preview1) Rust bindings",
+		"url": "https://docs.rs/wasi/0.11.0+wasi-snapshot-preview1/wasi/",
+		"type": "doc",
+		"level": "core",
+		"track": "wasm",
+		"stages": [
+			40,
+			41,
+			42
+		],
+		"concepts": [
+			"wasi-preview1",
+			"fd-write",
+			"clock-time-get",
+			"random-get"
+		],
+		"why": "Rustdoc for the raw preview1 imports, one page per function with every struct expanded. Often clearer than the witx when you want to check the memory shape that fd_write or clock_time_get is reading.",
+		"minutes": 25,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wasm-wasmtime-wasip1",
+		"title": "Using WASI preview1 from Wasmtime",
+		"url": "https://docs.wasmtime.dev/examples-wasip1.html",
+		"type": "doc",
+		"level": "core",
+		"track": "wasm",
+		"stages": [
+			40,
+			41
+		],
+		"concepts": [
+			"wasi-preview1",
+			"host-implementation",
+			"wasmtime"
+		],
+		"why": "How the reference runtime wires preview1 imports to a host, argv and environ included. Useful when stage 41's args layout does not match what wasmtime hands the same module.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wasm-wasmtime-cli-options",
+		"title": "Wasmtime CLI options",
+		"url": "https://docs.wasmtime.dev/cli-options.html",
+		"type": "doc",
+		"level": "core",
+		"track": "wasm",
+		"stages": [
+			1,
+			40
+		],
+		"concepts": [
+			"cli",
+			"invoke",
+			"wasi",
+			"wasmtime"
+		],
+		"why": "The exact flags the harness drives: `run --invoke <export> module.wasm args...`, and what wasmtime does with them - including which stream results go to and which one diagnostics go to. Match this and stage 1 passes on the first try.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wasm-wasmtime-fuzzing",
+		"title": "Fuzzing Wasmtime",
+		"url": "https://docs.wasmtime.dev/contributing-fuzzing.html",
+		"type": "doc",
+		"level": "core",
+		"track": "wasm",
+		"stages": [
+			43
+		],
+		"concepts": [
+			"fuzzing",
+			"differential-testing",
+			"oracles"
+		],
+		"why": "How wasmtime fuzzes itself: the oracles it uses and what counts as a crash rather than a legitimate rejection. That distinction is the whole point of stage 43 - a malformed module is input, never a reason to die.",
+		"minutes": 25,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wasm-wasm-smith",
+		"title": "wasm-smith",
+		"url": "https://docs.rs/wasm-smith/latest/wasm_smith/",
+		"type": "tool",
+		"level": "core",
+		"track": "wasm",
+		"stages": [
+			43
+		],
+		"concepts": [
+			"fuzzing",
+			"module-generation",
+			"arbitrary"
+		],
+		"why": "A generator of always-valid random modules. Point it at your runtime between stage 43 runs and it will find the crashes that 500 seeded mutations of a handful of modules never reach.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "wasm-wasmtime-determinism",
+		"title": "Deterministic Wasm execution",
+		"url": "https://docs.wasmtime.dev/examples-deterministic-wasm-execution.html",
+		"type": "doc",
+		"level": "core",
+		"track": "wasm",
+		"stages": [
+			45
+		],
+		"concepts": [
+			"determinism",
+			"float-determinism",
+			"nan",
+			"reproducibility"
+		],
+		"why": "What is and is not deterministic in wasm, and what an engine has to pin down to get the same answer twice. Exactly the property stage 45 soaks for over thousands of repetitions.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	}
+]
