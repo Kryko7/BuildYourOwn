@@ -4,8 +4,8 @@
 		"kind": "node",
 		"request": "everything under the prefix `k/`, whose end key is `k0`\n\nPOST /v3/kv/range\n{\n  \"key\": \"ay8=\",\n  \"range_end\": \"azA=\"\n}",
 		"request_hex": "7b226b6579223a226179383d222c2272616e67655f656e64223a22617a413d227d",
-		"response": "the pairs in byte order, with a count of how many the range holds\n\nHTTP 200 OK\n{\n  \"count\": \"3\",\n  \"header\": {\n    \"cluster_id\": \"10949400123113182022\",\n    \"member_id\": \"6601433576759777444\",\n    \"raft_term\": \"2\",\n    \"revision\": \"4\"\n  },\n  \"kvs\": [\n    {\n      \"create_revision\": \"2\",\n      \"key\": \"ay9h\",\n      \"mod_revision\": \"2\",\n      \"value\": \"MQ==\",\n      \"version\": \"1\"\n    },\n    {\n      \"create_revision\": \"3\",\n      \"key\": \"ay9i\",\n      \"mod_revision\": \"3\",\n      \"value\": \"Mg==\",\n      \"version\": \"1\"\n    },\n    {\n      \"create_revision\": \"4\",\n      \"key\": \"ay9j\",\n      \"mod_revision\": \"4\",\n      \"value\": \"Mw==\",\n      \"version\": \"1\"\n    }\n  ]\n}",
-		"response_hex": "7b22686561646572223a7b22636c75737465725f6964223a223130393439343030313233313133313832303232222c226d656d6265725f6964223a2236363031343333353736373539373737343434222c227265766973696f6e223a2234222c22726166745f7465726d223a2232227d2c226b7673223a5b7b226b6579223a2261793968222c226372656174655f7265766973696f6e223a2232222c226d6f645f7265766973696f6e223a2232222c2276657273696f6e223a2231222c2276616c7565223a224d513d3d227d2c7b226b6579223a2261793969222c226372656174655f7265766973696f6e223a2233222c226d6f645f7265766973696f6e223a2233222c2276657273696f6e223a2231222c2276616c7565223a224d673d3d227d2c7b226b6579223a226179396a222c226372656174655f7265766973696f6e223a2234222c226d6f645f7265766973696f6e223a2234222c2276657273696f6e223a2231222c2276616c7565223a224d773d3d227d5d2c22636f756e74223a2233227d",
+		"response": "the pairs in byte order, with a count of how many the range holds\n\nHTTP 200 OK\n{\n  \"count\": \"3\",\n  \"header\": {\n    \"cluster_id\": \"7876238223301777344\",\n    \"member_id\": \"10411272656471796155\",\n    \"raft_term\": \"2\",\n    \"revision\": \"4\"\n  },\n  \"kvs\": [\n    {\n      \"create_revision\": \"2\",\n      \"key\": \"ay9h\",\n      \"mod_revision\": \"2\",\n      \"value\": \"MQ==\",\n      \"version\": \"1\"\n    },\n    {\n      \"create_revision\": \"3\",\n      \"key\": \"ay9i\",\n      \"mod_revision\": \"3\",\n      \"value\": \"Mg==\",\n      \"version\": \"1\"\n    },\n    {\n      \"create_revision\": \"4\",\n      \"key\": \"ay9j\",\n      \"mod_revision\": \"4\",\n      \"value\": \"Mw==\",\n      \"version\": \"1\"\n    }\n  ]\n}",
+		"response_hex": "7b22686561646572223a7b22636c75737465725f6964223a2237383736323338323233333031373737333434222c226d656d6265725f6964223a223130343131323732363536343731373936313535222c227265766973696f6e223a2234222c22726166745f7465726d223a2232227d2c226b7673223a5b7b226b6579223a2261793968222c226372656174655f7265766973696f6e223a2232222c226d6f645f7265766973696f6e223a2232222c2276657273696f6e223a2231222c2276616c7565223a224d513d3d227d2c7b226b6579223a2261793969222c226372656174655f7265766973696f6e223a2233222c226d6f645f7265766973696f6e223a2233222c2276657273696f6e223a2231222c2276616c7565223a224d673d3d227d2c7b226b6579223a226179396a222c226372656174655f7265766973696f6e223a2234222c226d6f645f7265766973696f6e223a2234222c2276657273696f6e223a2231222c2276616c7565223a224d773d3d227d5d2c22636f756e74223a2233227d",
 		"note": "`k0` is `k/` with its last byte incremented, and the range excludes it. Ending the range at `k/ÿ` instead looks equivalent and is not: a key of `k/` followed by two 0xff bytes sorts after it and would be missed.",
 		"request_fields": [
 			{
@@ -26,7 +26,7 @@
 				"offset": 1,
 				"length": 8,
 				"field": "response.header",
-				"value": "{\"cluster_id\":\"10949400123113182022\",\"member_id\":\"6601433576759777444\",\"raft_term\":\"2\",\"revision\":\"4\"}",
+				"value": "{\"cluster_id\":\"7876238223301777344\",\"member_id\":\"10411272656471796155\",\"raft_term\":\"2\",\"revision\":\"4\"}",
 				"varies": true
 			},
 			{
@@ -48,8 +48,8 @@
 		"kind": "node",
 		"request": "a range from `z` to `a`, which covers nothing\n\nPOST /v3/kv/range\n{\n  \"key\": \"eg==\",\n  \"range_end\": \"YQ==\"\n}",
 		"request_hex": "7b226b6579223a2265673d3d222c2272616e67655f656e64223a2259513d3d227d",
-		"response": "a header and nothing else, at HTTP 200\n\nHTTP 200 OK\n{\n  \"header\": {\n    \"cluster_id\": \"18036146242389223811\",\n    \"member_id\": \"16959019698124064744\",\n    \"raft_term\": \"2\",\n    \"revision\": \"2\"\n  }\n}",
-		"response_hex": "7b22686561646572223a7b22636c75737465725f6964223a223138303336313436323432333839323233383131222c226d656d6265725f6964223a223136393539303139363938313234303634373434222c227265766973696f6e223a2232222c22726166745f7465726d223a2232227d7d",
+		"response": "a header and nothing else, at HTTP 200\n\nHTTP 200 OK\n{\n  \"header\": {\n    \"cluster_id\": \"6942512402702369786\",\n    \"member_id\": \"1514086414458810502\",\n    \"raft_term\": \"2\",\n    \"revision\": \"2\"\n  }\n}",
+		"response_hex": "7b22686561646572223a7b22636c75737465725f6964223a2236393432353132343032373032333639373836222c226d656d6265725f6964223a2231353134303836343134343538383130353032222c227265766973696f6e223a2232222c22726166745f7465726d223a2232227d7d",
 		"note": "An interval that is empty because its end sorts before its start is still a well-formed question, and the answer is simply that no key is in it. Refusing it with an error is the mistake.",
 		"request_fields": [
 			{
@@ -70,7 +70,7 @@
 				"offset": 1,
 				"length": 8,
 				"field": "response.header",
-				"value": "{\"cluster_id\":\"18036146242389223811\",\"member_id\":\"16959019698124064744\",\"raft_term\":\"2\",\"revision\":\"2\"}",
+				"value": "{\"cluster_id\":\"6942512402702369786\",\"member_id\":\"1514086414458810502\",\"raft_term\":\"2\",\"revision\":\"2\"}",
 				"varies": true
 			}
 		]

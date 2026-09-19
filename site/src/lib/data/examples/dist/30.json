@@ -4,8 +4,8 @@
 		"kind": "node",
 		"request": "compact up to revision 3, after two writes have happened\n\nPOST /v3/kv/compaction\n{\n  \"revision\": \"3\"\n}",
 		"request_hex": "7b227265766973696f6e223a2233227d",
-		"response": "a bare header: compaction answers when it happened, not what it removed\n\nHTTP 200 OK\n{\n  \"header\": {\n    \"cluster_id\": \"16494816415180879636\",\n    \"member_id\": \"6165748242607058862\",\n    \"raft_term\": \"2\",\n    \"revision\": \"3\"\n  }\n}",
-		"response_hex": "7b22686561646572223a7b22636c75737465725f6964223a223136343934383136343135313830383739363336222c226d656d6265725f6964223a2236313635373438323432363037303538383632222c227265766973696f6e223a2233222c22726166745f7465726d223a2232227d7d",
+		"response": "a bare header: compaction answers when it happened, not what it removed\n\nHTTP 200 OK\n{\n  \"header\": {\n    \"cluster_id\": \"16032618686655537237\",\n    \"member_id\": \"4484589075580338506\",\n    \"raft_term\": \"2\",\n    \"revision\": \"3\"\n  }\n}",
+		"response_hex": "7b22686561646572223a7b22636c75737465725f6964223a223136303332363138363836363535353337323337222c226d656d6265725f6964223a2234343834353839303735353830333338353036222c227265766973696f6e223a2233222c22726166745f7465726d223a2232227d7d",
 		"note": "Compaction is not a write. The revision in this header is the store's clock as it already was; nothing was appended to make room.",
 		"request_fields": [
 			{
@@ -21,7 +21,7 @@
 				"offset": 1,
 				"length": 8,
 				"field": "response.header",
-				"value": "{\"cluster_id\":\"16494816415180879636\",\"member_id\":\"6165748242607058862\",\"raft_term\":\"2\",\"revision\":\"3\"}",
+				"value": "{\"cluster_id\":\"16032618686655537237\",\"member_id\":\"4484589075580338506\",\"raft_term\":\"2\",\"revision\":\"3\"}",
 				"varies": true
 			}
 		]

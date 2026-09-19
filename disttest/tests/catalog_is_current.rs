@@ -50,7 +50,7 @@ fn catalog_has_the_shape_the_site_expects() {
     assert!(cat["generatedAt"].is_string());
 
     let sections = cat["sections"].as_array().expect("sections array");
-    assert_eq!(sections.len(), 12);
+    assert_eq!(sections.len(), stages::sections().len());
     let mut numbers: Vec<u64> = sections
         .iter()
         .flat_map(|s| {
@@ -64,12 +64,12 @@ fn catalog_has_the_shape_the_site_expects() {
     numbers.sort_unstable();
     assert_eq!(
         numbers,
-        (1..=77).collect::<Vec<u64>>(),
+        (1..=numbers.len() as u64).collect::<Vec<u64>>(),
         "every stage belongs to exactly one section"
     );
 
     let stages = cat["stages"].as_array().expect("stages array");
-    assert_eq!(stages.len(), 77);
+    assert_eq!(stages.len(), stages::all().len());
     for s in stages {
         let number = s["number"].as_u64().unwrap_or_default();
         let where_ = format!("stage {number}");
@@ -145,7 +145,7 @@ fn every_stage_is_ticked_or_not_in_the_plan() {
     }
     assert_eq!(
         ticks.len(),
-        77,
+        stages::all().len(),
         "PLAN.md must carry exactly one tickbox per stage"
     );
 }

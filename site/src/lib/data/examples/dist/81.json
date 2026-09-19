@@ -1,0 +1,24 @@
+[
+	{
+		"title": "The window between accepted and committed",
+		"kind": "primitives",
+		"request": "A write at the head, read from the tail before and after it propagates\n\n./your_program.sh chain\ninit 3\nwrite k 7\nread k\nread-at 0 k\npropagate\nread k",
+		"request_hex": "2e2f796f75725f70726f6772616d2e736820636861696e0a696e697420330a7772697465206b20370a72656164206b0a726561642d61742030206b0a70726f7061676174650a72656164206b",
+		"response": "the tail reads 0, node 0 already has 7 with `committed: false`, and after propagation the tail reads 7\n\n{\"head\":0,\"nodes\":3,\"ok\":true,\"tail\":2}\n{\"accepted\":true,\"at\":0,\"ok\":true}\n{\"from\":2,\"ok\":true,\"served\":true,\"value\":0}\n{\"committed\":false,\"from\":0,\"ok\":true,\"served\":true,\"value\":7}\n{\"moved\":1,\"ok\":true}\n{\"from\":2,\"ok\":true,\"served\":true,\"value\":0}",
+		"response_hex": "7b2268656164223a302c226e6f646573223a332c226f6b223a747275652c227461696c223a327d0a7b226163636570746564223a747275652c226174223a302c226f6b223a747275657d0a7b2266726f6d223a322c226f6b223a747275652c22736572766564223a747275652c2276616c7565223a307d0a7b22636f6d6d6974746564223a66616c73652c2266726f6d223a302c226f6b223a747275652c22736572766564223a747275652c2276616c7565223a377d0a7b226d6f766564223a312c226f6b223a747275657d0a7b2266726f6d223a322c226f6b223a747275652c22736572766564223a747275652c2276616c7565223a307d",
+		"note": "Both answers are correct at the moment they are given. The head has the write and the tail does not, and the rule that reads come from the tail is what turns that into a consistent story rather than a race.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "Losing the middle of the chain",
+		"kind": "primitives",
+		"request": "A committed write, a second in flight, and then the middle node dies\n\n./your_program.sh chain\ninit 3\nwrite k 7\npropagate\nwrite k 9\nfail 1\npropagate\nread k",
+		"request_hex": "2e2f796f75725f70726f6772616d2e736820636861696e0a696e697420330a7772697465206b20370a70726f7061676174650a7772697465206b20390a6661696c20310a70726f7061676174650a72656164206b",
+		"response": "the chain closes to head 0 and tail 2, and the tail ends up with 9\n\n{\"head\":0,\"nodes\":3,\"ok\":true,\"tail\":2}\n{\"accepted\":true,\"at\":0,\"ok\":true}\n{\"moved\":1,\"ok\":true}\n{\"accepted\":true,\"at\":0,\"ok\":true}\n{\"failed\":1,\"head\":0,\"ok\":true,\"tail\":2,\"was_head\":false,\"was_tail\":false}\n{\"moved\":2,\"ok\":true}\n{\"from\":2,\"ok\":true,\"served\":true,\"value\":7}",
+		"response_hex": "7b2268656164223a302c226e6f646573223a332c226f6b223a747275652c227461696c223a327d0a7b226163636570746564223a747275652c226174223a302c226f6b223a747275657d0a7b226d6f766564223a312c226f6b223a747275657d0a7b226163636570746564223a747275652c226174223a302c226f6b223a747275657d0a7b226661696c6564223a312c2268656164223a302c226f6b223a747275652c227461696c223a322c227761735f68656164223a66616c73652c227761735f7461696c223a66616c73657d0a7b226d6f766564223a322c226f6b223a747275657d0a7b2266726f6d223a322c226f6b223a747275652c22736572766564223a747275652c2276616c7565223a377d",
+		"note": "The second write had reached node 1 and no further. Node 1's predecessor still holds it, so closing the chain is enough to finish delivering it — no consensus round, no reconciliation, just the prefix invariant doing the work.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

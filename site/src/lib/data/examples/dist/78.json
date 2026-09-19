@@ -1,0 +1,24 @@
+[
+	{
+		"title": "The gap between the two models",
+		"kind": "primitives",
+		"request": "b reads 0 a full ten ticks after a's write of 1 has been acknowledged\n\n./your_program.sh consistency\ninit\nop a write 1 0 10\nop b read 0 20 30\ncheck linearizable\ncheck sequential",
+		"request_hex": "2e2f796f75725f70726f6772616d2e736820636f6e73697374656e63790a696e69740a6f702061207772697465203120302031300a6f702062207265616420302032302033300a636865636b206c696e656172697a61626c650a636865636b2073657175656e7469616c",
+		"response": "`linearizable` is false and `sequential` is true\n\n{\"ok\":true,\"ops\":0}\n{\"ok\":true,\"ops\":1}\n{\"ok\":true,\"ops\":2}\n{\"holds\":false,\"model\":\"linearizable\",\"ok\":true}\n{\"holds\":true,\"model\":\"sequential\",\"ok\":true}",
+		"response_hex": "7b226f6b223a747275652c226f7073223a307d0a7b226f6b223a747275652c226f7073223a317d0a7b226f6b223a747275652c226f7073223a327d0a7b22686f6c6473223a66616c73652c226d6f64656c223a226c696e656172697a61626c65222c226f6b223a747275657d0a7b22686f6c6473223a747275652c226d6f64656c223a2273657175656e7469616c222c226f6b223a747275657d",
+		"note": "The same four operations, two different answers. Sequential consistency lets b's read be placed before a's write because they are different clients, and nothing in the model cares that the clock says otherwise. This is exactly what a stale read from a follower looks like, and exactly why 'strongly consistent' has to be said more precisely than that.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "A history no ordering can rescue",
+		"kind": "primitives",
+		"request": "The same shape, but it is a reading its own earlier write\n\n./your_program.sh consistency\ninit\nop a write 1 0 10\nop a read 0 20 30\ncheck linearizable\ncheck sequential",
+		"request_hex": "2e2f796f75725f70726f6772616d2e736820636f6e73697374656e63790a696e69740a6f702061207772697465203120302031300a6f702061207265616420302032302033300a636865636b206c696e656172697a61626c650a636865636b2073657175656e7469616c",
+		"response": "both models are false\n\n{\"ok\":true,\"ops\":0}\n{\"ok\":true,\"ops\":1}\n{\"ok\":true,\"ops\":2}\n{\"holds\":false,\"model\":\"linearizable\",\"ok\":true}\n{\"holds\":false,\"model\":\"sequential\",\"ok\":true}",
+		"response_hex": "7b226f6b223a747275652c226f7073223a307d0a7b226f6b223a747275652c226f7073223a317d0a7b226f6b223a747275652c226f7073223a327d0a7b22686f6c6473223a66616c73652c226d6f64656c223a226c696e656172697a61626c65222c226f6b223a747275657d0a7b22686f6c6473223a66616c73652c226d6f64656c223a2273657175656e7469616c222c226f6b223a747275657d",
+		"note": "Program order is the one thing sequential consistency keeps, so a client that fails to see its own completed write cannot be explained by any reordering. That is the difference between a stale replica and a broken one.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

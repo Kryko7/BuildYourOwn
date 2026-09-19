@@ -4,8 +4,8 @@
 		"kind": "node",
 		"request": "the four keys under `n/`, but at most two of them\n\nPOST /v3/kv/range\n{\n  \"key\": \"bi8=\",\n  \"limit\": \"2\",\n  \"range_end\": \"bjA=\"\n}",
 		"request_hex": "7b226b6579223a226269383d222c226c696d6974223a2232222c2272616e67655f656e64223a22626a413d227d",
-		"response": "two pairs, `more` true, and a count that still says four\n\nHTTP 200 OK\n{\n  \"count\": \"4\",\n  \"header\": {\n    \"cluster_id\": \"13873466644295701677\",\n    \"member_id\": \"14639887054427413039\",\n    \"raft_term\": \"2\",\n    \"revision\": \"5\"\n  },\n  \"kvs\": [\n    {\n      \"create_revision\": \"2\",\n      \"key\": \"bi8w\",\n      \"mod_revision\": \"2\",\n      \"value\": \"djA=\",\n      \"version\": \"1\"\n    },\n    {\n      \"create_revision\": \"3\",\n      \"key\": \"bi8x\",\n      \"mod_revision\": \"3\",\n      \"value\": \"djE=\",\n      \"version\": \"1\"\n    }\n  ],\n  \"more\": true\n}",
-		"response_hex": "7b22686561646572223a7b22636c75737465725f6964223a223133383733343636363434323935373031363737222c226d656d6265725f6964223a223134363339383837303534343237343133303339222c227265766973696f6e223a2235222c22726166745f7465726d223a2232227d2c226b7673223a5b7b226b6579223a2262693877222c226372656174655f7265766973696f6e223a2232222c226d6f645f7265766973696f6e223a2232222c2276657273696f6e223a2231222c2276616c7565223a22646a413d227d2c7b226b6579223a2262693878222c226372656174655f7265766973696f6e223a2233222c226d6f645f7265766973696f6e223a2233222c2276657273696f6e223a2231222c2276616c7565223a22646a453d227d5d2c226d6f7265223a747275652c22636f756e74223a2234227d",
+		"response": "two pairs, `more` true, and a count that still says four\n\nHTTP 200 OK\n{\n  \"count\": \"4\",\n  \"header\": {\n    \"cluster_id\": \"648567354027757794\",\n    \"member_id\": \"15764731273668293342\",\n    \"raft_term\": \"2\",\n    \"revision\": \"5\"\n  },\n  \"kvs\": [\n    {\n      \"create_revision\": \"2\",\n      \"key\": \"bi8w\",\n      \"mod_revision\": \"2\",\n      \"value\": \"djA=\",\n      \"version\": \"1\"\n    },\n    {\n      \"create_revision\": \"3\",\n      \"key\": \"bi8x\",\n      \"mod_revision\": \"3\",\n      \"value\": \"djE=\",\n      \"version\": \"1\"\n    }\n  ],\n  \"more\": true\n}",
+		"response_hex": "7b22686561646572223a7b22636c75737465725f6964223a22363438353637333534303237373537373934222c226d656d6265725f6964223a223135373634373331323733363638323933333432222c227265766973696f6e223a2235222c22726166745f7465726d223a2232227d2c226b7673223a5b7b226b6579223a2262693877222c226372656174655f7265766973696f6e223a2232222c226d6f645f7265766973696f6e223a2232222c2276657273696f6e223a2231222c2276616c7565223a22646a413d227d2c7b226b6579223a2262693878222c226372656174655f7265766973696f6e223a2233222c226d6f645f7265766973696f6e223a2233222c2276657273696f6e223a2231222c2276616c7565223a22646a453d227d5d2c226d6f7265223a747275652c22636f756e74223a2234227d",
 		"note": "count answers the question that was asked — how many keys are in this range — and limit only says how many of them to send. A server that reports the truncated length as the count makes paging impossible.",
 		"request_fields": [
 			{
@@ -32,23 +32,23 @@
 				"offset": 1,
 				"length": 8,
 				"field": "response.header",
-				"value": "{\"cluster_id\":\"13873466644295701677\",\"member_id\":\"14639887054427413039\",\"raft_term\":\"2\",\"revision\":\"5\"}",
+				"value": "{\"cluster_id\":\"648567354027757794\",\"member_id\":\"15764731273668293342\",\"raft_term\":\"2\",\"revision\":\"5\"}",
 				"varies": true
 			},
 			{
-				"offset": 114,
+				"offset": 112,
 				"length": 5,
 				"field": "response.kvs",
 				"value": "[{\"create_revision\":\"2\",\"key\":\"bi8w\",\"mod_revision\":\"2\",\"value\":\"djA=\",\"version\":\"1\"},{\"create_revision\":\"3\",\"key\":\"bi8x…"
 			},
 			{
-				"offset": 292,
+				"offset": 290,
 				"length": 6,
 				"field": "response.more",
 				"value": "true"
 			},
 			{
-				"offset": 304,
+				"offset": 302,
 				"length": 7,
 				"field": "response.count",
 				"value": "\"4\""
@@ -60,8 +60,8 @@
 		"kind": "node",
 		"request": "at most two keys under `n/`, largest first\n\nPOST /v3/kv/range\n{\n  \"key\": \"bi8=\",\n  \"limit\": \"2\",\n  \"range_end\": \"bjA=\",\n  \"sort_order\": \"DESCEND\",\n  \"sort_target\": \"KEY\"\n}",
 		"request_hex": "7b226b6579223a226269383d222c226c696d6974223a2232222c2272616e67655f656e64223a22626a413d222c22736f72745f6f72646572223a2244455343454e44222c22736f72745f746172676574223a224b4559227d",
-		"response": "`n/3` and `n/2`, in that order, with `more` still true\n\nHTTP 200 OK\n{\n  \"count\": \"4\",\n  \"header\": {\n    \"cluster_id\": \"1166421324635383318\",\n    \"member_id\": \"12215245142304441825\",\n    \"raft_term\": \"2\",\n    \"revision\": \"5\"\n  },\n  \"kvs\": [\n    {\n      \"create_revision\": \"5\",\n      \"key\": \"bi8z\",\n      \"mod_revision\": \"5\",\n      \"value\": \"djM=\",\n      \"version\": \"1\"\n    },\n    {\n      \"create_revision\": \"4\",\n      \"key\": \"bi8y\",\n      \"mod_revision\": \"4\",\n      \"value\": \"djI=\",\n      \"version\": \"1\"\n    }\n  ],\n  \"more\": true\n}",
-		"response_hex": "7b22686561646572223a7b22636c75737465725f6964223a2231313636343231333234363335333833333138222c226d656d6265725f6964223a223132323135323435313432333034343431383235222c227265766973696f6e223a2235222c22726166745f7465726d223a2232227d2c226b7673223a5b7b226b6579223a226269387a222c226372656174655f7265766973696f6e223a2235222c226d6f645f7265766973696f6e223a2235222c2276657273696f6e223a2231222c2276616c7565223a22646a4d3d227d2c7b226b6579223a2262693879222c226372656174655f7265766973696f6e223a2234222c226d6f645f7265766973696f6e223a2234222c2276657273696f6e223a2231222c2276616c7565223a22646a493d227d5d2c226d6f7265223a747275652c22636f756e74223a2234227d",
+		"response": "`n/3` and `n/2`, in that order, with `more` still true\n\nHTTP 200 OK\n{\n  \"count\": \"4\",\n  \"header\": {\n    \"cluster_id\": \"12807646743992750553\",\n    \"member_id\": \"18135821795798246604\",\n    \"raft_term\": \"2\",\n    \"revision\": \"5\"\n  },\n  \"kvs\": [\n    {\n      \"create_revision\": \"5\",\n      \"key\": \"bi8z\",\n      \"mod_revision\": \"5\",\n      \"value\": \"djM=\",\n      \"version\": \"1\"\n    },\n    {\n      \"create_revision\": \"4\",\n      \"key\": \"bi8y\",\n      \"mod_revision\": \"4\",\n      \"value\": \"djI=\",\n      \"version\": \"1\"\n    }\n  ],\n  \"more\": true\n}",
+		"response_hex": "7b22686561646572223a7b22636c75737465725f6964223a223132383037363436373433393932373530353533222c226d656d6265725f6964223a223138313335383231373935373938323436363034222c227265766973696f6e223a2235222c22726166745f7465726d223a2232227d2c226b7673223a5b7b226b6579223a226269387a222c226372656174655f7265766973696f6e223a2235222c226d6f645f7265766973696f6e223a2235222c2276657273696f6e223a2231222c2276616c7565223a22646a4d3d227d2c7b226b6579223a2262693879222c226372656174655f7265766973696f6e223a2234222c226d6f645f7265766973696f6e223a2234222c2276657273696f6e223a2231222c2276616c7565223a22646a493d227d5d2c226d6f7265223a747275652c22636f756e74223a2234227d",
 		"note": "The sort happens first and the limit second. Truncating to the first two keys and then reversing them would answer `n/1` and `n/0`, which is a different pair of keys, not a different order.",
 		"request_fields": [
 			{
@@ -100,23 +100,23 @@
 				"offset": 1,
 				"length": 8,
 				"field": "response.header",
-				"value": "{\"cluster_id\":\"1166421324635383318\",\"member_id\":\"12215245142304441825\",\"raft_term\":\"2\",\"revision\":\"5\"}",
+				"value": "{\"cluster_id\":\"12807646743992750553\",\"member_id\":\"18135821795798246604\",\"raft_term\":\"2\",\"revision\":\"5\"}",
 				"varies": true
 			},
 			{
-				"offset": 113,
+				"offset": 114,
 				"length": 5,
 				"field": "response.kvs",
 				"value": "[{\"create_revision\":\"5\",\"key\":\"bi8z\",\"mod_revision\":\"5\",\"value\":\"djM=\",\"version\":\"1\"},{\"create_revision\":\"4\",\"key\":\"bi8y…"
 			},
 			{
-				"offset": 291,
+				"offset": 292,
 				"length": 6,
 				"field": "response.more",
 				"value": "true"
 			},
 			{
-				"offset": 303,
+				"offset": 304,
 				"length": 7,
 				"field": "response.count",
 				"value": "\"4\""

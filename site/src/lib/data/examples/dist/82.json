@@ -1,0 +1,24 @@
+[
+	{
+		"title": "What pre-vote is for",
+		"kind": "primitives",
+		"request": "An isolated node campaigns, first with pre-vote and then without\n\n./your_program.sh raft-reads\ninit 3\npartition 2\ncampaign 2\nstate\nprevote off\ncampaign 2\nstate",
+		"request_hex": "2e2f796f75725f70726f6772616d2e736820726166742d72656164730a696e697420330a706172746974696f6e20320a63616d706169676e20320a73746174650a707265766f7465206f66660a63616d706169676e20320a7374617465",
+		"response": "with pre-vote the term stays 1; without it the term jumps to 2\n\n{\"leader\":0,\"nodes\":3,\"ok\":true,\"term\":1}\n{\"node\":2,\"ok\":true,\"partitioned\":true}\n{\"became_leader\":false,\"ok\":true,\"reason\":\"pre-vote failed\",\"term\":1,\"term_raised\":false}\n{\"applied\":0,\"commit_index\":0,\"leader\":0,\"ok\":true,\"prevote\":true,\"quorum\":2,\"reachable\":2,\"term\":1}\n{\"ok\":true,\"prevote\":false}\n{\"became_leader\":false,\"ok\":true,\"reason\":\"no majority\",\"term\":2,\"term_raised\":true}\n{\"applied\":0,\"commit_index\":0,\"leader\":0,\"ok\":true,\"prevote\":false,\"quorum\":2,\"reachable\":2,\"term\":2}",
+		"response_hex": "7b226c6561646572223a302c226e6f646573223a332c226f6b223a747275652c227465726d223a317d0a7b226e6f6465223a322c226f6b223a747275652c22706172746974696f6e6564223a747275657d0a7b22626563616d655f6c6561646572223a66616c73652c226f6b223a747275652c22726561736f6e223a227072652d766f7465206661696c6564222c227465726d223a312c227465726d5f726169736564223a66616c73657d0a7b226170706c696564223a302c22636f6d6d69745f696e646578223a302c226c6561646572223a302c226f6b223a747275652c22707265766f7465223a747275652c2271756f72756d223a322c22726561636861626c65223a322c227465726d223a317d0a7b226f6b223a747275652c22707265766f7465223a66616c73657d0a7b22626563616d655f6c6561646572223a66616c73652c226f6b223a747275652c22726561736f6e223a226e6f206d616a6f72697479222c227465726d223a322c227465726d5f726169736564223a747275657d0a7b226170706c696564223a302c22636f6d6d69745f696e646578223a302c226c6561646572223a302c226f6b223a747275652c22707265766f7465223a66616c73652c2271756f72756d223a322c22726561636861626c65223a322c227465726d223a327d",
+		"note": "Node 2 loses either way — it cannot reach a majority. The difference is what it costs everyone else: without pre-vote it comes back from the partition with a higher term and forces a working leader to step down, which is a re-election caused entirely by a node that was never eligible.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "A linearizable read without writing anything",
+		"kind": "primitives",
+		"request": "An entry is committed, then read before and after the state machine applies it\n\n./your_program.sh raft-reads\ninit 3\nappend\nread-index\napply\nread-index",
+		"request_hex": "2e2f796f75725f70726f6772616d2e736820726166742d72656164730a696e697420330a617070656e640a726561642d696e6465780a6170706c790a726561642d696e646578",
+		"response": "the first read is refused because the state machine is behind; the second is served at index 1\n\n{\"leader\":0,\"nodes\":3,\"ok\":true,\"term\":1}\n{\"committed\":true,\"index\":1,\"ok\":true}\n{\"applied\":0,\"ok\":true,\"read_index\":1,\"reason\":\"state machine is behind\",\"served\":false}\n{\"applied\":1,\"ok\":true}\n{\"applied\":1,\"ok\":true,\"read_index\":1,\"served\":true}",
+		"response_hex": "7b226c6561646572223a302c226e6f646573223a332c226f6b223a747275652c227465726d223a317d0a7b22636f6d6d6974746564223a747275652c22696e646578223a312c226f6b223a747275657d0a7b226170706c696564223a302c226f6b223a747275652c22726561645f696e646578223a312c22726561736f6e223a227374617465206d616368696e6520697320626568696e64222c22736572766564223a66616c73657d0a7b226170706c696564223a312c226f6b223a747275657d0a7b226170706c696564223a312c226f6b223a747275652c22726561645f696e646578223a312c22736572766564223a747275657d",
+		"note": "Nothing was written to the log to serve this read. The cost is one heartbeat round and the patience to wait for apply — which is why ReadIndex is how a production Raft serves reads, rather than appending a no-op entry per read.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

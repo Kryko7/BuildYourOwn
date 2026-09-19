@@ -446,3 +446,42 @@ The classics as exercises in their own right, over the same line-oriented CLI: R
 | `node` | 15 | 128 |
 | `cluster` | 20 | 164 |
 | **all** | **77** | **720** |
+
+## M. Algorithms: what consistency means
+
+Stages 56-77 build the algorithms. These two are about the words used to argue about them:
+which histories a system is allowed to produce, and the cheap guarantees that remove most of
+the surprise without paying for consensus.
+
+- [ ] **Stage 78** — Consistency models: linearizable against sequential (`src/stages/s78_consistency_models.rs`, 10 tests)
+  - Topic `consistency`: `op <client> <read|write> <value> <start> <end>` records one operation, `check <model>` answers whether the history satisfies it
+  - Both models ask the same question — is there a total order of the operations that reads like one register — and differ only in which orderings are allowed
+  - Linearizable respects real time: if a ended before b started, a must come first. Sequential respects only each client's own order
+  - A read returns the value of the most recent write before it in the chosen order, and 0 when there has been no write
+- [ ] **Stage 79** — Session guarantees: read-your-writes and monotonic reads (`src/stages/s79_session_guarantees.rs`, 10 tests)
+  - Topic `session`: `init <replicas>`, `write <client> <replica> <key> <value>`, `replicate <replica>`, `read <client> <replica> <key>`
+  - Each session remembers the highest version it has written and the highest it has read; a read from a replica below that floor must not be served
+  - `served: false` is the right answer for a read that would go backwards — a real client retries elsewhere or waits, and neither is the store's decision
+  - `guarantees off` turns the session tracking off, which is how the stage shows what the guarantees were buying
+
+## N. Algorithms: replication strategies
+
+Three ways to keep replicas in step, none of them the leader-and-log arrangement the cluster
+ladder builds: a register that needs no consensus at all, a chain that needs no quorum, and
+the parts of production Raft the paper leaves to its last section.
+
+- [ ] **Stage 80** — ABD: a linearizable register without consensus (`src/stages/s80_abd_register.rs`, 10 tests)
+  - Topic `abd`: `write <writer> <value>` and `read` are both two-phase; `poke` puts a tagged value on one replica, which is how a half-finished write is arranged
+  - Values are tagged (timestamp, writer) and ordered by that pair, so two writers at the same timestamp still have a deterministic winner
+  - A write reads a quorum for the highest timestamp, then writes timestamp + 1 to a quorum; a replica never accepts a tag lower than the one it already holds
+  - A read must write back what it found before returning it — that second phase is what makes a later read unable to see anything older
+- [ ] **Stage 81** — Chain replication: writes at the head, reads at the tail (`src/stages/s81_chain_replication.rs`, 10 tests)
+  - Topic `chain`: `write <key> <value>` is accepted at the head only, `read <key>` is answered by the tail only, `propagate` moves one hop, `fail <node>` closes the gap
+  - The invariant is a prefix relationship: every node holds a prefix of what the node before it holds, so the tail's state is the committed state by definition
+  - `read-at <node> <key>` shows a node mid-chain, which may hold writes the tail has never heard of — those are not committed and a client must not be shown them
+  - When a middle node fails its successor is missing whatever that node had not yet forwarded, and its predecessor is the one that still has it
+- [ ] **Stage 82** — Raft in production: pre-vote, ReadIndex and transfer (`src/stages/s82_raft_reads_and_prevote.rs`, 10 tests)
+  - Topic `raft-reads`: `partition`/`heal` isolate a node, `campaign <node>` makes it try for leadership, `read-index` serves a linearizable read, `transfer <to>` hands leadership over
+  - Pre-vote asks for votes without raising the term, and only increments when the answer would be yes — a node that cannot win leaves the cluster's term alone
+  - ReadIndex has two conditions and needs both: a heartbeat quorum proving the leader is still the leader, and the state machine having applied everything committed
+  - Leadership transfer does not hold an election: the term moves once, to a named successor, with no timeout in between

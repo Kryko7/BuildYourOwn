@@ -476,14 +476,27 @@ mod tests {
 
     #[test]
     fn free_ports_are_distinct_and_usable() {
-        let ports = free_ports(4).expect("ports");
-        let mut sorted = ports.clone();
-        sorted.sort_unstable();
-        sorted.dedup();
-        assert_eq!(sorted.len(), 4, "four distinct ports");
-        for p in ports {
-            let l = TcpListener::bind(("127.0.0.1", p)).expect("bind the port we were given");
-            drop(l);
+        // free_ports() binds to learn each number and lets go again, so anything on the
+        // machine may take one before this test re-binds it. The properties under test are
+        // distinctness and bindability, not that the kernel reserves them for us, so a lost
+        // race is retried rather than failed.
+        for attempt in 0..8 {
+            let ports = free_ports(4).expect("ports");
+            let mut sorted = ports.clone();
+            sorted.sort_unstable();
+            sorted.dedup();
+            assert_eq!(sorted.len(), 4, "four distinct ports");
+            let bound: Vec<_> = ports
+                .iter()
+                .map(|p| TcpListener::bind(("127.0.0.1", *p)))
+                .collect();
+            if bound.iter().all(Result::is_ok) {
+                return;
+            }
+            assert!(
+                attempt < 7,
+                "free_ports never handed back four bindable ports"
+            );
         }
     }
 

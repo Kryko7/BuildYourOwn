@@ -4,8 +4,8 @@
 		"kind": "node",
 		"request": "version 0 — the key must not exist — and a put if that holds\n\nPOST /v3/kv/txn\n{\n  \"compare\": [\n    {\n      \"key\": \"Y2Fz\",\n      \"result\": \"EQUAL\",\n      \"target\": \"VERSION\",\n      \"version\": \"0\"\n    }\n  ],\n  \"failure\": [\n    {\n      \"requestRange\": {\n        \"key\": \"Y2Fz\"\n      }\n    }\n  ],\n  \"success\": [\n    {\n      \"requestPut\": {\n        \"key\": \"Y2Fz\",\n        \"value\": \"bWluZQ==\"\n      }\n    }\n  ]\n}",
 		"request_hex": "7b22636f6d70617265223a5b7b226b6579223a225932467a222c22726573756c74223a22455155414c222c22746172676574223a2256455253494f4e222c2276657273696f6e223a2230227d5d2c226661696c757265223a5b7b227265717565737452616e6765223a7b226b6579223a225932467a227d7d5d2c2273756363657373223a5b7b2272657175657374507574223a7b226b6579223a225932467a222c2276616c7565223a2262576c755a513d3d227d7d5d7d",
-		"response": "succeeded true, and the put's own response inside `responses`\n\nHTTP 200 OK\n{\n  \"header\": {\n    \"cluster_id\": \"10472884563366782460\",\n    \"member_id\": \"18246662229754071735\",\n    \"raft_term\": \"2\",\n    \"revision\": \"2\"\n  },\n  \"responses\": [\n    {\n      \"response_put\": {\n        \"header\": {\n          \"revision\": \"2\"\n        }\n      }\n    }\n  ],\n  \"succeeded\": true\n}",
-		"response_hex": "7b22686561646572223a7b22636c75737465725f6964223a223130343732383834353633333636373832343630222c226d656d6265725f6964223a223138323436363632323239373534303731373335222c227265766973696f6e223a2232222c22726166745f7465726d223a2232227d2c22737563636565646564223a747275652c22726573706f6e736573223a5b7b22726573706f6e73655f707574223a7b22686561646572223a7b227265766973696f6e223a2232227d7d7d5d7d",
+		"response": "succeeded true, and the put's own response inside `responses`\n\nHTTP 200 OK\n{\n  \"header\": {\n    \"cluster_id\": \"16711721366065246867\",\n    \"member_id\": \"4696084650463219824\",\n    \"raft_term\": \"2\",\n    \"revision\": \"2\"\n  },\n  \"responses\": [\n    {\n      \"response_put\": {\n        \"header\": {\n          \"revision\": \"2\"\n        }\n      }\n    }\n  ],\n  \"succeeded\": true\n}",
+		"response_hex": "7b22686561646572223a7b22636c75737465725f6964223a223136373131373231333636303635323436383637222c226d656d6265725f6964223a2234363936303834363530343633323139383234222c227265766973696f6e223a2232222c22726166745f7465726d223a2232227d2c22737563636565646564223a747275652c22726573706f6e736573223a5b7b22726573706f6e73655f707574223a7b22686561646572223a7b227265766973696f6e223a2232227d7d7d5d7d",
 		"note": "There is no `version` field to compare against on a key that was never written, so the comparison is made against zeros. That is what makes `VERSION EQUAL 0` mean \"absent\", and what makes this one request a lock.",
 		"request_fields": [
 			{
@@ -32,17 +32,17 @@
 				"offset": 1,
 				"length": 8,
 				"field": "response.header",
-				"value": "{\"cluster_id\":\"10472884563366782460\",\"member_id\":\"18246662229754071735\",\"raft_term\":\"2\",\"revision\":\"2\"}",
+				"value": "{\"cluster_id\":\"16711721366065246867\",\"member_id\":\"4696084650463219824\",\"raft_term\":\"2\",\"revision\":\"2\"}",
 				"varies": true
 			},
 			{
-				"offset": 114,
+				"offset": 113,
 				"length": 11,
 				"field": "response.succeeded",
 				"value": "true"
 			},
 			{
-				"offset": 131,
+				"offset": 130,
 				"length": 11,
 				"field": "response.responses",
 				"value": "[{\"response_put\":{\"header\":{\"revision\":\"2\"}}}]"
@@ -54,8 +54,8 @@
 		"kind": "node",
 		"request": "the identical transaction, sent after the key has been created\n\nPOST /v3/kv/txn\n{\n  \"compare\": [\n    {\n      \"key\": \"Y2Fz\",\n      \"result\": \"EQUAL\",\n      \"target\": \"VERSION\",\n      \"version\": \"0\"\n    }\n  ],\n  \"failure\": [\n    {\n      \"requestRange\": {\n        \"key\": \"Y2Fz\"\n      }\n    }\n  ],\n  \"success\": [\n    {\n      \"requestPut\": {\n        \"key\": \"Y2Fz\",\n        \"value\": \"eW91cnM=\"\n      }\n    }\n  ]\n}",
 		"request_hex": "7b22636f6d70617265223a5b7b226b6579223a225932467a222c22726573756c74223a22455155414c222c22746172676574223a2256455253494f4e222c2276657273696f6e223a2230227d5d2c226661696c757265223a5b7b227265717565737452616e6765223a7b226b6579223a225932467a227d7d5d2c2273756363657373223a5b7b2272657175657374507574223a7b226b6579223a225932467a222c2276616c7565223a2265573931636e4d3d227d7d5d7d",
-		"response": "no `succeeded` at all — false is the zero value — and the failure branch's range\n\nHTTP 200 OK\n{\n  \"header\": {\n    \"cluster_id\": \"1869270115728566270\",\n    \"member_id\": \"10128157361086319978\",\n    \"raft_term\": \"2\",\n    \"revision\": \"2\"\n  },\n  \"responses\": [\n    {\n      \"response_range\": {\n        \"count\": \"1\",\n        \"header\": {\n          \"revision\": \"2\"\n        },\n        \"kvs\": [\n          {\n            \"create_revision\": \"2\",\n            \"key\": \"Y2Fz\",\n            \"mod_revision\": \"2\",\n            \"value\": \"bWluZQ==\",\n            \"version\": \"1\"\n          }\n        ]\n      }\n    }\n  ]\n}",
-		"response_hex": "7b22686561646572223a7b22636c75737465725f6964223a2231383639323730313135373238353636323730222c226d656d6265725f6964223a223130313238313537333631303836333139393738222c227265766973696f6e223a2232222c22726166745f7465726d223a2232227d2c22726573706f6e736573223a5b7b22726573706f6e73655f72616e6765223a7b22686561646572223a7b227265766973696f6e223a2232227d2c226b7673223a5b7b226b6579223a225932467a222c226372656174655f7265766973696f6e223a2232222c226d6f645f7265766973696f6e223a2232222c2276657273696f6e223a2231222c2276616c7565223a2262576c755a513d3d227d5d2c22636f756e74223a2231227d7d5d7d",
+		"response": "no `succeeded` at all — false is the zero value — and the failure branch's range\n\nHTTP 200 OK\n{\n  \"header\": {\n    \"cluster_id\": \"16339232451794432945\",\n    \"member_id\": \"11993301497359158102\",\n    \"raft_term\": \"2\",\n    \"revision\": \"2\"\n  },\n  \"responses\": [\n    {\n      \"response_range\": {\n        \"count\": \"1\",\n        \"header\": {\n          \"revision\": \"2\"\n        },\n        \"kvs\": [\n          {\n            \"create_revision\": \"2\",\n            \"key\": \"Y2Fz\",\n            \"mod_revision\": \"2\",\n            \"value\": \"bWluZQ==\",\n            \"version\": \"1\"\n          }\n        ]\n      }\n    }\n  ]\n}",
+		"response_hex": "7b22686561646572223a7b22636c75737465725f6964223a223136333339323332343531373934343332393435222c226d656d6265725f6964223a223131393933333031343937333539313538313032222c227265766973696f6e223a2232222c22726166745f7465726d223a2232227d2c22726573706f6e736573223a5b7b22726573706f6e73655f72616e6765223a7b22686561646572223a7b227265766973696f6e223a2232227d2c226b7673223a5b7b226b6579223a225932467a222c226372656174655f7265766973696f6e223a2232222c226d6f645f7265766973696f6e223a2232222c2276657273696f6e223a2231222c2276616c7565223a2262576c755a513d3d227d5d2c22636f756e74223a2231227d7d5d7d",
 		"note": "The loser learns who won without a second round trip, because the failure branch read the key. Nothing was written: the header's revision is the same one the put before it reported.",
 		"request_fields": [
 			{
@@ -82,11 +82,11 @@
 				"offset": 1,
 				"length": 8,
 				"field": "response.header",
-				"value": "{\"cluster_id\":\"1869270115728566270\",\"member_id\":\"10128157361086319978\",\"raft_term\":\"2\",\"revision\":\"2\"}",
+				"value": "{\"cluster_id\":\"16339232451794432945\",\"member_id\":\"11993301497359158102\",\"raft_term\":\"2\",\"revision\":\"2\"}",
 				"varies": true
 			},
 			{
-				"offset": 113,
+				"offset": 114,
 				"length": 11,
 				"field": "response.responses",
 				"value": "[{\"response_range\":{\"count\":\"1\",\"header\":{\"revision\":\"2\"},\"kvs\":[{\"create_revision\":\"2\",\"key\":\"Y2Fz\",\"mod_revision\":\"2\",…"

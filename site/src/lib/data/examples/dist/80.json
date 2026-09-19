@@ -1,0 +1,24 @@
+[
+	{
+		"title": "The half-finished write, repaired by a read",
+		"kind": "primitives",
+		"request": "Replica 0 alone holds (ts 5, 42) — a writer died mid-write — then someone reads\n\n./your_program.sh abd\ninit 3\npoke 0 5 1 42\nread\nstate",
+		"request_hex": "2e2f796f75725f70726f6772616d2e7368206162640a696e697420330a706f6b652030203520312034320a726561640a7374617465",
+		"response": "the read returns 42 and `wrote_back` is true; two replicas now hold ts 5\n\n{\"ok\":true,\"quorum\":2,\"replicas\":3}\n{\"ok\":true,\"replica\":0,\"ts\":5,\"value\":42}\n{\"ok\":true,\"served\":true,\"ts\":5,\"value\":42,\"writer\":1,\"wrote_back\":true}\n{\"messages\":4,\"ok\":true,\"quorum\":2,\"replicas\":[{\"ts\":5,\"up\":true,\"value\":42,\"writer\":1},{\"ts\":5,\"up\":true,\"value\":42,\"writer\":1},{\"ts\":0,\"up\":true,\"value\":0,\"writer\":0}],\"writeback\":true}",
+		"response_hex": "7b226f6b223a747275652c2271756f72756d223a322c227265706c69636173223a337d0a7b226f6b223a747275652c227265706c696361223a302c227473223a352c2276616c7565223a34327d0a7b226f6b223a747275652c22736572766564223a747275652c227473223a352c2276616c7565223a34322c22777269746572223a312c2277726f74655f6261636b223a747275657d0a7b226d65737361676573223a342c226f6b223a747275652c2271756f72756d223a322c227265706c69636173223a5b7b227473223a352c227570223a747275652c2276616c7565223a34322c22777269746572223a317d2c7b227473223a352c227570223a747275652c2276616c7565223a34322c22777269746572223a317d2c7b227473223a302c227570223a747275652c2276616c7565223a302c22777269746572223a307d5d2c2277726974656261636b223a747275657d",
+		"note": "The read did not just observe the register, it repaired it. Before the read, 42 existed on one replica out of three and could still have been lost; afterwards it is on a majority and cannot be. This is why the second phase is not an optimisation.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "The same story with the second phase removed",
+		"kind": "primitives",
+		"request": "Write-back disabled, then the replica holding the value goes away\n\n./your_program.sh abd\ninit 3\nwriteback off\npoke 0 5 1 42\nread\ndown 0\nread",
+		"request_hex": "2e2f796f75725f70726f6772616d2e7368206162640a696e697420330a77726974656261636b206f66660a706f6b652030203520312034320a726561640a646f776e20300a72656164",
+		"response": "the first read returns 42 and the second returns 0\n\n{\"ok\":true,\"quorum\":2,\"replicas\":3}\n{\"ok\":true,\"writeback\":false}\n{\"ok\":true,\"replica\":0,\"ts\":5,\"value\":42}\n{\"ok\":true,\"served\":true,\"ts\":5,\"value\":42,\"writer\":1,\"wrote_back\":false}\n{\"ok\":true,\"replica\":0,\"up\":false}\n{\"ok\":true,\"served\":true,\"ts\":0,\"value\":0,\"writer\":0,\"wrote_back\":false}",
+		"response_hex": "7b226f6b223a747275652c2271756f72756d223a322c227265706c69636173223a337d0a7b226f6b223a747275652c2277726974656261636b223a66616c73657d0a7b226f6b223a747275652c227265706c696361223a302c227473223a352c2276616c7565223a34327d0a7b226f6b223a747275652c22736572766564223a747275652c227473223a352c2276616c7565223a34322c22777269746572223a312c2277726f74655f6261636b223a66616c73657d0a7b226f6b223a747275652c227265706c696361223a302c227570223a66616c73657d0a7b226f6b223a747275652c22736572766564223a747275652c227473223a302c2276616c7565223a302c22777269746572223a302c2277726f74655f6261636b223a66616c73657d",
+		"note": "Two reads, no write between them, and the value went backwards. Nothing failed that a majority-based system is not allowed to survive — one replica of three. The history is simply not linearizable, and the missing write-back is the whole reason.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

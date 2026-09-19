@@ -101,6 +101,11 @@ mod s74_gossip_dissemination;
 mod s75_circuit_breaker;
 mod s76_hedged_requests;
 mod s77_bulkheads;
+mod s78_consistency_models;
+mod s79_session_guarantees;
+mod s80_abd_register;
+mod s81_chain_replication;
+mod s82_raft_reads_and_prevote;
 
 /// Every implemented stage, in ascending order.
 pub fn all() -> Vec<Stage> {
@@ -182,6 +187,11 @@ pub fn all() -> Vec<Stage> {
         s75_circuit_breaker::stage(),
         s76_hedged_requests::stage(),
         s77_bulkheads::stage(),
+        s78_consistency_models::stage(),
+        s79_session_guarantees::stage(),
+        s80_abd_register::stage(),
+        s81_chain_replication::stage(),
+        s82_raft_reads_and_prevote::stage(),
     ];
     v.sort_by_key(|s| s.number);
     v
@@ -306,6 +316,16 @@ pub fn sections() -> &'static [Section] {
             id: "l",
             title: "Algorithms: coordination and resilience",
             stages: &[71, 72, 73, 74, 75, 76, 77],
+        },
+        Section {
+            id: "m",
+            title: "Algorithms: what consistency means",
+            stages: &[78, 79],
+        },
+        Section {
+            id: "n",
+            title: "Algorithms: replication strategies",
+            stages: &[80, 81, 82],
         },
     ]
 }
@@ -714,7 +734,13 @@ mod tests {
     #[test]
     fn the_suite_is_as_large_as_the_plan_says() {
         let stages = all();
-        assert_eq!(stages.len(), 77, "the plan is 77 stages");
+        // Counted from the sections, so growing the plan does not mean editing a literal.
+        let planned: usize = sections().iter().map(|s| s.stages.len()).sum();
+        assert_eq!(
+            stages.len(),
+            planned,
+            "every planned stage is implemented, and no more"
+        );
         let tests: usize = stages.iter().map(|s| s.tests.len()).sum();
         assert!(
             tests >= 700,
@@ -839,7 +865,11 @@ mod tests {
     fn sections_cover_the_whole_plan_once() {
         let mut numbers: Vec<u32> = sections().iter().flat_map(|s| s.stages.to_vec()).collect();
         numbers.sort_unstable();
-        assert_eq!(numbers, (1..=77).collect::<Vec<u32>>());
+        assert_eq!(
+            numbers,
+            (1..=numbers.len() as u32).collect::<Vec<u32>>(),
+            "the sections must cover 1..=n once each, with no gap and no repeat"
+        );
     }
 
     #[test]

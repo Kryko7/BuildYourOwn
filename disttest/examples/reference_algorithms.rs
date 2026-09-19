@@ -15,12 +15,16 @@ use std::io::{BufRead, Write};
 
 #[path = "alg/commit.rs"]
 mod commit;
+#[path = "alg/consistency.rs"]
+mod consistency;
 #[path = "alg/patterns.rs"]
 mod patterns;
 #[path = "alg/paxos.rs"]
 mod paxos;
 #[path = "alg/raft.rs"]
 mod raft;
+#[path = "alg/replication.rs"]
+mod replication;
 #[path = "alg/resilience.rs"]
 mod resilience;
 
@@ -111,6 +115,8 @@ fn make(topic: &str) -> Option<Box<dyn Topic>> {
     raft::make(topic)
         .or_else(|| paxos::make(topic))
         .or_else(|| commit::make(topic))
+        .or_else(|| consistency::make(topic))
+        .or_else(|| replication::make(topic))
         .or_else(|| patterns::make(topic))
         .or_else(|| resilience::make(topic))
 }

@@ -4,8 +4,8 @@
 		"kind": "node",
 		"request": "a write of `pk`, and the pair it is replacing\n\nPOST /v3/kv/put\n{\n  \"key\": \"cGs=\",\n  \"prev_kv\": true,\n  \"value\": \"YWZ0ZXI=\"\n}",
 		"request_hex": "7b226b6579223a226347733d222c22707265765f6b76223a747275652c2276616c7565223a2259575a305a58493d227d",
-		"response": "the usual header, plus the pair as it stood before this write\n\nHTTP 200 OK\n{\n  \"header\": {\n    \"cluster_id\": \"8887791480776013267\",\n    \"member_id\": \"7869015617916379691\",\n    \"raft_term\": \"2\",\n    \"revision\": \"3\"\n  },\n  \"prev_kv\": {\n    \"create_revision\": \"2\",\n    \"key\": \"cGs=\",\n    \"mod_revision\": \"2\",\n    \"value\": \"YmVmb3Jl\",\n    \"version\": \"1\"\n  }\n}",
-		"response_hex": "7b22686561646572223a7b22636c75737465725f6964223a2238383837373931343830373736303133323637222c226d656d6265725f6964223a2237383639303135363137393136333739363931222c227265766973696f6e223a2233222c22726166745f7465726d223a2232227d2c22707265765f6b76223a7b226b6579223a226347733d222c226372656174655f7265766973696f6e223a2232222c226d6f645f7265766973696f6e223a2232222c2276657273696f6e223a2231222c2276616c7565223a22596d566d62334a6c227d7d",
+		"response": "the usual header, plus the pair as it stood before this write\n\nHTTP 200 OK\n{\n  \"header\": {\n    \"cluster_id\": \"1287809856736990105\",\n    \"member_id\": \"15531170867806560189\",\n    \"raft_term\": \"2\",\n    \"revision\": \"3\"\n  },\n  \"prev_kv\": {\n    \"create_revision\": \"2\",\n    \"key\": \"cGs=\",\n    \"mod_revision\": \"2\",\n    \"value\": \"YmVmb3Jl\",\n    \"version\": \"1\"\n  }\n}",
+		"response_hex": "7b22686561646572223a7b22636c75737465725f6964223a2231323837383039383536373336393930313035222c226d656d6265725f6964223a223135353331313730383637383036353630313839222c227265766973696f6e223a2233222c22726166745f7465726d223a2232227d2c22707265765f6b76223a7b226b6579223a226347733d222c226372656174655f7265766973696f6e223a2232222c226d6f645f7265766973696f6e223a2232222c2276657273696f6e223a2231222c2276616c7565223a22596d566d62334a6c227d7d",
 		"note": "prev_kv is the pair as it was, revisions and all — not the value alone. On a key that did not exist the field is simply absent, which is how a caller tells a create from an overwrite without a second round trip.",
 		"request_fields": [
 			{
@@ -32,11 +32,11 @@
 				"offset": 1,
 				"length": 8,
 				"field": "response.header",
-				"value": "{\"cluster_id\":\"8887791480776013267\",\"member_id\":\"7869015617916379691\",\"raft_term\":\"2\",\"revision\":\"3\"}",
+				"value": "{\"cluster_id\":\"1287809856736990105\",\"member_id\":\"15531170867806560189\",\"raft_term\":\"2\",\"revision\":\"3\"}",
 				"varies": true
 			},
 			{
-				"offset": 112,
+				"offset": 113,
 				"length": 9,
 				"field": "response.prev_kv",
 				"value": "{\"create_revision\":\"2\",\"key\":\"cGs=\",\"mod_revision\":\"2\",\"value\":\"YmVmb3Jl\",\"version\":\"1\"}"
@@ -48,8 +48,8 @@
 		"kind": "node",
 		"request": "everything under `d/`, and what it held\n\nPOST /v3/kv/deleterange\n{\n  \"key\": \"ZC8=\",\n  \"prev_kv\": true,\n  \"range_end\": \"ZDA=\"\n}",
 		"request_hex": "7b226b6579223a225a43383d222c22707265765f6b76223a747275652c2272616e67655f656e64223a225a44413d227d",
-		"response": "a count of three, the three pairs that were removed, and one new revision\n\nHTTP 200 OK\n{\n  \"deleted\": \"3\",\n  \"header\": {\n    \"cluster_id\": \"15318989807832807883\",\n    \"member_id\": \"15547410360607824182\",\n    \"raft_term\": \"2\",\n    \"revision\": \"5\"\n  },\n  \"prev_kvs\": [\n    {\n      \"create_revision\": \"2\",\n      \"key\": \"ZC8x\",\n      \"mod_revision\": \"2\",\n      \"value\": \"djE=\",\n      \"version\": \"1\"\n    },\n    {\n      \"create_revision\": \"3\",\n      \"key\": \"ZC8y\",\n      \"mod_revision\": \"3\",\n      \"value\": \"djI=\",\n      \"version\": \"1\"\n    },\n    {\n      \"create_revision\": \"4\",\n      \"key\": \"ZC8z\",\n      \"mod_revision\": \"4\",\n      \"value\": \"djM=\",\n      \"version\": \"1\"\n    }\n  ]\n}",
-		"response_hex": "7b22686561646572223a7b22636c75737465725f6964223a223135333138393839383037383332383037383833222c226d656d6265725f6964223a223135353437343130333630363037383234313832222c227265766973696f6e223a2235222c22726166745f7465726d223a2232227d2c2264656c65746564223a2233222c22707265765f6b7673223a5b7b226b6579223a225a433878222c226372656174655f7265766973696f6e223a2232222c226d6f645f7265766973696f6e223a2232222c2276657273696f6e223a2231222c2276616c7565223a22646a453d227d2c7b226b6579223a225a433879222c226372656174655f7265766973696f6e223a2233222c226d6f645f7265766973696f6e223a2233222c2276657273696f6e223a2231222c2276616c7565223a22646a493d227d2c7b226b6579223a225a43387a222c226372656174655f7265766973696f6e223a2234222c226d6f645f7265766973696f6e223a2234222c2276657273696f6e223a2231222c2276616c7565223a22646a4d3d227d5d7d",
+		"response": "a count of three, the three pairs that were removed, and one new revision\n\nHTTP 200 OK\n{\n  \"deleted\": \"3\",\n  \"header\": {\n    \"cluster_id\": \"11373750127456248183\",\n    \"member_id\": \"10966860781235854199\",\n    \"raft_term\": \"2\",\n    \"revision\": \"5\"\n  },\n  \"prev_kvs\": [\n    {\n      \"create_revision\": \"2\",\n      \"key\": \"ZC8x\",\n      \"mod_revision\": \"2\",\n      \"value\": \"djE=\",\n      \"version\": \"1\"\n    },\n    {\n      \"create_revision\": \"3\",\n      \"key\": \"ZC8y\",\n      \"mod_revision\": \"3\",\n      \"value\": \"djI=\",\n      \"version\": \"1\"\n    },\n    {\n      \"create_revision\": \"4\",\n      \"key\": \"ZC8z\",\n      \"mod_revision\": \"4\",\n      \"value\": \"djM=\",\n      \"version\": \"1\"\n    }\n  ]\n}",
+		"response_hex": "7b22686561646572223a7b22636c75737465725f6964223a223131333733373530313237343536323438313833222c226d656d6265725f6964223a223130393636383630373831323335383534313939222c227265766973696f6e223a2235222c22726166745f7465726d223a2232227d2c2264656c65746564223a2233222c22707265765f6b7673223a5b7b226b6579223a225a433878222c226372656174655f7265766973696f6e223a2232222c226d6f645f7265766973696f6e223a2232222c2276657273696f6e223a2231222c2276616c7565223a22646a453d227d2c7b226b6579223a225a433879222c226372656174655f7265766973696f6e223a2233222c226d6f645f7265766973696f6e223a2233222c2276657273696f6e223a2231222c2276616c7565223a22646a493d227d2c7b226b6579223a225a43387a222c226372656174655f7265766973696f6e223a2234222c226d6f645f7265766973696f6e223a2234222c2276657273696f6e223a2231222c2276616c7565223a22646a4d3d227d5d7d",
 		"note": "One request is one revision however many keys it removed. A server that stamps a revision per key makes the store's clock depend on how a client happened to batch its deletes.",
 		"request_fields": [
 			{
@@ -76,7 +76,7 @@
 				"offset": 1,
 				"length": 8,
 				"field": "response.header",
-				"value": "{\"cluster_id\":\"15318989807832807883\",\"member_id\":\"15547410360607824182\",\"raft_term\":\"2\",\"revision\":\"5\"}",
+				"value": "{\"cluster_id\":\"11373750127456248183\",\"member_id\":\"10966860781235854199\",\"raft_term\":\"2\",\"revision\":\"5\"}",
 				"varies": true
 			},
 			{

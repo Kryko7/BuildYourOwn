@@ -1,0 +1,24 @@
+[
+	{
+		"title": "Read-your-writes, arranged on purpose",
+		"kind": "primitives",
+		"request": "c1 writes to replica 0, then reads from replica 1 before and after it catches up\n\n./your_program.sh session\ninit 2\nwrite c1 0 k 7\nread c1 1 k\nreplicate 1\nread c1 1 k",
+		"request_hex": "2e2f796f75725f70726f6772616d2e73682073657373696f6e0a696e697420320a77726974652063312030206b20370a726561642063312031206b0a7265706c696361746520310a726561642063312031206b",
+		"response": "the first read is refused with `served: false`; the second returns 7\n\n{\"ok\":true,\"replicas\":2}\n{\"ok\":true,\"replica\":0,\"version\":1}\n{\"ok\":true,\"reason\":\"replica is behind this session\",\"replica_version\":0,\"served\":false,\"session_floor\":1}\n{\"ok\":true,\"replica\":1,\"version\":1}\n{\"ok\":true,\"replica_version\":1,\"served\":true,\"value\":7,\"version\":1}",
+		"response_hex": "7b226f6b223a747275652c227265706c69636173223a327d0a7b226f6b223a747275652c227265706c696361223a302c2276657273696f6e223a317d0a7b226f6b223a747275652c22726561736f6e223a227265706c69636120697320626568696e6420746869732073657373696f6e222c227265706c6963615f76657273696f6e223a302c22736572766564223a66616c73652c2273657373696f6e5f666c6f6f72223a317d0a7b226f6b223a747275652c227265706c696361223a312c2276657273696f6e223a317d0a7b226f6b223a747275652c227265706c6963615f76657273696f6e223a312c22736572766564223a747275652c2276616c7565223a372c2276657273696f6e223a317d",
+		"note": "The replica is not broken and the write is not lost — replica 1 simply has not been told yet. Serving that read would show c1 an older world than the one it just changed, which is the single most confusing thing an eventually consistent store can do to a user.",
+		"request_fields": [],
+		"response_fields": []
+	},
+	{
+		"title": "What the guarantee was buying",
+		"kind": "primitives",
+		"request": "The same story with session tracking turned off\n\n./your_program.sh session\ninit 2\nguarantees off\nwrite c1 0 k 7\nread c1 1 k\nstate",
+		"request_hex": "2e2f796f75725f70726f6772616d2e73682073657373696f6e0a696e697420320a67756172616e74656573206f66660a77726974652063312030206b20370a726561642063312031206b0a7374617465",
+		"response": "the read is served and returns 0\n\n{\"ok\":true,\"replicas\":2}\n{\"guarantees\":false,\"ok\":true}\n{\"ok\":true,\"replica\":0,\"version\":1}\n{\"ok\":true,\"replica_version\":0,\"served\":true,\"value\":0,\"version\":0}\n{\"guarantees\":false,\"log\":1,\"ok\":true,\"replicas\":[{\"version\":1},{\"version\":0}]}",
+		"response_hex": "7b226f6b223a747275652c227265706c69636173223a327d0a7b2267756172616e74656573223a66616c73652c226f6b223a747275657d0a7b226f6b223a747275652c227265706c696361223a302c2276657273696f6e223a317d0a7b226f6b223a747275652c227265706c6963615f76657273696f6e223a302c22736572766564223a747275652c2276616c7565223a302c2276657273696f6e223a307d0a7b2267756172616e74656573223a66616c73652c226c6f67223a312c226f6b223a747275652c227265706c69636173223a5b7b2276657273696f6e223a317d2c7b2276657273696f6e223a307d5d7d",
+		"note": "Same store, same lag, same commands: the only change is that nothing is remembering what c1 has already seen. The value 0 is not corruption — it is what replica 1 honestly holds — and that is exactly why the guarantee has to live in the session rather than in the data.",
+		"request_fields": [],
+		"response_fields": []
+	}
+]

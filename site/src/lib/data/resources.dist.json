@@ -37,7 +37,9 @@
 			18,
 			38,
 			63,
-			69
+			69,
+			78,
+			79
 		],
 		"concepts": [
 			"logical-clocks",
@@ -67,7 +69,9 @@
 			36,
 			63,
 			73,
-			74
+			74,
+			78,
+			79
 		],
 		"concepts": [
 			"consistency-models",
@@ -173,7 +177,10 @@
 			38,
 			40,
 			63,
-			71
+			71,
+			78,
+			79,
+			81
 		],
 		"concepts": [
 			"replication",
@@ -1047,7 +1054,8 @@
 			57,
 			58,
 			59,
-			60
+			60,
+			82
 		],
 		"concepts": [
 			"raft",
@@ -1079,7 +1087,8 @@
 			47,
 			53,
 			59,
-			60
+			60,
+			82
 		],
 		"concepts": [
 			"raft",
@@ -1199,7 +1208,9 @@
 		"stages": [
 			38,
 			52,
-			54
+			54,
+			78,
+			79
 		],
 		"concepts": [
 			"consistency-models",
@@ -1221,7 +1232,9 @@
 		"track": "dist",
 		"stages": [
 			38,
-			54
+			54,
+			78,
+			80
 		],
 		"concepts": [
 			"linearizability",
@@ -1338,7 +1351,8 @@
 			49,
 			58,
 			59,
-			60
+			60,
+			82
 		],
 		"concepts": [
 			"raft",
@@ -2181,6 +2195,110 @@
 		],
 		"why": "The operational half of stage 77, with graphs: what a service's throughput curve does past its limit, why an unbounded queue is how one slow dependency takes everything, and why the limit should be on concurrency rather than on the queue. Read the section on dropping work whose deadline has passed - the stage counts that as capacity recovered, not as a rejection.",
 		"minutes": 35,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-aphyr-consistency-models",
+		"title": "Strong consistency models (Aphyr)",
+		"url": "https://aphyr.com/posts/313-strong-consistency-models",
+		"type": "article",
+		"level": "intro",
+		"track": "dist",
+		"stages": [
+			78,
+			79
+		],
+		"concepts": [
+			"consistency-models",
+			"linearizability",
+			"sequential-consistency"
+		],
+		"why": "The map of the territory, drawn as a lattice from linearizable down to eventual, with what each model forbids and what it costs. Read this before the papers: it is the piece that makes the hierarchy make sense rather than being a list of names.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-princeton-consistency-notes",
+		"title": "Consistency (Princeton COS 418 lecture notes)",
+		"url": "https://www.cs.princeton.edu/courses/archive/fall18/cos418/docs/p8-consistency.pdf",
+		"type": "doc",
+		"level": "core",
+		"track": "dist",
+		"stages": [
+			78,
+			79,
+			80
+		],
+		"concepts": [
+			"consistency-models",
+			"quorums",
+			"registers"
+		],
+		"why": "Worked examples of histories that are sequential but not linearizable, and the quorum arithmetic behind a replicated register. The diagrams are the fastest way to see why real time is the only difference between the two models stage 78 checks.",
+		"minutes": 25,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-bailis-hat",
+		"title": "Highly Available Transactions: Virtues and Limitations",
+		"url": "https://www.vldb.org/pvldb/vol7/p181-bailis.pdf",
+		"type": "paper",
+		"level": "deep",
+		"track": "dist",
+		"stages": [
+			79
+		],
+		"concepts": [
+			"session-guarantees",
+			"availability",
+			"isolation-levels"
+		],
+		"why": "Maps out exactly which guarantees a system can offer while staying available under partition, and the session guarantees sit right on that line — read-your-writes and monotonic reads are achievable, linearizability is not. Section 4 is the one to read for stage 79.",
+		"minutes": 45,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-chain-replication-paper",
+		"title": "Chain Replication for Supporting High Throughput and Availability",
+		"url": "https://www.usenix.org/legacy/event/osdi04/tech/full_papers/renesse/renesse.pdf",
+		"type": "paper",
+		"level": "core",
+		"track": "dist",
+		"stages": [
+			81
+		],
+		"concepts": [
+			"chain-replication",
+			"strong-consistency",
+			"failure-recovery"
+		],
+		"why": "The paper stage 81 is built from. Section 2 gives the prefix invariant in two sentences and section 3 works through each of the three failure positions — head, tail and middle — which is the part most summaries leave out.",
+		"minutes": 40,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "dist-fowler-consistent-core",
+		"title": "Consistent Core (Patterns of Distributed Systems)",
+		"url": "https://martinfowler.com/articles/patterns-of-distributed-systems/consistent-core.html",
+		"type": "article",
+		"level": "intro",
+		"track": "dist",
+		"stages": [
+			80,
+			82
+		],
+		"concepts": [
+			"consensus",
+			"quorum",
+			"leases"
+		],
+		"why": "Why a system usually runs a small consensus cluster beside a large data cluster rather than putting everything through consensus — the practical framing for why stage 80's consensus-free register and stage 82's ReadIndex both exist.",
+		"minutes": 15,
 		"free": true,
 		"checkedAt": "2026-09-19"
 	}

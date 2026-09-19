@@ -4,8 +4,8 @@
 		"kind": "node",
 		"request": "thirty seconds, and ID 0 to mean \"pick an id for me\"\n\nPOST /v3/lease/grant\n{\n  \"ID\": \"0\",\n  \"TTL\": \"30\"\n}",
 		"request_hex": "7b224944223a2230222c2254544c223a223330227d",
-		"response": "the id the store picked and the TTL it settled on, both as strings\n\nHTTP 200 OK\n{\n  \"ID\": \"5370719268184237573\",\n  \"TTL\": \"30\",\n  \"header\": {\n    \"cluster_id\": \"4392493755009827575\",\n    \"member_id\": \"18373149472124258952\",\n    \"raft_term\": \"2\",\n    \"revision\": \"1\"\n  }\n}",
-		"response_hex": "7b22686561646572223a7b22636c75737465725f6964223a2234333932343933373535303039383237353735222c226d656d6265725f6964223a223138333733313439343732313234323538393532222c227265766973696f6e223a2231222c22726166745f7465726d223a2232227d2c224944223a2235333730373139323638313834323337353733222c2254544c223a223330227d",
+		"response": "the id the store picked and the TTL it settled on, both as strings\n\nHTTP 200 OK\n{\n  \"ID\": \"1607961781681313541\",\n  \"TTL\": \"30\",\n  \"header\": {\n    \"cluster_id\": \"3942641976014425821\",\n    \"member_id\": \"15972104132439119440\",\n    \"raft_term\": \"2\",\n    \"revision\": \"1\"\n  }\n}",
+		"response_hex": "7b22686561646572223a7b22636c75737465725f6964223a2233393432363431393736303134343235383231222c226d656d6265725f6964223a223135393732313034313332343339313139343430222c227265766973696f6e223a2231222c22726166745f7465726d223a2232227d2c224944223a2231363037393631373831363831333133353431222c2254544c223a223330227d",
 		"note": "The TTL that comes back is the one the store will honour, not the one that was asked for: real etcd refuses to grant less than a couple of seconds. Nothing is written to the store here, so the revision has not moved.",
 		"request_fields": [
 			{
@@ -27,14 +27,14 @@
 				"offset": 1,
 				"length": 8,
 				"field": "response.header",
-				"value": "{\"cluster_id\":\"4392493755009827575\",\"member_id\":\"18373149472124258952\",\"raft_term\":\"2\",\"revision\":\"1\"}",
+				"value": "{\"cluster_id\":\"3942641976014425821\",\"member_id\":\"15972104132439119440\",\"raft_term\":\"2\",\"revision\":\"1\"}",
 				"varies": true
 			},
 			{
 				"offset": 113,
 				"length": 4,
 				"field": "response.ID",
-				"value": "\"5370719268184237573\"",
+				"value": "\"1607961781681313541\"",
 				"varies": true
 			},
 			{
@@ -50,8 +50,8 @@
 		"kind": "node",
 		"request": "a point read of a key that was written with a lease attached\n\nPOST /v3/kv/range\n{\n  \"key\": \"bGs=\"\n}",
 		"request_hex": "7b226b6579223a226247733d227d",
-		"response": "the usual kv, plus `lease` naming the lease that owns it\n\nHTTP 200 OK\n{\n  \"count\": \"1\",\n  \"header\": {\n    \"cluster_id\": \"13745567630156575427\",\n    \"member_id\": \"11995909819273710031\",\n    \"raft_term\": \"2\",\n    \"revision\": \"2\"\n  },\n  \"kvs\": [\n    {\n      \"create_revision\": \"2\",\n      \"key\": \"bGs=\",\n      \"lease\": \"4242\",\n      \"mod_revision\": \"2\",\n      \"value\": \"YWxpdmU=\",\n      \"version\": \"1\"\n    }\n  ]\n}",
-		"response_hex": "7b22686561646572223a7b22636c75737465725f6964223a223133373435353637363330313536353735343237222c226d656d6265725f6964223a223131393935393039383139323733373130303331222c227265766973696f6e223a2232222c22726166745f7465726d223a2232227d2c226b7673223a5b7b226b6579223a226247733d222c226372656174655f7265766973696f6e223a2232222c226d6f645f7265766973696f6e223a2232222c2276657273696f6e223a2231222c2276616c7565223a2259577870646d553d222c226c65617365223a2234323432227d5d2c22636f756e74223a2231227d",
+		"response": "the usual kv, plus `lease` naming the lease that owns it\n\nHTTP 200 OK\n{\n  \"count\": \"1\",\n  \"header\": {\n    \"cluster_id\": \"9556459935166495045\",\n    \"member_id\": \"5697271914641060186\",\n    \"raft_term\": \"2\",\n    \"revision\": \"2\"\n  },\n  \"kvs\": [\n    {\n      \"create_revision\": \"2\",\n      \"key\": \"bGs=\",\n      \"lease\": \"4242\",\n      \"mod_revision\": \"2\",\n      \"value\": \"YWxpdmU=\",\n      \"version\": \"1\"\n    }\n  ]\n}",
+		"response_hex": "7b22686561646572223a7b22636c75737465725f6964223a2239353536343539393335313636343935303435222c226d656d6265725f6964223a2235363937323731393134363431303630313836222c227265766973696f6e223a2232222c22726166745f7465726d223a2232227d2c226b7673223a5b7b226b6579223a226247733d222c226372656174655f7265766973696f6e223a2232222c226d6f645f7265766973696f6e223a2232222c2276657273696f6e223a2231222c2276616c7565223a2259577870646d553d222c226c65617365223a2234323432227d5d2c22636f756e74223a2231227d",
 		"note": "A grant may name its own id instead of asking for one. The key looks like any other until the lease goes, and then it goes too, with nobody having sent a delete.",
 		"request_fields": [
 			{
@@ -66,17 +66,17 @@
 				"offset": 1,
 				"length": 8,
 				"field": "response.header",
-				"value": "{\"cluster_id\":\"13745567630156575427\",\"member_id\":\"11995909819273710031\",\"raft_term\":\"2\",\"revision\":\"2\"}",
+				"value": "{\"cluster_id\":\"9556459935166495045\",\"member_id\":\"5697271914641060186\",\"raft_term\":\"2\",\"revision\":\"2\"}",
 				"varies": true
 			},
 			{
-				"offset": 114,
+				"offset": 112,
 				"length": 5,
 				"field": "response.kvs",
 				"value": "[{\"create_revision\":\"2\",\"key\":\"bGs=\",\"lease\":\"4242\",\"mod_revision\":\"2\",\"value\":\"YWxpdmU=\",\"version\":\"1\"}]"
 			},
 			{
-				"offset": 226,
+				"offset": 224,
 				"length": 7,
 				"field": "response.count",
 				"value": "\"1\""

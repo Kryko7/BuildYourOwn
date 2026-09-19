@@ -275,7 +275,7 @@ export const tracks: Record<TrackId, TrackMeta> = {
 		reference: 'the suite’s own model checker',
 		reportPath: '/__reports/dist.json',
 		examples: 'bytes',
-		plannedStages: 77,
+		plannedStages: 82,
 		sectionBadges: {
 			A: { badge: 'Clock Clearing', icon: '🕰' },
 			B: { badge: 'The Allotments', icon: '🌾' },
@@ -288,7 +288,9 @@ export const tracks: Record<TrackId, TrackMeta> = {
 			I: { badge: 'The Council Ring', icon: '🗳' },
 			J: { badge: 'The Handshake Gate', icon: '🤝' },
 			K: { badge: 'The Long Furrow', icon: '📜' },
-			L: { badge: 'The Weather Station', icon: '🧭' }
+			L: { badge: 'The Weather Station', icon: '🧭' },
+			M: { badge: 'The Reading Room', icon: '📖' },
+			N: { badge: 'The Mirror Ponds', icon: '🪞' }
 		},
 		ladders: [
 			{
@@ -300,8 +302,8 @@ export const tracks: Record<TrackId, TrackMeta> = {
 			{
 				id: 'algorithms',
 				title: 'Algorithms & patterns',
-				note: 'The named algorithms on their own terms: Raft and Paxos, atomic commit, sagas and the outbox, fencing tokens, leases, gossip, circuit breakers and load shedding. Exercises, not another server.',
-				sections: ['I', 'J', 'K', 'L']
+				note: 'The named algorithms on their own terms: Raft and Paxos, atomic commit, sagas and the outbox, fencing tokens, gossip, circuit breakers — then what consistency actually means, and three ways to replicate that are not a leader and a log. Exercises, not another server.',
+				sections: ['I', 'J', 'K', 'L', 'M', 'N']
 			},
 			{
 				id: 'node',
