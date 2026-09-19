@@ -21,3 +21,6 @@ byo.toml
 .vscode/
 *.swp
 .DS_Store
+
+# One workspace, one target directory.
+/target

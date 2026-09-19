@@ -3,6 +3,8 @@
 A stage-by-stage, black-box conformance tester for a **distributed key/value system** you
 write yourself. Track id `dist`.
 
+> Commands below are run from the **repo root**: this is a cargo workspace, so every
+> binary and example lands in the one `target/` directory at the top.
 ```
 disttest --target my_node --stage 22
 disttest --target my_node --tag algorithms --all

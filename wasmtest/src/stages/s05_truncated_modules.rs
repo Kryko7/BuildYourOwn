@@ -350,7 +350,7 @@ wasm_test!(trailing_bytes, |ctx| {
         let mut bytes = good.bytes.clone();
         bytes.extend_from_slice(&tail);
         let mut m = good.clone();
-        m.label = format!("trailing-{:02x?}", tail);
+        m.label = format!("trailing-{tail:02x?}");
         m.bytes = bytes;
         expect_start_rejected(ctx, &m, why)?;
     }

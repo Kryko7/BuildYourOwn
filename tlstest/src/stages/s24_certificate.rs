@@ -301,7 +301,7 @@ tls_test!(chain_order, |ctx| {
     }
     for i in 1..subjects.len() {
         c.eq(
-            &format!("certificate.certificate_list[{}].subject", i),
+            &format!("certificate.certificate_list[{i}].subject"),
             subjects[i - 1].1.clone(),
             subjects[i].0.clone(),
         );

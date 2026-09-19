@@ -8,13 +8,15 @@ GNU ld 2.47. Every stage also carries worked examples — 87 of them — each a 
 annotated field by field, next to the linker command line and the exact stdout and exit
 status the linked program must produce.
 
+> Commands below are run from the **repo root**: this is a cargo workspace, so every
+> binary and example lands in the one `target/` directory at the top.
 ```
-cargo build --release
-./target/release/linktest --linker gnu_ld --validate --all    # suite self-check, all green
-./target/release/linktest --linker ./your_program.sh --stage 1  # your first red/green
-./target/release/linktest --linker my_linker --until 12
-./target/release/linktest --list                              # stages, counts, PLAN.md tickboxes
-./target/release/linktest --list --json catalog.json          # stage catalog for the site
+cargo build --release -p linktest
+target/release/linktest --linker gnu_ld --validate --all    # suite self-check, all green
+target/release/linktest --linker ./your_program.sh --stage 1  # your first red/green
+target/release/linktest --linker my_linker --until 12
+target/release/linktest --list                              # stages, counts, PLAN.md tickboxes
+target/release/linktest --list --json catalog.json          # stage catalog for the site
 ```
 
 Nothing is downloaded and nothing is installed. The suite **writes its own object files** —
@@ -66,8 +68,8 @@ A linker that dies, hangs, or produces a binary the kernel refuses is its own fa
 To see the red path without writing a linker:
 
 ```
-cargo build --release --example broken_linker
-./target/release/linktest --linker target/release/examples/broken_linker --until 5
+cargo build --release -p linktest --example broken_linker
+target/release/linktest --linker target/release/examples/broken_linker --until 5
 ```
 
 ## The contract your linker must follow
@@ -398,8 +400,8 @@ Then add two lines to `src/stages/mod.rs` (`mod s17_undefined_symbol;` and
 
 ```
 cargo test                                             # registry invariants + catalog freshness
-./target/release/linktest --linker gnu_ld --validate --stage 17
-./target/release/linktest --list --json catalog.json   # catalog.json must be regenerated
+target/release/linktest --linker gnu_ld --validate --stage 17
+target/release/linktest --list --json catalog.json   # catalog.json must be regenerated
 ```
 
 `PLAN.md` carries a tickbox line per stage naming its source file and test count
@@ -515,11 +517,11 @@ and in the JSON report's `notes` rather than only here.
 ## Development
 
 ```
-cargo build --release
+cargo build --release -p linktest
 cargo test                                  # 61 unit + 30 integration tests
 cargo clippy --all-targets -- -D warnings
 cargo fmt --check
-./target/release/linktest --linker gnu_ld --validate --all   # 341/341, ~3.5 s
+target/release/linktest --linker gnu_ld --validate --all   # 341/341, ~3.5 s
 ```
 
 The whole suite runs in under four seconds, which is the point: a linker is a batch program,

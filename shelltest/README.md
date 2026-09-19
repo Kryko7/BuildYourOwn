@@ -5,12 +5,14 @@ A self-contained, stage-by-stage tester for POSIX shells, written in Rust. It dr
 compares what it sees with a declarative YAML suite: 70 stages, 592 tests, all validated
 against bash 5.
 
+> Commands below are run from the **repo root**: this is a cargo workspace, so every
+> binary and example lands in the one `target/` directory at the top.
 ```
-cargo build --release
-./target/release/shelltest --shell bash --all            # sanity-check the suite (all green)
-./target/release/shelltest --shell ./my_shell --stage 1  # your first red/green
-./target/release/shelltest --shell ./my_shell --until 12
-./target/release/shelltest --list                        # stages, counts, PLAN.md tickboxes
+cargo build --release -p shelltest
+target/release/shelltest --shell bash --all            # sanity-check the suite (all green)
+target/release/shelltest --shell ./my_shell --stage 1  # your first red/green
+target/release/shelltest --shell ./my_shell --until 12
+target/release/shelltest --list                        # stages, counts, PLAN.md tickboxes
 ```
 
 No network, no Docker, no accounts. Linux and macOS.
@@ -231,7 +233,7 @@ never rely on timing except through explicit `wait`/`sleep_ms` steps.
 ```
 cargo test          # unit tests per module + tests/selftest.rs (runs the suite on bash)
 cargo clippy
-cargo build --release
+cargo build --release -p shelltest
 ```
 
 Layout:

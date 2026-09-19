@@ -7,13 +7,15 @@ real on-disk fixtures — and compares what comes back with a suite written in R
 carries worked examples — 91 of them — showing the exact bytes a broker receives and the exact
 bytes Apache Kafka answered, annotated field by field (see [Examples](#examples)).
 
+> Commands below are run from the **repo root**: this is a cargo workspace, so every
+> binary and example lands in the one `target/` directory at the top.
 ```
-cargo build --release
-./target/release/kafkatest --broker apache_kafka --validate --all   # suite self-check, all green
-./target/release/kafkatest --broker ./your_program.sh --stage 1     # your first red/green
-./target/release/kafkatest --broker my_broker --until 12
-./target/release/kafkatest --list                                   # stages, counts, PLAN.md tickboxes
-./target/release/kafkatest --list --json catalog.json               # stage catalog for the site
+cargo build --release -p kafkatest
+target/release/kafkatest --broker apache_kafka --validate --all   # suite self-check, all green
+target/release/kafkatest --broker ./your_program.sh --stage 1     # your first red/green
+target/release/kafkatest --broker my_broker --until 12
+target/release/kafkatest --list                                   # stages, counts, PLAN.md tickboxes
+target/release/kafkatest --list --json catalog.json               # stage catalog for the site
 ```
 
 The reference broker is downloaded once (~130 MB) into `~/.cache/kafkatest` and run on random
@@ -57,8 +59,8 @@ own stdout/stderr. A broker that dies mid-test is its own failure kind:
 To see the red path without writing a broker:
 
 ```
-cargo build --release --example broken_broker
-./target/release/kafkatest --broker target/release/examples/broken_broker --until 5
+cargo build --release -p kafkatest --example broken_broker
+target/release/kafkatest --broker target/release/examples/broken_broker --until 5
 ```
 
 ## CLI
@@ -259,8 +261,8 @@ what the stage is about before writing a line of code. They live next to the sta
 `catalog.json` and are what the site renders in its wire inspector.
 
 ```
-./target/release/kafkatest --capture-examples examples/captured.json --broker apache_kafka
-./target/release/kafkatest --list --json catalog.json     # merges them into the catalog
+target/release/kafkatest --capture-examples examples/captured.json --broker apache_kafka
+target/release/kafkatest --list --json catalog.json     # merges them into the catalog
 ```
 
 An example is declared in the stage's own file, and its request is **built with the codec the
@@ -351,9 +353,9 @@ so editing a summary needs no broker. The bytes and the annotations come from
 `examples/captured.json`, so **anything that moves a byte needs a recapture**:
 
 ```
-cargo build --release
-./target/release/kafkatest --capture-examples examples/captured.json --broker apache_kafka
-./target/release/kafkatest --list --json catalog.json
+cargo build --release -p kafkatest
+target/release/kafkatest --capture-examples examples/captured.json --broker apache_kafka
+target/release/kafkatest --list --json catalog.json
 cargo test                                   # tests/examples_are_current.rs proves both files
 ```
 
@@ -449,9 +451,9 @@ Then add two lines to `src/stages/mod.rs` (`mod s17_create_topics;` and
 
 ```
 cargo test                                                   # registry invariants + catalog
-./target/release/kafkatest --broker apache_kafka --validate --stage 17
-./target/release/kafkatest --capture-examples examples/captured.json --broker apache_kafka
-./target/release/kafkatest --list --json catalog.json        # catalog.json must be regenerated
+target/release/kafkatest --broker apache_kafka --validate --stage 17
+target/release/kafkatest --capture-examples examples/captured.json --broker apache_kafka
+target/release/kafkatest --list --json catalog.json        # catalog.json must be regenerated
 ```
 
 Update `PLAN.md`: every stage needs a tickbox line naming its source file and test count
@@ -557,11 +559,11 @@ against this same harness — a stage is a new `src/stages/sNN_*.rs` plus two li
 ## Development
 
 ```
-cargo build --release
+cargo build --release -p kafkatest
 cargo test                                  # 91 unit + 21 integration tests
 cargo clippy --all-targets -- -D warnings
 cargo fmt --check
-./target/release/kafkatest --broker apache_kafka --validate --all
+target/release/kafkatest --broker apache_kafka --validate --all
 pgrep -f kafka_2.13                         # must print nothing afterwards
 ```
 

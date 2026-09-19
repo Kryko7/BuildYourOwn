@@ -2,6 +2,7 @@
 name = "kafkatest"
 version = "0.1.0"
 edition = "2021"
+rust-version = "1.88"
 description = "stage-by-stage black-box conformance tester for Kafka brokers"
 license = "MIT"
 

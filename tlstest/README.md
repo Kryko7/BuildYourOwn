@@ -7,13 +7,15 @@ Rust: 48 stages, 343 tests, all validated against `openssl s_server` from the sy
 OpenSSL 3.x. Every stage also carries worked examples — 95 of them — showing the exact bytes
 the reference sent and received, annotated field by field (see [Examples](#examples)).
 
+> Commands below are run from the **repo root**: this is a cargo workspace, so every
+> binary and example lands in the one `target/` directory at the top.
 ```
-cargo build --release
-./target/release/tlstest --server openssl --validate --all   # suite self-check, all green
-./target/release/tlstest --server ./your_program.sh --stage 1  # your first red/green
-./target/release/tlstest --server my_server --until 12
-./target/release/tlstest --list                                # stages, counts, PLAN.md tickboxes
-./target/release/tlstest --list --json catalog.json            # stage catalog for the site
+cargo build --release -p tlstest
+target/release/tlstest --server openssl --validate --all   # suite self-check, all green
+target/release/tlstest --server ./your_program.sh --stage 1  # your first red/green
+target/release/tlstest --server my_server --until 12
+target/release/tlstest --list                                # stages, counts, PLAN.md tickboxes
+target/release/tlstest --list --json catalog.json            # stage catalog for the site
 ```
 
 There is nothing to download: the reference is the `openssl` already on your PATH, and the
@@ -89,8 +91,8 @@ hashes and the key schedule:
 To see the red path without writing a server:
 
 ```
-cargo build --release --example broken_server
-./target/release/tlstest --server target/release/examples/broken_server --until 5
+cargo build --release -p tlstest --example broken_server
+target/release/tlstest --server target/release/examples/broken_server --until 5
 ```
 
 That example accepts connections and says nothing until spoken to — so stage 01 is green —
@@ -338,8 +340,8 @@ answered, with every field annotated, so a learner can see what a stage is about
 writing a line of code.
 
 ```
-./target/release/tlstest --capture-examples examples/captured.json --server openssl
-./target/release/tlstest --list --json catalog.json     # merges them into the catalog
+target/release/tlstest --capture-examples examples/captured.json --server openssl
+target/release/tlstest --list --json catalog.json     # merges them into the catalog
 ```
 
 An example is declared in the stage's own file and names a **scenario** the capture
@@ -448,9 +450,9 @@ Then add two lines to `src/stages/mod.rs` (`mod s25_certificate_verify;` and
 
 ```
 cargo test                                                   # registry invariants + catalog
-./target/release/tlstest --server openssl --validate --stage 25
-./target/release/tlstest --capture-examples examples/captured.json --server openssl
-./target/release/tlstest --list --json catalog.json          # catalog.json must be regenerated
+target/release/tlstest --server openssl --validate --stage 25
+target/release/tlstest --capture-examples examples/captured.json --server openssl
+target/release/tlstest --list --json catalog.json          # catalog.json must be regenerated
 ```
 
 `PLAN.md` is generated from the catalog's stage names, files, test counts and hints; a cargo
@@ -558,11 +560,11 @@ the failure's `context` block. The ones worth knowing about:
 ## Development
 
 ```
-cargo build --release
+cargo build --release -p tlstest
 cargo test                                  # 98 unit + 44 integration tests
 cargo clippy --all-targets -- -D warnings
 cargo fmt --check
-./target/release/tlstest --server openssl --validate --all
+target/release/tlstest --server openssl --validate --all
 pgrep -f 's_server' # must print nothing afterwards
 ```
 

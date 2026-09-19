@@ -1,0 +1,197 @@
+# Every claim this repo makes, run in public.
+#
+# The pitch is that each tester is green against the real implementation, which is what
+# makes a red mark on your own program mean something. That is only worth anything if it is
+# reproducible, so this workflow runs the six `--validate` commands from the README against
+# the real bash, wasmtime, openssl, GNU ld, Apache Kafka and etcd — plus the discrimination
+# suites, which prove a deliberately wrong program goes red where it should.
+#
+# Jobs are split by cost. `crates` and `site` finish in a couple of minutes; `validate` is
+# a matrix so a slow reference does not hold up a fast one; `cluster` is the fifteen-minute
+# etcd ladder and runs on its own.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: -D warnings
+
+jobs:
+  crates:
+    name: crate tests (${{ matrix.crate }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        crate: [shelltest, kafkatest, wasmtest, tlstest, linktest, disttest, byo]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: ${{ matrix.crate }}
+      - name: Java, for kafkatest's reference broker
+        if: matrix.crate == 'kafkatest'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - run: cargo fmt --check
+        working-directory: ${{ matrix.crate }}
+      - run: cargo clippy --all-targets -- -D warnings
+        working-directory: ${{ matrix.crate }}
+      - run: cargo test --release
+        working-directory: ${{ matrix.crate }}
+
+  validate:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: shell vs bash
+            crate: shelltest
+            run: ./target/release/shelltest --shell bash --validate --all
+          - name: wasm vs wasmtime
+            crate: wasmtest
+            run: ./target/release/wasmtest --runtime wasmtime --validate --all
+          - name: tls vs openssl s_server
+            crate: tlstest
+            run: ./target/release/tlstest --server openssl --validate --all
+          - name: link vs GNU ld
+            crate: linktest
+            run: ./target/release/linktest --linker gnu_ld --validate --all
+          - name: kafka vs Apache Kafka
+            crate: kafkatest
+            java: true
+            run: ./target/release/kafkatest --broker apache_kafka --validate --all
+          - name: dist primitives and algorithms
+            crate: disttest
+            run: |
+              ./target/release/disttest --target reference_primitives --validate --until 20
+              ./target/release/disttest --target reference_algorithms --validate --from 56
+          - name: dist node vs etcd
+            crate: disttest
+            run: ./target/release/disttest --target etcd --validate --from 21 --until 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: ${{ matrix.crate }}
+      - name: Java, for the reference broker
+        if: matrix.java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Cache downloaded references
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/${{ matrix.crate }}
+          key: ref-${{ matrix.crate }}-${{ runner.os }}
+      - run: cargo build --release
+        working-directory: ${{ matrix.crate }}
+      - run: ${{ matrix.run }}
+        working-directory: ${{ matrix.crate }}
+
+  discriminates:
+    name: the suites discriminate
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        crate: [shelltest, kafkatest, wasmtest, tlstest, linktest, disttest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: ${{ matrix.crate }}
+      - name: Cache downloaded references
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/${{ matrix.crate }}
+          key: ref-${{ matrix.crate }}-${{ runner.os }}
+      # A suite that passes everything proves nothing. These runs point each tester at a
+      # deliberately wrong program and assert it goes red at the stages it should and stays
+      # green at the stages it should — see each crate's tests/discrimination.rs.
+      - run: cargo test --release --test discrimination -- --nocapture
+        working-directory: ${{ matrix.crate }}
+
+  cluster:
+    name: dist cluster vs etcd (slow)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: disttest
+      - name: Cache downloaded references
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/disttest
+          key: ref-disttest-${{ runner.os }}
+      - run: cargo build --release
+        working-directory: disttest
+      # Roughly fifteen minutes: three- and five-node etcd clusters with fault injection.
+      - run: ./target/release/disttest --target etcd --validate --from 36 --until 55
+        working-directory: disttest
+      - name: No stray reference processes were left behind
+        if: always()
+        run: |
+          leaked=$(pgrep -f 'cache/disttest/etcd' | wc -l)
+          test "$leaked" -eq 0 || { echo "$leaked stray etcd processes"; exit 1; }
+
+  msrv:
+    name: builds on the stated MSRV
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        crate: [shelltest, kafkatest, wasmtest, tlstest, linktest, disttest, byo]
+    steps:
+      - uses: actions/checkout@v4
+      # The floor every Cargo.toml declares. If a dependency bump raises it, this job fails
+      # before a user discovers it — which is how the number got to 1.88 rather than 1.87.
+      - uses: dtolnay/rust-toolchain@1.88
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: ${{ matrix.crate }}
+      - run: cargo check --all-targets
+        working-directory: ${{ matrix.crate }}
+
+  site:
+    name: site
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+      - run: npm ci
+        working-directory: site
+      - run: npm run check
+        working-directory: site
+      - run: npm run test
+        working-directory: site
+      - run: npm run build
+        working-directory: site
+      # The catalogs the site ships are generated from each tester's catalog.json. If a
+      # checked-in catalog is stale, `npm run sync` changes a file and this fails.
+      - name: The committed catalogs are current
+        run: git diff --exit-code -- src/lib/data
+        working-directory: site

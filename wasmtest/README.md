@@ -7,13 +7,15 @@ suite written in Rust: 48 stages, 381 tests, all validated against `wasmtime` 48
 Every module the suite runs is **built by this crate's own encoder**, so a failure can print
 the exact bytes it ran, annotated section by section.
 
+> Commands below are run from the **repo root**: this is a cargo workspace, so every
+> binary and example lands in the one `target/` directory at the top.
 ```
-cargo build --release
-./target/release/wasmtest --runtime wasmtime --validate --all    # suite self-check, all green
-./target/release/wasmtest --runtime ./your_program.sh --stage 1   # your first red/green
-./target/release/wasmtest --runtime my_runtime --until 12
-./target/release/wasmtest --list                                  # stages, counts, PLAN.md tickboxes
-./target/release/wasmtest --list --json catalog.json              # stage catalog for the site
+cargo build --release -p wasmtest
+target/release/wasmtest --runtime wasmtime --validate --all    # suite self-check, all green
+target/release/wasmtest --runtime ./your_program.sh --stage 1   # your first red/green
+target/release/wasmtest --runtime my_runtime --until 12
+target/release/wasmtest --list                                  # stages, counts, PLAN.md tickboxes
+target/release/wasmtest --list --json catalog.json              # stage catalog for the site
 ```
 
 The reference runtime is downloaded once (~11 MB) into `~/.cache/wasmtest` and run straight
@@ -69,8 +71,8 @@ hangs is its own failure kind:
 To see the red path without writing a runtime:
 
 ```
-cargo build --release --example broken_runtime
-./target/release/wasmtest --runtime target/release/examples/broken_runtime --until 5
+cargo build --release -p wasmtest --example broken_runtime
+target/release/wasmtest --runtime target/release/examples/broken_runtime --until 5
 ```
 
 ## The contract your runtime must follow
@@ -365,8 +367,8 @@ Then add two lines to `src/stages/mod.rs` (`mod s15_division_traps;` and
 
 ```
 cargo test                                                # registry invariants + catalog
-./target/release/wasmtest --runtime wasmtime --validate --stage 15
-./target/release/wasmtest --list --json catalog.json      # catalog.json must be regenerated
+target/release/wasmtest --runtime wasmtime --validate --stage 15
+target/release/wasmtest --list --json catalog.json      # catalog.json must be regenerated
 ```
 
 `PLAN.md` is generated from the registry, so its tickbox line — the source file, the test
@@ -504,11 +506,11 @@ appears it carries a reason, which is printed in the summary and belongs in this
 ## Development
 
 ```
-cargo build --release
+cargo build --release -p wasmtest
 cargo test                                  # unit + integration tests
 cargo clippy --all-targets -- -D warnings
 cargo fmt --check
-./target/release/wasmtest --runtime wasmtime --validate --all
+target/release/wasmtest --runtime wasmtime --validate --all
 ```
 
 Layout:

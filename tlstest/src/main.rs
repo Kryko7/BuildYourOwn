@@ -95,9 +95,14 @@ fn locate(explicit: Option<PathBuf>, relative: &str) -> Result<PathBuf> {
             }
         }
     }
+    // In a cargo workspace the binary lives in the *workspace* target directory, so walking
+    // up from it lands at the repo root rather than at this crate. Try the crate's own
+    // subdirectory at each level too, which makes the command work from the repo root, from
+    // inside the crate, and from wherever `install.sh` put it.
+    let crate_name = env!("CARGO_PKG_NAME");
     roots
         .iter()
-        .map(|r| r.join(relative))
+        .flat_map(|r| [r.join(relative), r.join(crate_name).join(relative)])
         .find(|p| p.exists())
         .ok_or_else(|| anyhow::anyhow!("cannot find {relative}; pass --servers-file"))
 }

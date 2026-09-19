@@ -1,0 +1,31 @@
+# One workspace, so the seven testers cannot drift apart quietly.
+#
+# Before this they were seven unrelated crates with seven lockfiles and seven copies of the
+# same harness code, and the copies had already diverged: `assert.rs` shares thirteen of its
+# seventeen public functions across crates and differs in the rest, `report.rs` six. A
+# workspace does not fix that duplication on its own — see the note in PLAN.md — but it does
+# give one resolved dependency set, one target directory, and one place to notice.
+#
+# `byo` is here too: it is the command that drives the testers, and it shares their
+# dependency set.
+[workspace]
+resolver = "2"
+members = [
+    "shelltest",
+    "kafkatest",
+    "wasmtest",
+    "tlstest",
+    "linktest",
+    "disttest",
+    "byo",
+]
+
+[workspace.package]
+edition = "2021"
+rust-version = "1.88"
+license = "MIT"
+
+# Release binaries are what `install.sh` installs and what every `--validate` run uses, so
+# they are built the way they are shipped.
+[profile.release]
+strip = true

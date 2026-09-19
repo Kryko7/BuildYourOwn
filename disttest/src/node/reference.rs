@@ -253,6 +253,12 @@ pub fn crate_root() -> Result<PathBuf> {
                 if d.join("Cargo.toml").is_file() && d.join("src/stages").is_dir() {
                     return Some(d);
                 }
+                // In a workspace the ancestors are the repo root, which has a Cargo.toml but
+                // no src/stages: the crate is one level down from it.
+                let here = d.join(env!("CARGO_PKG_NAME"));
+                if here.join("Cargo.toml").is_file() && here.join("src/stages").is_dir() {
+                    return Some(here);
+                }
                 dir = d.parent().map(Path::to_path_buf);
             }
         }
@@ -269,14 +275,23 @@ pub fn crate_root() -> Result<PathBuf> {
 /// `broken_node` is the deliberately wrong node the README uses to show red output.
 pub fn example_binary(name: &str) -> Result<PathBuf> {
     let root = crate_root()?;
-    for profile in ["release", "debug"] {
-        let p = root
-            .join("target")
-            .join(profile)
-            .join("examples")
-            .join(name);
-        if p.is_file() {
-            return Ok(p);
+    // Cargo puts examples under the *workspace* target directory when there is one and
+    // under the crate's own when there is not, and CARGO_TARGET_DIR overrides both. Look
+    // where cargo actually put them rather than assuming a layout.
+    let mut roots: Vec<PathBuf> = Vec::new();
+    if let Some(dir) = std::env::var_os("CARGO_TARGET_DIR") {
+        roots.push(PathBuf::from(dir));
+    }
+    roots.push(root.join("target"));
+    if let Some(parent) = root.parent() {
+        roots.push(parent.join("target"));
+    }
+    for target in &roots {
+        for profile in ["release", "debug"] {
+            let p = target.join(profile).join("examples").join(name);
+            if p.is_file() {
+                return Ok(p);
+            }
         }
     }
     eprintln!("disttest: building the {name} example (once)");
@@ -291,7 +306,11 @@ pub fn example_binary(name: &str) -> Result<PathBuf> {
     if !status.success() {
         bail!("cargo could not build the {name} example");
     }
-    let p = root.join("target/release/examples").join(name);
+    let p = roots
+        .iter()
+        .map(|t| t.join("release").join("examples").join(name))
+        .find(|p| p.is_file())
+        .unwrap_or_else(|| root.join("target/release/examples").join(name));
     if !p.is_file() {
         bail!(
             "cargo built the {name} example but {} is missing",

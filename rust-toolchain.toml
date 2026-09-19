@@ -1,0 +1,12 @@
+# Pinned so `cargo build` works out of the box rather than failing to resolve.
+#
+# The dependency tree uses edition 2024, which needs Rust 1.85 just to parse, and `time`
+# pulls the floor up to 1.88. A distribution cargo older than that — Ubuntu 24.04 ships
+# 1.75 — cannot resolve the lockfile at all, with an error that points at a dependency
+# rather than at the toolchain. rustup reads this file and installs the right one.
+#
+# The floor is checked in CI (the `msrv` job), so this number is measured rather than
+# claimed: it was 1.87 until `time 0.3.55` moved it.
+[toolchain]
+channel = "1.88"
+components = ["rustfmt", "clippy"]

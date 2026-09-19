@@ -204,7 +204,7 @@ fn print_track(conn: &Connection, paths: &Paths, track: Track) -> Result<()> {
     // Next stage: the lowest known stage that is not done.
     if let Some(next) = known
         .iter()
-        .find(|n| !states.get(n).is_some_and(|r| r.state == "done"))
+        .find(|n| states.get(n).is_none_or(|r| r.state != "done"))
     {
         let name = cat.as_ref().and_then(|c| c.name_of(*next)).unwrap_or("");
         let state = states.get(next).map(|r| r.state.as_str()).unwrap_or("todo");
