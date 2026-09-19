@@ -61,10 +61,27 @@
 			return {
 				...l,
 				stages,
+				range: stageRange(stages.map((s) => s.number)),
 				done: stages.filter((s) => progress.isDone(track, s.number)).length
 			};
 		})
 	);
+
+	/**
+	 * Which stages a rung covers, as "56–77". A rung is not always where its number suggests —
+	 * dist climbs its algorithms rung second but numbers it 56–77 — so the range says plainly
+	 * what to run. Written as a list of runs, because nothing guarantees a rung is contiguous.
+	 */
+	function stageRange(numbers: number[]): string {
+		const sorted = [...numbers].sort((a, b) => a - b);
+		const runs: [number, number][] = [];
+		for (const n of sorted) {
+			const last = runs[runs.length - 1];
+			if (last && n === last[1] + 1) last[1] = n;
+			else runs.push([n, n]);
+		}
+		return runs.map(([a, b]) => (a === b ? `${a}` : `${a}–${b}`)).join(', ');
+	}
 
 	/**
 	 * `recentre` is for openings that did not come from the map itself (the camp lists, the
@@ -163,7 +180,7 @@
 						<i style="width:{l.stages.length ? (l.done / l.stages.length) * 100 : 0}%"></i>
 					</div>
 					<p class="tiny muted rsec">
-						sections {l.sections.join(', ')}
+						stages {l.range} · sections {l.sections.join(', ')}
 					</p>
 				</article>
 			{/each}
