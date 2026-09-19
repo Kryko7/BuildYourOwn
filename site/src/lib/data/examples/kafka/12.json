@@ -5,7 +5,7 @@
 		"request": "DescribeTopicPartitions v0, correlation id 121, the fixture topic's real name, response_partition_limit 100",
 		"request_hex": "00000025004b00000000007900096b61666b617465737400020974312d65783132310000000064ff00",
 		"response": "One topics entry with error_code 0 (NONE), the name echoed and the topic's real id from its TopicRecord, then one partition: error_code 0, partition_index 0, leader_id the broker's node id, leader_epoch 0, replica_nodes and isr_nodes both holding just that node, and nothing in eligible_leader_replicas, last_known_elr or offline_replicas; next_cursor is null",
-		"response_hex": "0000004a0000007900000000000200000974312d6578313231eeec3f005fb24aeda8efa67ec3ab1cf400020000000000000000000100000000020000000102000000010101010000000df800ff00",
+		"response_hex": "0000004a0000007900000000000200000974312d65783132317f9d4d47e57343d49746b2b735f6e46b00020000000000000000000100000000020000000102000000010101010000000df800ff00",
 		"note": "The id is the one the metadata log minted, not anything derived from the name — a client that later fetches by id will use exactly these 16 bytes. error_code is 0 even though the partition holds no records.",
 		"request_fields": [
 			{
@@ -128,7 +128,7 @@
 				"offset": 25,
 				"length": 16,
 				"field": "body.topics[0].topic_id",
-				"value": "eeec3f00-5fb2-4aed-a8ef-a67ec3ab1cf4",
+				"value": "7f9d4d47-e573-43d4-9746-b2b735f6e46b",
 				"varies": true
 			},
 			{
@@ -244,7 +244,7 @@
 			"topics": {
 				"t1": {
 					"name": "t1-ex121",
-					"id": "eeec3f00-5fb2-4aed-a8ef-a67ec3ab1cf4",
+					"id": "7f9d4d47-e573-43d4-9746-b2b735f6e46b",
 					"partitions": 1
 				}
 			},
@@ -257,7 +257,7 @@
 		"request": "DescribeTopicPartitions v0, correlation id 122, two names: 'zzz-unknown' first, then the fixture topic",
 		"request_hex": "00000032004b00000000007a00096b61666b617465737400030c7a7a7a2d756e6b6e6f776e000974312d65783132320000000064ff00",
 		"response": "Two entries in topic-name order — the fixture topic first with error_code 0, its real id and its single partition, then 'zzz-unknown' with error_code 3 (UNKNOWN_TOPIC_OR_PARTITION), an all-zero id and no partitions",
-		"response_hex": "0000006f0000007a00000000000300000974312d6578313232ccf7579e50cb4183add3654fe5496b7300020000000000000000000100000000020000000102000000010101010000000df80000030c7a7a7a2d756e6b6e6f776e00000000000000000000000000000000000100000df800ff00",
+		"response_hex": "0000006f0000007a00000000000300000974312d6578313232353ff9e784fc4a6db250e404e89d665300020000000000000000000100000000020000000102000000010101010000000df80000030c7a7a7a2d756e6b6e6f776e00000000000000000000000000000000000100000df800ff00",
 		"note": "Each entry carries its own error_code, and the order is the broker's, not the request's: topics are walked in name order so that a cursor can page through them. Match entries by the echoed name.",
 		"request_fields": [
 			{
@@ -380,7 +380,7 @@
 				"offset": 25,
 				"length": 16,
 				"field": "body.topics[0].topic_id",
-				"value": "ccf7579e-50cb-4183-add3-654fe5496b73",
+				"value": "353ff9e7-84fc-4a6d-b250-e404e89d6653",
 				"varies": true
 			},
 			{
@@ -496,7 +496,7 @@
 			"topics": {
 				"t1": {
 					"name": "t1-ex122",
-					"id": "ccf7579e-50cb-4183-add3-654fe5496b73",
+					"id": "353ff9e7-84fc-4a6d-b250-e404e89d6653",
 					"partitions": 1
 				}
 			},

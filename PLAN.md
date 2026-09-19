@@ -617,9 +617,9 @@ buildable at every step.
 | `dist` node | 15 / 128 | etcd 3.7.1 | 108 s |
 | `dist` cluster | 20 / 164 | etcd 3.7.1 | 859 s |
 
-With shell (70/592) and kafka (46/306) that is **2 811 tests over six tracks**, every one of
+With shell (70/592) and kafka (47/315) that is **2 820 tests over six tracks**, every one of
 them green against the real implementation. `byo` carries a six-entry registry (98 tests), the
-site renders six trails from those catalogs (354 stage pages prerendered), and `install.sh`
+site renders six trails from those catalogs (355 stage pages prerendered), and `install.sh`
 builds and installs all of it.
 
 Verified after the build, in a sandbox `BYO_HOME`: `install.sh --skip-site` → `byo tracks`

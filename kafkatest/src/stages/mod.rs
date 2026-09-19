@@ -69,6 +69,7 @@ mod s43_cli_interop;
 mod s44_fuzz;
 mod s45_soak;
 mod s46_transaction_coordinator;
+mod s47_transactional_writes;
 
 /// Every implemented stage, in ascending order.
 pub fn all() -> Vec<Stage> {
@@ -119,6 +120,7 @@ pub fn all() -> Vec<Stage> {
         s44_fuzz::stage(),
         s45_soak::stage(),
         s46_transaction_coordinator::stage(),
+        s47_transactional_writes::stage(),
     ];
     v.sort_by_key(|s| s.number);
     v
@@ -171,7 +173,7 @@ pub fn sections() -> &'static [Section] {
         Section {
             id: "g",
             title: "Transactions",
-            stages: &[46],
+            stages: &[46, 47],
         },
     ]
 }

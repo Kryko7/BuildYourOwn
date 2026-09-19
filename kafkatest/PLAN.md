@@ -261,3 +261,8 @@ the coordinator hands out with it is what stops two instances of the same job bo
   - `InitProducerId` with a transactional id is a different operation from the same request with a null one: it is coordinator state that outlives the connection
   - Asking twice for the same transactional id must return the same producer id with a higher epoch — that bump is the entire fencing mechanism
   - A produce stamped with a superseded epoch is refused with INVALID_PRODUCER_EPOCH (47) and must append nothing
+- [ ] **Stage 47** — A transaction, end to end **[ext]** (`src/stages/s47_transactional_writes.rs`, 9 tests)
+  - `AddPartitionsToTxn` (24) comes before the first write to a partition: the coordinator must know where to put markers if the transaction aborts
+  - A transactional batch sets bit 4 of the record batch attributes as well as carrying the producer id and epoch
+  - `EndTxn` (26) with `committed` true or false makes the coordinator write a control record into every partition the transaction touched — a real record at a real offset
+  - A consumer at isolation_level 1 reads nothing past the last stable offset and is given the aborted transactions to filter; at level 0 it sees everything immediately

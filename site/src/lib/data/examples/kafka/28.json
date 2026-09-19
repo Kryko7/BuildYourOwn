@@ -3,9 +3,9 @@
 		"title": "A poll on an empty partition",
 		"kind": "wire",
 		"request": "Fetch v16, correlation id 281: partition 0 of an empty topic from offset 0, max_wait_ms 1000, min_bytes 1",
-		"request_hex": "00000060000100100000011900096b61666b617465737400000003e80000000100a00000000000000000000000020e280aa2bcc14d30adf8cd8b2d0844810200000000ffffffff0000000000000000ffffffffffffffffffffffff001000000000010100",
+		"request_hex": "00000060000100100000011900096b61666b617465737400000003e80000000100a0000000000000000000000002ebb9e1c03194438f90f7f09cffae41a60200000000ffffffff0000000000000000ffffffffffffffffffffffff001000000000010100",
 		"response": "Nothing for about a second, then throttle_time_ms 0, top-level error_code 0, and the partition with error_code 0, high_watermark 0 and an empty records field",
-		"response_hex": "00000048000001190000000000000016fc4c8e020e280aa2bcc14d30adf8cd8b2d0844810200000000000000000000000000000000000000000000000000000000000000ffffffff01000000",
+		"response_hex": "00000048000001190000000000000011e444a402ebb9e1c03194438f90f7f09cffae41a60200000000000000000000000000000000000000000000000000000000000000ffffffff01000000",
 		"note": "Park the request instead of answering it: min_bytes 1 cannot be met, so the broker owes the client either a record or the timeout. Answering at once turns a consumer's poll loop into a busy loop, and blocking a whole thread on the sleep starves every other connection.",
 		"request_fields": [
 			{
@@ -90,7 +90,7 @@
 				"offset": 46,
 				"length": 16,
 				"field": "body.topics[0].topic_id",
-				"value": "0e280aa2-bcc1-4d30-adf8-cd8b2d084481",
+				"value": "ebb9e1c0-3194-438f-90f7-f09cffae41a6",
 				"varies": true
 			},
 			{
@@ -201,7 +201,7 @@
 				"offset": 15,
 				"length": 4,
 				"field": "body.session_id",
-				"value": "385633422",
+				"value": "300172452",
 				"varies": true
 			},
 			{
@@ -214,7 +214,7 @@
 				"offset": 20,
 				"length": 16,
 				"field": "body.responses[0].topic_id",
-				"value": "0e280aa2-bcc1-4d30-adf8-cd8b2d084481",
+				"value": "ebb9e1c0-3194-438f-90f7-f09cffae41a6",
 				"varies": true
 			},
 			{
@@ -294,12 +294,12 @@
 			"topics": {
 				"t1": {
 					"name": "t1-ex281",
-					"id": "0e280aa2-bcc1-4d30-adf8-cd8b2d084481",
+					"id": "ebb9e1c0-3194-438f-90f7-f09cffae41a6",
 					"partitions": 1
 				},
 				"t2": {
 					"name": "t2-ex281",
-					"id": "9d02e32b-6269-45d0-a069-e275cfffc5eb",
+					"id": "5ba349a9-59ec-4e85-96d5-fc1bb47d16d1",
 					"partitions": 1
 				}
 			},
@@ -310,9 +310,9 @@
 		"title": "The same poll where records already exist",
 		"kind": "wire",
 		"request": "The same request, correlation id 282, against a partition that already holds three records",
-		"request_hex": "00000060000100100000011a00096b61666b617465737400000003e80000000100a00000000000000000000000024826bcf3eb194514825f23c7ca2fd6f60200000000ffffffff0000000000000000ffffffffffffffffffffffff001000000000010100",
+		"request_hex": "00000060000100100000011a00096b61666b617465737400000003e80000000100a0000000000000000000000002415db304fb7a4cc6998e039c4bac8ed80200000000ffffffff0000000000000000ffffffffffffffffffffffff001000000000010100",
 		"response": "Immediately, in milliseconds: error_code 0, high_watermark 3, and the batch carrying 'r0', 'r1' and 'r2'",
-		"response_hex": "000000a00000011a0000000000000023c474eb024826bcf3eb194514825f23c7ca2fd6f60200000000000000000000000000030000000000000003000000000000000000ffffffff5900000000000000000000004c00000000021be011e6000000000002000001a0b8dc641a000001a0b8dc641affffffffffffffffffffffffffff00000003100000000104723000100000020104723100100000040104723200000000",
+		"response_hex": "000000a00000011a0000000000000023a0cfb702415db304fb7a4cc6998e039c4bac8ed80200000000000000000000000000030000000000000003000000000000000000ffffffff5900000000000000000000004c0000000002ad142635000000000002000001a0b8e4f87a000001a0b8e4f87affffffffffffffffffffffffffff00000003100000000104723000100000020104723100100000040104723200000000",
 		"note": "min_bytes is tested before the wait begins, and again every time the log grows — a produce that lands while the fetch is parked must complete it there and then, not leave the consumer to wait out max_wait_ms for data that is already on disk.",
 		"request_fields": [
 			{
@@ -397,7 +397,7 @@
 				"offset": 46,
 				"length": 16,
 				"field": "body.topics[0].topic_id",
-				"value": "4826bcf3-eb19-4514-825f-23c7ca2fd6f6",
+				"value": "415db304-fb7a-4cc6-998e-039c4bac8ed8",
 				"varies": true
 			},
 			{
@@ -508,7 +508,7 @@
 				"offset": 15,
 				"length": 4,
 				"field": "body.session_id",
-				"value": "600077547",
+				"value": "597741495",
 				"varies": true
 			},
 			{
@@ -521,7 +521,7 @@
 				"offset": 20,
 				"length": 16,
 				"field": "body.responses[0].topic_id",
-				"value": "4826bcf3-eb19-4514-825f-23c7ca2fd6f6",
+				"value": "415db304-fb7a-4cc6-998e-039c4bac8ed8",
 				"varies": true
 			},
 			{
@@ -606,7 +606,7 @@
 				"offset": 90,
 				"length": 4,
 				"field": "body.responses[0].partitions[0].records.batch[0].crc",
-				"value": "0x1be011e6 (CRC-32C of everything after this field)",
+				"value": "0xad142635 (CRC-32C of everything after this field)",
 				"varies": true
 			},
 			{
@@ -625,14 +625,14 @@
 				"offset": 100,
 				"length": 8,
 				"field": "body.responses[0].partitions[0].records.batch[0].base_timestamp",
-				"value": "1789807846426",
+				"value": "1789808408698",
 				"varies": true
 			},
 			{
 				"offset": 108,
 				"length": 8,
 				"field": "body.responses[0].partitions[0].records.batch[0].max_timestamp",
-				"value": "1789807846426",
+				"value": "1789808408698",
 				"varies": true
 			},
 			{
@@ -724,12 +724,12 @@
 			"topics": {
 				"t1": {
 					"name": "t1-ex282",
-					"id": "04597d37-3ce7-44f2-b0a5-3d0409cf5e32",
+					"id": "f0594040-3b17-4220-a19c-45b972c79039",
 					"partitions": 1
 				},
 				"t2": {
 					"name": "t2-ex282",
-					"id": "4826bcf3-eb19-4514-825f-23c7ca2fd6f6",
+					"id": "415db304-fb7a-4cc6-998e-039c4bac8ed8",
 					"partitions": 1
 				}
 			},

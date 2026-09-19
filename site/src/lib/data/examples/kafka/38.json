@@ -207,7 +207,7 @@
 			"topics": {
 				"t1": {
 					"name": "t1-ex381",
-					"id": "06139869-2464-47a6-9e5b-1a427fa06b99",
+					"id": "39e4fd74-678c-40a5-9f19-490fb704c009",
 					"partitions": 1
 				}
 			},
@@ -422,7 +422,7 @@
 			"topics": {
 				"t1": {
 					"name": "t1-ex382",
-					"id": "f50fef10-c87d-4d82-9bbe-7cd320f6c5c6",
+					"id": "f54974ae-0466-4f52-927e-d917a46d74a4",
 					"partitions": 1
 				}
 			},

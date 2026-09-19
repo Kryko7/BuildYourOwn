@@ -1,0 +1,81 @@
+[
+	{
+		"title": "AddPartitionsToTxn before the first write",
+		"kind": "wire",
+		"request": "AddPartitionsToTxn (api_key 24) v3, correlation id 471: the transactional id, the producer id and epoch the coordinator handed out, and the topics and partitions this transaction is about to write to",
+		"request_hex": "0000003600180003000001d700096b61666b617465737400166b61666b61746573742d6578616d706c652d74786e0000000000015f9000000100",
+		"response": "One entry per partition, each with error_code 0",
+		"response_hex": "0000000b000001d700000000000100",
+		"note": "This is the step that makes an abort possible. The coordinator records the partitions, and if the transaction ends in an abort it knows which logs need an abort marker — without it there would be records in partitions nobody could tell a consumer to ignore.",
+		"request_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "54 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 2,
+				"field": "header.api_key",
+				"value": "24 (AddPartitionsToTxn)"
+			},
+			{
+				"offset": 6,
+				"length": 2,
+				"field": "header.api_version",
+				"value": "3"
+			},
+			{
+				"offset": 8,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "471"
+			},
+			{
+				"offset": 12,
+				"length": 11,
+				"field": "header.client_id",
+				"value": "'kafkatest'"
+			},
+			{
+				"offset": 23,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 24,
+				"length": 34,
+				"field": "body",
+				"value": "34 bytes — a request body this harness does not annotate"
+			}
+		],
+		"response_fields": [
+			{
+				"offset": 0,
+				"length": 4,
+				"field": "size",
+				"value": "11 (bytes that follow)"
+			},
+			{
+				"offset": 4,
+				"length": 4,
+				"field": "header.correlation_id",
+				"value": "471"
+			},
+			{
+				"offset": 8,
+				"length": 1,
+				"field": "header.tagged_fields",
+				"value": "0 tagged fields"
+			},
+			{
+				"offset": 9,
+				"length": 6,
+				"field": "body",
+				"value": "6 bytes — a response body this harness does not annotate"
+			}
+		]
+	}
+]

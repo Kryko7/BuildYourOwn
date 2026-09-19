@@ -5,7 +5,7 @@
 		"request": "DeleteTopics v6, correlation id 181, one {name = the fixture topic, topic_id = all zeroes} entry, timeout_ms 5000",
 		"request_hex": "0000003800140006000000b500096b61666b617465737400020d646f6f6d65642d657831383100000000000000000000000000000000000000138800",
 		"response": "throttle_time_ms, then one responses entry: the name echoed, topic_id filled in with the topic's real id — the broker resolved the name before deleting — error_code 0 (NONE) and error_message null",
-		"response_hex": "0000002c000000b50000000000020d646f6f6d65642d657831383183990c1cf25c46b7b51c1b9d0d85cec00000000000",
+		"response_hex": "0000002c000000b50000000000020d646f6f6d65642d65783138315d3f658b6ad74c12b2e18466e56ea10c0000000000",
 		"note": "Deletion is keyed by id: resolve the name, write a RemoveTopicRecord for that id, then answer. Once the record is published, DescribeTopicPartitions for the same name is error 3 again with an all-zero topic_id, and re-creating the name mints a brand new id.",
 		"request_fields": [
 			{
@@ -122,7 +122,7 @@
 				"offset": 27,
 				"length": 16,
 				"field": "body.responses[0].topic_id",
-				"value": "83990c1c-f25c-46b7-b51c-1b9d0d85cec0",
+				"value": "5d3f658b-6ad7-4c12-b2e1-8466e56ea10c",
 				"varies": true
 			},
 			{
@@ -154,7 +154,7 @@
 			"topics": {
 				"doomed": {
 					"name": "doomed-ex181",
-					"id": "83990c1c-f25c-46b7-b51c-1b9d0d85cec0",
+					"id": "5d3f658b-6ad7-4c12-b2e1-8466e56ea10c",
 					"partitions": 2
 				}
 			},

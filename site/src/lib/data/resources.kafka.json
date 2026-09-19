@@ -38,7 +38,8 @@
 			40,
 			41,
 			42,
-			46
+			46,
+			47
 		],
 		"concepts": [
 			"wire-protocol",
@@ -2180,7 +2181,8 @@
 		"level": "core",
 		"track": "kafka",
 		"stages": [
-			46
+			46,
+			47
 		],
 		"concepts": [
 			"transactions",
@@ -2200,7 +2202,8 @@
 		"level": "intro",
 		"track": "kafka",
 		"stages": [
-			46
+			46,
+			47
 		],
 		"concepts": [
 			"transactions",
@@ -2220,7 +2223,8 @@
 		"level": "intro",
 		"track": "kafka",
 		"stages": [
-			46
+			46,
+			47
 		],
 		"concepts": [
 			"exactly-once",
@@ -2260,7 +2264,8 @@
 		"level": "deep",
 		"track": "kafka",
 		"stages": [
-			46
+			46,
+			47
 		],
 		"concepts": [
 			"transactions",
@@ -2269,6 +2274,26 @@
 		],
 		"why": "What went wrong with the first design at scale — one transactional id per input partition — and how fencing moved to the consumer group generation instead. Worth reading once the basic mechanism is clear, because it explains why the API has the shape it does today.",
 		"minutes": 45,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "kafka-read-committed-semantics",
+		"title": "isolation.level and what READ_COMMITTED actually does (Kafka consumer configuration)",
+		"url": "https://kafka.apache.org/documentation/#consumerconfigs_isolation.level",
+		"type": "doc",
+		"level": "core",
+		"track": "kafka",
+		"stages": [
+			47
+		],
+		"concepts": [
+			"read-committed",
+			"last-stable-offset",
+			"aborted-transactions"
+		],
+		"why": "Says the part stage 47's filtering test is about: read_committed returns everything below the last stable offset and *includes the list of aborted transactions so the consumer can discard those records*. The broker does not strip them out, and a consumer that ignores the list reads data that was never committed.",
+		"minutes": 10,
 		"free": true,
 		"checkedAt": "2026-09-19"
 	}

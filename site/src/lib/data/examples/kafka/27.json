@@ -3,9 +3,9 @@
 		"title": "A gzip batch comes back still compressed",
 		"kind": "wire",
 		"request": "Fetch v16, correlation id 271: partition 0 from offset 0 of a topic holding one gzip-compressed batch of two records, 'gzip-0' and 'gzip-1'",
-		"request_hex": "00000060000100100000010f00096b61666b617465737400000001f40000000100a000000000000000000000000214ff8589c628496494aa9f98bc3f8cfd0200000000ffffffff0000000000000000ffffffffffffffffffffffff001000000000010100",
+		"request_hex": "00000060000100100000010f00096b61666b617465737400000001f40000000100a0000000000000000000000002bc4c4a7e9e6f419ebf6fe38e459aa3330200000000ffffffff0000000000000000ffffffffffffffffffffffff001000000000010100",
 		"response": "error_code 0, high_watermark 2, and the stored batch byte for byte: attributes 0x0001 — bits 0-2 carry the codec, 1 is gzip — last_offset_delta 1, a record count of 2, and a gzip stream where the plain records would otherwise be",
-		"response_hex": "000000ad0000010f0000000000000073cb36700214ff8589c628496494aa9f98bc3f8cfd0200000000000000000000000000020000000000000002000000000000000000ffffffff6600000000000000000000005900000000025750410d000100000001000001a0b8dc5e07000001a0b8dc5e07ffffffffffffffffffffffffffff000000021f8b08000000000000ff9360606060e449afca2cd035609060606082720c1900e754d9551a000000000000",
+		"response_hex": "000000ad0000010f000000000000007cd8fd9702bc4c4a7e9e6f419ebf6fe38e459aa3330200000000000000000000000000020000000000000002000000000000000000ffffffff660000000000000000000000590000000002c9cfbd93000100000001000001a0b8e4f231000001a0b8e4f231ffffffffffffffffffffffffffff000000021f8b08000000000000ff9360606060e449afca2cd035609060606082720c1900e754d9551a000000000000",
 		"note": "Serving this fetch needs no decompression at all: the batch header is plain, and the record count already says how many records are inside the blob. Decompressing and re-encoding would change the bytes and invalidate the CRC.",
 		"request_fields": [
 			{
@@ -90,7 +90,7 @@
 				"offset": 46,
 				"length": 16,
 				"field": "body.topics[0].topic_id",
-				"value": "14ff8589-c628-4964-94aa-9f98bc3f8cfd",
+				"value": "bc4c4a7e-9e6f-419e-bf6f-e38e459aa333",
 				"varies": true
 			},
 			{
@@ -201,7 +201,7 @@
 				"offset": 15,
 				"length": 4,
 				"field": "body.session_id",
-				"value": "1942697584",
+				"value": "2094595479",
 				"varies": true
 			},
 			{
@@ -214,7 +214,7 @@
 				"offset": 20,
 				"length": 16,
 				"field": "body.responses[0].topic_id",
-				"value": "14ff8589-c628-4964-94aa-9f98bc3f8cfd",
+				"value": "bc4c4a7e-9e6f-419e-bf6f-e38e459aa333",
 				"varies": true
 			},
 			{
@@ -299,7 +299,7 @@
 				"offset": 90,
 				"length": 4,
 				"field": "body.responses[0].partitions[0].records.batch[0].crc",
-				"value": "0x5750410d (CRC-32C of everything after this field)",
+				"value": "0xc9cfbd93 (CRC-32C of everything after this field)",
 				"varies": true
 			},
 			{
@@ -318,14 +318,14 @@
 				"offset": 100,
 				"length": 8,
 				"field": "body.responses[0].partitions[0].records.batch[0].base_timestamp",
-				"value": "1789807844871",
+				"value": "1789808407089",
 				"varies": true
 			},
 			{
 				"offset": 108,
 				"length": 8,
 				"field": "body.responses[0].partitions[0].records.batch[0].max_timestamp",
-				"value": "1789807844871",
+				"value": "1789808407089",
 				"varies": true
 			},
 			{
@@ -375,7 +375,7 @@
 			"topics": {
 				"t1": {
 					"name": "t1-ex271",
-					"id": "14ff8589-c628-4964-94aa-9f98bc3f8cfd",
+					"id": "bc4c4a7e-9e6f-419e-bf6f-e38e459aa333",
 					"partitions": 1
 				}
 			},
@@ -386,9 +386,9 @@
 		"title": "Four codecs in one partition",
 		"kind": "wire",
 		"request": "The same request against a partition holding four two-record batches: gzip at offsets 0-1, snappy at 2-3, lz4 at 4-5, zstd at 6-7",
-		"request_hex": "00000060000100100000011000096b61666b617465737400000001f40000000100a000000000000000000000000292ad26cd75664e119f963ecad51276e80200000000ffffffff0000000000000000ffffffffffffffffffffffff001000000000010100",
+		"request_hex": "00000060000100100000011000096b61666b617465737400000001f40000000100a00000000000000000000000020339b42e2e2f4025b0d4fbf30260d1330200000000ffffffff0000000000000000ffffffffffffffffffffffff001000000000010100",
 		"response": "error_code 0, high_watermark 8, and the four batches concatenated in offset order, each keeping its own attributes — 0x0001, 0x0002, 0x0003, 0x0004",
-		"response_hex": "000001eb000001100000000000000006cf5b220292ad26cd75664e119f963ecad51276e80200000000000000000000000000080000000000000008000000000000000000ffffffffa30300000000000000000000005900000000027682288c000100000001000001a0b8dc5e95000001a0b8dc5e95ffffffffffffffffffffffffffff000000021f8b08000000000000ff9360606060e449afca2cd035609060606082720c1900e754d9551a0000000000000000000002000000650000000002a439970c000200000001000001a0b8dc5e97000001a0b8dc5e97ffffffffffffffffffffffffffff0000000282534e41505059000000000100000001000000201e741c0000000110736e617070792d30001c0000020110736e617070792d31000000000000000004000000600000000002c78103af000300000001000001a0b8dc5ea7000001a0b8dc5ea7ffffffffffffffffffffffffffff0000000204224d187440bd1800008016000000010a6c7a342d300016000002010a6c7a342d3100f19f758100000000f19f7581000000000000000600000054000000000238f1489e000400000001000001a0b8dc5eaf000001a0b8dc5eafffffffffffffffffffffffffffff0000000228b52ffd0058d1000018000000010c7a7374642d300018000002010c7a7374642d3100000000",
+		"response_hex": "000001eb00000110000000000000000f995197020339b42e2e2f4025b0d4fbf30260d1330200000000000000000000000000080000000000000008000000000000000000ffffffffa30300000000000000000000005900000000027f5a6325000100000001000001a0b8e4f2f5000001a0b8e4f2f5ffffffffffffffffffffffffffff000000021f8b08000000000000ff9360606060e449afca2cd035609060606082720c1900e754d9551a0000000000000000000002000000650000000002144a74ec000200000001000001a0b8e4f2f8000001a0b8e4f2f8ffffffffffffffffffffffffffff0000000282534e41505059000000000100000001000000201e741c0000000110736e617070792d30001c0000020110736e617070792d310000000000000000040000006000000000029489c56d000300000001000001a0b8e4f30f000001a0b8e4f30fffffffffffffffffffffffffffff0000000204224d187440bd1800008016000000010a6c7a342d300016000002010a6c7a342d3100f19f758100000000f19f75810000000000000006000000540000000002e1c2e9ec000400000001000001a0b8e4f316000001a0b8e4f316ffffffffffffffffffffffffffff0000000228b52ffd0058d1000018000000010c7a7374642d300018000002010c7a7374642d3100000000",
 		"note": "Compression is a property of a batch, not of a topic or a partition, so any mixture is legal. Kafka's framings are specific — snappy is xerial-framed, lz4 is the LZ4 frame format — but the fetch path never has to know which is which.",
 		"request_fields": [
 			{
@@ -473,7 +473,7 @@
 				"offset": 46,
 				"length": 16,
 				"field": "body.topics[0].topic_id",
-				"value": "92ad26cd-7566-4e11-9f96-3ecad51276e8",
+				"value": "0339b42e-2e2f-4025-b0d4-fbf30260d133",
 				"varies": true
 			},
 			{
@@ -584,7 +584,7 @@
 				"offset": 15,
 				"length": 4,
 				"field": "body.session_id",
-				"value": "114252578",
+				"value": "261706135",
 				"varies": true
 			},
 			{
@@ -597,7 +597,7 @@
 				"offset": 20,
 				"length": 16,
 				"field": "body.responses[0].topic_id",
-				"value": "92ad26cd-7566-4e11-9f96-3ecad51276e8",
+				"value": "0339b42e-2e2f-4025-b0d4-fbf30260d133",
 				"varies": true
 			},
 			{
@@ -682,7 +682,7 @@
 				"offset": 91,
 				"length": 4,
 				"field": "body.responses[0].partitions[0].records.batch[0].crc",
-				"value": "0x7682288c (CRC-32C of everything after this field)",
+				"value": "0x7f5a6325 (CRC-32C of everything after this field)",
 				"varies": true
 			},
 			{
@@ -701,14 +701,14 @@
 				"offset": 101,
 				"length": 8,
 				"field": "body.responses[0].partitions[0].records.batch[0].base_timestamp",
-				"value": "1789807845013",
+				"value": "1789808407285",
 				"varies": true
 			},
 			{
 				"offset": 109,
 				"length": 8,
 				"field": "body.responses[0].partitions[0].records.batch[0].max_timestamp",
-				"value": "1789807845013",
+				"value": "1789808407285",
 				"varies": true
 			},
 			{
@@ -758,7 +758,7 @@
 			"topics": {
 				"t1": {
 					"name": "t1-ex272",
-					"id": "92ad26cd-7566-4e11-9f96-3ecad51276e8",
+					"id": "0339b42e-2e2f-4025-b0d4-fbf30260d133",
 					"partitions": 1
 				}
 			},

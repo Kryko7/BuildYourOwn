@@ -3,9 +3,9 @@
 		"title": "Fetch the only record in the log",
 		"kind": "wire",
 		"request": "Fetch v16, correlation id 231: the fixture topic's id, partition 0, fetch_offset 0, partition_max_bytes 1048576",
-		"request_hex": "0000006000010010000000e700096b61666b617465737400000003e80000000100a00000000000000000000000021c5acfe7510242bf9a8f0deb92dddcf00200000000ffffffff0000000000000000ffffffffffffffffffffffff001000000000010100",
+		"request_hex": "0000006000010010000000e700096b61666b617465737400000003e80000000100a0000000000000000000000002dfd741bab79f4b999b1254700112a4960200000000ffffffff0000000000000000ffffffffffffffffffffffff001000000000010100",
 		"response": "error_code 0, log_start_offset 0, high_watermark 1, and a records field holding one v2 RecordBatch exactly as it sits in the segment: base_offset 0, last_offset_delta 0, magic 2, attributes 0, a CRC-32C over everything that follows it, and one record whose value is 'hello kafkatest'",
-		"response_hex": "0000009b000000e70000000000000077c4b55d021c5acfe7510242bf9a8f0deb92dddcf00200000000000000000000000000010000000000000001000000000000000000ffffffff540000000000000000000000470000000002c4fcb473000000000000000001a0b8dc58b6000001a0b8dc58b6ffffffffffffffffffffffffffff000000012a000000011e68656c6c6f206b61666b617465737400000000",
+		"response_hex": "0000009b000000e7000000000000007e6ab82002dfd741bab79f4b999b1254700112a4960200000000000000000000000000010000000000000001000000000000000000ffffffff540000000000000000000000470000000002ccb9fd48000000000000000001a0b8e4ec66000001a0b8e4ec66ffffffffffffffffffffffffffff000000012a000000011e68656c6c6f206b61666b617465737400000000",
 		"note": "high_watermark is the offset *after* the last record, so one record means 1. The batch is copied out of 00000000000000000000.log untouched — re-encoding it, even field for field, is how the CRC stops matching and clients start reporting corrupt messages.",
 		"request_fields": [
 			{
@@ -90,7 +90,7 @@
 				"offset": 46,
 				"length": 16,
 				"field": "body.topics[0].topic_id",
-				"value": "1c5acfe7-5102-42bf-9a8f-0deb92dddcf0",
+				"value": "dfd741ba-b79f-4b99-9b12-54700112a496",
 				"varies": true
 			},
 			{
@@ -201,7 +201,7 @@
 				"offset": 15,
 				"length": 4,
 				"field": "body.session_id",
-				"value": "2009380189",
+				"value": "2120923168",
 				"varies": true
 			},
 			{
@@ -214,7 +214,7 @@
 				"offset": 20,
 				"length": 16,
 				"field": "body.responses[0].topic_id",
-				"value": "1c5acfe7-5102-42bf-9a8f-0deb92dddcf0",
+				"value": "dfd741ba-b79f-4b99-9b12-54700112a496",
 				"varies": true
 			},
 			{
@@ -299,7 +299,7 @@
 				"offset": 90,
 				"length": 4,
 				"field": "body.responses[0].partitions[0].records.batch[0].crc",
-				"value": "0xc4fcb473 (CRC-32C of everything after this field)",
+				"value": "0xccb9fd48 (CRC-32C of everything after this field)",
 				"varies": true
 			},
 			{
@@ -318,14 +318,14 @@
 				"offset": 100,
 				"length": 8,
 				"field": "body.responses[0].partitions[0].records.batch[0].base_timestamp",
-				"value": "1789807843510",
+				"value": "1789808405606",
 				"varies": true
 			},
 			{
 				"offset": 108,
 				"length": 8,
 				"field": "body.responses[0].partitions[0].records.batch[0].max_timestamp",
-				"value": "1789807843510",
+				"value": "1789808405606",
 				"varies": true
 			},
 			{
@@ -417,7 +417,7 @@
 			"topics": {
 				"t1": {
 					"name": "t1-ex231",
-					"id": "1c5acfe7-5102-42bf-9a8f-0deb92dddcf0",
+					"id": "dfd741ba-b79f-4b99-9b12-54700112a496",
 					"partitions": 1
 				}
 			},
@@ -428,9 +428,9 @@
 		"title": "Fetch at the offset after that record",
 		"kind": "wire",
 		"request": "The same topic and partition, fetch_offset 1, max_wait_ms 0",
-		"request_hex": "0000006000010010000000e800096b61666b617465737400000000000000000100a000000000000000000000000267fbb025f7d44fafa69edc188d3a254b0200000000ffffffff0000000000000001ffffffffffffffffffffffff001000000000010100",
+		"request_hex": "0000006000010010000000e800096b61666b617465737400000000000000000100a00000000000000000000000026b8046c41fc94caf94afb96eb5c655420200000000ffffffff0000000000000001ffffffffffffffffffffffff001000000000010100",
 		"response": "error_code 0 again, high_watermark still 1, and an empty records field",
-		"response_hex": "00000048000000e8000000000000000d829c8f0267fbb025f7d44fafa69edc188d3a254b0200000000000000000000000000010000000000000001000000000000000000ffffffff01000000",
+		"response_hex": "00000048000000e8000000000000000ed1018a026b8046c41fc94caf94afb96eb5c655420200000000000000000000000000010000000000000001000000000000000000ffffffff01000000",
 		"note": "fetch_offset == high_watermark means 'caught up', not an error. This is the request a consumer repeats once it has read everything; answering 1 (OFFSET_OUT_OF_RANGE) here sends it back to the start of the log.",
 		"request_fields": [
 			{
@@ -515,7 +515,7 @@
 				"offset": 46,
 				"length": 16,
 				"field": "body.topics[0].topic_id",
-				"value": "67fbb025-f7d4-4faf-a69e-dc188d3a254b",
+				"value": "6b8046c4-1fc9-4caf-94af-b96eb5c65542",
 				"varies": true
 			},
 			{
@@ -626,7 +626,7 @@
 				"offset": 15,
 				"length": 4,
 				"field": "body.session_id",
-				"value": "226663567",
+				"value": "248578442",
 				"varies": true
 			},
 			{
@@ -639,7 +639,7 @@
 				"offset": 20,
 				"length": 16,
 				"field": "body.responses[0].topic_id",
-				"value": "67fbb025-f7d4-4faf-a69e-dc188d3a254b",
+				"value": "6b8046c4-1fc9-4caf-94af-b96eb5c65542",
 				"varies": true
 			},
 			{
@@ -719,7 +719,7 @@
 			"topics": {
 				"t1": {
 					"name": "t1-ex232",
-					"id": "67fbb025-f7d4-4faf-a69e-dc188d3a254b",
+					"id": "6b8046c4-1fc9-4caf-94af-b96eb5c65542",
 					"partitions": 1
 				}
 			},

@@ -3,9 +3,9 @@
 		"title": "Fetch from an offset inside a batch",
 		"kind": "wire",
 		"request": "Fetch v16, correlation id 251, fetch_offset 4. The partition holds three batches: offsets 0-2, 3-4 and 5",
-		"request_hex": "0000006000010010000000fb00096b61666b617465737400000001f40000000100a0000000000000000000000002d6cb47a57b824d8291a25738a5a12b150200000000ffffffff0000000000000004ffffffffffffffffffffffff001000000000010100",
+		"request_hex": "0000006000010010000000fb00096b61666b617465737400000001f40000000100a0000000000000000000000002c8d6f88502884e55a916921bb36b13ac0200000000ffffffff0000000000000004ffffffffffffffffffffffff001000000000010100",
 		"response": "error_code 0, log_start_offset 0, high_watermark 6, and records that begin at base_offset 3 — the whole batch containing offset 4 — followed by the batch at 5",
-		"response_hex": "000000de000000fb00000000000000308b499602d6cb47a57b824d8291a25738a5a12b150200000000000000000000000000060000000000000006000000000000000000ffffffff9601000000000000000300000043000000000230517497000000000001000001a0b8dc5b66000001a0b8dc5b66ffffffffffffffffffffffffffff0000000210000000010461330010000002010461340000000000000000050000003a0000000002d1d32923000000000000000001a0b8dc5b68000001a0b8dc5b68ffffffffffffffffffffffffffff00000001100000000104613500000000",
+		"response_hex": "000000de000000fb000000000000003a0bb99e02c8d6f88502884e55a916921bb36b13ac0200000000000000000000000000060000000000000006000000000000000000ffffffff960100000000000000030000004300000000024ac46737000000000001000001a0b8e4ef51000001a0b8e4ef51ffffffffffffffffffffffffffff0000000210000000010461330010000002010461340000000000000000050000003a0000000002ed5de331000000000000000001a0b8e4ef52000001a0b8e4ef52ffffffffffffffffffffffffffff00000001100000000104613500000000",
 		"note": "Never split a batch. Find the first batch whose last offset is >= fetch_offset and start sending there; record 3 comes back although nobody asked for it, and the client discards it. Cutting the batch open would break its CRC and its record count.",
 		"request_fields": [
 			{
@@ -90,7 +90,7 @@
 				"offset": 46,
 				"length": 16,
 				"field": "body.topics[0].topic_id",
-				"value": "d6cb47a5-7b82-4d82-91a2-5738a5a12b15",
+				"value": "c8d6f885-0288-4e55-a916-921bb36b13ac",
 				"varies": true
 			},
 			{
@@ -201,7 +201,7 @@
 				"offset": 15,
 				"length": 4,
 				"field": "body.session_id",
-				"value": "814434710",
+				"value": "973846942",
 				"varies": true
 			},
 			{
@@ -214,7 +214,7 @@
 				"offset": 20,
 				"length": 16,
 				"field": "body.responses[0].topic_id",
-				"value": "d6cb47a5-7b82-4d82-91a2-5738a5a12b15",
+				"value": "c8d6f885-0288-4e55-a916-921bb36b13ac",
 				"varies": true
 			},
 			{
@@ -299,7 +299,7 @@
 				"offset": 91,
 				"length": 4,
 				"field": "body.responses[0].partitions[0].records.batch[0].crc",
-				"value": "0x30517497 (CRC-32C of everything after this field)",
+				"value": "0x4ac46737 (CRC-32C of everything after this field)",
 				"varies": true
 			},
 			{
@@ -318,14 +318,14 @@
 				"offset": 101,
 				"length": 8,
 				"field": "body.responses[0].partitions[0].records.batch[0].base_timestamp",
-				"value": "1789807844198",
+				"value": "1789808406353",
 				"varies": true
 			},
 			{
 				"offset": 109,
 				"length": 8,
 				"field": "body.responses[0].partitions[0].records.batch[0].max_timestamp",
-				"value": "1789807844198",
+				"value": "1789808406353",
 				"varies": true
 			},
 			{
@@ -417,7 +417,7 @@
 			"topics": {
 				"t1": {
 					"name": "t1-ex251",
-					"id": "d6cb47a5-7b82-4d82-91a2-5738a5a12b15",
+					"id": "c8d6f885-0288-4e55-a916-921bb36b13ac",
 					"partitions": 1
 				}
 			},
@@ -428,9 +428,9 @@
 		"title": "Fetch past the end of the log",
 		"kind": "wire",
 		"request": "The same partition, fetch_offset 12, while the high watermark is 6",
-		"request_hex": "0000006000010010000000fc00096b61666b617465737400000001f40000000100a0000000000000000000000002e910c6b815d3469d9e0ebf3a2524c7d00200000000ffffffff000000000000000cffffffffffffffffffffffff001000000000010100",
+		"request_hex": "0000006000010010000000fc00096b61666b617465737400000001f40000000100a000000000000000000000000299d10fe1d0f94e6f848b0dbb248ca56e0200000000ffffffff000000000000000cffffffffffffffffffffffff001000000000010100",
 		"response": "Top-level error_code 0 still, and on the partition error_code 1 (OFFSET_OUT_OF_RANGE) with no records",
-		"response_hex": "00000048000000fc000000000000004fc108de02e910c6b815d3469d9e0ebf3a2524c7d002000000000001ffffffffffffffffffffffffffffffffffffffffffffffff00ffffffff01000000",
+		"response_hex": "00000048000000fc000000000000004bb5b0a40299d10fe1d0f94e6f848b0dbb248ca56e02000000000001ffffffffffffffffffffffffffffffffffffffffffffffff00ffffffff01000000",
 		"note": "Above the high watermark, or below log_start_offset (a negative offset included), is error 1. Exactly *at* the high watermark is not: that is the caught-up consumer, and it must get error 0 with an empty records field.",
 		"request_fields": [
 			{
@@ -515,7 +515,7 @@
 				"offset": 46,
 				"length": 16,
 				"field": "body.topics[0].topic_id",
-				"value": "e910c6b8-15d3-469d-9e0e-bf3a2524c7d0",
+				"value": "99d10fe1-d0f9-4e6f-848b-0dbb248ca56e",
 				"varies": true
 			},
 			{
@@ -626,7 +626,7 @@
 				"offset": 15,
 				"length": 4,
 				"field": "body.session_id",
-				"value": "1338050782",
+				"value": "1270198436",
 				"varies": true
 			},
 			{
@@ -639,7 +639,7 @@
 				"offset": 20,
 				"length": 16,
 				"field": "body.responses[0].topic_id",
-				"value": "e910c6b8-15d3-469d-9e0e-bf3a2524c7d0",
+				"value": "99d10fe1-d0f9-4e6f-848b-0dbb248ca56e",
 				"varies": true
 			},
 			{
@@ -719,7 +719,7 @@
 			"topics": {
 				"t1": {
 					"name": "t1-ex252",
-					"id": "e910c6b8-15d3-469d-9e0e-bf3a2524c7d0",
+					"id": "99d10fe1-d0f9-4e6f-848b-0dbb248ca56e",
 					"partitions": 1
 				}
 			},

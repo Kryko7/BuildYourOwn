@@ -5,7 +5,7 @@
 		"request": "FindCoordinator v4, key_type 0 (a consumer group), with a single entry in coordinator_keys: the group id 'kafkatest-group'",
 		"request_hex": "00000027000a00040000018700096b61666b6174657374000002106b61666b61746573742d67726f757000",
 		"response": "Top-level error_code 0 and throttle_time_ms 0, then one coordinators entry whose key is the group id it was asked about, error_code 0 (NONE), error_message null, and the node_id, host and port of the broker that owns __consumer_offsets-(hash(group) % partitions) — the same address Metadata advertises for that node",
-		"response_hex": "0000003100000187000000000002106b61666b61746573742d67726f7570000000010a3132372e302e302e310000a7b70000010000",
+		"response_hex": "0000003100000187000000000002106b61666b61746573742d67726f7570000000010a3132372e302e302e310000b3810000010000",
 		"note": "Answer the host and port a client can actually reach, not the socket this request arrived on: the client opens a fresh connection to whatever you return and sends every group request there. Apache Kafka creates __consumer_offsets lazily, so the very first lookup after a cold start can be 15 COORDINATOR_NOT_AVAILABLE for a few hundred milliseconds; a client retries.",
 		"request_fields": [
 			{
@@ -123,7 +123,7 @@
 				"offset": 44,
 				"length": 4,
 				"field": "body.coordinators[0].port",
-				"value": "42935",
+				"value": "45953",
 				"varies": true
 			},
 			{
@@ -158,7 +158,7 @@
 		"request": "The same request with two coordinator_keys: 'kafkatest-group' and 'kafkatest-never-used', a group id nothing has ever joined or committed to",
 		"request_hex": "0000003c000a00040000018800096b61666b6174657374000003106b61666b61746573742d67726f7570156b61666b61746573742d6e657665722d7573656400",
 		"response": "coordinators has two entries, in the order the keys were asked, each carrying its own key and error_code 0; on a single-broker cluster both name the same node_id, host and port. The unused group is answered exactly like the used one",
-		"response_hex": "0000005c00000188000000000003106b61666b61746573742d67726f7570000000010a3132372e302e302e310000a7b700000100156b61666b61746573742d6e657665722d75736564000000010a3132372e302e302e310000a7b70000010000",
+		"response_hex": "0000005c00000188000000000003106b61666b61746573742d67726f7570000000010a3132372e302e302e310000b38100000100156b61666b61746573742d6e657665722d75736564000000010a3132372e302e302e310000b3810000010000",
 		"note": "Resolving a coordinator is arithmetic over the group id, not a lookup of group state: a group that does not exist yet still has the broker that would own it. v4 is also a batch API — every key gets its own error_code and the top-level error_code stays 0, which is what lets a client resolve several groups in one round trip.",
 		"request_fields": [
 			{
@@ -276,7 +276,7 @@
 				"offset": 44,
 				"length": 4,
 				"field": "body.coordinators[0].port",
-				"value": "42935",
+				"value": "45953",
 				"varies": true
 			},
 			{

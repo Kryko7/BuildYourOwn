@@ -5,7 +5,7 @@
 		"request": "DescribeTopicPartitions v0, correlation id 131, the fixture topic (3 partitions), response_partition_limit 100",
 		"request_hex": "00000025004b00000000008300096b61666b617465737400020974312d65783133310000000064ff00",
 		"response": "One topics entry with error_code 0 and its real topic id, holding a compact array of three partitions with partition_index 0, 1 and 2 in that order; each has error_code 0, a leader_id, a leader_epoch, replica_nodes and isr_nodes naming the one broker, and nothing in the three remaining arrays. next_cursor is null, since all three fitted under the limit",
-		"response_hex": "000000820000008300000000000200000974312d657831333178310364f91f429fad95365e7d4079ed000400000000000000000001000000000200000001020000000101010100000000000001000000010000000002000000010200000001010101000000000000020000000100000000020000000102000000010101010000000df800ff00",
+		"response_hex": "000000820000008300000000000200000974312d6578313331551c1b40988a4723bb0c66de4e34d0b3000400000000000000000001000000000200000001020000000101010100000000000001000000010000000002000000010200000001010101000000000000020000000100000000020000000102000000010101010000000df800ff00",
 		"note": "The metadata log stores one PartitionRecord per partition and not necessarily in index order, so sort before you write. Five compact arrays follow each leader_epoch (replicas, ISR, eligible leader replicas, last known ELR, offline replicas) — a forgotten empty one is the usual cause of a body that will not decode.",
 		"request_fields": [
 			{
@@ -128,7 +128,7 @@
 				"offset": 25,
 				"length": 16,
 				"field": "body.topics[0].topic_id",
-				"value": "78310364-f91f-429f-ad95-365e7d4079ed",
+				"value": "551c1b40-988a-4723-bb0c-66de4e34d0b3",
 				"varies": true
 			},
 			{
@@ -244,7 +244,7 @@
 			"topics": {
 				"t1": {
 					"name": "t1-ex131",
-					"id": "78310364-f91f-429f-ad95-365e7d4079ed",
+					"id": "551c1b40-988a-4723-bb0c-66de4e34d0b3",
 					"partitions": 3
 				}
 			},
@@ -257,7 +257,7 @@
 		"request": "DescribeTopicPartitions v0, correlation id 132, two fixture topics — the first with 3 partitions, the second with 2 — response_partition_limit 100",
 		"request_hex": "0000002f004b00000000008400096b61666b617465737400030974312d6578313332000974322d65783133320000000064ff00",
 		"response": "Two topics entries in name order, both error_code 0: the first carrying partitions 0, 1, 2 and the second partitions 0, 1, each partition with its own leader and ISR; next_cursor is null",
-		"response_hex": "000000dc0000008400000000000300000974312d65783133326db1121fc6394a978e9dbe225e8cd6df000400000000000000000001000000000200000001020000000101010100000000000001000000010000000002000000010200000001010101000000000000020000000100000000020000000102000000010101010000000df80000000974322d6578313332a3d5a3ce1edb43abbdb1d8149bebb9860003000000000000000000010000000002000000010200000001010101000000000000010000000100000000020000000102000000010101010000000df800ff00",
+		"response_hex": "000000dc0000008400000000000300000974312d6578313332a3bb81818bc348169dae3cf8cd1f2788000400000000000000000001000000000200000001020000000101010100000000000001000000010000000002000000010200000001010101000000000000020000000100000000020000000102000000010101010000000df80000000974322d65783133324b1701367e2d44cfad0e8bb2bfb1c9c30003000000000000000000010000000002000000010200000001010101000000000000010000000100000000020000000102000000010101010000000df800ff00",
 		"note": "The partitions array belongs to its topic entry, so two topics mean two arrays and not one flat list. However many partitions a topic has, it still gets exactly one topic entry.",
 		"request_fields": [
 			{
@@ -380,7 +380,7 @@
 				"offset": 25,
 				"length": 16,
 				"field": "body.topics[0].topic_id",
-				"value": "6db1121f-c639-4a97-8e9d-be225e8cd6df",
+				"value": "a3bb8181-8bc3-4816-9dae-3cf8cd1f2788",
 				"varies": true
 			},
 			{
@@ -496,12 +496,12 @@
 			"topics": {
 				"t1": {
 					"name": "t1-ex132",
-					"id": "6db1121f-c639-4a97-8e9d-be225e8cd6df",
+					"id": "a3bb8181-8bc3-4816-9dae-3cf8cd1f2788",
 					"partitions": 3
 				},
 				"t2": {
 					"name": "t2-ex132",
-					"id": "a3d5a3ce-1edb-43ab-bdb1-d8149bebb986",
+					"id": "4b170136-7e2d-44cf-ad0e-8bb2bfb1c9c3",
 					"partitions": 2
 				}
 			},

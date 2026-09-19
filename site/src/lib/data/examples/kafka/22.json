@@ -3,9 +3,9 @@
 		"title": "Fetch an existing topic with an empty log",
 		"kind": "wire",
 		"request": "Fetch v16, correlation id 221: the fixture topic's id, partition 0, fetch_offset 0, max_wait_ms 200",
-		"request_hex": "0000006000010010000000dd00096b61666b617465737400000000c80000000100a0000000000000000000000002c532a355237a49918d5be4cfbb58fb660200000000ffffffff0000000000000000ffffffffffffffffffffffff001000000000010100",
+		"request_hex": "0000006000010010000000dd00096b61666b617465737400000000c80000000100a00000000000000000000000021ad5b7ba78284a72b1c2595694dd7d320200000000ffffffff0000000000000000ffffffffffffffffffffffff001000000000010100",
 		"response": "Top-level error_code 0, one responses entry echoing the topic id, and one partition: partition_index 0, error_code 0 (NONE), high_watermark 0, log_start_offset 0 and an empty records field",
-		"response_hex": "00000048000000dd000000000000005f06e9fa02c532a355237a49918d5be4cfbb58fb660200000000000000000000000000000000000000000000000000000000000000ffffffff01000000",
+		"response_hex": "00000048000000dd000000000000005917f2a9021ad5b7ba78284a72b1c2595694dd7d320200000000000000000000000000000000000000000000000000000000000000ffffffff01000000",
 		"note": "Empty is not an error: 0, not 3 (UNKNOWN_TOPIC_OR_PARTITION) and not 100 (UNKNOWN_TOPIC_ID). The segment file 00000000000000000000.log is zero bytes long, and zero bytes of records is a perfectly good answer.",
 		"request_fields": [
 			{
@@ -90,7 +90,7 @@
 				"offset": 46,
 				"length": 16,
 				"field": "body.topics[0].topic_id",
-				"value": "c532a355-237a-4991-8d5b-e4cfbb58fb66",
+				"value": "1ad5b7ba-7828-4a72-b1c2-595694dd7d32",
 				"varies": true
 			},
 			{
@@ -201,7 +201,7 @@
 				"offset": 15,
 				"length": 4,
 				"field": "body.session_id",
-				"value": "1594288634",
+				"value": "1494741673",
 				"varies": true
 			},
 			{
@@ -214,7 +214,7 @@
 				"offset": 20,
 				"length": 16,
 				"field": "body.responses[0].topic_id",
-				"value": "c532a355-237a-4991-8d5b-e4cfbb58fb66",
+				"value": "1ad5b7ba-7828-4a72-b1c2-595694dd7d32",
 				"varies": true
 			},
 			{
@@ -294,7 +294,7 @@
 			"topics": {
 				"t1": {
 					"name": "t1-ex221",
-					"id": "c532a355-237a-4991-8d5b-e4cfbb58fb66",
+					"id": "1ad5b7ba-7828-4a72-b1c2-595694dd7d32",
 					"partitions": 1
 				}
 			},
@@ -305,9 +305,9 @@
 		"title": "Both partitions of an empty topic",
 		"kind": "wire",
 		"request": "Fetch v16, correlation id 222: one topic entry carrying two partitions, 0 and 1, both from offset 0",
-		"request_hex": "0000008100010010000000de00096b61666b617465737400000000c80000000100a0000000000000000000000002a72c2934bde94344abf3179c4c29275f0300000000ffffffff0000000000000000ffffffffffffffffffffffff001000000000000001ffffffff0000000000000000ffffffffffffffffffffffff001000000000010100",
+		"request_hex": "0000008100010010000000de00096b61666b617465737400000000c80000000100a0000000000000000000000002811537bda7584f178d98a32f251261ab0300000000ffffffff0000000000000000ffffffffffffffffffffffff001000000000000001ffffffff0000000000000000ffffffffffffffffffffffff001000000000010100",
 		"response": "One responses entry with two partition entries, in the order they were asked for, each with error_code 0, high_watermark 0, log_start_offset 0 and no records",
-		"response_hex": "0000006d000000de0000000000000067d52f9502a72c2934bde94344abf3179c4c29275f0300000000000000000000000000000000000000000000000000000000000000ffffffff010000000001000000000000000000000000000000000000000000000000000000ffffffff01000000",
+		"response_hex": "0000006d000000de0000000000000067df648402811537bda7584f178d98a32f251261ab0300000000000000000000000000000000000000000000000000000000000000ffffffff010000000001000000000000000000000000000000000000000000000000000000ffffffff01000000",
 		"note": "Partitions of one topic share a single topic entry — the id is written once, the partitions array holds the rest. Every partition that was asked about gets an answer, even when there is nothing in it.",
 		"request_fields": [
 			{
@@ -392,7 +392,7 @@
 				"offset": 46,
 				"length": 16,
 				"field": "body.topics[0].topic_id",
-				"value": "a72c2934-bde9-4344-abf3-179c4c29275f",
+				"value": "811537bd-a758-4f17-8d98-a32f251261ab",
 				"varies": true
 			},
 			{
@@ -503,7 +503,7 @@
 				"offset": 15,
 				"length": 4,
 				"field": "body.session_id",
-				"value": "1742024597",
+				"value": "1742693508",
 				"varies": true
 			},
 			{
@@ -516,7 +516,7 @@
 				"offset": 20,
 				"length": 16,
 				"field": "body.responses[0].topic_id",
-				"value": "a72c2934-bde9-4344-abf3-179c4c29275f",
+				"value": "811537bd-a758-4f17-8d98-a32f251261ab",
 				"varies": true
 			},
 			{
@@ -596,7 +596,7 @@
 			"topics": {
 				"t1": {
 					"name": "t1-ex222",
-					"id": "a72c2934-bde9-4344-abf3-179c4c29275f",
+					"id": "811537bd-a758-4f17-8d98-a32f251261ab",
 					"partitions": 2
 				}
 			},

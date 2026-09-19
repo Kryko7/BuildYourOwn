@@ -1,6 +1,6 @@
 {
 	"track": "kafka",
-	"generatedAt": "2026-09-19T08:54:57.737Z",
+	"generatedAt": "2026-09-19T09:04:43.597Z",
 	"sections": [
 		{
 			"id": "A",
@@ -87,7 +87,8 @@
 			"id": "G",
 			"title": "Transactions",
 			"stages": [
-				46
+				46,
+				47
 			]
 		}
 	],
@@ -2064,12 +2065,66 @@
 				}
 			],
 			"exampleCount": 2
+		},
+		{
+			"number": 47,
+			"slug": "transactional_writes",
+			"name": "A transaction, end to end",
+			"ext": true,
+			"section": "G",
+			"file": "src/stages/s47_transactional_writes.rs",
+			"planDone": false,
+			"hints": [
+				"`AddPartitionsToTxn` (24) comes before the first write to a partition: the coordinator must know where to put markers if the transaction aborts",
+				"A transactional batch sets bit 4 of the record batch attributes as well as carrying the producer id and epoch",
+				"`EndTxn` (26) with `committed` true or false makes the coordinator write a control record into every partition the transaction touched — a real record at a real offset",
+				"A consumer at isolation_level 1 reads nothing past the last stable offset and is given the aborted transactions to filter; at level 0 it sees everything immediately"
+			],
+			"tests": [
+				{
+					"name": "ApiVersions advertises AddPartitionsToTxn and EndTxn",
+					"ext": true
+				},
+				{
+					"name": "a partition can be added to a transaction",
+					"ext": true
+				},
+				{
+					"name": "a committed transaction's records are readable",
+					"ext": true
+				},
+				{
+					"name": "the commit wrote a control record after them",
+					"ext": true
+				},
+				{
+					"name": "an aborted transaction's records are in the log at read_uncommitted",
+					"ext": true
+				},
+				{
+					"name": "and read_committed hands the consumer the list to drop them by",
+					"ext": true
+				},
+				{
+					"name": "read_committed reports the aborted transaction so a consumer can drop it",
+					"ext": true
+				},
+				{
+					"name": "an open transaction holds the last stable offset back",
+					"ext": true
+				},
+				{
+					"name": "the broker is still serving afterwards",
+					"ext": true
+				}
+			],
+			"exampleCount": 1
 		}
 	],
 	"totals": {
-		"stages": 46,
-		"tests": 306,
-		"ext": 24
+		"stages": 47,
+		"tests": 315,
+		"ext": 25
 	},
 	"source": "kafkatest/catalog.json"
 }

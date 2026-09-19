@@ -5,7 +5,7 @@
 		"request": "DescribeTopicPartitions v0, correlation id 151, the fixture topic (6 partitions), response_partition_limit 1, cursor null",
 		"request_hex": "00000026004b00000000009700096b61666b617465737400020a6269672d65783135310000000001ff00",
 		"response": "One topics entry with error_code 0 carrying exactly one partition (partition_index 0), then a non-null next_cursor: the topic's name and partition_index 1 — the first partition that did not fit",
-		"response_hex": "0000005a0000009700000000000200000a6269672d6578313531f44ff80b6f284c85adb3148072c39e4200020000000000000000000100000000020000000102000000010101010000000df800010a6269672d6578313531000000010000",
+		"response_hex": "0000005a0000009700000000000200000a6269672d6578313531a64215575db842a89f1a29cf0019512a00020000000000000000000100000000020000000102000000010101010000000df800010a6269672d6578313531000000010000",
 		"note": "response_partition_limit counts partitions across the whole response, not per topic. When the budget runs out, next_cursor stops being the null byte 0xff and becomes a struct: a compact string, an int32 and its own tagged-field byte.",
 		"request_fields": [
 			{
@@ -128,7 +128,7 @@
 				"offset": 26,
 				"length": 16,
 				"field": "body.topics[0].topic_id",
-				"value": "f44ff80b-6f28-4c85-adb3-148072c39e42",
+				"value": "a6421557-5db8-42a8-9f1a-29cf0019512a",
 				"varies": true
 			},
 			{
@@ -262,7 +262,7 @@
 			"topics": {
 				"big": {
 					"name": "big-ex151",
-					"id": "f44ff80b-6f28-4c85-adb3-148072c39e42",
+					"id": "a6421557-5db8-42a8-9f1a-29cf0019512a",
 					"partitions": 6
 				}
 			},
@@ -275,7 +275,7 @@
 		"request": "The same request, correlation id 152, response_partition_limit 1, but with cursor {topic_name = the fixture topic, partition_index 1} — what a client sends after the page above",
 		"request_hex": "00000035004b00000000009800096b61666b617465737400020a6269672d65783135320000000001010a6269672d6578313532000000010000",
 		"response": "partition_index 1 alone: the cursor is inclusive, so the partition it names is the first one returned. next_cursor then points at partition_index 2",
-		"response_hex": "0000005a0000009800000000000200000a6269672d657831353203614766e9dd4569998f76822073925900020000000000010000000100000000020000000102000000010101010000000df800010a6269672d6578313532000000020000",
+		"response_hex": "0000005a0000009800000000000200000a6269672d6578313532d12972b287c645ce8d2d26814842d4c600020000000000010000000100000000020000000102000000010101010000000df800010a6269672d6578313532000000020000",
 		"note": "Resuming means skipping every topic sorted before the cursor's name and every partition below its index. The walk ends when next_cursor comes back null; a broker may spend one final, empty page when the limit lands exactly on the end of a topic.",
 		"request_fields": [
 			{
@@ -416,7 +416,7 @@
 				"offset": 26,
 				"length": 16,
 				"field": "body.topics[0].topic_id",
-				"value": "03614766-e9dd-4569-998f-768220739259",
+				"value": "d12972b2-87c6-45ce-8d2d-26814842d4c6",
 				"varies": true
 			},
 			{
@@ -550,7 +550,7 @@
 			"topics": {
 				"big": {
 					"name": "big-ex152",
-					"id": "03614766-e9dd-4569-998f-768220739259",
+					"id": "d12972b2-87c6-45ce-8d2d-26814842d4c6",
 					"partitions": 6
 				}
 			},

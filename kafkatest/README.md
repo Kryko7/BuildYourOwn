@@ -2,8 +2,8 @@
 
 A self-contained, stage-by-stage conformance tester for Kafka brokers, written in Rust.
 It drives **any** broker binary as a black box over TCP — real frames, real record batches,
-real on-disk fixtures — and compares what comes back with a suite written in Rust: 46 stages,
-306 tests, all validated against Apache Kafka 4.1.2 running in KRaft mode. Every stage also
+real on-disk fixtures — and compares what comes back with a suite written in Rust: 47 stages,
+315 tests, all validated against Apache Kafka 4.1.2 running in KRaft mode. Every stage also
 carries worked examples — 91 of them — showing the exact bytes a broker receives and the exact
 bytes Apache Kafka answered, annotated field by field (see [Examples](#examples)).
 
@@ -490,7 +490,7 @@ bytes attached.
 
 ### History, and what a new stage can lean on
 
-All 46 stages are implemented; `PLAN.md` carries no `(planned)` entry any more. Stages 1-14,
+All 47 stages are implemented; `PLAN.md` carries no `(planned)` entry any more. Stages 1-14,
 19-24 and 29-32 came first, then 15-18, 25-28, 33-37, 38-42 and 43-45 were written in parallel
 against this same harness — a stage is a new `src/stages/sNN_*.rs` plus two lines in
 `src/stages/mod.rs`, and nothing else has to change. What a new stage can already lean on:

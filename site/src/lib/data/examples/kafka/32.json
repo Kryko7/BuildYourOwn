@@ -339,7 +339,7 @@
 			"topics": {
 				"t1": {
 					"name": "t1-ex321",
-					"id": "b28a8273-74b0-4fc9-b8df-a8bc974bf71b",
+					"id": "ee958bb5-e03c-467c-aa3c-b1c11162e60b",
 					"partitions": 2
 				}
 			},
@@ -352,7 +352,7 @@
 		"request": "Produce v11, correlation id 322, acks -1: one topic entry whose partition_data array carries two partitions — partition 0 with a two-record batch, partition 1 with a one-record batch",
 		"request_hex": "000000cf0000000b0000014200096b61666b61746573740000ffff00001388020974312d65783332320300000000540000000000000000000000470000000002d8f551f50000000000010000018bcfe568000000018bcfe56800ffffffffffffffffffffffffffff0000000214000000010870302d610014000002010870302d620000000000014900000000000000000000003c00000000022b07eebf0000000000000000018bcfe568000000018bcfe56800ffffffffffffffffffffffffffff0000000114000000010870312d6100000000",
 		"response": "One responses entry for the topic, with two partition_responses in the same order: index 0 with error_code 0 (NONE) and base_offset 0, index 1 with error_code 0 and base_offset 0 as well",
-		"response_hex": "000000580000014200020974312d6578333232030000000000000000000000000000ffffffffffffffff00000000000000000100000000000100000000000000000000ffffffffffffffff0000000000000000010000000000000000",
+		"response_hex": "000000580000014200020974312d6578333232030000000100000000000000000000ffffffffffffffff00000000000000000100000000000000000000000000000000ffffffffffffffff0000000000000000010000000000000000",
 		"note": "Both base offsets are 0 because every partition is its own log with its own offset counter. A single shared 'next offset' is the classic bug here, and it shows up the moment a second partition is written.",
 		"request_fields": [
 			{
@@ -619,7 +619,7 @@
 				"offset": 20,
 				"length": 4,
 				"field": "body.responses[0].partition_responses[0].index",
-				"value": "0"
+				"value": "1"
 			},
 			{
 				"offset": 24,
@@ -686,7 +686,7 @@
 			"topics": {
 				"t1": {
 					"name": "t1-ex322",
-					"id": "ec5eb50c-ed96-48d1-9671-9ec0c1a235f6",
+					"id": "c4b7ee54-8b14-4ca3-a623-4bfcf24ef6f6",
 					"partitions": 2
 				}
 			},

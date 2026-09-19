@@ -5,7 +5,7 @@
 		"request": "Fetch v16, correlation id 211, one topic: topic_id 00000000-0000-4000-8000-000000000001, partition 0, fetch_offset 0",
 		"request_hex": "0000006000010010000000d300096b61666b617465737400000001f40000000100a0000000000000000000000002000000000000400080000000000000010200000000ffffffff0000000000000000ffffffffffffffffffffffff001000000000010100",
 		"response": "throttle_time_ms 0 and a top-level error_code of 0, then one responses entry echoing those same 16 id bytes, holding one partition: partition_index 0, error_code 100 (UNKNOWN_TOPIC_ID), high_watermark -1 and an empty records field",
-		"response_hex": "00000048000000d30000000000000037931d3f020000000000004000800000000000000102000000000064ffffffffffffffffffffffffffffffffffffffffffffffff01ffffffff01000000",
+		"response_hex": "00000048000000d3000000000000003e4fe671020000000000004000800000000000000102000000000064ffffffffffffffffffffffffffffffffffffffffffffffff01ffffffff01000000",
 		"note": "The top level stays 0 — the request was well formed, the topic was not there. From Fetch v13 there is no topic name to fall back on, so echo the id you were given: that is the only thing the client can match the entry against.",
 		"request_fields": [
 			{
@@ -200,7 +200,7 @@
 				"offset": 15,
 				"length": 4,
 				"field": "body.session_id",
-				"value": "932388159",
+				"value": "1045423729",
 				"varies": true
 			},
 			{
@@ -294,9 +294,9 @@
 		"title": "An unknown id beside a known one",
 		"kind": "wire",
 		"request": "Fetch v16, correlation id 212, two topics: the real (empty) fixture topic's id and the same made-up id, each asking for partition 0 at offset 0",
-		"request_hex": "0000009300010010000000d400096b61666b617465737400000001f40000000100a0000000000000000000000003865af184bd74479cbfc804f67ac0c0460200000000ffffffff0000000000000000ffffffffffffffffffffffff001000000000000000000000400080000000000000010200000000ffffffff0000000000000000ffffffffffffffffffffffff001000000000010100",
+		"request_hex": "0000009300010010000000d400096b61666b617465737400000001f40000000100a000000000000000000000000383b40334453545a2a1e5c38a7a929fe20200000000ffffffff0000000000000000ffffffffffffffffffffffff001000000000000000000000400080000000000000010200000000ffffffff0000000000000000ffffffffffffffffffffffff001000000000010100",
 		"response": "Top-level error_code 0 and two responses entries, in the order they were asked for: the fixture topic with error_code 0, high_watermark 0 and no records, then the made-up id with error_code 100 (UNKNOWN_TOPIC_ID)",
-		"response_hex": "0000007f000000d4000000000000004e0a3d4c03865af184bd74479cbfc804f67ac0c0460200000000000000000000000000000000000000000000000000000000000000ffffffff0100000000000000004000800000000000000102000000000064ffffffffffffffffffffffffffffffffffffffffffffffff01ffffffff01000000",
+		"response_hex": "0000007f000000d4000000000000004f3cf23a0383b40334453545a2a1e5c38a7a929fe20200000000000000000000000000000000000000000000000000000000000000ffffffff0100000000000000004000800000000000000102000000000064ffffffffffffffffffffffffffffffffffffffffffffffff01ffffffff01000000",
 		"note": "One unknown topic must not spoil the rest of the answer. In Fetch every failure that belongs to a partition is reported on that partition; the top-level error_code is about the request and its fetch session, nothing else.",
 		"request_fields": [
 			{
@@ -381,7 +381,7 @@
 				"offset": 46,
 				"length": 16,
 				"field": "body.topics[0].topic_id",
-				"value": "865af184-bd74-479c-bfc8-04f67ac0c046",
+				"value": "83b40334-4535-45a2-a1e5-c38a7a929fe2",
 				"varies": true
 			},
 			{
@@ -492,7 +492,7 @@
 				"offset": 15,
 				"length": 4,
 				"field": "body.session_id",
-				"value": "1309293900",
+				"value": "1329394234",
 				"varies": true
 			},
 			{
@@ -505,7 +505,7 @@
 				"offset": 20,
 				"length": 16,
 				"field": "body.responses[0].topic_id",
-				"value": "865af184-bd74-479c-bfc8-04f67ac0c046",
+				"value": "83b40334-4535-45a2-a1e5-c38a7a929fe2",
 				"varies": true
 			},
 			{
@@ -585,7 +585,7 @@
 			"topics": {
 				"t1": {
 					"name": "t1-ex212",
-					"id": "865af184-bd74-479c-bfc8-04f67ac0c046",
+					"id": "83b40334-4535-45a2-a1e5-c38a7a929fe2",
 					"partitions": 1
 				}
 			},

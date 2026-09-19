@@ -138,7 +138,7 @@ export const tracks: Record<TrackId, TrackMeta> = {
 		reference: 'Apache Kafka 4.1 (KRaft)',
 		reportPath: '/__reports/kafka.json',
 		examples: 'bytes',
-		plannedStages: 46,
+		plannedStages: 47,
 		sectionBadges: {
 			A: { badge: 'Sprout Field', icon: '🌱' },
 			B: { badge: 'Signpost Meadow', icon: '🌷' },
