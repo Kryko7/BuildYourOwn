@@ -138,11 +138,17 @@ jobs:
       - run: cargo build --release --examples -p disttest
       # Roughly fifteen minutes: three- and five-node etcd clusters with fault injection.
       - run: target/release/disttest --target etcd --validate --from 36 --until 55
-      - name: No stray reference processes were left behind
+      - name: No stray reference processes or temp dirs were left behind
         if: always()
         run: |
-          leaked=$(pgrep -f 'cache/disttest/etcd' | wc -l)
-          test "$leaked" -eq 0 || { echo "$leaked stray etcd processes"; exit 1; }
+          # Match the process *name*, not the command line. `pgrep -f cache/disttest/etcd`
+          # matches the shell running it, because that pattern is in its own command line —
+          # so the check reported a leak on every clean run, including this one.
+          leaked=$(pgrep -x etcd | wc -l)
+          dirs=$(find /tmp -maxdepth 1 -name 'disttest-*' | wc -l)
+          echo "stray etcd processes: $leaked, stray temp dirs: $dirs"
+          test "$leaked" -eq 0 || { pgrep -ax etcd; exit 1; }
+          test "$dirs" -eq 0 || { find /tmp -maxdepth 1 -name 'disttest-*'; exit 1; }
 
   msrv:
     name: builds on the stated MSRV
