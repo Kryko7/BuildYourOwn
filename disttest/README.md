@@ -3,8 +3,9 @@
 A stage-by-stage, black-box conformance tester for a **distributed key/value system** you
 write yourself. Track id `dist`.
 
-> Commands below are run from the **repo root**: this is a cargo workspace, so every
-> binary and example lands in the one `target/` directory at the top.
+> These assume `disttest` is on your `PATH` (`./install.sh` puts it there). From a source
+> checkout it is `target/release/disttest`, run from the repo root — this is a cargo
+> workspace, so every binary and example lands in the one `target/` directory at the top.
 ```
 disttest --target my_node --stage 22
 disttest --target my_node --tag algorithms --all
@@ -15,8 +16,12 @@ disttest --list                                  # stages, ladders, test counts,
 disttest --list --json > catalog.json            # the stage catalog the site reads
 ```
 
-Nothing here implements the thing you are building. This repository holds the harness, the
-suite, the oracles, the fault injector and the docs.
+Nothing here implements the node you are building. The harness, the suite, the oracles, the
+fault injector and the docs are what this directory holds — plus two reference programs,
+`examples/reference_primitives.rs` and `examples/reference_algorithms.rs`, which *are*
+implementations of the primitives and algorithms ladders. They exist so those two ladders can
+be validated the way the node and cluster ladders are validated against real etcd, and
+reading either one spoils its ladder.
 
 **88 stages, 830 tests.** 20 stages on the primitives ladder, 33 on the algorithms
 ladder, 15 on the node ladder, 20 on the cluster ladder; 544 of the tests are the core

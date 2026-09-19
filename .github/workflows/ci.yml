@@ -36,8 +36,6 @@ jobs:
         with:
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: ${{ matrix.crate }}
       - name: Java, for kafkatest's reference broker
         if: matrix.crate == 'kafkatest'
         uses: actions/setup-java@v4
@@ -60,34 +58,32 @@ jobs:
         include:
           - name: shell vs bash
             crate: shelltest
-            run: ./target/release/shelltest --shell bash --validate --all
+            run: target/release/shelltest --shell bash --validate --all
           - name: wasm vs wasmtime
             crate: wasmtest
-            run: ./target/release/wasmtest --runtime wasmtime --validate --all
+            run: target/release/wasmtest --runtime wasmtime --validate --all
           - name: tls vs openssl s_server
             crate: tlstest
-            run: ./target/release/tlstest --server openssl --validate --all
+            run: target/release/tlstest --server openssl --validate --all
           - name: link vs GNU ld
             crate: linktest
-            run: ./target/release/linktest --linker gnu_ld --validate --all
+            run: target/release/linktest --linker gnu_ld --validate --all
           - name: kafka vs Apache Kafka
             crate: kafkatest
             java: true
-            run: ./target/release/kafkatest --broker apache_kafka --validate --all
+            run: target/release/kafkatest --broker apache_kafka --validate --all
           - name: dist primitives and algorithms
             crate: disttest
             run: |
-              ./target/release/disttest --target reference_primitives --validate --until 20
-              ./target/release/disttest --target reference_algorithms --validate --from 56
+              target/release/disttest --target reference_primitives --validate --until 20
+              target/release/disttest --target reference_algorithms --validate --from 56
           - name: dist node vs etcd
             crate: disttest
-            run: ./target/release/disttest --target etcd --validate --from 21 --until 35
+            run: target/release/disttest --target etcd --validate --from 21 --until 35
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: ${{ matrix.crate }}
       - name: Java, for the reference broker
         if: matrix.java
         uses: actions/setup-java@v4
@@ -99,10 +95,10 @@ jobs:
         with:
           path: ~/.cache/${{ matrix.crate }}
           key: ref-${{ matrix.crate }}-${{ runner.os }}
-      - run: cargo build --release
-        working-directory: ${{ matrix.crate }}
+      # These are the commands the READMEs tell a reader to run, run exactly as written:
+      # from the repo root, against the one workspace target directory.
+      - run: cargo build --release --examples -p ${{ matrix.crate }}
       - run: ${{ matrix.run }}
-        working-directory: ${{ matrix.crate }}
 
   discriminates:
     name: the suites discriminate
@@ -115,8 +111,6 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: ${{ matrix.crate }}
       - name: Cache downloaded references
         uses: actions/cache@v4
         with:
@@ -136,18 +130,14 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: disttest
       - name: Cache downloaded references
         uses: actions/cache@v4
         with:
           path: ~/.cache/disttest
           key: ref-disttest-${{ runner.os }}
-      - run: cargo build --release
-        working-directory: disttest
+      - run: cargo build --release --examples -p disttest
       # Roughly fifteen minutes: three- and five-node etcd clusters with fault injection.
-      - run: ./target/release/disttest --target etcd --validate --from 36 --until 55
-        working-directory: disttest
+      - run: target/release/disttest --target etcd --validate --from 36 --until 55
       - name: No stray reference processes were left behind
         if: always()
         run: |
@@ -167,8 +157,6 @@ jobs:
       # before a user discovers it — which is how the number got to 1.88 rather than 1.87.
       - uses: dtolnay/rust-toolchain@1.88
       - uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: ${{ matrix.crate }}
       - run: cargo check --all-targets
         working-directory: ${{ matrix.crate }}
 
