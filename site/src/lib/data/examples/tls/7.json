@@ -5,7 +5,7 @@
 		"request": "A complete ClientHello, immediately followed by a TCP FIN on the client's write half. No Finished will ever arrive.",
 		"request_hex": "16030300b2010000ae0303f6c505b07647790acb999710523b30ee1c7b89ad287ce35be324d2e818f311fd2093652be0fb5a2d3d93828178891d60fb9ccf9ba99539e46960ac6ba3b1c8395f00061302130313010100005f0000000e000c0000096c6f63616c686f7374002b0003020304000a00060004001d0017000d000e000c040308040805080608070401003300260024001d0020daaf6f117da3e53162f21088f2f5d808de17be510ebcc01a30d662c8e714884f",
 		"response": "The server may send its whole flight anyway, and then closes. Either way the process survives and the next connection is accepted.",
-		"response_hex": "160303007a020000760303acfa905b17a41bdaaa85d8c4ba6d168832d1991d09356d2efd358b2e2b5fb42b2093652be0fb5a2d3d93828178891d60fb9ccf9ba99539e46960ac6ba3b1c8395f130200002e002b0002030400330024001d00205b162ce9ac326053d8ceff7c79670a2c8f8464ff187139628ec085ceb2b35623140303000101170303002db524d630c89a699fad81b5bb917f1c35cbacec2fd4725cdbe504346d243d18a568ea67c45ffb0ef3f83ab0983d17030301d93891592f589ff2d0b4d5d17b74a3f21bb5687a7adc469a298fd472d3c6f6f54885038b6cf90c9d043f5a5f49947c3257309a3c1994f8bbc4bbba30acd8b291d91a67ba19d1e7698bac0880feb79cf745ab9c07aed0a0bb7af290bf6378367f956df7447aa0437cc4a8053aa16daca47fc1161efe71f030732f6c5ad8b2766a45d9a248d1813ebbdc152eadfc2c2dc1cb29bc5c748196413c673503509016edfbbc724c8431c58bc1a3506cfba3ea9e0496b8ceb6c3ce01ca0160335ffe6422664ab2d62841ad3daceb8821d145b09dc9dd1a31ad895f3ab4bb7bc72ad5f4475cb7d1b8ba7352922de31f351f6c1d0fc6dced6ca31de04f9846ab8fe5d3a67ab2fbcbb73cebf45829fb7656c54f7e463329612b5cf3d87f756cbc067230912d6fc6f0c256bad22916434a2a0ffba28e78639fee265ea902960baa2740045d337f216a17ac8fe9c8fb9c701cfb0ef74615725613487513303f38ee3fc064e9c68878190e1397f484add39e3f32800feb7f17330fa9d070b1ebd193e35abff82ed9d534026176f80f8372e24cc11b61b8987a291649e77c3ee6122d80f5826a2b30f114d5dc796efbfc2f010c165c9a1cc6de47a41c4915a67aec64efa5a826c426a9264577d42738373f2d9db2c743d064e63848ee5678685b43170303005fab937c8429f12f9ce7911e65a2e744c49865f23f84693ce69657d43483c02b75d9a7dd78b199ce3672455d4328b6187c29a8c20070e8a6725a2cfd41337e2ca12dd533f26b7faf379a0525a2bc7b3f38e5b503233053081711d61bde9e24d817030300455e923156b7e8c6ea63ad343a5989c9e7b3121da48c4c04bfaf88ae8de36baa0a10a1aac304b1855cc8790d4999c08f579291af91d3f7681c1ac3c4eac0773327b131982803",
+		"response_hex": "160303007a020000760303246abadda9caaa511189c0d58acbd5e4931f95459d9c96f863128f3a630a9dca2093652be0fb5a2d3d93828178891d60fb9ccf9ba99539e46960ac6ba3b1c8395f130200002e002b0002030400330024001d0020e8a3fff7c3269ebd34cc239946daa26582c68818a114d828284c89cf9921ca18140303000101170303002d18fbdd7f0754cf2b0429eb020d0880b102324a9105f931b94be35c0d458fb6c6b047e8011ddd2aa505faab03be17030301d9444248443f6631c35a2fff21ccb8588e0ea9d8abdc6e4fb90ba4862734be16482af35186974700c0b8c002e4605bb93df02c3cd3ee3c13bbb4056927ec87ca60ae929ff091ec0867795e6c5094d924a4e910eb0507a520d2a5200f70674924512f51d5da0655f5de27f8d38b4810246757608d8bbb416696fa800be8dab2e633af52f4491636d81268ec19dada6db99e2e6d97bed6f7dadf7496a6aca5490c1a4efe4b6cf073a22775b1afee0f79ca41c123b33f11c873fa8ab16c738e09fbc8c133bba3fdd9ee679822bed03e01e2ccbd0fa86f1be2b27bc443354fd6c32eba94edd17bf579c568983a073a0ac865a2d93ff6bf189ee08efafe56a5dcd4d705e1f23e5a07f0131a0f09f0a4f437c9c450b0efb77ffb8fb186a1d9ab6f3b1aedf592e2e8dc2fd674d5089cdf05d6bb03a1633921267ee13de8ff7db7de649b345a245bf6a5f9fcd82901a103ad6b000df8a506979da2de6c4e9a515b4e6c0449e948cff19b9f677b2fb28eab016484e0769dfb1704c11372c8c7854fee8ba8e917416b665c37721577b78861ac13f72a8205645544f848e5fc0c1d5b20ef0b315a4e8272a02ea08d39fbce0a300de1525dcb8e633d970cf63ee381515dc7c7ed126e87103d2a67641d09f94ed0bde91157d2fc6f5fabfd532117030300609bdf32a4e83a81d5ee550ebe002b16b0e42d134062225ccb154f9eb4d00ed6d1c941b6d654a7eea5328e91f00aff5dd8fcaefb279b808faa7262b8c4a10bef79db5840439e0ad804ba76948ee3ed05344e7f8b2c99653e9da09cb5703e31a65617030300452c2ff17e8e5374afc2ac80c99b32839bf2861393e60a6c27d83b2de0008fc264f0aa7d1b6dabdbcac866321c840f47193c4220fd93612eaaf5963742e72cc92be5aa8a6349",
 		"note": "read() == 0 means the peer will send nothing more. Free that connection's state and return to accept(); it is not an error condition.",
 		"request_fields": [
 			{
@@ -329,7 +329,7 @@
 				"offset": 11,
 				"length": 32,
 				"field": "server_hello.random",
-				"value": "acfa905b17a41bdaaa85d8c4ba6d168832d1991d09356d2efd358b2e2b5fb42b",
+				"value": "246abadda9caaa511189c0d58acbd5e4931f95459d9c96f863128f3a630a9dca",
 				"varies": true
 			},
 			{
@@ -409,7 +409,7 @@
 				"offset": 95,
 				"length": 32,
 				"field": "server_hello.extensions[1].server_share.key_exchange",
-				"value": "5b162ce9ac326053… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
+				"value": "e8a3fff7c3269ebd… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
 				"varies": true
 			},
 			{
@@ -502,35 +502,35 @@
 				"offset": 664,
 				"length": 2,
 				"field": "record4.record.length",
-				"value": "95 (bytes that follow)"
+				"value": "96 (bytes that follow)"
 			},
 			{
 				"offset": 666,
-				"length": 95,
+				"length": 96,
 				"field": "record4.record.encrypted_record",
-				"value": "95 bytes: the AEAD ciphertext plus its 16-byte tag. The real content type is inside it, after the content and before the padding.",
+				"value": "96 bytes: the AEAD ciphertext plus its 16-byte tag. The real content type is inside it, after the content and before the padding.",
 				"varies": true
 			},
 			{
-				"offset": 761,
+				"offset": 762,
 				"length": 1,
 				"field": "record5.record.type",
 				"value": "application_data(23)"
 			},
 			{
-				"offset": 762,
+				"offset": 763,
 				"length": 2,
 				"field": "record5.record.legacy_record_version",
 				"value": "0x0303"
 			},
 			{
-				"offset": 764,
+				"offset": 765,
 				"length": 2,
 				"field": "record5.record.length",
 				"value": "69 (bytes that follow)"
 			},
 			{
-				"offset": 766,
+				"offset": 767,
 				"length": 69,
 				"field": "record5.record.encrypted_record",
 				"value": "69 bytes: the AEAD ciphertext plus its 16-byte tag. The real content type is inside it, after the content and before the padding.",

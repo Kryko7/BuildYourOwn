@@ -3,8 +3,8 @@
 A self-contained, stage-by-stage conformance tester for **TLS 1.3 servers** (RFC 8446),
 written in Rust. It drives **any** server binary as a black box over TCP — real records,
 real key schedules, real signatures — and compares what comes back with a suite written in
-Rust: 45 stages, 321 tests, all validated against `openssl s_server` from the system
-OpenSSL 3.x. Every stage also carries worked examples — 91 of them — showing the exact bytes
+Rust: 48 stages, 343 tests, all validated against `openssl s_server` from the system
+OpenSSL 3.x. Every stage also carries worked examples — 95 of them — showing the exact bytes
 the reference sent and received, annotated field by field (see [Examples](#examples)).
 
 ```
@@ -109,11 +109,11 @@ tlstest --server <name|path> [--stage N] [--until N] [--from N] [--all]
 
 | Flag | Meaning |
 |---|---|
-| `--server` | A name from `servers.yaml` (`openssl`, `my_server`) **or a path**. A path is run as `<path> -accept PORT -cert C -key K -rev` with a fresh process per test. |
+| `--server` | A name from `servers.yaml` (`openssl`, `my_server`) **or a path**. A path is run as `<path> -accept PORT -cert C -key K -rev` with a fresh process per test. The client-authentication stages add `-verify 2 -CAfile CA` (request a client certificate) or `-Verify 2 -CAfile CA` (require one). |
 | `--stage N` / `--until N` / `--from N` / `--all` | Stage selection. |
 | `--only SUBSTR` | Only tests whose name contains the substring. |
 | `--tag T` | Only tests carrying a tag. `slow` selects the long ones (fuzz, soak-ish, interop). |
-| `--skip-ext` | Hide everything beyond the core track: 51 tests, including all of stages 39–45. |
+| `--skip-ext` | Hide everything beyond the core track: 73 tests, including all of stages 39–48. |
 | `--validate` | Run against the reference server and word failures as suite bugs. `tlstest --server openssl --validate --all` must be all green. |
 | `--verbose` | Print each server process's command line as it is started. |
 | `--keep-tmp` | Keep every server instance's temp dir (certificates, captured output) and print the paths. |

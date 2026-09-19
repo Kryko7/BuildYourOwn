@@ -5,7 +5,7 @@
 		"request": "key_share holds one entry: group 0x001d and a 32-byte key_exchange — the client's ephemeral public key",
 		"request_hex": "010000ac0303e351700c62338a111461f93cc365ba68506aecf027867095724dc20beaf0b810207408afccf842367ba58cb536578377cac22ffe5b74ad771108ff4a804c1be95500061302130313010100005d0000000e000c0000096c6f63616c686f7374002b0003020304000a00040002001d000d000e000c040308040805080608070401003300260024001d0020da93e6349391d5285e0aaeb35585768788243a5cfa7f61a5fd21a634bff71666",
 		"response": "key_share holds one entry, not a list: group 0x001d and the server's own 32 bytes.",
-		"response_hex": "02000076030397e343228884d16161ba9a3bd5bbeb734a312dcc5df94031d9d72fd501cf850e207408afccf842367ba58cb536578377cac22ffe5b74ad771108ff4a804c1be955130200002e002b0002030400330024001d0020dccc6f5a21fc50e31ec76111a3ed3a67360e51d68b85ca0ae2b16f1240e1ca5b",
+		"response_hex": "0200007603031d0d048e8e848a2a3400117de559ff01af11523c45e145777c6a1b95e743b05b207408afccf842367ba58cb536578377cac22ffe5b74ad771108ff4a804c1be955130200002e002b0002030400330024001d0020b5b3230fc02f73c9f3c4041b83c22d412bfce9082dfbee1604ed0f942388fe72",
 		"note": "X25519(client_private, server_public) and X25519(server_private, client_public) are the same 32 bytes, and that value is the (EC)DHE input to HKDF-Extract.",
 		"request_fields": [
 			{
@@ -287,7 +287,7 @@
 				"offset": 6,
 				"length": 32,
 				"field": "server_hello.random",
-				"value": "97e343228884d16161ba9a3bd5bbeb734a312dcc5df94031d9d72fd501cf850e",
+				"value": "1d0d048e8e848a2a3400117de559ff01af11523c45e145777c6a1b95e743b05b",
 				"varies": true
 			},
 			{
@@ -367,7 +367,7 @@
 				"offset": 90,
 				"length": 32,
 				"field": "server_hello.extensions[1].server_share.key_exchange",
-				"value": "dccc6f5a21fc50e3… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
+				"value": "b5b3230fc02f73c9… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
 				"varies": true
 			}
 		]
@@ -378,7 +378,7 @@
 		"request": "key_share group 0x0017 with a 65-byte key_exchange beginning 04",
 		"request_hex": "010000cd0303921a9662740cf7994b2e5ff1c00af21ae1cea802996db1344876010a92991762209960aebb574374486b50162a289d1d2353e7ef24073fabf7c447c96b64a11dbd00061302130313010100007e0000000e000c0000096c6f63616c686f7374002b0003020304000a000400020017000d000e000c04030804080508060807040100330047004500170041040c8c1bf000be201d51567ed6f00e5a245b1211698a5ef963ba424bbf7cc4679c6c97f662683b224040072e3c5835ddb9ab4c979c63bf2d8c2bebe854482de00e",
 		"response": "key_share group 0x0017 with the server's 65-byte point.",
-		"response_hex": "020000970303cd1c70efe27422535d5fbceaaacb5627140e4b75be3d876d6e62d5911ae1f26a209960aebb574374486b50162a289d1d2353e7ef24073fabf7c447c96b64a11dbd130200004f002b000203040033004500170041041b6d3e0595e32433f35432bd27c910269ccb612a573de265b0560e44cefd2f3b699e01594f557c10b50c3258ef431ecff9f640c3ee32c4e304d97e486e819bf7",
+		"response_hex": "02000097030383e65d4fdd4aa1da9eed653a235f016e2ab5f392d511f2bb0c1bfb576795455d209960aebb574374486b50162a289d1d2353e7ef24073fabf7c447c96b64a11dbd130200004f002b0002030400330045001700410480fe13dcd775072f48912f2ae976b445c876d5431975289ebc37e8bd85ab7181f2cb6c164e3a9b44f7d9e5f07bcc89f24eb5a251d14f7acfc88b397c8a430c88",
 		"note": "65 bytes is `04 || X || Y`, uncompressed SEC1. The shared secret is the X coordinate only — 32 bytes, not 64.",
 		"request_fields": [
 			{
@@ -660,7 +660,7 @@
 				"offset": 6,
 				"length": 32,
 				"field": "server_hello.random",
-				"value": "cd1c70efe27422535d5fbceaaacb5627140e4b75be3d876d6e62d5911ae1f26a",
+				"value": "83e65d4fdd4aa1da9eed653a235f016e2ab5f392d511f2bb0c1bfb576795455d",
 				"varies": true
 			},
 			{
@@ -740,7 +740,7 @@
 				"offset": 90,
 				"length": 65,
 				"field": "server_hello.extensions[1].server_share.key_exchange",
-				"value": "041b6d3e0595e324… (65 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
+				"value": "0480fe13dcd77507… (65 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
 				"varies": true
 			}
 		]

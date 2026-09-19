@@ -49,7 +49,13 @@ fn list_shows_stages_and_tickboxes() {
         text.contains("[ ] Stage 01") || text.contains("[x] Stage 01"),
         "--list must show the PLAN.md tickbox:\n{text}"
     );
-    assert!(text.contains("45 stages implemented"), "{text}");
+    assert!(
+        text.contains(&format!(
+            "{} stages implemented",
+            tlstest::stages::all().len()
+        )),
+        "{text}"
+    );
     assert!(text.contains("examples"), "{text}");
 }
 
@@ -60,8 +66,14 @@ fn list_json_prints_the_catalog_on_stdout() {
     let v: serde_json::Value =
         serde_json::from_str(&stdout(&out)).expect("--list --json must print JSON");
     assert_eq!(v["track"], "tls");
-    assert_eq!(v["stages"].as_array().map(Vec::len), Some(45));
-    assert_eq!(v["sections"].as_array().map(Vec::len), Some(7));
+    assert_eq!(
+        v["stages"].as_array().map(Vec::len),
+        Some(tlstest::stages::all().len())
+    );
+    assert_eq!(
+        v["sections"].as_array().map(Vec::len),
+        Some(tlstest::stages::sections().len())
+    );
 }
 
 #[test]

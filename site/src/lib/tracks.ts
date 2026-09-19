@@ -207,7 +207,7 @@ export const tracks: Record<TrackId, TrackMeta> = {
 		reference: 'openssl s_server (OpenSSL 3.x)',
 		reportPath: '/__reports/tls.json',
 		examples: 'bytes',
-		plannedStages: 45,
+		plannedStages: 48,
 		sectionBadges: {
 			A: { badge: 'The Gate', icon: '🌱' },
 			B: { badge: 'Greeting Green', icon: '🌷' },
@@ -215,7 +215,8 @@ export const tracks: Record<TrackId, TrackMeta> = {
 			D: { badge: 'Seal Garden', icon: '🔏' },
 			E: { badge: 'Cipher Copse', icon: '🍃' },
 			F: { badge: 'Alarm Bells', icon: '🔔' },
-			G: { badge: 'The Far Orchard', icon: '🌳' }
+			G: { badge: 'The Far Orchard', icon: '🌳' },
+			H: { badge: 'The Gatehouse', icon: '🔑' }
 		}
 	},
 	link: {

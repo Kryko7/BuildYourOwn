@@ -569,6 +569,41 @@ impl CertificateMsg {
         })
     }
 
+    /// Encode a Certificate body: the context, then the list, each entry with extensions.
+    ///
+    /// A client answering a CertificateRequest must echo that request's context byte for
+    /// byte, and it is empty in a handshake CertificateRequest — but echoing is the rule,
+    /// not emptiness, which is what post-handshake authentication depends on.
+    pub fn encode_body(&self) -> Vec<u8> {
+        let mut w = Writer::new();
+        w.vec8(&self.request_context);
+        w.nest24(|list| {
+            for (der, extensions) in &self.entries {
+                list.vec24(der);
+                // `encode_extensions` already writes the two-byte length, so this must not
+                // wrap it in another one.
+                list.raw(&encode_extensions(extensions));
+            }
+        });
+        w.finish()
+    }
+
+    /// A Certificate carrying one certificate and no extensions.
+    pub fn one(request_context: &[u8], der: &[u8]) -> CertificateMsg {
+        CertificateMsg {
+            request_context: request_context.to_vec(),
+            entries: vec![(der.to_vec(), Vec::new())],
+        }
+    }
+
+    /// An empty Certificate: what a client sends when it has nothing the server will accept.
+    pub fn none(request_context: &[u8]) -> CertificateMsg {
+        CertificateMsg {
+            request_context: request_context.to_vec(),
+            entries: Vec::new(),
+        }
+    }
+
     /// The end-entity certificate, which RFC 8446 §4.4.2 puts first.
     pub fn leaf(&self) -> TlsResult<&[u8]> {
         self.entries
@@ -584,6 +619,59 @@ impl CertificateMsg {
     }
 }
 
+/// A parsed CertificateRequest (RFC 8446 §4.3.2).
+///
+/// Two fields and one rule worth knowing: the context is empty in a handshake
+/// CertificateRequest and is echoed by the client's Certificate, and
+/// `signature_algorithms` is the one extension the server *must* send — without it the
+/// client has no way to know what it may sign with, so its absence is an illegal message
+/// rather than a defaulted one.
+#[derive(Debug, Clone)]
+pub struct CertificateRequestMsg {
+    /// `certificate_request_context`, empty during the handshake.
+    pub context: Vec<u8>,
+    /// The extensions the request carried.
+    pub extensions: Vec<Extension>,
+}
+
+impl CertificateRequestMsg {
+    /// Parse a CertificateRequest body.
+    pub fn parse(body: &[u8]) -> TlsResult<CertificateRequestMsg> {
+        let mut r = Reader::new(body, "certificate_request");
+        let context = r.vec8("certificate_request_context")?.to_vec();
+        let ext_bytes = r.vec16("extensions")?;
+        r.expect_done("certificate_request")?;
+        let extensions = parse_extensions(ext_bytes, "certificate_request")?;
+        Ok(CertificateRequestMsg {
+            context,
+            extensions,
+        })
+    }
+
+    /// The schemes the server said it will accept, from `signature_algorithms` (13).
+    pub fn signature_algorithms(&self) -> TlsResult<Vec<u16>> {
+        let ext = self
+            .extensions
+            .iter()
+            .find(|e| e.ext_type == EXT_SIGNATURE_ALGORITHMS)
+            .ok_or_else(|| {
+                TlsError::Protocol(
+                    "certificate_request has no signature_algorithms: RFC 8446 section 4.3.2 \
+                     makes it mandatory, because nothing else tells the client what to sign with"
+                        .into(),
+                )
+            })?;
+        let mut r = Reader::new(&ext.data, "certificate_request.signature_algorithms");
+        let list = r.vec16("supported_signature_algorithms")?;
+        let mut out = Vec::new();
+        let mut lr = Reader::new(list, "supported_signature_algorithms");
+        while !lr.done() {
+            out.push(lr.u16("scheme")?);
+        }
+        Ok(out)
+    }
+}
+
 /// A parsed CertificateVerify (RFC 8446 §4.4.3).
 #[derive(Debug, Clone)]
 pub struct CertificateVerifyMsg {
@@ -594,6 +682,14 @@ pub struct CertificateVerifyMsg {
 }
 
 impl CertificateVerifyMsg {
+    /// Encode a CertificateVerify body: the scheme, then the signature.
+    pub fn encode_body(&self) -> Vec<u8> {
+        let mut w = Writer::new();
+        w.u16(self.algorithm);
+        w.vec16(&self.signature);
+        w.finish()
+    }
+
     /// Parse a CertificateVerify body.
     pub fn parse(body: &[u8]) -> TlsResult<CertificateVerifyMsg> {
         let mut r = Reader::new(body, "certificate_verify");

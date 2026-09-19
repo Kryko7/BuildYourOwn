@@ -15,9 +15,9 @@
 
 use super::crypto::HashAlg;
 use super::{
-    sig_name, TlsError, TlsResult, SERVER_CV_CONTEXT, SIG_ECDSA_SECP256R1_SHA256, SIG_ED25519,
-    SIG_RSA_PKCS1_SHA256, SIG_RSA_PSS_RSAE_SHA256, SIG_RSA_PSS_RSAE_SHA384,
-    SIG_RSA_PSS_RSAE_SHA512,
+    sig_name, TlsError, TlsResult, CLIENT_CV_CONTEXT, SERVER_CV_CONTEXT,
+    SIG_ECDSA_SECP256R1_SHA256, SIG_ED25519, SIG_RSA_PKCS1_SHA256, SIG_RSA_PSS_RSAE_SHA256,
+    SIG_RSA_PSS_RSAE_SHA384, SIG_RSA_PSS_RSAE_SHA512,
 };
 use rsa::pkcs1::DecodeRsaPublicKey;
 use rsa::pkcs8::DecodePublicKey;
@@ -36,6 +36,36 @@ pub fn signed_content(context: &str, transcript_hash: &[u8]) -> Vec<u8> {
 /// The content a *server* signs: [`signed_content`] with the server context string.
 pub fn server_signed_content(transcript_hash: &[u8]) -> Vec<u8> {
     signed_content(SERVER_CV_CONTEXT, transcript_hash)
+}
+
+/// The content a *client* signs: the same 64 spaces and separator, one different string.
+///
+/// The two context strings are the whole defence against a signature made for one role
+/// being replayed in the other, so they are the first thing to check when a server rejects
+/// a CertificateVerify that looks right in every other way.
+pub fn client_signed_content(transcript_hash: &[u8]) -> Vec<u8> {
+    signed_content(CLIENT_CV_CONTEXT, transcript_hash)
+}
+
+/// Sign `content` with a PKCS#8 PEM private key, under one signature scheme.
+///
+/// Only the schemes the suite's own client certificate uses are implemented; anything else
+/// is an error rather than a silently wrong signature.
+pub fn sign_pem(key_pkcs8_pem: &str, scheme: u16, content: &[u8]) -> TlsResult<Vec<u8>> {
+    match scheme {
+        SIG_ECDSA_SECP256R1_SHA256 => {
+            use p256::ecdsa::signature::Signer as _;
+            use p256::pkcs8::DecodePrivateKey;
+            let key = p256::ecdsa::SigningKey::from_pkcs8_pem(key_pkcs8_pem)
+                .map_err(|e| TlsError::Crypto(format!("cannot read the P-256 client key: {e}")))?;
+            // TLS wants the DER-encoded (r, s) SEQUENCE, not the fixed-width pair.
+            let sig: p256::ecdsa::Signature = key.sign(content);
+            Ok(sig.to_der().as_bytes().to_vec())
+        }
+        other => Err(TlsError::Crypto(format!(
+            "the suite cannot sign with scheme 0x{other:04x}"
+        ))),
+    }
 }
 
 /// The public key of an end-entity certificate, in the shape its algorithm needs.

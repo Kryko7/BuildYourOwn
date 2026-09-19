@@ -286,6 +286,7 @@ pub fn build_spec(
     port: u16,
     material: &Material,
     options: &ServerOptions,
+    client_ca: Option<&Path>,
     boot_timeout: Duration,
 ) -> Result<ServerSpec> {
     let ph = Placeholders {
@@ -298,7 +299,7 @@ pub fn build_spec(
         ServerKind::Reference => reference::program()?,
         ServerKind::External => def.command.iter().map(|a| ph.apply(a)).collect(),
     };
-    argv.extend(contract_flags(port, material, options));
+    argv.extend(contract_flags(port, material, options, client_ca));
     if def.kind == ServerKind::Reference {
         argv.extend(reference::extra_flags(options));
         // `s_server -cert` reads exactly one certificate out of the PEM, so the reference
@@ -340,7 +341,12 @@ pub fn build_spec(
 pub const BOOT_PROBE_CONNECTIONS: u32 = 1;
 
 /// The flags every server under test is given, in the order the contract writes them.
-pub fn contract_flags(port: u16, material: &Material, options: &ServerOptions) -> Vec<String> {
+pub fn contract_flags(
+    port: u16,
+    material: &Material,
+    options: &ServerOptions,
+    client_ca: Option<&Path>,
+) -> Vec<String> {
     let mut flags = vec![
         "-accept".to_string(),
         port.to_string(),
@@ -350,6 +356,14 @@ pub fn contract_flags(port: u16, material: &Material, options: &ServerOptions) -
         material.key_pem.to_string_lossy().to_string(),
         "-rev".to_string(),
     ];
+    if let (Some(required), Some(ca)) = (options.client_auth, client_ca) {
+        // Lower-case `-verify` requests a certificate and carries on without one; upper-case
+        // `-Verify` requires it. The depth is how far up a chain the server will look.
+        flags.push(if required { "-Verify" } else { "-verify" }.to_string());
+        flags.push("2".to_string());
+        flags.push("-CAfile".to_string());
+        flags.push(ca.to_string_lossy().to_string());
+    }
     if let Some(n) = options.naccept {
         flags.push("-naccept".to_string());
         // The boot probe in `ServerHandle::wait_for_port` opens a TCP connection and closes
@@ -367,10 +381,23 @@ mod tests {
 
     #[test]
     fn free_port_is_usable_and_never_4433() {
-        let p = free_port().expect("free port");
-        assert_ne!(p, 4433);
-        let l = TcpListener::bind(("127.0.0.1", p)).expect("bind the port we were given");
-        drop(l);
+        // free_port() binds a port to learn its number and then lets it go, so between the
+        // two calls here anything on the machine may take it. The property under test is
+        // that the port it hands back is bindable and is never the s_server default, not
+        // that the kernel holds it for us — so a lost race is retried rather than failed.
+        let mut last = None;
+        for _ in 0..8 {
+            let p = free_port().expect("free port");
+            assert_ne!(p, 4433, "free_port must never hand back s_server's default");
+            match TcpListener::bind(("127.0.0.1", p)) {
+                Ok(l) => {
+                    drop(l);
+                    return;
+                }
+                Err(e) => last = Some((p, e)),
+            }
+        }
+        panic!("free_port never handed back a bindable port: {last:?}");
     }
 
     #[test]
@@ -378,7 +405,7 @@ mod tests {
         let dir = tempfile::tempdir().expect("tempdir");
         let store = CertStore::new(dir.path()).expect("store");
         let m = store.get(CertKind::Leaf(KeyKind::EcdsaP256)).expect("cert");
-        let flags = contract_flags(5555, &m, &ServerOptions::default());
+        let flags = contract_flags(5555, &m, &ServerOptions::default(), None);
         assert_eq!(flags[0], "-accept");
         assert_eq!(flags[1], "5555");
         assert_eq!(flags[2], "-cert");
@@ -387,7 +414,7 @@ mod tests {
         assert_eq!(flags.len(), 7, "no -naccept unless a test asks for one");
         // `with_naccept(3)` means "this test makes three connections"; the flag carries a
         // fourth for the boot probe.
-        let flags = contract_flags(1, &m, &ServerOptions::default().with_naccept(3));
+        let flags = contract_flags(1, &m, &ServerOptions::default().with_naccept(3), None);
         assert_eq!(&flags[7..], &["-naccept".to_string(), "4".to_string()]);
     }
 

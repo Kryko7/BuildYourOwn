@@ -3,9 +3,9 @@
 		"title": "A record that is not tampered with, for comparison",
 		"kind": "wire",
 		"request": "`good\\n` sealed with the client's application keys",
-		"request_hex": "1703030016838eefc1776ad368707fc980eb7594d14d8c62bc38a2",
+		"request_hex": "1703030016266b96a64446cc67ce54beecd7e3944a1e1508db686e",
 		"response": "`doog\\n` back. Flip any bit of that ciphertext and this stops happening.",
-		"response_hex": "17030300160f251d85aa8e017c97bd3a61b55a6bb01c7e758ec7ca",
+		"response_hex": "1703030016de20d14c6dfc58b93fcc2fb91ca401aa37084661ddd7",
 		"note": "AEAD is all-or-nothing: one changed bit anywhere in the ciphertext, the tag, or the five header bytes that make up the additional data, and decryption fails outright. There is no partially valid record.",
 		"request_fields": [
 			{

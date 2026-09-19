@@ -5,7 +5,7 @@
 		"request": "An ordinary TLS 1.3 ClientHello",
 		"request_hex": "010000ae0303902dfe32a39d973c04ea5080b933eb8ebc725029bae331fe6e8574a2668f78542009fb31dd55525bc936939d2c84ea048468310c87522e2e146dbc29224c0e7c3100061302130313010100005f0000000e000c0000096c6f63616c686f7374002b0003020304000a00060004001d0017000d000e000c040308040805080608070401003300260024001d0020865389d50790261eab5aa92dc9adf2afdb19cb3fe24ff107fb893a245671e459",
 		"response": "02, a uint24 length, 03 03, 32 random bytes, the echoed session id, the chosen suite, 00, and an extensions block holding supported_versions and key_share.",
-		"response_hex": "020000760303ed704d1bfc676ddc5ca826f607543d807718cca44818c19ddbe4e9c495cc37182009fb31dd55525bc936939d2c84ea048468310c87522e2e146dbc29224c0e7c31130200002e002b0002030400330024001d002011d4f4874a959707606d955697e25272509b87e8a6f39917fdd1fa380cee903a",
+		"response_hex": "02000076030357e791c3e0b316df90d0d52c54cee7d82010ced229a234c80e9990b3d73b4f202009fb31dd55525bc936939d2c84ea048468310c87522e2e146dbc29224c0e7c31130200002e002b0002030400330024001d0020eefb66b34b21b3b15281c6a4c2b4b1521a78b6d01a34504550374a2fda0cc72b",
 		"note": "Compare the session id in the two messages: same length byte, same bytes. That is the only field of a ServerHello that is copied rather than chosen.",
 		"request_fields": [
 			{
@@ -293,7 +293,7 @@
 				"offset": 6,
 				"length": 32,
 				"field": "server_hello.random",
-				"value": "ed704d1bfc676ddc5ca826f607543d807718cca44818c19ddbe4e9c495cc3718",
+				"value": "57e791c3e0b316df90d0d52c54cee7d82010ced229a234c80e9990b3d73b4f20",
 				"varies": true
 			},
 			{
@@ -373,7 +373,7 @@
 				"offset": 90,
 				"length": 32,
 				"field": "server_hello.extensions[1].server_share.key_exchange",
-				"value": "11d4f4874a959707… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
+				"value": "eefb66b34b21b3b1… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
 				"varies": true
 			}
 		]

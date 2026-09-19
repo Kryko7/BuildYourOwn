@@ -3,9 +3,9 @@
 		"title": "What is really inside an encrypted record",
 		"kind": "wire",
 		"request": "`pad\\n` as application data. Inside the AEAD the plaintext is `pad\\n` followed by the byte 0x17, and then as many zero bytes as the sender likes.",
-		"request_hex": "1703030015f75eb72212e78a8a159dda9c0fafb39b4902e85524",
+		"request_hex": "1703030015b8446a32c5052f1de8afd4633f218e8f68456b7f2d",
 		"response": "The answer's plaintext is `dap\\n` || 0x17, with whatever padding the server chose. Both records say application_data(23) in the clear.",
-		"response_hex": "1703030015026fe47184d5a3c858d4626a6c476125df53fce24e",
+		"response_hex": "1703030015f301df52fc647e300bf44c3238fed4925554446b8b",
 		"note": "The outer content type of every protected record is 23, always — even for a handshake message or an alert. The real type is the last non-zero byte of the decrypted fragment.",
 		"request_fields": [
 			{

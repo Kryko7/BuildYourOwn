@@ -3,9 +3,9 @@
 		"title": "The client's Finished closes the handshake",
 		"kind": "wire",
 		"request": "The server's Finished, which the client has just verified",
-		"request_hex": "14000030538d2614918867c273887667e04c9c6f859a72c65c3a57ca9b77c8a5d7341da12b9a722cf11342f5564c28279b5d8237",
+		"request_hex": "14000030cdb743ac6874ff1f69df10ab1b1505ca5e665f80014a7a3f8eb3c46c494d63224f03f7ea1e47b531640bb587a8ff739a",
 		"response": "The client's own `14` + uint24 length + verify_data, encrypted under the *client* handshake keys — the last message before application keys take over.",
-		"response_hex": "14000030faa52fad8398d1adb616946362daa6b03a02d6db1ade64d93d4a79ecb4420c6be49d7e2f89127c7b1f3a08c4febc37d0",
+		"response_hex": "140000306c6775bd9a5350ad966718ca7f0bcf1d26f30e511aca019862b069cc07e1f3615f718fb497cd9ccf238f7b9152452f7d",
 		"note": "Two Finished messages, two different finished keys, two different transcripts. The client's covers the server's, so it can only be produced after it.",
 		"request_fields": [
 			{
@@ -24,7 +24,7 @@
 				"offset": 4,
 				"length": 48,
 				"field": "finished.verify_data",
-				"value": "538d2614918867c273887667e04c9c6f859a72c65c3a57ca9b77c8a5d7341da12b9a722cf11342f5564c28279b5d8237 — HMAC(finished_key, Transcript-Hash(everything before this message))",
+				"value": "cdb743ac6874ff1f69df10ab1b1505ca5e665f80014a7a3f8eb3c46c494d63224f03f7ea1e47b531640bb587a8ff739a — HMAC(finished_key, Transcript-Hash(everything before this message))",
 				"varies": true
 			}
 		],
@@ -45,7 +45,7 @@
 				"offset": 4,
 				"length": 48,
 				"field": "finished.verify_data",
-				"value": "faa52fad8398d1adb616946362daa6b03a02d6db1ade64d93d4a79ecb4420c6be49d7e2f89127c7b1f3a08c4febc37d0 — HMAC(finished_key, Transcript-Hash(everything before this message))",
+				"value": "6c6775bd9a5350ad966718ca7f0bcf1d26f30e511aca019862b069cc07e1f3615f718fb497cd9ccf238f7b9152452f7d — HMAC(finished_key, Transcript-Hash(everything before this message))",
 				"varies": true
 			}
 		]

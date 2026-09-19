@@ -3,9 +3,9 @@
 		"title": "A line before the keys rotate",
 		"kind": "wire",
 		"request": "`rotate\\n` under application_traffic_secret_0",
-		"request_hex": "170303001804ba3b36153126744f3087e153ab658e861a9a1f441a5b14",
+		"request_hex": "17030300181e062b20793da4201d531595651a734d73684babe64923fe",
 		"response": "`etator\\n` back. A `18 00 00 01 00` KeyUpdate follows, and then the same exchange works under secret_1.",
-		"response_hex": "17030300188f955adc4b5b8d86c8420a83912e55a6be24855e0a6007cd",
+		"response_hex": "1703030018dcb2f156a779f0944472f5882e507961bdb77401ac65c1ee",
 		"note": "The KeyUpdate message is five bytes: type 24, a uint24 length of 1, and the request_update byte. Everything else about it is derivation.",
 		"request_fields": [
 			{

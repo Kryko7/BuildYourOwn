@@ -47,6 +47,14 @@ pub fn openssl_path() -> Result<PathBuf> {
 /// The flags only the reference needs.
 pub fn extra_flags(options: &ServerOptions) -> Vec<String> {
     let mut flags = vec!["-tls1_3".to_string(), "-quiet".to_string()];
+    // `s_server` is a demo tool: its verification callback prints what went wrong and then
+    // returns "carry on", so `-Verify` alone rejects a client that sends *no* certificate
+    // but happily establishes a connection with one signed by nobody. `-verify_return_error`
+    // makes it enforce what the contract's `-Verify` already means. A server under test is
+    // expected to enforce it without being asked twice.
+    if options.client_auth == Some(true) {
+        flags.push("-verify_return_error".to_string());
+    }
     flags.extend(options.reference_args.clone());
     flags
 }

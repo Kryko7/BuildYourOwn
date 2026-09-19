@@ -5,7 +5,7 @@
 		"request": "type 22 (handshake), legacy_record_version 0x0303, a two-byte length, then the ClientHello message",
 		"request_hex": "16030300b2010000ae0303483d67e6146541d3eeea537603a85c441ba33db9a9af4d0960eccdfca0274b85204118d656ba431b2c7bacbb9ead7d006f3570e4b9be6cc73af9e43c9fb95566cd00061302130313010100005f0000000e000c0000096c6f63616c686f7374002b0003020304000a00060004001d0017000d000e000c040308040805080608070401003300260024001d00200253677e96d10750b2ec4bed5615e87df711008fad424987624206bcbfcc5855",
 		"response": "One handshake record carrying the ServerHello: type 22, version 0x0303, length, message.",
-		"response_hex": "160303007a020000760303f4a84178307f7ffb1582cb9cd3e9acf990f1c856f6ebc23dc98dc392be189515204118d656ba431b2c7bacbb9ead7d006f3570e4b9be6cc73af9e43c9fb95566cd130200002e002b0002030400330024001d0020d376527feea103d7a96a8bcce3505539e4ac6f16579d4bbd4f0010d8829ef94a",
+		"response_hex": "160303007a02000076030374c386a890efc095f1e882ac12092e92ee6180a28397d888bd8a58880b152de5204118d656ba431b2c7bacbb9ead7d006f3570e4b9be6cc73af9e43c9fb95566cd130200002e002b0002030400330024001d002096a3c4b398a4a4c99df36cf8bc297b22c6b16aa5ffc53ff0e4b2023935cb3f02",
 		"note": "Five header bytes, then exactly `length` more. Read the header first and then read that many bytes — one read() is neither one record nor one message.",
 		"request_fields": [
 			{
@@ -329,7 +329,7 @@
 				"offset": 11,
 				"length": 32,
 				"field": "server_hello.random",
-				"value": "f4a84178307f7ffb1582cb9cd3e9acf990f1c856f6ebc23dc98dc392be189515",
+				"value": "74c386a890efc095f1e882ac12092e92ee6180a28397d888bd8a58880b152de5",
 				"varies": true
 			},
 			{
@@ -409,7 +409,7 @@
 				"offset": 95,
 				"length": 32,
 				"field": "server_hello.extensions[1].server_share.key_exchange",
-				"value": "d376527feea103d7… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
+				"value": "96a3c4b398a4a4c9… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
 				"varies": true
 			}
 		]
@@ -420,7 +420,7 @@
 		"request": "Byte for byte the hello above, except that the record header says 0x0301",
 		"request_hex": "16030100b2010000ae03039c3cb282c83123e240a8f5d912262d9fd2233e2db23f669cbe96e4798c8751cf20239306bf6d779d504a879c64be5c33c5224bc0fa70c9dcbea1d1b48215aac76e00061302130313010100005f0000000e000c0000096c6f63616c686f7374002b0003020304000a00060004001d0017000d000e000c040308040805080608070401003300260024001d00204428210ed16483c3a8945abcfbaa0d4ed376f07bedf13b0681b3ec7b3c15517c",
 		"response": "The same ServerHello. The 0x0301 changes nothing.",
-		"response_hex": "160303007a0200007603034029bec87cda7f5ccd6a7aa2f869be1dc2023ff69ccfc45693c6692dc0e26fc720239306bf6d779d504a879c64be5c33c5224bc0fa70c9dcbea1d1b48215aac76e130200002e002b0002030400330024001d0020bb1047b743e81e2993999263f9152e59f5fbe5b430883f663abedf470c5bdf4c",
+		"response_hex": "160303007a020000760303e398667f5977a36285088e930da2b02a79fa1ecfb2cac0cec69d42ddb1ea728f20239306bf6d779d504a879c64be5c33c5224bc0fa70c9dcbea1d1b48215aac76e130200002e002b0002030400330024001d0020f65f59032219ce48e719013288fe45561ece03ab7a019ced35590dfde80b2242",
 		"note": "RFC 8446 section 5.1 allows 0x0301 on the record carrying the first ClientHello, for middleboxes that inspect it. Rejecting it is a real interoperability bug.",
 		"request_fields": [
 			{
@@ -744,7 +744,7 @@
 				"offset": 11,
 				"length": 32,
 				"field": "server_hello.random",
-				"value": "4029bec87cda7f5ccd6a7aa2f869be1dc2023ff69ccfc45693c6692dc0e26fc7",
+				"value": "e398667f5977a36285088e930da2b02a79fa1ecfb2cac0cec69d42ddb1ea728f",
 				"varies": true
 			},
 			{
@@ -824,7 +824,7 @@
 				"offset": 95,
 				"length": 32,
 				"field": "server_hello.extensions[1].server_share.key_exchange",
-				"value": "bb1047b743e81e29… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
+				"value": "f65f59032219ce48… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
 				"varies": true
 			}
 		]
@@ -835,7 +835,7 @@
 		"request": "The ClientHello handshake message: msg_type 1, a three-byte length, the body",
 		"request_hex": "010000ae03039a092137ae5054ae242053c6044dccc39173892d72c8dc335c9410a93671b4e72098cc9ea1e27fbb3688cb276229f2e8c0ace303e1e14c220a1c6502c3ee86788900061302130313010100005f0000000e000c0000096c6f63616c686f7374002b0003020304000a00060004001d0017000d000e000c040308040805080608070401003300260024001d00200b9e9529aa9d65f8ea1a881cfa85240b45e37a6717fb6444ed9c08dcff04d71d",
 		"response": "server_hello(2), a three-byte length, legacy_version 0x0303, 32 random bytes, the echoed session id, the chosen cipher suite, compression 0, extensions.",
-		"response_hex": "0200007603038bdb97cc664bce5f7d7caef5f580a2082cac067af4a5f9fecff294392e0d9d5e2098cc9ea1e27fbb3688cb276229f2e8c0ace303e1e14c220a1c6502c3ee867889130200002e002b0002030400330024001d0020e2206531f77e5720ef6cfd6cd3131ae7b864f449685cc27ee44c18f2f4dfa774",
+		"response_hex": "0200007603036863ff4b4540476b4e42673c12b1e33629ffe5543a3b1c7cc07e012f70d3bc932098cc9ea1e27fbb3688cb276229f2e8c0ace303e1e14c220a1c6502c3ee867889130200002e002b0002030400330024001d002079a8137b48a4fb81908e2fa68fa7fa564684eecb1ae276439bbb602b22864d2e",
 		"note": "The handshake header is one type byte and a uint24 length — note the three bytes, not four. Only this framing, never the record header, goes into the transcript.",
 		"request_fields": [
 			{
@@ -1123,7 +1123,7 @@
 				"offset": 6,
 				"length": 32,
 				"field": "server_hello.random",
-				"value": "8bdb97cc664bce5f7d7caef5f580a2082cac067af4a5f9fecff294392e0d9d5e",
+				"value": "6863ff4b4540476b4e42673c12b1e33629ffe5543a3b1c7cc07e012f70d3bc93",
 				"varies": true
 			},
 			{
@@ -1203,7 +1203,7 @@
 				"offset": 90,
 				"length": 32,
 				"field": "server_hello.extensions[1].server_share.key_exchange",
-				"value": "e2206531f77e5720… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
+				"value": "79a8137b48a4fb81… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
 				"varies": true
 			}
 		]

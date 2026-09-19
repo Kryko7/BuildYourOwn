@@ -71,6 +71,9 @@ mod s42_key_update;
 mod s43_resumption;
 mod s44_early_data;
 mod s45_interop;
+mod s46_client_certificate_request;
+mod s47_client_certificate;
+mod s48_client_auth_policy;
 
 /// Every implemented stage, in ascending order.
 pub fn all() -> Vec<Stage> {
@@ -120,6 +123,9 @@ pub fn all() -> Vec<Stage> {
         s43_resumption::stage(),
         s44_early_data::stage(),
         s45_interop::stage(),
+        s46_client_certificate_request::stage(),
+        s47_client_certificate::stage(),
+        s48_client_auth_policy::stage(),
     ];
     v.sort_by_key(|s| s.number);
     v
@@ -172,6 +178,11 @@ pub fn sections() -> &'static [Section] {
             id: "g",
             title: "Advanced",
             stages: &[41, 42, 43, 44, 45],
+        },
+        Section {
+            id: "h",
+            title: "Client authentication",
+            stages: &[46, 47, 48],
         },
     ]
 }
@@ -464,6 +475,32 @@ impl Ctx {
         }
     }
 
+    /// A client that has handshaked and presented the suite's client certificate.
+    ///
+    /// Pair it with `ServerOptions::requesting_client_cert()` or
+    /// `requiring_client_cert()`; without one of those the server never asks, and this
+    /// fails saying so.
+    pub async fn handshake_authenticated(&self) -> Result<Client, Failure> {
+        let auth = self
+            .certs
+            .client_auth()
+            .map_err(|e| harness(format!("cannot generate the client certificate: {e:#}")))?;
+        let mut client = self.client().await?;
+        match client.handshake_with_client_auth(&auth).await {
+            Ok(()) => Ok(client),
+            Err(e) => Err(handshake_failure(e, &client)),
+        }
+    }
+
+    /// A client that handshakes but answers the CertificateRequest with an empty list.
+    pub async fn handshake_declining(&self) -> Result<Client, Failure> {
+        let mut client = self.client().await?;
+        match client.handshake_declining_client_auth().await {
+            Ok(()) => Ok(client),
+            Err(e) => Err(handshake_failure(e, &client)),
+        }
+    }
+
     /// Prove the server is still *accepting* after whatever the test just did to it,
     /// without requiring a handshake.
     ///
@@ -591,7 +628,14 @@ mod tests {
     #[test]
     fn every_stage_is_unique_and_ordered() {
         let stages = all();
-        assert_eq!(stages.len(), 45, "the plan has 45 stages");
+        // Counted from the sections rather than written here, so growing the suite does not
+        // mean editing a number in two places.
+        let planned: usize = sections().iter().map(|s| s.stages.len()).sum();
+        assert_eq!(
+            stages.len(),
+            planned,
+            "every planned stage is implemented, and no more"
+        );
         let mut last = 0;
         for s in &stages {
             assert!(s.number > last, "stage {} is out of order", s.number);
@@ -695,7 +739,11 @@ mod tests {
     fn sections_cover_the_whole_plan_once() {
         let mut numbers: Vec<u32> = sections().iter().flat_map(|s| s.stages.to_vec()).collect();
         numbers.sort_unstable();
-        assert_eq!(numbers, (1..=45).collect::<Vec<u32>>());
+        assert_eq!(
+            numbers,
+            (1..=numbers.len() as u32).collect::<Vec<u32>>(),
+            "the sections must cover 1..=n once each, with no gap and no repeat"
+        );
     }
 
     #[test]

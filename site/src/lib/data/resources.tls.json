@@ -19,7 +19,9 @@
 			25,
 			27,
 			30,
-			32
+			32,
+			46,
+			47
 		],
 		"concepts": [
 			"record-layer",
@@ -69,7 +71,9 @@
 			1,
 			30,
 			39,
-			45
+			45,
+			46,
+			48
 		],
 		"concepts": [
 			"reference-server",
@@ -96,7 +100,10 @@
 			24,
 			30,
 			36,
-			41
+			41,
+			46,
+			47,
+			48
 		],
 		"concepts": [
 			"rfc8446",
@@ -216,7 +223,9 @@
 			7,
 			29,
 			34,
-			37
+			37,
+			46,
+			48
 		],
 		"concepts": [
 			"state-machine",
@@ -265,7 +274,8 @@
 			11,
 			35,
 			36,
-			37
+			37,
+			48
 		],
 		"concepts": [
 			"alerts",
@@ -289,7 +299,8 @@
 		"stages": [
 			4,
 			37,
-			40
+			40,
+			47
 		],
 		"concepts": [
 			"robustness",
@@ -830,7 +841,9 @@
 		"track": "tls",
 		"stages": [
 			24,
-			29
+			29,
+			47,
+			48
 		],
 		"concepts": [
 			"certificate",
@@ -852,7 +865,8 @@
 		"track": "tls",
 		"stages": [
 			25,
-			26
+			26,
+			47
 		],
 		"concepts": [
 			"certificate-verify",
@@ -875,7 +889,8 @@
 		"stages": [
 			27,
 			28,
-			29
+			29,
+			47
 		],
 		"concepts": [
 			"finished",
@@ -1276,6 +1291,111 @@
 			"latency"
 		],
 		"why": "The readable version of the 0-RTT trade-off — what it saves, what it risks, and how one large deployment decided which requests to allow. Read it before the RFC appendix so stage 44's 'just refuse it' has a reason attached.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "tls-rfc8446-certificate-request",
+		"title": "RFC 8446 §4.3.2 — CertificateRequest",
+		"url": "https://www.rfc-editor.org/rfc/rfc8446#section-4.3.2",
+		"type": "spec",
+		"level": "core",
+		"track": "tls",
+		"stages": [
+			46,
+			48
+		],
+		"concepts": [
+			"certificate-request",
+			"client-authentication",
+			"signature-algorithms"
+		],
+		"why": "The message stage 46 is built from, in thirty lines: the context field, the extensions block, and the sentence that makes signature_algorithms mandatory. Worth reading beside the TLS 1.2 version to see how much was deleted.",
+		"minutes": 8,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "tls-mutual-tls-rfc8705",
+		"title": "RFC 8705 — OAuth 2.0 Mutual-TLS Client Authentication",
+		"url": "https://www.rfc-editor.org/rfc/rfc8705.html",
+		"type": "spec",
+		"level": "deep",
+		"track": "tls",
+		"stages": [
+			47,
+			48
+		],
+		"concepts": [
+			"mutual-tls",
+			"oauth",
+			"client-certificates"
+		],
+		"why": "What client certificates are actually used for outside a lab: binding an OAuth token to the certificate that fetched it. Section 3 shows a protocol built on top consuming exactly the identity these three stages establish.",
+		"minutes": 25,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "tls-smallstep-pki",
+		"title": "Everything you should know about certificates and PKI",
+		"url": "https://smallstep.com/blog/everything-pki/",
+		"type": "article",
+		"level": "intro",
+		"track": "tls",
+		"stages": [
+			46,
+			47,
+			48
+		],
+		"concepts": [
+			"pki",
+			"certificate-authority",
+			"chain-of-trust"
+		],
+		"why": "The background these stages assume: what a CA is, what signing a certificate means, and why \"the signature checks out\" and \"I trust this identity\" are two different questions. Stage 47's last test is precisely that gap.",
+		"minutes": 40,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "tls-istio-mtls",
+		"title": "Mutual TLS in a service mesh (Istio security concepts)",
+		"url": "https://istio.io/latest/docs/concepts/security/",
+		"type": "doc",
+		"level": "intro",
+		"track": "tls",
+		"stages": [
+			48
+		],
+		"concepts": [
+			"mutual-tls",
+			"service-mesh",
+			"identity"
+		],
+		"why": "Client certificates at scale: every workload gets one, and the mesh requires them rather than requesting them. A concrete answer to \"who turns this on\", which makes stage 48's request-versus-require distinction feel less academic.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "tls-davidwong-tls13",
+		"title": "The TLS 1.3 handshake, walked through",
+		"url": "https://www.davidwong.fr/tls13/",
+		"type": "article",
+		"level": "intro",
+		"track": "tls",
+		"stages": [
+			46,
+			47
+		],
+		"concepts": [
+			"handshake",
+			"visualisation",
+			"client-authentication"
+		],
+		"why": "An interactive walk through a real handshake, message by message. Useful here for seeing where CertificateRequest and the client's own Certificate sit in the flight, which is hard to picture from the grammar alone.",
 		"minutes": 20,
 		"free": true,
 		"checkedAt": "2026-09-19"

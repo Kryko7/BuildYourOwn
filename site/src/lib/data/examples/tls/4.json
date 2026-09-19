@@ -16,7 +16,7 @@
 		"request": "A well-formed ClientHello on a fresh connection",
 		"request_hex": "16030300b2010000ae0303d8f3cd619e6e0af5e0d2d6afe5f52573781bf3340c4c68bf458563f7dc796c93201e14bda8fac930cb88d4364333ec090112d43eba27cc26a3a2ab2964631c79da00061302130313010100005f0000000e000c0000096c6f63616c686f7374002b0003020304000a00060004001d0017000d000e000c040308040805080608070401003300260024001d0020270cdad807c464437e9295bc0ef1652ac481a7525003555a67844036a577c609",
 		"response": "A ServerHello. The garbage changed nothing.",
-		"response_hex": "160303007a0200007603032759d51aac8777172b34e82eb1ff13f67b6407bafa357daf0e604d36a3758cd6201e14bda8fac930cb88d4364333ec090112d43eba27cc26a3a2ab2964631c79da130200002e002b0002030400330024001d002063fdb6d77590abfb65726ae4836e85fb638f1d5d79fef1c40ac632f3fc9cae06",
+		"response_hex": "160303007a020000760303173c21f79b0a5e94cf0949939ef70e150f23f85c440ab916b3b6bfbf49c9f600201e14bda8fac930cb88d4364333ec090112d43eba27cc26a3a2ab2964631c79da130200002e002b0002030400330024001d0020fe7a6ae0481760163c81678c8939297f827fa3c4ea6fff87dd432ebd6da1f144",
 		"note": "This is the half of the stage that is easy to miss: surviving the bad connection is only half of it, the accept loop has to still be running afterwards.",
 		"request_fields": [
 			{
@@ -340,7 +340,7 @@
 				"offset": 11,
 				"length": 32,
 				"field": "server_hello.random",
-				"value": "2759d51aac8777172b34e82eb1ff13f67b6407bafa357daf0e604d36a3758cd6",
+				"value": "173c21f79b0a5e94cf0949939ef70e150f23f85c440ab916b3b6bfbf49c9f600",
 				"varies": true
 			},
 			{
@@ -420,7 +420,7 @@
 				"offset": 95,
 				"length": 32,
 				"field": "server_hello.extensions[1].server_share.key_exchange",
-				"value": "63fdb6d77590abfb… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
+				"value": "fe7a6ae048176016… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
 				"varies": true
 			}
 		]

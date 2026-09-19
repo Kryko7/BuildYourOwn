@@ -5,7 +5,7 @@
 		"request": "cipher_suites begins with 00 ff (the renegotiation SCSV) and the extensions end with ff 01 00 01 00 (renegotiation_info, empty)",
 		"request_hex": "16030300b9010000b5030365f73cc1325c85f191d9f9af604c16658a59c4254b5301dc6df18b27cc8068b420b8ae533494a2fa9cd39de963dc103c9c6e7acda6ed35468a024330a54fc8e94f000800ff130213031301010000640000000e000c0000096c6f63616c686f7374002b0003020304000a00060004001d0017000d000e000c040308040805080608070401003300260024001d0020f091eacbd9bb6884de15709894f5650cbe83337102b28352ee51692dd5a76b6bff01000100",
 		"response": "An ordinary ServerHello. Both are skipped like anything else unrecognised.",
-		"response_hex": "160303007a020000760303806e27ac29622b060e6d95787ef0b432af64d573f4d7d91adb621e52a833cd1320b8ae533494a2fa9cd39de963dc103c9c6e7acda6ed35468a024330a54fc8e94f130200002e002b0002030400330024001d00205d729c74f39f2e496fe46f10418c5c7c05bcbaa09909b9dc73c4e60165b50c26",
+		"response_hex": "160303007a020000760303f8d90b93b88617c0f6c3746d98448826a5a8d58f2bbd21c44822c64b3176ec3d20b8ae533494a2fa9cd39de963dc103c9c6e7acda6ed35468a024330a54fc8e94f130200002e002b0002030400330024001d0020af57fd331b7f21a2bbc25a6cb66d66c9379f359b16a7fd17370241e31b87507f",
 		"note": "Real clients still send these. A TLS 1.3 server must not try to honour them, and must not refuse a hello for carrying them.",
 		"request_fields": [
 			{
@@ -354,7 +354,7 @@
 				"offset": 11,
 				"length": 32,
 				"field": "server_hello.random",
-				"value": "806e27ac29622b060e6d95787ef0b432af64d573f4d7d91adb621e52a833cd13",
+				"value": "f8d90b93b88617c0f6c3746d98448826a5a8d58f2bbd21c44822c64b3176ec3d",
 				"varies": true
 			},
 			{
@@ -434,7 +434,7 @@
 				"offset": 95,
 				"length": 32,
 				"field": "server_hello.extensions[1].server_share.key_exchange",
-				"value": "5d729c74f39f2e49… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
+				"value": "af57fd331b7f21a2… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
 				"varies": true
 			}
 		]

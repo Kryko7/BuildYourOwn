@@ -1,6 +1,6 @@
 {
 	"track": "tls",
-	"generatedAt": "2026-09-19T05:05:20.894Z",
+	"generatedAt": "2026-09-19T07:26:44.690Z",
 	"sections": [
 		{
 			"id": "A",
@@ -87,6 +87,15 @@
 				43,
 				44,
 				45
+			]
+		},
+		{
+			"id": "H",
+			"title": "Client authentication",
+			"stages": [
+				46,
+				47,
+				48
 			]
 		}
 	],
@@ -1959,12 +1968,154 @@
 				}
 			],
 			"exampleCount": 2
+		},
+		{
+			"number": 46,
+			"slug": "client_certificate_request",
+			"name": "CertificateRequest",
+			"ext": true,
+			"section": "H",
+			"file": "src/stages/s46_client_certificate_request.rs",
+			"planDone": false,
+			"hints": [
+				"CertificateRequest is handshake type 13 and belongs in the encrypted flight, after EncryptedExtensions and before the server's own Certificate",
+				"Its body is certificate_request_context (opaque<0..255>, empty during a handshake) followed by an extensions block — there is no certificate_types or supported_signature_algorithms list any more, those were TLS 1.2",
+				"signature_algorithms is mandatory in it: without it the client has no way to know what it may sign with, so an empty extensions block is an illegal message",
+				"Sending it at all is a choice; a server that never wants client certificates simply omits the message and nothing else about the handshake changes"
+			],
+			"tests": [
+				{
+					"name": "the server sends one when it is asking",
+					"ext": true
+				},
+				{
+					"name": "it arrives inside the encrypted flight",
+					"ext": true
+				},
+				{
+					"name": "it comes before the server's own Certificate",
+					"ext": true
+				},
+				{
+					"name": "the context is empty during a handshake",
+					"ext": true
+				},
+				{
+					"name": "it carries signature_algorithms",
+					"ext": true
+				},
+				{
+					"name": "the schemes it offers are ones a TLS 1.3 client can use",
+					"ext": true
+				},
+				{
+					"name": "requiring a certificate looks the same on the wire as requesting one",
+					"ext": true
+				},
+				{
+					"name": "a server that was not asked for client auth sends none",
+					"ext": true
+				}
+			],
+			"exampleCount": 1
+		},
+		{
+			"number": 47,
+			"slug": "client_certificate",
+			"name": "The client's Certificate and CertificateVerify",
+			"ext": true,
+			"section": "H",
+			"file": "src/stages/s47_client_certificate.rs",
+			"planDone": false,
+			"hints": [
+				"Both messages go out under the *client* handshake traffic keys, after the server's Finished and before the client's own",
+				"The client's Certificate echoes the certificate_request_context byte for byte — empty during a handshake, but echoing is the rule",
+				"CertificateVerify signs 64 spaces, then \"TLS 1.3, client CertificateVerify\", then a zero byte, then the transcript hash up to and including the client's Certificate — a different context string from the server's, on purpose",
+				"The client's Certificate and CertificateVerify are in the transcript, so the Finished that follows covers them and its verify_data differs from an unauthenticated handshake's"
+			],
+			"tests": [
+				{
+					"name": "a client certificate completes the handshake",
+					"ext": true
+				},
+				{
+					"name": "and the data path still works afterwards",
+					"ext": true
+				},
+				{
+					"name": "the client's Certificate echoes the request context",
+					"ext": true
+				},
+				{
+					"name": "the CertificateVerify uses a scheme the server offered",
+					"ext": true
+				},
+				{
+					"name": "the client's messages are in the transcript before its Finished",
+					"ext": true
+				},
+				{
+					"name": "a signature over the server's context string is refused",
+					"ext": true
+				},
+				{
+					"name": "a signature over the wrong transcript is refused",
+					"ext": true
+				},
+				{
+					"name": "a certificate the server's CA never signed is refused",
+					"ext": true
+				}
+			],
+			"exampleCount": 2
+		},
+		{
+			"number": 48,
+			"slug": "client_auth_policy",
+			"name": "Declining, and requesting against requiring",
+			"ext": true,
+			"section": "H",
+			"file": "src/stages/s48_client_auth_policy.rs",
+			"planDone": false,
+			"hints": [
+				"Declining is an empty Certificate, not silence: the client still sends the message, with a zero-length certificate_list, and no CertificateVerify after it",
+				"A server that only *requests* must carry on with an unauthenticated connection — the handshake completes and application data flows",
+				"A server that *requires* must fail the handshake, and certificate_required(116) is the alert that says why; handshake_failure loses that information",
+				"An empty Certificate is followed by Finished and nothing else — a CertificateVerify with no certificate to verify is an illegal message"
+			],
+			"tests": [
+				{
+					"name": "a client that declines sends an empty Certificate, not silence",
+					"ext": true
+				},
+				{
+					"name": "a server that only requests carries on without one",
+					"ext": true
+				},
+				{
+					"name": "and its data path works unauthenticated",
+					"ext": true
+				},
+				{
+					"name": "a server that requires one refuses the empty list",
+					"ext": true
+				},
+				{
+					"name": "and says certificate_required rather than something vaguer",
+					"ext": true
+				},
+				{
+					"name": "authenticating against the same server succeeds",
+					"ext": true
+				}
+			],
+			"exampleCount": 1
 		}
 	],
 	"totals": {
-		"stages": 45,
-		"tests": 321,
-		"ext": 7
+		"stages": 48,
+		"tests": 343,
+		"ext": 10
 	},
 	"source": "tlstest/catalog.json"
 }

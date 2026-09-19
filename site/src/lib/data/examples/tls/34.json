@@ -3,9 +3,9 @@
 		"title": "The last line before a close",
 		"kind": "wire",
 		"request": "`bye\\n`, and then an alert record carrying `01 00` — warning, close_notify",
-		"request_hex": "170303001534162d402477d133a2307dc8db8e9b4b8b1419d034",
+		"request_hex": "170303001592d55627fa82f4648ad0ea4a8c147676c0e5ed1620",
 		"response": "`eyb\\n`, and then the server's own close_notify, also encrypted, before it closes the socket.",
-		"response_hex": "1703030015c9f32383e0e651c16f663f28404ab33ee21490b1eb",
+		"response_hex": "17030300157f03f1df00ad35fe27bd6625cac32b636c91e74d7a",
 		"note": "The alert is two bytes of plaintext inside an application_data record. Its ciphertext is 2 + 1 + 16 = 19 bytes, which is how you spot one without keys — and all you can tell is that *something* two bytes long was said.",
 		"request_fields": [
 			{

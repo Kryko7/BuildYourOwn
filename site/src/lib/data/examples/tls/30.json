@@ -3,9 +3,9 @@
 		"title": "One line in, one line out",
 		"kind": "wire",
 		"request": "An application_data record whose plaintext is `hello\\n` — six bytes inside the AEAD, plus the inner content type and the tag",
-		"request_hex": "170303001744aa4c547a16708c31a9a39794f9fd66278ffb80d7c6fc",
+		"request_hex": "1703030017fface4c2f2a5932312d6ad8f47ece9bbca2d86fda6ee05",
 		"response": "An application_data record whose plaintext is `olleh\\n`. The record on the wire is opaque; only the length gives its size away.",
-		"response_hex": "17030300173389991ab0016b207761215e11b8f293f9387a001af7bb",
+		"response_hex": "1703030017d6868b6ef311de69acf50a307cbf874c3d2b99b6aff78f",
 		"note": "Compare the two record lengths in the hex: both are 6 + 1 + 16 = 23 bytes of ciphertext. The extra byte is the inner content_type and the 16 are the tag.",
 		"request_fields": [
 			{

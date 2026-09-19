@@ -48,7 +48,7 @@ fn catalog_has_the_shape_the_site_expects() {
     assert!(cat["generatedAt"].is_string());
 
     let sections = cat["sections"].as_array().expect("sections array");
-    assert_eq!(sections.len(), 7);
+    assert_eq!(sections.len(), stages::sections().len());
     let mut numbers: Vec<u64> = sections
         .iter()
         .flat_map(|s| {
@@ -62,7 +62,7 @@ fn catalog_has_the_shape_the_site_expects() {
     numbers.sort_unstable();
     assert_eq!(
         numbers,
-        (1..=45).collect::<Vec<u64>>(),
+        (1..=numbers.len() as u64).collect::<Vec<u64>>(),
         "the sections must cover all 45 stages"
     );
 
@@ -117,11 +117,16 @@ fn catalog_has_the_shape_the_site_expects() {
     }
 }
 
+/// How many stages the registry holds, so this file never writes the number down.
+fn crate_stages_len() -> usize {
+    stages::all().len()
+}
+
 #[test]
 fn the_suite_is_the_size_the_plan_promises() {
     let cat = committed();
     let stages = cat["stages"].as_array().expect("stages");
-    assert_eq!(stages.len(), 45);
+    assert_eq!(stages.len(), crate_stages_len());
     let tests: usize = stages
         .iter()
         .map(|s| s["tests"].as_array().map(Vec::len).unwrap_or(0))
@@ -143,8 +148,8 @@ fn plan_md_lists_every_stage_with_its_hints_and_test_count() {
     let ticks = catalog::plan_ticks(&plan);
     assert_eq!(
         ticks.len(),
-        45,
-        "PLAN.md must carry a tickbox for all 45 stages"
+        stages::all().len(),
+        "PLAN.md must carry one tickbox per implemented stage"
     );
     let text = std::fs::read_to_string(&plan).expect("read PLAN.md");
     let cat = committed();

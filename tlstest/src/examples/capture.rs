@@ -54,7 +54,11 @@ pub async fn run(def: ServerDef, opts: RunOptions, stages: &[Stage], out: &Path)
                 server_name: "localhost".to_string(),
                 seed: u64::from(stage.number) * 100 + index as u64 + 1,
             };
-            let example = one(addr, stage, spec, &env, &mut problems).await;
+            let client_auth = match options.client_auth {
+                Some(_) => runner.certs().client_auth().ok(),
+                None => None,
+            };
+            let example = one(addr, stage, spec, &env, client_auth, &mut problems).await;
             captured.push(example);
             total += 1;
         }
@@ -99,6 +103,7 @@ async fn one(
     stage: &Stage,
     spec: &ExampleSpec,
     env: &ExampleEnv,
+    client_auth: Option<crate::certs::ClientAuth>,
     problems: &mut Vec<String>,
 ) -> Example {
     let where_ = format!("stage {:02} example '{}'", stage.number, spec.title);
@@ -116,7 +121,7 @@ async fn one(
             config,
             request,
             response,
-        } => match handshake(addr, config(env), *request, *response).await {
+        } => match handshake(addr, config(env), *request, *response, client_auth).await {
             Ok(pair) => pair,
             Err(e) => {
                 problems.push(format!("{where_}: {e}"));
@@ -225,14 +230,32 @@ async fn handshake(
     config: crate::tls::client::ClientConfig,
     request: Part,
     response: Part,
+    client_auth: Option<crate::certs::ClientAuth>,
 ) -> Result<(Vec<u8>, Vec<u8>)> {
     let mut client = Client::connect(addr, READ_TIMEOUT, config)
         .await
         .map_err(|e| anyhow::anyhow!("cannot connect: {e}"))?;
-    client
-        .handshake()
-        .await
-        .map_err(|e| anyhow::anyhow!("the handshake did not complete: {e}"))?;
+    // An example that wants to show a client-authentication message has to answer the
+    // server's CertificateRequest, or those messages never exist.
+    let wants_client_auth = matches!(
+        request,
+        Part::ClientCertificate | Part::ClientCertificateVerify
+    ) || matches!(
+        response,
+        Part::ClientCertificate | Part::ClientCertificateVerify
+    );
+    if wants_client_auth {
+        let auth = client_auth.context("this example needs client-authentication material")?;
+        client
+            .handshake_with_client_auth(&auth)
+            .await
+            .map_err(|e| anyhow::anyhow!("the authenticated handshake did not complete: {e}"))?;
+    } else {
+        client
+            .handshake()
+            .await
+            .map_err(|e| anyhow::anyhow!("the handshake did not complete: {e}"))?;
+    }
     if request == Part::NewSessionTicket || response == Part::NewSessionTicket {
         client
             .collect_tickets(Duration::from_millis(800))
@@ -257,6 +280,9 @@ async fn handshake(
             Part::CertificateVerify => client.certificate_verify_bytes.clone(),
             Part::ServerFinished => client.server_finished_bytes.clone(),
             Part::ClientFinished => client.client_finished_bytes.clone(),
+            Part::CertificateRequest => client.certificate_request.clone().unwrap_or_default(),
+            Part::ClientCertificate => client.client_certificate_bytes.clone(),
+            Part::ClientCertificateVerify => client.client_certificate_verify_bytes.clone(),
             Part::NewSessionTicket => {
                 let ticket = client
                     .tickets

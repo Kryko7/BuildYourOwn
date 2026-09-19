@@ -1,12 +1,12 @@
 [
 	{
-		"title": "The retry request itself",
+		"title": "A CertificateRequest, field by field",
 		"kind": "wire",
-		"request": "A ClientHello naming x25519 and secp256r1 in supported_groups, with an empty key_share list",
-		"request_hex": "010000ae03034281428eb258325d521b095768f7e7797927eb4041dea26a735aed53e74ee97d201bb52b617dac4878922066c439a24551f375b98d92ecd906a8ab5f56c231c11e00061302130313010100005f0000000e000c0000096c6f63616c686f7374002b0003020304000a00060004001d0017000d000e000c040308040805080608070401003300260024001d0020602f277f61f14a06fb291e873d7d46e42b527d076c6b0536dd3ef9cd60cbe533",
-		"response": "A ServerHello whose random is CF 21 AD 74 … 33 9C and whose key_share holds two bytes: the group it wants.",
-		"response_hex": "0200007603032750b33d3ea9decd594382a1ba5e4c2c377fe54702586c345987921a626eb6af201bb52b617dac4878922066c439a24551f375b98d92ecd906a8ab5f56c231c11e130200002e002b0002030400330024001d00207b1472b29b45819cb9fe09843a78127ed657d7185d39ff1d3d3e4cfa69c06a48",
-		"note": "Look at the random in the hex: it is not random at all. Any ServerHello carrying SHA-256(\"HelloRetryRequest\") is a retry, and the client must not treat it as a completed key exchange.",
+		"request": "An ordinary ClientHello, against a server that wants a client certificate",
+		"request_hex": "010000ae030359355d86896eb9234e8d0bc28b2d7a376703439ae606676af78e009a47b9b3232099f3028198c7b0af9c8da320663b7bb0fe71536c9e734289c736b371d037388e00061302130313010100005f0000000e000c0000096c6f63616c686f7374002b0003020304000a00060004001d0017000d000e000c040308040805080608070401003300260024001d0020c2f2cf26448d8c3b296aa895835a7a83ebd665d36195def948c8c61ed5b7c443",
+		"response": "`0d`, a uint24 length, `00` for the empty certificate_request_context, then a uint16-counted extensions block holding signature_algorithms(13).",
+		"response_hex": "0d00006200005f000d002a002809050906090404030503060308070808081a081b081c0809080a080b080408050806040105010601001b000706000200010003002f00220020001e301c311a301806035504030c11746c737465737420636c69656e74204341",
+		"note": "Two bytes of context and a list of schemes is the whole message: TLS 1.2's certificate_types and its own copy of the CA list are gone. Note where it sits — after EncryptedExtensions, before the server's Certificate, and encrypted, so nobody watching the connection can tell that client authentication is in play.",
 		"request_fields": [
 			{
 				"offset": 0,
@@ -30,7 +30,7 @@
 				"offset": 6,
 				"length": 32,
 				"field": "client_hello.random",
-				"value": "4281428eb258325d521b095768f7e7797927eb4041dea26a735aed53e74ee97d",
+				"value": "59355d86896eb9234e8d0bc28b2d7a376703439ae606676af78e009a47b9b323",
 				"varies": true
 			},
 			{
@@ -43,7 +43,7 @@
 				"offset": 39,
 				"length": 32,
 				"field": "client_hello.legacy_session_id",
-				"value": "1bb52b617dac4878922066c439a24551f375b98d92ecd906a8ab5f56c231c11e (the server must echo this back byte for byte)",
+				"value": "99f3028198c7b0af9c8da320663b7bb0fe71536c9e734289c736b371d037388e (the server must echo this back byte for byte)",
 				"varies": true
 			},
 			{
@@ -266,7 +266,7 @@
 				"offset": 146,
 				"length": 32,
 				"field": "client_hello.extensions[4].client_shares[0].key_exchange",
-				"value": "602f277f61f14a06… (32 bytes) — the client's ephemeral public key",
+				"value": "c2f2cf26448d8c3b… (32 bytes) — the client's ephemeral public key",
 				"varies": true
 			}
 		],
@@ -274,119 +274,21 @@
 			{
 				"offset": 0,
 				"length": 1,
-				"field": "server_hello.msg_type",
-				"value": "server_hello(2)"
+				"field": "certificate_request.msg_type",
+				"value": "certificate_request(13)"
 			},
 			{
 				"offset": 1,
 				"length": 3,
-				"field": "server_hello.length",
-				"value": "118 (bytes of body that follow)"
+				"field": "certificate_request.length",
+				"value": "98 (bytes of body that follow)"
 			},
 			{
 				"offset": 4,
-				"length": 2,
-				"field": "server_hello.legacy_version",
-				"value": "0x0303 (TLS 1.3 pins this at 0x0303; the real version is in supported_versions)"
-			},
-			{
-				"offset": 6,
-				"length": 32,
-				"field": "server_hello.random",
-				"value": "2750b33d3ea9decd594382a1ba5e4c2c377fe54702586c345987921a626eb6af",
-				"varies": true
-			},
-			{
-				"offset": 38,
-				"length": 1,
-				"field": "server_hello.legacy_session_id.length",
-				"value": "32"
-			},
-			{
-				"offset": 39,
-				"length": 32,
-				"field": "server_hello.legacy_session_id_echo",
-				"value": "1bb52b617dac4878922066c439a24551f375b98d92ecd906a8ab5f56c231c11e (must equal the ClientHello's legacy_session_id)",
-				"varies": true
-			},
-			{
-				"offset": 71,
-				"length": 2,
-				"field": "server_hello.cipher_suite",
-				"value": "TLS_AES_256_GCM_SHA384(0x1302)"
-			},
-			{
-				"offset": 73,
-				"length": 1,
-				"field": "server_hello.legacy_compression_method",
-				"value": "0 (must be 0)"
-			},
-			{
-				"offset": 74,
-				"length": 2,
-				"field": "server_hello.extensions.length",
-				"value": "46 bytes of extensions"
-			},
-			{
-				"offset": 76,
-				"length": 2,
-				"field": "server_hello.extensions[0].extension_type",
-				"value": "supported_versions(43)"
-			},
-			{
-				"offset": 78,
-				"length": 2,
-				"field": "server_hello.extensions[0].length",
-				"value": "2 bytes"
-			},
-			{
-				"offset": 80,
-				"length": 2,
-				"field": "server_hello.extensions[0].selected_version",
-				"value": "TLS 1.3 (0x0304)"
-			},
-			{
-				"offset": 82,
-				"length": 2,
-				"field": "server_hello.extensions[1].extension_type",
-				"value": "key_share(51)"
-			},
-			{
-				"offset": 84,
-				"length": 2,
-				"field": "server_hello.extensions[1].length",
-				"value": "36 bytes"
-			},
-			{
-				"offset": 86,
-				"length": 2,
-				"field": "server_hello.extensions[1].server_share.group",
-				"value": "x25519(0x001d)"
-			},
-			{
-				"offset": 88,
-				"length": 2,
-				"field": "server_hello.extensions[1].server_share.key_exchange.length",
-				"value": "32"
-			},
-			{
-				"offset": 90,
-				"length": 32,
-				"field": "server_hello.extensions[1].server_share.key_exchange",
-				"value": "7b1472b29b45819c… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
-				"varies": true
+				"length": 98,
+				"field": "certificate_request.body",
+				"value": "98 bytes"
 			}
 		]
-	},
-	{
-		"title": "The transcript after a retry",
-		"kind": "text",
-		"request": "Transcript-Hash(ClientHello1, HelloRetryRequest, ClientHello2, ...) =\nHash( message_hash || 00 00 Hash.length || Hash(ClientHello1)\n      || HelloRetryRequest || ClientHello2 || ... )",
-		"request_hex": "",
-		"response": "`message_hash` is handshake type 254, and the three length bytes are the hash length — 00 00 20 for SHA-256, 00 00 30 for SHA-384.",
-		"response_hex": "",
-		"note": "The replacement lets a stateless server reconstruct the transcript from the cookie alone: it never has to remember ClientHello1, only its hash. Skip it and every retried handshake dies at the server's Finished.",
-		"request_fields": [],
-		"response_fields": []
 	}
 ]

@@ -132,6 +132,29 @@ impl Material {
     }
 }
 
+/// A CA, and one client certificate it signed, for the client-authentication stages.
+///
+/// Client auth turns the handshake around: the *tester* has to present a certificate and
+/// prove it holds the key, so unlike everything else in this module the private key is kept
+/// where the suite can sign with it (`sig::sign_pem`) and not only written to disk.
+#[derive(Debug, Clone)]
+pub struct ClientAuth {
+    /// PEM holding the CA certificate, handed to the server as `-CAfile`.
+    pub ca_pem: PathBuf,
+    /// PEM holding the client certificate.
+    pub cert_pem: PathBuf,
+    /// PEM holding the client's private key.
+    pub key_pem: PathBuf,
+    /// The client's certificate DER, which is what goes in the Certificate message.
+    pub client_der: Vec<u8>,
+    /// The CA's certificate DER.
+    pub ca_der: Vec<u8>,
+    /// The client's private key as a PKCS#8 PEM, for signing CertificateVerify.
+    pub key_pkcs8_pem: String,
+    /// The signature scheme that key must be used with.
+    pub scheme: u16,
+}
+
 /// Generates certificates on demand and keeps them for the rest of the run.
 ///
 /// RSA-2048 generation is the slow one (a fraction of a second in release, a few seconds in
@@ -139,6 +162,7 @@ impl Material {
 pub struct CertStore {
     dir: PathBuf,
     cache: Mutex<BTreeMap<CertKind, Material>>,
+    client_auth: Mutex<Option<ClientAuth>>,
 }
 
 impl CertStore {
@@ -150,6 +174,7 @@ impl CertStore {
         Ok(CertStore {
             dir: dir.to_path_buf(),
             cache: Mutex::new(BTreeMap::new()),
+            client_auth: Mutex::new(None),
         })
     }
 
@@ -170,6 +195,20 @@ impl CertStore {
             cache.insert(kind, material.clone());
         }
         Ok(material)
+    }
+
+    /// The CA and client certificate the client-authentication stages use, minted once.
+    pub fn client_auth(&self) -> Result<ClientAuth> {
+        if let Ok(slot) = self.client_auth.lock() {
+            if let Some(c) = slot.as_ref() {
+                return Ok(c.clone());
+            }
+        }
+        let made = generate_client_auth(&self.dir)?;
+        if let Ok(mut slot) = self.client_auth.lock() {
+            *slot = Some(made.clone());
+        }
+        Ok(made)
     }
 
     /// The default material every stage uses unless it says otherwise.
@@ -322,6 +361,70 @@ fn key_pair(kind: KeyKind) -> Result<KeyPair> {
                 .context("rcgen refused the generated RSA key")
         }
     }
+}
+
+/// Mint the client-authentication material: a CA, and a P-256 client certificate under it.
+fn generate_client_auth(dir: &Path) -> Result<ClientAuth> {
+    use p256::pkcs8::EncodePrivateKey;
+
+    let ca_key = key_pair(KeyKind::EcdsaP256)?;
+    let mut ca_params =
+        CertificateParams::new(Vec::<String>::new()).context("client CA parameters")?;
+    ca_params
+        .distinguished_name
+        .push(DnType::CommonName, "tlstest client CA");
+    ca_params.is_ca = IsCa::Ca(BasicConstraints::Constrained(0));
+    ca_params.key_usages = vec![KeyUsagePurpose::KeyCertSign, KeyUsagePurpose::CrlSign];
+    ca_params.not_before = rcgen::date_time_ymd(2024, 1, 1);
+    ca_params.not_after = rcgen::date_time_ymd(2035, 1, 1);
+    let ca = ca_params
+        .self_signed(&ca_key)
+        .context("cannot self-sign the client CA")?;
+
+    // The key is made by `p256` rather than by rcgen, because the suite has to sign the
+    // client's CertificateVerify with it later and rcgen hands back no signer.
+    let signing = p256::ecdsa::SigningKey::random(&mut p256::elliptic_curve::rand_core::OsRng);
+    let key_pkcs8_pem = p256::SecretKey::from(signing.as_nonzero_scalar())
+        .to_pkcs8_pem(p256::pkcs8::LineEnding::LF)
+        .context("cannot serialize the client key")?
+        .to_string();
+    let client_key =
+        KeyPair::from_pem(&key_pkcs8_pem).context("rcgen cannot read the client key")?;
+
+    let mut client_params =
+        CertificateParams::new(Vec::<String>::new()).context("client certificate parameters")?;
+    client_params
+        .distinguished_name
+        .push(DnType::CommonName, "tlstest client");
+    client_params.is_ca = IsCa::ExplicitNoCa;
+    client_params.key_usages = vec![KeyUsagePurpose::DigitalSignature];
+    client_params.extended_key_usages = vec![rcgen::ExtendedKeyUsagePurpose::ClientAuth];
+    client_params.not_before = rcgen::date_time_ymd(2024, 1, 1);
+    client_params.not_after = rcgen::date_time_ymd(2035, 1, 1);
+    let client = client_params
+        .signed_by(&client_key, &ca, &ca_key)
+        .context("cannot sign the client certificate")?;
+
+    let ca_pem = dir.join("client_ca.cert.pem");
+    let cert_pem = dir.join("client.cert.pem");
+    let key_pem = dir.join("client.key.pem");
+    std::fs::write(&ca_pem, ca.pem())
+        .with_context(|| format!("cannot write {}", ca_pem.display()))?;
+    std::fs::write(&cert_pem, client.pem())
+        .with_context(|| format!("cannot write {}", cert_pem.display()))?;
+    std::fs::write(&key_pem, &key_pkcs8_pem)
+        .with_context(|| format!("cannot write {}", key_pem.display()))?;
+    restrict(&key_pem);
+
+    Ok(ClientAuth {
+        ca_pem,
+        cert_pem,
+        key_pem,
+        client_der: client.der().to_vec(),
+        ca_der: ca.der().to_vec(),
+        key_pkcs8_pem,
+        scheme: KeyKind::EcdsaP256.signature_scheme(),
+    })
 }
 
 fn restrict(path: &Path) {

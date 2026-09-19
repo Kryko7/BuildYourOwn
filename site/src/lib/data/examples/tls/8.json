@@ -5,7 +5,7 @@
 		"request": "legacy_version 0x0303, and a supported_versions extension whose list holds 0x0304",
 		"request_hex": "010000ae03034bbc1e841fa5581da6175711c6aab9512a4fb8ce1fc47e4666a08fc3cba1c0bc2012c63c9622ceddb0ce7a2759414076b742d5614f70b12a596fc8b6c7b723a31200061302130313010100005f0000000e000c0000096c6f63616c686f7374002b0003020304000a00060004001d0017000d000e000c040308040805080608070401003300260024001d0020b4e4f07705b306b7164ae310bcfec9b315eb5599ae52a5772ad7585f23f0e55b",
 		"response": "legacy_version 0x0303 again, and a supported_versions extension holding the two bytes 0x0304.",
-		"response_hex": "020000760303a13173db3f036029f032b0cab631720aec19afc20912c2470018c7ffa10f300e2012c63c9622ceddb0ce7a2759414076b742d5614f70b12a596fc8b6c7b723a312130200002e002b0002030400330024001d002048f24509860bc46603e53087004ed48eff46fc0a6ff02fc8213ff0387a529f5c",
+		"response_hex": "0200007603033608a2847da87b5bfa001dd38a1027f55ce4b39f020488daad6e03d5ac8170c92012c63c9622ceddb0ce7a2759414076b742d5614f70b12a596fc8b6c7b723a312130200002e002b0002030400330024001d00206f0a5fc148a39badfd5ad7bba9140445a67d1f0966f29dc7c5d454038326e904",
 		"note": "Both messages say 0x0303 in the field called `version`, and neither of them means it. Negotiate from the extension; the field is there so a 1990s middlebox does not panic.",
 		"request_fields": [
 			{
@@ -293,7 +293,7 @@
 				"offset": 6,
 				"length": 32,
 				"field": "server_hello.random",
-				"value": "a13173db3f036029f032b0cab631720aec19afc20912c2470018c7ffa10f300e",
+				"value": "3608a2847da87b5bfa001dd38a1027f55ce4b39f020488daad6e03d5ac8170c9",
 				"varies": true
 			},
 			{
@@ -373,7 +373,7 @@
 				"offset": 90,
 				"length": 32,
 				"field": "server_hello.extensions[1].server_share.key_exchange",
-				"value": "48f24509860bc466… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
+				"value": "6f0a5fc148a39bad… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
 				"varies": true
 			}
 		]

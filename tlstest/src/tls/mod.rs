@@ -209,6 +209,10 @@ impl AlertDescription {
     pub const NO_RENEGOTIATION: AlertDescription = AlertDescription(100);
     /// `certificate_required(116)`
     pub const CERTIFICATE_REQUIRED: AlertDescription = AlertDescription(116);
+    /// The peer's certificate is not one the receiver can build a trusted chain for.
+    pub const UNKNOWN_CA: AlertDescription = AlertDescription(48);
+    /// The certificate was rejected for a reason with no more specific alert.
+    pub const CERTIFICATE_UNKNOWN: AlertDescription = AlertDescription(46);
     /// `no_application_protocol(120)`
     pub const NO_APPLICATION_PROTOCOL: AlertDescription = AlertDescription(120);
 

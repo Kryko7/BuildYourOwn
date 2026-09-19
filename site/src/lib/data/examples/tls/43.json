@@ -3,9 +3,9 @@
 		"title": "A NewSessionTicket",
 		"kind": "wire",
 		"request": "The client's Finished, which is what the resumption secret is taken over",
-		"request_hex": "14000030baf2e65c8ce085f5263ed3618b91ca1bbe8d9e7bf90d8dff0a1c1da00ff987b2ebf27f7529f6010e3f84d92ba555a627",
+		"request_hex": "140000308bd63f084159a63c2950a3631fb314b41659df5cafa0e7cf807d93809fea41c997676e4aab7bab672636d76b2515cb2f",
 		"response": "`04`, a uint24 length, ticket_lifetime, ticket_age_add, a ticket_nonce, the opaque ticket itself, and an extensions block.",
-		"response_hex": "040000e500001c20416dce0008000000000000000000d04ed6b5ec736ca989487f59f314e9223b6adf64476406965c46fb140dcf22bfd65cf64bdb4f4a66f65b0d9bc13d10d6f855a4bc9d33a9496b4d23f375a7307c6f5cb32341e08d014b617030edf1551d5426a1842ad260e49541bb4d7e7426e349e87bcd51a54243156dc54420e78c19c7c27a60a0095606146a0ea4f1ad168f6217062a6b8f4af6576bae1fa649b80ce09be286ad5fd4eca9745a8efb75d271377283e688e0a9e58566c433a7bc525ff3d852a82e37c64c337dd74a7e45fad7774912b54bc894d23443d07422353535c00000",
+		"response_hex": "040000e500001c20baf7cf1408000000000000000000d0dea6970a6d0a83431f420fdf25f023528ef506424c9e99f43da12bc9e2d227e3015cfb321d4bde1a5a7496d51519b6f051b8eb3db96f9377e562fed2b16732ab34943c36fff0a03f49d93537e1423f1f1f6e24557180f4a4f523f18da56857574b3633753130648fe60b30d32c8ff63f4c9b2f353688d3b20306ef649000b068fc0ad0f5895ddb3085114fb74254d577b4039dc300ae5a2287b1fc4104df466323d698e367b94e30f9471a8823f74f34f13b5ab705f85e6d9b4c40f5bd45b3ad509f7b9d5a82490f49c725756eeb51850000",
 		"note": "The ticket is opaque to the client: it is whatever the server needs to recover the PSK, usually its own state sealed under a key only it holds.",
 		"request_fields": [
 			{
@@ -24,7 +24,7 @@
 				"offset": 4,
 				"length": 48,
 				"field": "finished.verify_data",
-				"value": "baf2e65c8ce085f5263ed3618b91ca1bbe8d9e7bf90d8dff0a1c1da00ff987b2ebf27f7529f6010e3f84d92ba555a627 — HMAC(finished_key, Transcript-Hash(everything before this message))",
+				"value": "8bd63f084159a63c2950a3631fb314b41659df5cafa0e7cf807d93809fea41c997676e4aab7bab672636d76b2515cb2f — HMAC(finished_key, Transcript-Hash(everything before this message))",
 				"varies": true
 			}
 		],
@@ -51,7 +51,7 @@
 				"offset": 8,
 				"length": 4,
 				"field": "new_session_ticket.ticket_age_add",
-				"value": "0x416dce00 — added to the client's ticket age so it cannot be correlated",
+				"value": "0xbaf7cf14 — added to the client's ticket age so it cannot be correlated",
 				"varies": true
 			},
 			{
@@ -76,7 +76,7 @@
 				"offset": 23,
 				"length": 208,
 				"field": "new_session_ticket.ticket",
-				"value": "4ed6b5ec736ca989… (208 bytes) — opaque to the client; it becomes the PSK identity",
+				"value": "dea6970a6d0a8343… (208 bytes) — opaque to the client; it becomes the PSK identity",
 				"varies": true
 			},
 			{

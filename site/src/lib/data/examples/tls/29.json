@@ -5,7 +5,7 @@
 		"request": "A perfectly good ClientHello, and then a plaintext Finished where the server expects to be talking next",
 		"request_hex": "16030300b2010000ae0303d26a5c754d88dd28294fde76a5ccca3665a2b5d89f1f49f3f6b5c29a117e5631209c6ac86c34ea92595ef90dbf32e7cdf1cc93412d9607f93cacb7b2592dd3266300061302130313010100005f0000000e000c0000096c6f63616c686f7374002b0003020304000a00060004001d0017000d000e000c040308040805080608070401003300260024001d0020f030d86c01d96b9314bec055d4d10f823f99c73a7fe8f4ef981fd92ce68fdd1c1603030024140000200000000000000000000000000000000000000000000000000000000000000000",
 		"response": "The ServerHello and its flight may go out first, and then a fatal alert — unexpected_message(10) is the one RFC 8446 names.",
-		"response_hex": "160303007a0200007603039e98517cd89a860910f51be60ba548395a63d4c9f6c441333f80ee29b68c5e3f209c6ac86c34ea92595ef90dbf32e7cdf1cc93412d9607f93cacb7b2592dd32663130200002e002b0002030400330024001d0020a9d7ded01b4dd40df98054ec4dd230e19f9c911e38b226498d1718a246dcf505140303000101170303002de5463ee563f908c429cdfe4648aaa4c8ac83926e92594c2457e5aec8bb165dc723f7530875a9ffa7876c0fc7c817030301d98dad653ec254a4158b154f0129c27912d68c0368257489cdfcdf3af74e1a3adec8bb7b07937b07ea218ff395a2b6bef9f008753b1539d0f34361583fc5ed052d65e4030fdc80aa739fd18b4c2b44ffb5f3feb83ec6a9574926c1ec5921b6823a60e5d82b93d79ad33795fdc6c7fcfca0b0a53c566ea2113218a14138024eb8406b4bd284a450989dc14f7cf0074607982c982a46cd6640f0750b0d425b8f26741f27dbf47dde2f5ed59ef6b98db56270a28d6f6d9c3e2a493956dce107cec8203554876eb9d9142137bd2479a9770d384a1e5095caf59d208abe2a53ecba03b765414195a11149099e0c3a26b1252179d90b1a6dbf603ea0266076ce3739a152418a62a786894fb5632c2166f30719da04b1e82dbcb4153c5e8e84bc58f2be2a21a6167afd64fafc615244d4374b68a6e87ea532250c426ff15397eab606e8479a8d0f8bd93a082b8ac6398f5acdc34db48316c93bbb4aee927e9fff670010c024e9411919fce0e508797dc52d76d16ae9fd61e153be144155f67f7cb9efb7104927c9108ea32849e711bea71ff32cb8c17fde81f605e346d28b952d9cdeba129ca1e7ec13de308fd8b10064c4e961e3ce64a8a63edface41c0f6cabe9f8df52db3ec04af873426a4847058d3b3cd6ea99df02ab0581bfd0211703030061489e7461cc7ed01f7339045ffe8eb2bad18c4ca696e7a09491a9309d3df8afc553e5ae53a790674c4d990974411f0cd58f79838f8d0e9e9d3e687167908297860f3291a969f6d6096f38813501ad5b330e1e4efcd73d5e6e1a1d09c46bd92a34b61703030045d2f8e390839f9ff4eb4015b46e04fc841ad2856f49aae4de073193505f06a613070720ad73fd9d57cbc5442bf42045ecacec4cfd3ba2046fb0766bd94f3a34535fde637ede170303001300c12b94cf73f8dda8c3bf31cd9b26f3c99cdc",
+		"response_hex": "160303007a020000760303692f2b96bdb8f9662a44f832076ada2c4328ec2ea725a7d35e7f6772f0806959209c6ac86c34ea92595ef90dbf32e7cdf1cc93412d9607f93cacb7b2592dd32663130200002e002b0002030400330024001d0020f5c1db169b3007c00455b1a2b08ed68c730a8dc6afd48371cfe9299b5004e307140303000101170303002d2123e87ab3e95cc3f8541a787ec2851e28226b098d6abdb50a95a83997d2a1b01bbcf654bef02a0628379c534e17030301d962b9d1084292f63a963414f3880d2b5f9c9703c530476b97890a074e1e9675af1e83ca14dc8aa99b945fecff43973b7778198ed577f873f7486abeffe7f618999d2e3a318137c510a2486e87e6d09479c7cf4e58044783da50b114f46f99d1058cb78a53f4a472ae5f49e5babde45dcb48556d9e7af9dc634022019dfa9b9d38cc4829d65becb264128eca49c891b06fc24aff7141a86ddcf2d06b16cbbeb0cd6ae8fed5775ab3cc2e50b0c494e57387ee9be3b16c31b4297e388bdafb46377d4dfee00be0a4e616cc6674ab5de8bd3b8d28864603d3fdbc2b23e1086cff37d15edfa1fcf844c1d7bc0015889a118cdf18f6230198c798ecc525eee7a62189572cdac4ec4572b9c13d9ea56f04fa3006cf178a6717016de4e7518875f7d836636cb40b9a92c3bf4bedb7da0e4a83281c382f1b6ae0cdb58980240644f0bc83d1ce8c508dbd23327aeb60a21e8e06670f09d134dd0dc499a5a99e0f92711ee4ba98dc4802ccee9cf12bab702d7c8ad256c87faf0ed302f49931aca7ed3d88bd2730fee9a996c0ff91445f0a0d9ff75fddbf9a48bd332802f46edc20c2c2a8075563b3d041496c68c87bb7fee49f0be0f992c986815a40d3089e7e97586a3619700878e2046739ef3a055bb36c6e458a9c4c3e3adbeed43e84561703030060b28c126da3ae2ab7b3971590608c33daa94cb16a542239fc963deb21ef4c61741549f40bee25c62cf0d81dc3e49338a195548bc909dcb7e5dd901b312a228bdcff312e3b980d0dbf250da8f2206a125798f8586e39c9c58d3540fd63aec55242170303004568bccf8a339bcb9ce566603f7ff497738ea4c37bf88d1aec57a1084fe9845c9617261423c721ac3388f7d1c849a9778f7f603b1ed7007329d30e9520f0d2f6da0ccf3ac14317030300134277c4c6d8b3a1e121b0f9ca7387581839ba63",
 		"note": "The Finished is well-formed. It is only wrong because of where it is, which is why the state machine has to be a real one and not a sequence of parsers.",
 		"request_fields": [
 			{
@@ -366,7 +366,7 @@
 				"offset": 11,
 				"length": 32,
 				"field": "server_hello.random",
-				"value": "9e98517cd89a860910f51be60ba548395a63d4c9f6c441333f80ee29b68c5e3f",
+				"value": "692f2b96bdb8f9662a44f832076ada2c4328ec2ea725a7d35e7f6772f0806959",
 				"varies": true
 			},
 			{
@@ -446,7 +446,7 @@
 				"offset": 95,
 				"length": 32,
 				"field": "server_hello.extensions[1].server_share.key_exchange",
-				"value": "a9d7ded01b4dd40d… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
+				"value": "f5c1db169b3007c0… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
 				"varies": true
 			},
 			{
@@ -539,60 +539,60 @@
 				"offset": 664,
 				"length": 2,
 				"field": "record4.record.length",
-				"value": "97 (bytes that follow)"
+				"value": "96 (bytes that follow)"
 			},
 			{
 				"offset": 666,
-				"length": 97,
+				"length": 96,
 				"field": "record4.record.encrypted_record",
-				"value": "97 bytes: the AEAD ciphertext plus its 16-byte tag. The real content type is inside it, after the content and before the padding.",
+				"value": "96 bytes: the AEAD ciphertext plus its 16-byte tag. The real content type is inside it, after the content and before the padding.",
 				"varies": true
 			},
 			{
-				"offset": 763,
+				"offset": 762,
 				"length": 1,
 				"field": "record5.record.type",
 				"value": "application_data(23)"
 			},
 			{
-				"offset": 764,
+				"offset": 763,
 				"length": 2,
 				"field": "record5.record.legacy_record_version",
 				"value": "0x0303"
 			},
 			{
-				"offset": 766,
+				"offset": 765,
 				"length": 2,
 				"field": "record5.record.length",
 				"value": "69 (bytes that follow)"
 			},
 			{
-				"offset": 768,
+				"offset": 767,
 				"length": 69,
 				"field": "record5.record.encrypted_record",
 				"value": "69 bytes: the AEAD ciphertext plus its 16-byte tag. The real content type is inside it, after the content and before the padding.",
 				"varies": true
 			},
 			{
-				"offset": 837,
+				"offset": 836,
 				"length": 1,
 				"field": "record6.record.type",
 				"value": "application_data(23)"
 			},
 			{
-				"offset": 838,
+				"offset": 837,
 				"length": 2,
 				"field": "record6.record.legacy_record_version",
 				"value": "0x0303"
 			},
 			{
-				"offset": 840,
+				"offset": 839,
 				"length": 2,
 				"field": "record6.record.length",
 				"value": "19 (bytes that follow)"
 			},
 			{
-				"offset": 842,
+				"offset": 841,
 				"length": 19,
 				"field": "record6.record.encrypted_record",
 				"value": "19 bytes: the AEAD ciphertext plus its 16-byte tag. The real content type is inside it, after the content and before the padding.",

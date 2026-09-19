@@ -3,9 +3,9 @@
 		"title": "A short line, for scale",
 		"kind": "wire",
 		"request": "`size\\n` — five bytes of content in a 22-byte ciphertext",
-		"request_hex": "1703030016b883a8be0a5197c50c6bf049600d629dc20fa5b72ad5",
+		"request_hex": "17030300164ce663696c089ff7db1f015095f99b0a0141ab3b45f4",
 		"response": "`ezis\\n`, the same shape back.",
-		"response_hex": "1703030016ff6a27103e7272a6d9604d4d687dfe3f777817ca6e73",
+		"response_hex": "170303001607c75ab380801a656352ddcb997f16afe554045bea6f",
 		"note": "Every protected record costs five header bytes, one inner type byte and a 16-byte tag. At one byte per record that is 22 bytes on the wire for one — legal, and a good reason to batch.",
 		"request_fields": [
 			{

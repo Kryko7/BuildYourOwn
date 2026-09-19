@@ -60,6 +60,12 @@ pub enum Part {
     NewSessionTicket,
     /// EncryptedExtensions, Certificate, CertificateVerify and Finished, end to end.
     ServerFlight,
+    /// The server's CertificateRequest, after decryption.
+    CertificateRequest,
+    /// The client's own Certificate, after encryption is removed.
+    ClientCertificate,
+    /// The client's own CertificateVerify.
+    ClientCertificateVerify,
     /// Nothing at all.
     None,
 }

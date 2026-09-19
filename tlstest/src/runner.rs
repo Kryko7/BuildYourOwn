@@ -173,12 +173,24 @@ impl Runner {
             .map_err(|e| Failure::harness(format!("cannot generate a certificate: {e:#}")))?;
         let port = server::free_port()
             .map_err(|e| Failure::harness(format!("cannot pick a free port: {e:#}")))?;
+        // The client CA is minted only when a stage actually asks for client auth: it costs
+        // two key generations, and most stages never need it.
+        let client_ca = match options.client_auth {
+            Some(_) => Some(
+                self.certs
+                    .client_auth()
+                    .map_err(|e| Failure::harness(format!("cannot generate the client CA: {e:#}")))?
+                    .ca_pem,
+            ),
+            None => None,
+        };
         let spec = server::build_spec(
             &self.def,
             &tmp,
             port,
             &material,
             options,
+            client_ca.as_deref(),
             Duration::from_millis(self.def.boot_timeout_ms),
         )
         .map_err(|e| Failure::harness(format!("{e:#}")))?;

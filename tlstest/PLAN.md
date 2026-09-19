@@ -263,3 +263,26 @@ finished before the key schedule is started.
   - `openssl s_client -tls1_3 -connect host:port` is the shortest full TLS 1.3 client there is, and it prints the negotiated parameters
   - Its `-ciphersuites` and `-groups` flags pin the negotiation, so each of the three suites and both groups can be exercised from the outside
   - `-sess_out` then `-sess_in` proves resumption end to end: the second run prints `Reused` when the ticket was accepted
+
+## H. Client authentication [ext]
+
+A TLS server may ask the client to prove who it is, and RFC 8446 turns the handshake around
+to do it: the same Certificate and CertificateVerify messages, sent by the client, signed
+under a different context string. These three stages are that mirror image, and the policy
+decision behind it — request, or require.
+
+- [ ] **Stage 46** — CertificateRequest **[ext]** (`src/stages/s46_client_certificate_request.rs`, 8 tests)
+  - CertificateRequest is handshake type 13 and belongs in the encrypted flight, after EncryptedExtensions and before the server's own Certificate
+  - Its body is certificate_request_context (opaque<0..255>, empty during a handshake) followed by an extensions block — there is no certificate_types or supported_signature_algorithms list any more, those were TLS 1.2
+  - signature_algorithms is mandatory in it: without it the client has no way to know what it may sign with, so an empty extensions block is an illegal message
+  - Sending it at all is a choice; a server that never wants client certificates simply omits the message and nothing else about the handshake changes
+- [ ] **Stage 47** — The client's Certificate and CertificateVerify **[ext]** (`src/stages/s47_client_certificate.rs`, 8 tests)
+  - Both messages go out under the *client* handshake traffic keys, after the server's Finished and before the client's own
+  - The client's Certificate echoes the certificate_request_context byte for byte — empty during a handshake, but echoing is the rule
+  - CertificateVerify signs 64 spaces, then "TLS 1.3, client CertificateVerify", then a zero byte, then the transcript hash up to and including the client's Certificate — a different context string from the server's, on purpose
+  - The client's Certificate and CertificateVerify are in the transcript, so the Finished that follows covers them and its verify_data differs from an unauthenticated handshake's
+- [ ] **Stage 48** — Declining, and requesting against requiring **[ext]** (`src/stages/s48_client_auth_policy.rs`, 6 tests)
+  - Declining is an empty Certificate, not silence: the client still sends the message, with a zero-length certificate_list, and no CertificateVerify after it
+  - A server that only *requests* must carry on with an unauthenticated connection — the handshake completes and application data flows
+  - A server that *requires* must fail the handshake, and certificate_required(116) is the alert that says why; handshake_failure loses that information
+  - An empty Certificate is followed by Finished and nothing else — a CertificateVerify with no certificate to verify is an illegal message

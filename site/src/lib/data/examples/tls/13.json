@@ -5,7 +5,7 @@
 		"request": "signature_algorithms holds one entry: 04 03, ecdsa_secp256r1_sha256",
 		"request_hex": "010000a40303048293269f2f153e1891214c175d7c77f93214c1b1366c73021ab352d0183ba2202d1a8aca96e16bbff6843185f3f25e6d68b2b5fb62e40f3e1a3a2e1e23ee08990006130213031301010000550000000e000c0000096c6f63616c686f7374002b0003020304000a00060004001d0017000d000400020403003300260024001d002038cf8a09b16f90f4d8cbb76bfe2531a1c656d88231e0c0441ee0665d9a7cc11a",
 		"response": "CertificateVerify.algorithm is 04 03, followed by a DER-encoded ECDSA signature — a SEQUENCE of two INTEGERs, so its length varies between 70 and 72 bytes.",
-		"response_hex": "0f00004b0403004730450220572570c3cb155f5aa0eb07151e11b49be30b89405162098689142d2594f978d1022100dcee51b13af74d7ebb75d090f7420e3c65deca3e4322520f30faa51627c5380a",
+		"response_hex": "0f00004b040300473045022100e291031a3ea0538d17df852f76065f34ca619472d2ad051d4d4b7b5b7f44f46a02207dff703eb085c6c472155f140ba71e82238ab204112f6120168a6f3a363a275b",
 		"note": "The server picks a scheme that is in the client's list *and* that its own key can produce. Those are two separate conditions and both have to hold.",
 		"request_fields": [
 			{
@@ -269,7 +269,7 @@
 				"offset": 8,
 				"length": 71,
 				"field": "certificate_verify.signature",
-				"value": "over 64 spaces, \"TLS 1.3, server CertificateVerify\", a zero byte and Transcript-Hash(ClientHello..Certificate) — 30450220572570c3… (71 bytes)",
+				"value": "over 64 spaces, \"TLS 1.3, server CertificateVerify\", a zero byte and Transcript-Hash(ClientHello..Certificate) — 3045022100e29103… (71 bytes)",
 				"varies": true
 			}
 		]
@@ -280,7 +280,7 @@
 		"request": "signature_algorithms holds 08 04, rsa_pss_rsae_sha256",
 		"request_hex": "010000a403036ada5209d6ba57831a522fa4f5a793c393992628d945118802a03f49ad4f467f2099fef1ccd7b9d4537249afd1f7dc091fa8ed1b0f871d1acbbac9ba0b7324a3620006130213031301010000550000000e000c0000096c6f63616c686f7374002b0003020304000a00060004001d0017000d000400020804003300260024001d0020a2061e39aaa7da295ac999c3768e7fb7ef5f0197789707fac34feb874faf575f",
 		"response": "CertificateVerify.algorithm is 08 04 and the signature is exactly 256 bytes — the modulus size of a 2048-bit key.",
-		"response_hex": "0f0001040804010008df3cc63a5009ae5d16c6e3a677c58ef9ac027be85e7cfe3e480b4cc36d92ba6be95122c7cffbaa71d97dcf6fed3c8b62a366eeb84b58739b31d7a92ff416df5d08af20567bf977ba54f93b44321777b7754dff3a2c8aeb04e0da50d893916e0192dcd599203a69424061aeaf7cf5cd928ad8307b0ed0f57cf050ff8f351ceedd587ff5e1b7914b53ee817b5d4e963a924c0e1437a7d3975575172a18a70748af07659cb61916ad3b99b994d7d634841215cdcbf0c2a75e59a5b5e48d655e189e7c357fa03abe988d6250b58ade0186247f8c5884f58b5d75c8012935876734a004f92859071669a10fdd6cf56e2e8cf9841204655da4e3a833303e5d726d97",
+		"response_hex": "0f000104080401005e6f15ad622c968a71936172ed077f67d79e5545ee9cfb7a94d4827c15709dd1695376131346fedd8efbcc8714766632c7eaccf82f6df79eaccf83263b5dff61219535b79667845a0669f168c9943031b950d63d5a8e502a31a78d8daaeb4540e236e98e375d17c195c0b618e4a80649b533b2de5dacc75d44b704844c8163c4b666212d0573c316bc6676773563debd8e2430ada7edc1fc5f24328fdbbfdf6fa6966a3e73d36659b2146def403c28bca34e17a9bf3d817aeb93455ed214ad1f23a31558d308d8fedd9045c9a839ed52084714c54a587b0b50f85d6a771c4db8e43711395bc9a165fee718f66efdf76668726d3c6039df323faec427119f4f42",
 		"note": "PSS, not PKCS#1 v1.5. The two produce signatures of the same length, so a server that uses the wrong one looks right until a client actually verifies it.",
 		"request_fields": [
 			{
@@ -544,7 +544,7 @@
 				"offset": 8,
 				"length": 256,
 				"field": "certificate_verify.signature",
-				"value": "over 64 spaces, \"TLS 1.3, server CertificateVerify\", a zero byte and Transcript-Hash(ClientHello..Certificate) — 08df3cc63a5009ae… (256 bytes)",
+				"value": "over 64 spaces, \"TLS 1.3, server CertificateVerify\", a zero byte and Transcript-Hash(ClientHello..Certificate) — 5e6f15ad622c968a… (256 bytes)",
 				"varies": true
 			}
 		]

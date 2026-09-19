@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-18T19:20:33Z",
+  "generated_at": "2026-09-19T07:24:26Z",
   "server": "openssl",
   "server_version": "OpenSSL 3.6.4 25 Aug 2026 (Library: OpenSSL 3.6.4 25 Aug 2026)",
   "stages": {
@@ -34,7 +34,7 @@
         "request": "cipher_suites holds one entry: 13 01",
         "request_hex": "010000aa030389298a097e488abae58c7f302c4ed30cd39684f1a1dc59acb447f4de8e3ec73020859cdd20e50bb88d3c2e306c12536a3ec47f8956b3b5ebc06b9129dd84164f3d000213010100005f0000000e000c0000096c6f63616c686f7374002b0003020304000a00060004001d0017000d000e000c040308040805080608070401003300260024001d0020ac898c5fb8807599c901f2532dbc537548fdbd10135988356ddd7f59604a5249",
         "response": "server_hello.cipher_suite echoes 13 01, two bytes and no list around them.",
-        "response_hex": "020000760303fef5190669f448112afeaaa6c0ec53623ee01502d970b464a6603da713d3f01820859cdd20e50bb88d3c2e306c12536a3ec47f8956b3b5ebc06b9129dd84164f3d130100002e002b0002030400330024001d0020d63731eb82a063d0b0d47c2e1c04b21bb60bbd92ca78b5a7107c2318221a8b4a",
+        "response_hex": "020000760303fd0e7df1d4f736607024d8693ccde579c564668c9cd08062a749526a7d4738ce20859cdd20e50bb88d3c2e306c12536a3ec47f8956b3b5ebc06b9129dd84164f3d130100002e002b0002030400330024001d0020f8fff10840ac78400daa5fab962c6731ebcf9c268086d6e3a72aa2b006624f65",
         "note": "0x1301 means SHA-256 and AES-128-GCM: a 32-byte transcript hash, 32-byte secrets, a 16-byte key and a 12-byte IV.",
         "request_fields": [
           {
@@ -310,7 +310,7 @@
             "offset": 6,
             "length": 32,
             "field": "server_hello.random",
-            "value": "fef5190669f448112afeaaa6c0ec53623ee01502d970b464a6603da713d3f018",
+            "value": "fd0e7df1d4f736607024d8693ccde579c564668c9cd08062a749526a7d4738ce",
             "varies": true
           },
           {
@@ -390,7 +390,7 @@
             "offset": 90,
             "length": 32,
             "field": "server_hello.extensions[1].server_share.key_exchange",
-            "value": "d63731eb82a063d0… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
+            "value": "f8fff10840ac7840… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
             "varies": true
           }
         ]
@@ -401,7 +401,7 @@
         "request": "cipher_suites holds 13 03",
         "request_hex": "010000aa03039de64b4bc34548bb6eba7a4447670218f978fd10a93a5ef720c92adad79d9c2020914185ca91adb4bff4f95b778a9a6e178d481979b26cc8462ea03f1ebb2b744c000213030100005f0000000e000c0000096c6f63616c686f7374002b0003020304000a00060004001d0017000d000e000c040308040805080608070401003300260024001d00200a6709a8976b5ba9eb0fa9d47bc1e62a04f608128c0ce913c918a725c3e1176f",
         "response": "server_hello.cipher_suite is 13 03.",
-        "response_hex": "02000076030308ece18f25baeb3c6803a4e11e65c32365d3a09c940766db0f90560e546da0f020914185ca91adb4bff4f95b778a9a6e178d481979b26cc8462ea03f1ebb2b744c130300002e002b0002030400330024001d00200cd83a044fef00a2a7d049bcc18e3d7ae38b14a13f5839aaf93dd9c339567b0e",
+        "response_hex": "020000760303378edc57bc451c99baeeff586c09b88adcb80edd695c022abb0ed7fd12ee9d2320914185ca91adb4bff4f95b778a9a6e178d481979b26cc8462ea03f1ebb2b744c130300002e002b0002030400330024001d002017543823daceebeea4d4ca6b8162e9e77f94f8b1b5292c459ea4ca39800a0a6d",
         "note": "0x1303 is SHA-256 like 0x1301, but a 32-byte AEAD key. Only 0x1302 switches the hash to SHA-384 — and then every secret, every transcript hash and the finished key all become 48 bytes.",
         "request_fields": [
           {
@@ -677,7 +677,7 @@
             "offset": 6,
             "length": 32,
             "field": "server_hello.random",
-            "value": "08ece18f25baeb3c6803a4e11e65c32365d3a09c940766db0f90560e546da0f0",
+            "value": "378edc57bc451c99baeeff586c09b88adcb80edd695c022abb0ed7fd12ee9d23",
             "varies": true
           },
           {
@@ -757,7 +757,7 @@
             "offset": 90,
             "length": 32,
             "field": "server_hello.extensions[1].server_share.key_exchange",
-            "value": "0cd83a044fef00a2… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
+            "value": "17543823daceebee… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
             "varies": true
           }
         ]
@@ -1099,7 +1099,7 @@
         "request": "key_share holds one entry: group 0x001d and a 32-byte key_exchange — the client's ephemeral public key",
         "request_hex": "010000ac0303e351700c62338a111461f93cc365ba68506aecf027867095724dc20beaf0b810207408afccf842367ba58cb536578377cac22ffe5b74ad771108ff4a804c1be95500061302130313010100005d0000000e000c0000096c6f63616c686f7374002b0003020304000a00040002001d000d000e000c040308040805080608070401003300260024001d0020da93e6349391d5285e0aaeb35585768788243a5cfa7f61a5fd21a634bff71666",
         "response": "key_share holds one entry, not a list: group 0x001d and the server's own 32 bytes.",
-        "response_hex": "02000076030397e343228884d16161ba9a3bd5bbeb734a312dcc5df94031d9d72fd501cf850e207408afccf842367ba58cb536578377cac22ffe5b74ad771108ff4a804c1be955130200002e002b0002030400330024001d0020dccc6f5a21fc50e31ec76111a3ed3a67360e51d68b85ca0ae2b16f1240e1ca5b",
+        "response_hex": "0200007603031d0d048e8e848a2a3400117de559ff01af11523c45e145777c6a1b95e743b05b207408afccf842367ba58cb536578377cac22ffe5b74ad771108ff4a804c1be955130200002e002b0002030400330024001d0020b5b3230fc02f73c9f3c4041b83c22d412bfce9082dfbee1604ed0f942388fe72",
         "note": "X25519(client_private, server_public) and X25519(server_private, client_public) are the same 32 bytes, and that value is the (EC)DHE input to HKDF-Extract.",
         "request_fields": [
           {
@@ -1381,7 +1381,7 @@
             "offset": 6,
             "length": 32,
             "field": "server_hello.random",
-            "value": "97e343228884d16161ba9a3bd5bbeb734a312dcc5df94031d9d72fd501cf850e",
+            "value": "1d0d048e8e848a2a3400117de559ff01af11523c45e145777c6a1b95e743b05b",
             "varies": true
           },
           {
@@ -1461,7 +1461,7 @@
             "offset": 90,
             "length": 32,
             "field": "server_hello.extensions[1].server_share.key_exchange",
-            "value": "dccc6f5a21fc50e3… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
+            "value": "b5b3230fc02f73c9… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
             "varies": true
           }
         ]
@@ -1472,7 +1472,7 @@
         "request": "key_share group 0x0017 with a 65-byte key_exchange beginning 04",
         "request_hex": "010000cd0303921a9662740cf7994b2e5ff1c00af21ae1cea802996db1344876010a92991762209960aebb574374486b50162a289d1d2353e7ef24073fabf7c447c96b64a11dbd00061302130313010100007e0000000e000c0000096c6f63616c686f7374002b0003020304000a000400020017000d000e000c04030804080508060807040100330047004500170041040c8c1bf000be201d51567ed6f00e5a245b1211698a5ef963ba424bbf7cc4679c6c97f662683b224040072e3c5835ddb9ab4c979c63bf2d8c2bebe854482de00e",
         "response": "key_share group 0x0017 with the server's 65-byte point.",
-        "response_hex": "020000970303cd1c70efe27422535d5fbceaaacb5627140e4b75be3d876d6e62d5911ae1f26a209960aebb574374486b50162a289d1d2353e7ef24073fabf7c447c96b64a11dbd130200004f002b000203040033004500170041041b6d3e0595e32433f35432bd27c910269ccb612a573de265b0560e44cefd2f3b699e01594f557c10b50c3258ef431ecff9f640c3ee32c4e304d97e486e819bf7",
+        "response_hex": "02000097030383e65d4fdd4aa1da9eed653a235f016e2ab5f392d511f2bb0c1bfb576795455d209960aebb574374486b50162a289d1d2353e7ef24073fabf7c447c96b64a11dbd130200004f002b0002030400330045001700410480fe13dcd775072f48912f2ae976b445c876d5431975289ebc37e8bd85ab7181f2cb6c164e3a9b44f7d9e5f07bcc89f24eb5a251d14f7acfc88b397c8a430c88",
         "note": "65 bytes is `04 || X || Y`, uncompressed SEC1. The shared secret is the X coordinate only — 32 bytes, not 64.",
         "request_fields": [
           {
@@ -1754,7 +1754,7 @@
             "offset": 6,
             "length": 32,
             "field": "server_hello.random",
-            "value": "cd1c70efe27422535d5fbceaaacb5627140e4b75be3d876d6e62d5911ae1f26a",
+            "value": "83e65d4fdd4aa1da9eed653a235f016e2ab5f392d511f2bb0c1bfb576795455d",
             "varies": true
           },
           {
@@ -1834,7 +1834,7 @@
             "offset": 90,
             "length": 65,
             "field": "server_hello.extensions[1].server_share.key_exchange",
-            "value": "041b6d3e0595e324… (65 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
+            "value": "0480fe13dcd77507… (65 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
             "varies": true
           }
         ]
@@ -1847,7 +1847,7 @@
         "request": "signature_algorithms holds one entry: 04 03, ecdsa_secp256r1_sha256",
         "request_hex": "010000a40303048293269f2f153e1891214c175d7c77f93214c1b1366c73021ab352d0183ba2202d1a8aca96e16bbff6843185f3f25e6d68b2b5fb62e40f3e1a3a2e1e23ee08990006130213031301010000550000000e000c0000096c6f63616c686f7374002b0003020304000a00060004001d0017000d000400020403003300260024001d002038cf8a09b16f90f4d8cbb76bfe2531a1c656d88231e0c0441ee0665d9a7cc11a",
         "response": "CertificateVerify.algorithm is 04 03, followed by a DER-encoded ECDSA signature — a SEQUENCE of two INTEGERs, so its length varies between 70 and 72 bytes.",
-        "response_hex": "0f00004b0403004730450220572570c3cb155f5aa0eb07151e11b49be30b89405162098689142d2594f978d1022100dcee51b13af74d7ebb75d090f7420e3c65deca3e4322520f30faa51627c5380a",
+        "response_hex": "0f00004b040300473045022100e291031a3ea0538d17df852f76065f34ca619472d2ad051d4d4b7b5b7f44f46a02207dff703eb085c6c472155f140ba71e82238ab204112f6120168a6f3a363a275b",
         "note": "The server picks a scheme that is in the client's list *and* that its own key can produce. Those are two separate conditions and both have to hold.",
         "request_fields": [
           {
@@ -2111,7 +2111,7 @@
             "offset": 8,
             "length": 71,
             "field": "certificate_verify.signature",
-            "value": "over 64 spaces, \"TLS 1.3, server CertificateVerify\", a zero byte and Transcript-Hash(ClientHello..Certificate) — 30450220572570c3… (71 bytes)",
+            "value": "over 64 spaces, \"TLS 1.3, server CertificateVerify\", a zero byte and Transcript-Hash(ClientHello..Certificate) — 3045022100e29103… (71 bytes)",
             "varies": true
           }
         ]
@@ -2122,7 +2122,7 @@
         "request": "signature_algorithms holds 08 04, rsa_pss_rsae_sha256",
         "request_hex": "010000a403036ada5209d6ba57831a522fa4f5a793c393992628d945118802a03f49ad4f467f2099fef1ccd7b9d4537249afd1f7dc091fa8ed1b0f871d1acbbac9ba0b7324a3620006130213031301010000550000000e000c0000096c6f63616c686f7374002b0003020304000a00060004001d0017000d000400020804003300260024001d0020a2061e39aaa7da295ac999c3768e7fb7ef5f0197789707fac34feb874faf575f",
         "response": "CertificateVerify.algorithm is 08 04 and the signature is exactly 256 bytes — the modulus size of a 2048-bit key.",
-        "response_hex": "0f0001040804010008df3cc63a5009ae5d16c6e3a677c58ef9ac027be85e7cfe3e480b4cc36d92ba6be95122c7cffbaa71d97dcf6fed3c8b62a366eeb84b58739b31d7a92ff416df5d08af20567bf977ba54f93b44321777b7754dff3a2c8aeb04e0da50d893916e0192dcd599203a69424061aeaf7cf5cd928ad8307b0ed0f57cf050ff8f351ceedd587ff5e1b7914b53ee817b5d4e963a924c0e1437a7d3975575172a18a70748af07659cb61916ad3b99b994d7d634841215cdcbf0c2a75e59a5b5e48d655e189e7c357fa03abe988d6250b58ade0186247f8c5884f58b5d75c8012935876734a004f92859071669a10fdd6cf56e2e8cf9841204655da4e3a833303e5d726d97",
+        "response_hex": "0f000104080401005e6f15ad622c968a71936172ed077f67d79e5545ee9cfb7a94d4827c15709dd1695376131346fedd8efbcc8714766632c7eaccf82f6df79eaccf83263b5dff61219535b79667845a0669f168c9943031b950d63d5a8e502a31a78d8daaeb4540e236e98e375d17c195c0b618e4a80649b533b2de5dacc75d44b704844c8163c4b666212d0573c316bc6676773563debd8e2430ada7edc1fc5f24328fdbbfdf6fa6966a3e73d36659b2146def403c28bca34e17a9bf3d817aeb93455ed214ad1f23a31558d308d8fedd9045c9a839ed52084714c54a587b0b50f85d6a771c4db8e43711395bc9a165fee718f66efdf76668726d3c6039df323faec427119f4f42",
         "note": "PSS, not PKCS#1 v1.5. The two produce signatures of the same length, so a server that uses the wrong one looks right until a client actually verifies it.",
         "request_fields": [
           {
@@ -2386,7 +2386,7 @@
             "offset": 8,
             "length": 256,
             "field": "certificate_verify.signature",
-            "value": "over 64 spaces, \"TLS 1.3, server CertificateVerify\", a zero byte and Transcript-Hash(ClientHello..Certificate) — 08df3cc63a5009ae… (256 bytes)",
+            "value": "over 64 spaces, \"TLS 1.3, server CertificateVerify\", a zero byte and Transcript-Hash(ClientHello..Certificate) — 5e6f15ad622c968a… (256 bytes)",
             "varies": true
           }
         ]
@@ -2399,7 +2399,7 @@
         "request": "An ordinary ClientHello. A real browser also puts a GREASE extension type first and a GREASE cipher suite at the head of the list.",
         "request_hex": "010000ae0303bd15fc4ae6a7e72c931b9440c5d02a366f43c283f30fef546243cb2ff72d184220b65de6d9d473176aff7bac1fb86d5b41482ee2bac00f2d33f834ebc8a024462100061302130313010100005f0000000e000c0000096c6f63616c686f7374002b0003020304000a00060004001d0017000d000e000c040308040805080608070401003300260024001d00207bc13cfaa4de62c0128f866ca7389a5c85859526f9aa303f8750c36cb7de3e25",
         "response": "An ordinary ServerHello. Nothing GREASE-shaped comes back.",
-        "response_hex": "020000760303c0bd2a126c936f95883c874c79e1dd546f1c6888222ff333099278a98841b14920b65de6d9d473176aff7bac1fb86d5b41482ee2bac00f2d33f834ebc8a0244621130200002e002b0002030400330024001d0020cb0795b2d95b0b719567540bb8866b25901de7ca11341e33809d14d2e1848e68",
+        "response_hex": "020000760303042481c7a483caf303dd0eff6f5ca67b997f70d148d6e89d2d875ffa8244d4fe20b65de6d9d473176aff7bac1fb86d5b41482ee2bac00f2d33f834ebc8a0244621130200002e002b0002030400330024001d002091334f49b4ea269c60d705ce85cb95b0357884c4c50f667f4f5cbc8d8901f664",
         "note": "GREASE values are reserved forever and will never mean anything. Their entire purpose is to break servers that do not skip what they do not recognise — which is how the ecosystem stays extensible.",
         "request_fields": [
           {
@@ -2687,7 +2687,7 @@
             "offset": 6,
             "length": 32,
             "field": "server_hello.random",
-            "value": "c0bd2a126c936f95883c874c79e1dd546f1c6888222ff333099278a98841b149",
+            "value": "042481c7a483caf303dd0eff6f5ca67b997f70d148d6e89d2d875ffa8244d4fe",
             "varies": true
           },
           {
@@ -2767,7 +2767,7 @@
             "offset": 90,
             "length": 32,
             "field": "server_hello.extensions[1].server_share.key_exchange",
-            "value": "cb0795b2d95b0b71… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
+            "value": "91334f49b4ea269c… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
             "varies": true
           }
         ]
@@ -3910,7 +3910,7 @@
         "request": "An ordinary TLS 1.3 ClientHello",
         "request_hex": "010000ae0303902dfe32a39d973c04ea5080b933eb8ebc725029bae331fe6e8574a2668f78542009fb31dd55525bc936939d2c84ea048468310c87522e2e146dbc29224c0e7c3100061302130313010100005f0000000e000c0000096c6f63616c686f7374002b0003020304000a00060004001d0017000d000e000c040308040805080608070401003300260024001d0020865389d50790261eab5aa92dc9adf2afdb19cb3fe24ff107fb893a245671e459",
         "response": "02, a uint24 length, 03 03, 32 random bytes, the echoed session id, the chosen suite, 00, and an extensions block holding supported_versions and key_share.",
-        "response_hex": "020000760303ed704d1bfc676ddc5ca826f607543d807718cca44818c19ddbe4e9c495cc37182009fb31dd55525bc936939d2c84ea048468310c87522e2e146dbc29224c0e7c31130200002e002b0002030400330024001d002011d4f4874a959707606d955697e25272509b87e8a6f39917fdd1fa380cee903a",
+        "response_hex": "02000076030357e791c3e0b316df90d0d52c54cee7d82010ced229a234c80e9990b3d73b4f202009fb31dd55525bc936939d2c84ea048468310c87522e2e146dbc29224c0e7c31130200002e002b0002030400330024001d0020eefb66b34b21b3b15281c6a4c2b4b1521a78b6d01a34504550374a2fda0cc72b",
         "note": "Compare the session id in the two messages: same length byte, same bytes. That is the only field of a ServerHello that is copied rather than chosen.",
         "request_fields": [
           {
@@ -4198,7 +4198,7 @@
             "offset": 6,
             "length": 32,
             "field": "server_hello.random",
-            "value": "ed704d1bfc676ddc5ca826f607543d807718cca44818c19ddbe4e9c495cc3718",
+            "value": "57e791c3e0b316df90d0d52c54cee7d82010ced229a234c80e9990b3d73b4f20",
             "varies": true
           },
           {
@@ -4278,7 +4278,7 @@
             "offset": 90,
             "length": 32,
             "field": "server_hello.extensions[1].server_share.key_exchange",
-            "value": "11d4f4874a959707… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
+            "value": "eefb66b34b21b3b1… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
             "varies": true
           }
         ]
@@ -4350,7 +4350,7 @@
         "request": "type 22 (handshake), legacy_record_version 0x0303, a two-byte length, then the ClientHello message",
         "request_hex": "16030300b2010000ae0303483d67e6146541d3eeea537603a85c441ba33db9a9af4d0960eccdfca0274b85204118d656ba431b2c7bacbb9ead7d006f3570e4b9be6cc73af9e43c9fb95566cd00061302130313010100005f0000000e000c0000096c6f63616c686f7374002b0003020304000a00060004001d0017000d000e000c040308040805080608070401003300260024001d00200253677e96d10750b2ec4bed5615e87df711008fad424987624206bcbfcc5855",
         "response": "One handshake record carrying the ServerHello: type 22, version 0x0303, length, message.",
-        "response_hex": "160303007a020000760303f4a84178307f7ffb1582cb9cd3e9acf990f1c856f6ebc23dc98dc392be189515204118d656ba431b2c7bacbb9ead7d006f3570e4b9be6cc73af9e43c9fb95566cd130200002e002b0002030400330024001d0020d376527feea103d7a96a8bcce3505539e4ac6f16579d4bbd4f0010d8829ef94a",
+        "response_hex": "160303007a02000076030374c386a890efc095f1e882ac12092e92ee6180a28397d888bd8a58880b152de5204118d656ba431b2c7bacbb9ead7d006f3570e4b9be6cc73af9e43c9fb95566cd130200002e002b0002030400330024001d002096a3c4b398a4a4c99df36cf8bc297b22c6b16aa5ffc53ff0e4b2023935cb3f02",
         "note": "Five header bytes, then exactly `length` more. Read the header first and then read that many bytes — one read() is neither one record nor one message.",
         "request_fields": [
           {
@@ -4674,7 +4674,7 @@
             "offset": 11,
             "length": 32,
             "field": "server_hello.random",
-            "value": "f4a84178307f7ffb1582cb9cd3e9acf990f1c856f6ebc23dc98dc392be189515",
+            "value": "74c386a890efc095f1e882ac12092e92ee6180a28397d888bd8a58880b152de5",
             "varies": true
           },
           {
@@ -4754,7 +4754,7 @@
             "offset": 95,
             "length": 32,
             "field": "server_hello.extensions[1].server_share.key_exchange",
-            "value": "d376527feea103d7… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
+            "value": "96a3c4b398a4a4c9… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
             "varies": true
           }
         ]
@@ -4765,7 +4765,7 @@
         "request": "Byte for byte the hello above, except that the record header says 0x0301",
         "request_hex": "16030100b2010000ae03039c3cb282c83123e240a8f5d912262d9fd2233e2db23f669cbe96e4798c8751cf20239306bf6d779d504a879c64be5c33c5224bc0fa70c9dcbea1d1b48215aac76e00061302130313010100005f0000000e000c0000096c6f63616c686f7374002b0003020304000a00060004001d0017000d000e000c040308040805080608070401003300260024001d00204428210ed16483c3a8945abcfbaa0d4ed376f07bedf13b0681b3ec7b3c15517c",
         "response": "The same ServerHello. The 0x0301 changes nothing.",
-        "response_hex": "160303007a0200007603034029bec87cda7f5ccd6a7aa2f869be1dc2023ff69ccfc45693c6692dc0e26fc720239306bf6d779d504a879c64be5c33c5224bc0fa70c9dcbea1d1b48215aac76e130200002e002b0002030400330024001d0020bb1047b743e81e2993999263f9152e59f5fbe5b430883f663abedf470c5bdf4c",
+        "response_hex": "160303007a020000760303e398667f5977a36285088e930da2b02a79fa1ecfb2cac0cec69d42ddb1ea728f20239306bf6d779d504a879c64be5c33c5224bc0fa70c9dcbea1d1b48215aac76e130200002e002b0002030400330024001d0020f65f59032219ce48e719013288fe45561ece03ab7a019ced35590dfde80b2242",
         "note": "RFC 8446 section 5.1 allows 0x0301 on the record carrying the first ClientHello, for middleboxes that inspect it. Rejecting it is a real interoperability bug.",
         "request_fields": [
           {
@@ -5089,7 +5089,7 @@
             "offset": 11,
             "length": 32,
             "field": "server_hello.random",
-            "value": "4029bec87cda7f5ccd6a7aa2f869be1dc2023ff69ccfc45693c6692dc0e26fc7",
+            "value": "e398667f5977a36285088e930da2b02a79fa1ecfb2cac0cec69d42ddb1ea728f",
             "varies": true
           },
           {
@@ -5169,7 +5169,7 @@
             "offset": 95,
             "length": 32,
             "field": "server_hello.extensions[1].server_share.key_exchange",
-            "value": "bb1047b743e81e29… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
+            "value": "f65f59032219ce48… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
             "varies": true
           }
         ]
@@ -5180,7 +5180,7 @@
         "request": "The ClientHello handshake message: msg_type 1, a three-byte length, the body",
         "request_hex": "010000ae03039a092137ae5054ae242053c6044dccc39173892d72c8dc335c9410a93671b4e72098cc9ea1e27fbb3688cb276229f2e8c0ace303e1e14c220a1c6502c3ee86788900061302130313010100005f0000000e000c0000096c6f63616c686f7374002b0003020304000a00060004001d0017000d000e000c040308040805080608070401003300260024001d00200b9e9529aa9d65f8ea1a881cfa85240b45e37a6717fb6444ed9c08dcff04d71d",
         "response": "server_hello(2), a three-byte length, legacy_version 0x0303, 32 random bytes, the echoed session id, the chosen cipher suite, compression 0, extensions.",
-        "response_hex": "0200007603038bdb97cc664bce5f7d7caef5f580a2082cac067af4a5f9fecff294392e0d9d5e2098cc9ea1e27fbb3688cb276229f2e8c0ace303e1e14c220a1c6502c3ee867889130200002e002b0002030400330024001d0020e2206531f77e5720ef6cfd6cd3131ae7b864f449685cc27ee44c18f2f4dfa774",
+        "response_hex": "0200007603036863ff4b4540476b4e42673c12b1e33629ffe5543a3b1c7cc07e012f70d3bc932098cc9ea1e27fbb3688cb276229f2e8c0ace303e1e14c220a1c6502c3ee867889130200002e002b0002030400330024001d002079a8137b48a4fb81908e2fa68fa7fa564684eecb1ae276439bbb602b22864d2e",
         "note": "The handshake header is one type byte and a uint24 length — note the three bytes, not four. Only this framing, never the record header, goes into the transcript.",
         "request_fields": [
           {
@@ -5468,7 +5468,7 @@
             "offset": 6,
             "length": 32,
             "field": "server_hello.random",
-            "value": "8bdb97cc664bce5f7d7caef5f580a2082cac067af4a5f9fecff294392e0d9d5e",
+            "value": "6863ff4b4540476b4e42673c12b1e33629ffe5543a3b1c7cc07e012f70d3bc93",
             "varies": true
           },
           {
@@ -5548,7 +5548,7 @@
             "offset": 90,
             "length": 32,
             "field": "server_hello.extensions[1].server_share.key_exchange",
-            "value": "e2206531f77e5720… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
+            "value": "79a8137b48a4fb81… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
             "varies": true
           }
         ]
@@ -5585,7 +5585,7 @@
         "request": "The ClientHello record, then `14 03 03 00 01 01` — six bytes that mean nothing and change nothing",
         "request_hex": "16030300b2010000ae03032911bc95b9835c8c41ffdbc17f4070b97e0650f7ac7c9db9594398d1fdc06457201de62812b0739dbcc1ca86c1604bef6009ffec21f805c93fed7bf775e44a502b00061302130313010100005f0000000e000c0000096c6f63616c686f7374002b0003020304000a00060004001d0017000d000e000c040308040805080608070401003300260024001d00203aa29199408d8513172c1c03f2a578bf471fcfaec56cc84a05ab67c4ac18967f140303000101",
         "response": "The ServerHello, and usually the server's own `14 03 03 00 01 01` straight after it.",
-        "response_hex": "160303007a0200007603035b870ce0fb7df95f31c4a6ed191b358accfec59a8fd0b4b54c461c9bbb212af6201de62812b0739dbcc1ca86c1604bef6009ffec21f805c93fed7bf775e44a502b130200002e002b0002030400330024001d0020f7a2d2033deed31fa2587fe3fab9ba5add8517ecefbaeced268855f57f79c42e140303000101",
+        "response_hex": "160303007a0200007603031f7d28cc285d91e1f2bf575c9188eaf9b802ec4f4f76319fbdedbf629d69370e201de62812b0739dbcc1ca86c1604bef6009ffec21f805c93fed7bf775e44a502b130200002e002b0002030400330024001d0020b6b4a3c8157dddfb6845a1c9b6d413b010fd63339a53fe8e22485e7473a83b74140303000101",
         "note": "Drop it on the floor. It does not go into the transcript, it does not advance a sequence number, and it is not encrypted even when it arrives after the keys have changed.",
         "request_fields": [
           {
@@ -5933,7 +5933,7 @@
             "offset": 11,
             "length": 32,
             "field": "server_hello.random",
-            "value": "5b870ce0fb7df95f31c4a6ed191b358accfec59a8fd0b4b54c461c9bbb212af6",
+            "value": "1f7d28cc285d91e1f2bf575c9188eaf9b802ec4f4f76319fbdedbf629d69370e",
             "varies": true
           },
           {
@@ -6013,7 +6013,7 @@
             "offset": 95,
             "length": 32,
             "field": "server_hello.extensions[1].server_share.key_exchange",
-            "value": "f7a2d2033deed31f… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
+            "value": "b6b4a3c8157dddfb… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
             "varies": true
           },
           {
@@ -6486,7 +6486,7 @@
         "request": "An ordinary ClientHello",
         "request_hex": "010000ae0303d2297d8730fe36de3bed00eb22d6e7303ffafeb2454436e1ede70c4100a190c5208b87a6278f773b259820191e334c2db9431f6c6b6f1f01633d297663a1759c2600061302130313010100005f0000000e000c0000096c6f63616c686f7374002b0003020304000a00060004001d0017000d000e000c040308040805080608070401003300260024001d0020ab3186ef926b9874da9f16448d646e0345c4e2cb35bdd4083d0c67034dbd5950",
         "response": "`0b`, a uint24 length, `00` (the empty context), a uint24 list length, then one entry: a uint24 DER length, the certificate, and `00 00` for its extensions.",
-        "response_hex": "0b0001c4000001c00001bb308201b73082015da003020102021447a04d5d7708feeaec52c950f90e203cb0301996300a06082a8648ce3d04030230173115301306035504030c0c746c7374657374206c656166301e170d3234303130313030303030305a170d3335303130313030303030305a30173115301306035504030c0c746c7374657374206c6561663059301306072a8648ce3d020106082a8648ce3d0301070342000447a88f1cbf5f0a0dbc5b93a22191cc4e4f8859568d4d5edf01e93ba94a05f1233c672b516ca470797c85d5f0ed9afeda87d643f10f2f215fb0d2b5c74008f018a38186308183302b0603551d110424302282096c6f63616c686f737487047f000001820f746c73746573742e696e76616c6964300f0603551d0f0101ff0405030307a00030130603551d25040c300a06082b06010505070301301d0603551d0e041604145ab3987b6ae55fdd8fc5fbc950498f1a58a222ec300f0603551d130101ff04053003010100300a06082a8648ce3d0403020348003045022100bb8b43522f57fd12d7c7205732daa32c0cdb710440c75c1fb34f17b32d4fc05a02204af7e869782a11d1d563c2ced981dfafe5853868582099b4585d7b229dc2b1450000",
+        "response_hex": "0b0001c4000001c00001bb308201b73082015da00302010202147f466e2a61c2e4f6dd0771ad18fef70e940e6dd1300a06082a8648ce3d04030230173115301306035504030c0c746c7374657374206c656166301e170d3234303130313030303030305a170d3335303130313030303030305a30173115301306035504030c0c746c7374657374206c6561663059301306072a8648ce3d020106082a8648ce3d0301070342000431bd7f410456259ed1d3d16e42fb50d4e3cdbf4cdd6f6fd99d52012ace17f77bb097bcc29702dcc8d86fba155dbd2324aac1522218a18362f651bbd509586889a38186308183302b0603551d110424302282096c6f63616c686f737487047f000001820f746c73746573742e696e76616c6964300f0603551d0f0101ff0405030307a00030130603551d25040c300a06082b06010505070301301d0603551d0e041604147bb5f3da7b2cffba017b9a0596d50da00f4e5861300f0603551d130101ff04053003010100300a06082a8648ce3d0403020348003045022100faee0291b5c7777c687ce370aac1c9cd004ebc4954ceb78041a834fad6eab0a402204481c17d307c2600987b97aa62ab678866d4d3b42a7fac58221695b1b0ea92cf0000",
         "note": "Three uint24 lengths inside one message. The innermost is the DER; the outer two are TLS framing and have to agree with it exactly.",
         "request_fields": [
           {
@@ -6803,7 +6803,7 @@
         "request": "The same hello, against a server holding leaf, intermediate and root",
         "request_hex": "010000ae03031f4dfc149f99e09c0d559f263dad7359f1a4be4b36cf6707313d6f12504ca8ef20ca83a16b7492fd825460596d9d18d39bdfa6ba32f0d33f34192774606a0a95e500061302130313010100005f0000000e000c0000096c6f63616c686f7374002b0003020304000a00060004001d0017000d000e000c040308040805080608070401003300260024001d002058b7b23c14fea7f9da172a810914bb0c4b390a1261b2e801c482fadfe13fdf4d",
         "response": "certificate_list with three entries, leaf first, each with its own `00 00` extensions block.",
-        "response_hex": "0b0004d7000004d30001cc308201c83082016da00302010202145f91c15ab7c504ea71c8b7a92906473d4e29009a300a06082a8648ce3d040302301f311d301b06035504030c14746c737465737420696e7465726d656469617465301e170d3234303130313030303030305a170d3335303130313030303030305a301f311d301b06035504030c14746c737465737420636861696e6564206c6561663059301306072a8648ce3d020106082a8648ce3d03010703420004a64cb42bb104310e2bf0c43b251a77fc7ae0fd6b78bab221eb48c479cf41f82da68981c0ac51ea3368fc2722a06851205c390e85aa1914eda801339f5c6b59aca38186308183302b0603551d110424302282096c6f63616c686f737487047f000001820f746c73746573742e696e76616c6964300f0603551d0f0101ff0405030307a00030130603551d25040c300a06082b06010505070301301d0603551d0e04160414964341e4920bcd925e916150951a8ceb0738372e300f0603551d130101ff04053003010100300a06082a8648ce3d04030203490030460221009b23549922196723649898750c49157e0d177e0888551c7d5eae8c3a06f7b5860221009a8401135cedaa75780938196d1d593ee3d4ece25f682e9a0c7d886a419bdb8400000001813082017d30820124a00302010202144da84512834924fc1e5c21ae36a4039535a81428300a06082a8648ce3d04030230173115301306035504030c0c746c737465737420726f6f74301e170d3735303130313030303030305a170d3335303130313030303030305a301f311d301b06035504030c14746c737465737420696e7465726d6564696174653059301306072a8648ce3d020106082a8648ce3d03010703420004d5bdc2122926c6c1afe610ba1825c9f9dec313837d7ab16519007e85ab54732c223100bfb6a3a252ce3177aed0e036de58b65140f0170418d71f2a7142cc3cafa3463044300f0603551d0f0101ff04050303078400301d0603551d0e0416041491862d1d41ba5e53cbc055c8ca1c5e88e070aa2230120603551d130101ff040830060101ff020100300a06082a8648ce3d04030203470030440220755954a80294983ffe49f12c140a8d540cbc560be160bef3bc56f3698a4a601802201c11fd60f3a66b0d20229605dc0b79918e75fab0fc736a8b08f572126903b86b00000001773082017330820119a00302010202141a5855ab980de85f31138bc5acc984af0d266c4d300a06082a8648ce3d04030230173115301306035504030c0c746c737465737420726f6f74301e170d3735303130313030303030305a170d3335303130313030303030305a30173115301306035504030c0c746c737465737420726f6f743059301306072a8648ce3d020106082a8648ce3d03010703420004fb8ebede4cb1db8d572b96111a1773300f3cfb23180047bb16bbd3916d7e4c72d837d8e76f91514d193c9ce550da96f47e82b9bd1a182360dc941682edc91170a3433041300f0603551d0f0101ff04050303078600301d0603551d0e04160414213b99ef210d07590d7c901350dc0cf6e097f8e1300f0603551d130101ff040530030101ff300a06082a8648ce3d0403020348003045022100deff7a1f4be6811d8eaafe8f0f1cc388e06a9a0bda9164c7c3b22f7aafb5f51b022073ab4d27fa7e28ef11e5ed8c74af2b474e79dd5016249ca5b5a32965fe5e67140000",
+        "response_hex": "0b0004d6000004d20001cc308201c83082016da00302010202147caa88d710adf0809ed9922bf6198b18b54e36d1300a06082a8648ce3d040302301f311d301b06035504030c14746c737465737420696e7465726d656469617465301e170d3234303130313030303030305a170d3335303130313030303030305a301f311d301b06035504030c14746c737465737420636861696e6564206c6561663059301306072a8648ce3d020106082a8648ce3d03010703420004c31436e1a598c84f49330763cdad156fb02ff1eec5b51b7f38fe0aba494f0f909ff7eccbe5a87a5fe449fb70cddf593c83a156daa286490040ffaa3b35bb72daa38186308183302b0603551d110424302282096c6f63616c686f737487047f000001820f746c73746573742e696e76616c6964300f0603551d0f0101ff0405030307a00030130603551d25040c300a06082b06010505070301301d0603551d0e04160414a82395e81b2ed33e8766026cb122d1b22b0fda07300f0603551d130101ff04053003010100300a06082a8648ce3d0403020349003046022100c8a7fcdf77384bafe9dbe4b9bc370ec46b833c0a7516aba31c2ecc48372eef52022100c7c87c78fd497f31d0af8dc541f4eb1fd9eaf649732fee2ee7db96930ff6163f00000001813082017d30820124a00302010202142c7c0a01ac21d7275bf9b7927d86054ec1c11c34300a06082a8648ce3d04030230173115301306035504030c0c746c737465737420726f6f74301e170d3735303130313030303030305a170d3335303130313030303030305a301f311d301b06035504030c14746c737465737420696e7465726d6564696174653059301306072a8648ce3d020106082a8648ce3d03010703420004ca586a620a9576e2082aa64c2a68d645772ef294545138fbaed3afdfb06a5a72dde06dfef52bc26083f51b384c7e4fef4fe2bfa429417ab11b54cbe408f39ee7a3463044300f0603551d0f0101ff04050303078400301d0603551d0e04160414ff5e2a3da86dc4b305e42fe2e7bf5b50052714b530120603551d130101ff040830060101ff020100300a06082a8648ce3d040302034700304402204a03d435e8e825c58832d2625c0fb2376fdecb2b5bdf90128f4a12ab7b9d7958022053b5c4da6bfb5af9681ad78f19b1cb90d9b7666d6dd52147b846756e05d01ecc00000001763082017230820119a0030201020214616dde0aa1999409297339c339ae5e5ebb37850b300a06082a8648ce3d04030230173115301306035504030c0c746c737465737420726f6f74301e170d3735303130313030303030305a170d3335303130313030303030305a30173115301306035504030c0c746c737465737420726f6f743059301306072a8648ce3d020106082a8648ce3d03010703420004ddba46bc106d050705538894ce83d55d228c4d9715eeaf2feee710fe0dba46a1cae50630914bbe44e11e0c9ad5a66d0808240a4dbcdd2a58613e366bb7215a2ca3433041300f0603551d0f0101ff04050303078600301d0603551d0e04160414406ea6427d522e4d7d16e37e7ddcbc3c44b60193300f0603551d130101ff040530030101ff300a06082a8648ce3d040302034700304402203e6dcac9a7a0c04455f42fb4f8b69b5b69e297ee165da08970a74723871ce0b702201ffa8a83179402cc73977654774e2967f0dddf15b208d8ef02b833936f893d960000",
         "note": "Order matters: each entry certifies the one before it. Sending the root first — or sorting the file — produces a chain no client can build a path from.",
         "request_fields": [
           {
@@ -7079,7 +7079,7 @@
             "offset": 1,
             "length": 3,
             "field": "certificate.length",
-            "value": "1239 (bytes of body that follow)"
+            "value": "1238 (bytes of body that follow)"
           },
           {
             "offset": 4,
@@ -7091,7 +7091,7 @@
             "offset": 5,
             "length": 3,
             "field": "certificate.certificate_list.length",
-            "value": "1235 bytes"
+            "value": "1234 bytes"
           },
           {
             "offset": 8,
@@ -7135,17 +7135,17 @@
             "offset": 863,
             "length": 3,
             "field": "certificate.certificate_list[2].cert_data.length",
-            "value": "375 bytes"
+            "value": "374 bytes"
           },
           {
             "offset": 866,
-            "length": 375,
+            "length": 374,
             "field": "certificate.certificate_list[2].cert_data",
             "value": "a DER X.509 certificate",
             "varies": true
           },
           {
-            "offset": 1241,
+            "offset": 1240,
             "length": 2,
             "field": "certificate.certificate_list[2].extensions.length",
             "value": "0 — every entry carries its own extensions block, new in TLS 1.3"
@@ -7158,9 +7158,9 @@
         "title": "A CertificateVerify message",
         "kind": "wire",
         "request": "The Certificate message whose hash this signature covers",
-        "request_hex": "0b0001c4000001c00001bb308201b73082015da003020102021447a04d5d7708feeaec52c950f90e203cb0301996300a06082a8648ce3d04030230173115301306035504030c0c746c7374657374206c656166301e170d3234303130313030303030305a170d3335303130313030303030305a30173115301306035504030c0c746c7374657374206c6561663059301306072a8648ce3d020106082a8648ce3d0301070342000447a88f1cbf5f0a0dbc5b93a22191cc4e4f8859568d4d5edf01e93ba94a05f1233c672b516ca470797c85d5f0ed9afeda87d643f10f2f215fb0d2b5c74008f018a38186308183302b0603551d110424302282096c6f63616c686f737487047f000001820f746c73746573742e696e76616c6964300f0603551d0f0101ff0405030307a00030130603551d25040c300a06082b06010505070301301d0603551d0e041604145ab3987b6ae55fdd8fc5fbc950498f1a58a222ec300f0603551d130101ff04053003010100300a06082a8648ce3d0403020348003045022100bb8b43522f57fd12d7c7205732daa32c0cdb710440c75c1fb34f17b32d4fc05a02204af7e869782a11d1d563c2ced981dfafe5853868582099b4585d7b229dc2b1450000",
+        "request_hex": "0b0001c4000001c00001bb308201b73082015da00302010202147f466e2a61c2e4f6dd0771ad18fef70e940e6dd1300a06082a8648ce3d04030230173115301306035504030c0c746c7374657374206c656166301e170d3234303130313030303030305a170d3335303130313030303030305a30173115301306035504030c0c746c7374657374206c6561663059301306072a8648ce3d020106082a8648ce3d0301070342000431bd7f410456259ed1d3d16e42fb50d4e3cdbf4cdd6f6fd99d52012ace17f77bb097bcc29702dcc8d86fba155dbd2324aac1522218a18362f651bbd509586889a38186308183302b0603551d110424302282096c6f63616c686f737487047f000001820f746c73746573742e696e76616c6964300f0603551d0f0101ff0405030307a00030130603551d25040c300a06082b06010505070301301d0603551d0e041604147bb5f3da7b2cffba017b9a0596d50da00f4e5861300f0603551d130101ff04053003010100300a06082a8648ce3d0403020348003045022100faee0291b5c7777c687ce370aac1c9cd004ebc4954ceb78041a834fad6eab0a402204481c17d307c2600987b97aa62ab678866d4d3b42a7fac58221695b1b0ea92cf0000",
         "response": "`0f`, a uint24 length, a uint16 SignatureScheme, a uint16 signature length, and the signature.",
-        "response_hex": "0f00004b0403004730450220251877ec05d0205cd6b95ec187993192223f56cbde8a5221d193c21c470ad4ff022100d20db24166fd8ef53b659481967bd9b0964e5488ceafe37ac4d243e13895ec50",
+        "response_hex": "0f00004b040300473045022100abea125adba752ba12984f7ac8cb218f3bb75e76a74a38e1fb4d93f971f418b502205c9083ecc6d2001182dcd8c4c0fccac6b231a22ce325f48a039cd36d604d77a8",
         "note": "The signature is over content the message does not contain: 64 spaces, a context string, a zero byte and the transcript hash up to and including Certificate.",
         "request_fields": [
           {
@@ -7236,7 +7236,7 @@
             "offset": 8,
             "length": 71,
             "field": "certificate_verify.signature",
-            "value": "over 64 spaces, \"TLS 1.3, server CertificateVerify\", a zero byte and Transcript-Hash(ClientHello..Certificate) — 30450220251877ec… (71 bytes)",
+            "value": "over 64 spaces, \"TLS 1.3, server CertificateVerify\", a zero byte and Transcript-Hash(ClientHello..Certificate) — 3045022100abea12… (71 bytes)",
             "varies": true
           }
         ]
@@ -7258,9 +7258,9 @@
         "title": "An RSA-PSS CertificateVerify",
         "kind": "wire",
         "request": "The Certificate message carrying a 2048-bit RSA key",
-        "request_hex": "0b0003500000034c000347308203433082022ba003020102021436ea2d6d5318f6f7337c9ab059951bd2b4f1ee32300d06092a864886f70d01010b050030173115301306035504030c0c746c7374657374206c656166301e170d3234303130313030303030305a170d3335303130313030303030305a30173115301306035504030c0c746c7374657374206c65616630820122300d06092a864886f70d01010105000382010f003082010a0282010100da59388f16d870e303ff633a597575bb81bcf9749c239d09fb268154c8a9feddebb4734b0abdc969176d13dcd3400ea0bb5d3b7ab17132a5cd71f7742322db24d5780fbcab69ee28f45ef01bc98146224f574430abdd7564766d122252d244b8e0956a1156f37d566928062dced1e84a7af7c4a3a81f2615906e1d9d3e4db516772503cf8de4479b7b8c85af42f58163d38c394ca23833f14b6255dabad797bbc37a2b178dc292d3b9f074fb5fa97fd4a60d9dd299bc09a7d5d6fba19115c9a4a1a072fe80ee2671343235ec5627dd438d86c4d0af6cf1b2abde4d6b99bebd766225be1df7f45f6b3e6d7c6a1fe6e61a31a73d0bac329775107536175e569adf0203010001a38186308183302b0603551d110424302282096c6f63616c686f737487047f000001820f746c73746573742e696e76616c6964300f0603551d0f0101ff0405030307a00030130603551d25040c300a06082b06010505070301301d0603551d0e0416041422a1f7db2be7c2618d5ab8d1ace5f5bc1496a79d300f0603551d130101ff04053003010100300d06092a864886f70d01010b05000382010100d546257e7c8731515f47feed62e91f625edafa27e6e606ac4ebd3e08efb0a2796712b82d783cc1ec48b641a5419e8b93ed8d3a7578bfe424c38bc3e5aad43355c1d7cb1d4bb9e0359cbc98db106a82a318dd08c50fafdc31eab01c46f26ac9ab11cbd88a2c39a39c70b5fd8f3de461d8af6d6ff4cbf7230b1476c95b61859f2227ad090e174076b8031247cd8fa255dd1203dfa0f83e5780929dbdd7e23d7a930b0e589a9f83825a53f5a63debc6545028a1a5aad92b10faf7e52e520b0b41d7d936b1128d0ba555517f884fc88db37c336fdfd0fafb94d0b35f2d0d1f79242758e3de905b534d8c9c899bc2e448d60366dd9ae92f5cc4d83498de1f0f4b2acb0000",
+        "request_hex": "0b0003500000034c000347308203433082022ba00302010202142eb3c3e689ee0f346a1a08bc62d767ced634373a300d06092a864886f70d01010b050030173115301306035504030c0c746c7374657374206c656166301e170d3234303130313030303030305a170d3335303130313030303030305a30173115301306035504030c0c746c7374657374206c65616630820122300d06092a864886f70d01010105000382010f003082010a0282010100a69ba96186de039b8807427d3f83471a27e183457c20eff8bc6225f18ecdb4c5cc3e1dc0019a02f1a048a10ee62a3e5d25d37e693f7ccf8ea848b68f92f61a89d385ba33b639474619c6f9700c1e56faf6d7657e9fa7df328c3abc6b2c38d1f73fc81743235ccb568053253bfd32c8bb44737b18fa3d83bc36523ef2de9e12f571ec0ea7a0ab9875134b8542803890ba8cfe7dd0bd9d5f510bb4cc5b4024d2741177effd41fe381bcf578fbc4c3d61b9d05d6d6f24842da6c816f4e3fabb57e0f43bb26c20e9f57192a038c93ed362ff5861c7211bbde38f020a6d3627eff59364ec3aff0638cee109dadb654a3e96db2d49fa3add10fb02deaa34596d42496b0203010001a38186308183302b0603551d110424302282096c6f63616c686f737487047f000001820f746c73746573742e696e76616c6964300f0603551d0f0101ff0405030307a00030130603551d25040c300a06082b06010505070301301d0603551d0e041604144ea1cbcc2cd6e79c58322b0749bc524dab0df687300f0603551d130101ff04053003010100300d06092a864886f70d01010b05000382010100986ec982572cca8bcf4dd4b3946896d5a871c7b99a9d851531d9b0aaf73fd583e9c83a53666ed2e4df2b5baf6797471a6ff752beaf28e86d0128f567b4bbc5a243c25ce9bbc051f164eccf80e031b2b8254fac514e50d752cecbb46e9288aa68eb6a75ca46a7ae377c054c57f991b475d7e310aca561279dce13c4a0e1877e80ae45e02f81286d6e158e2a23143e499ff0271ee50884a58e6f5203da088048cdff4c427d6550377af062ab84daa567a19c85ad19f4e0be8e7dbf86b6c1b9299f736a613b3006948d1a3fc01a4ab98fad10570ad589bb3bbcbaa82f865cac982c7729c83793cc93fb04010bdd79aa30c6e0627f06827ea92d48b46a95a7b0e0420000",
         "response": "algorithm 08 04 (rsa_pss_rsae_sha256), length 01 00, and 256 bytes of signature.",
-        "response_hex": "0f000104080401008bec99a8c7a69553e7b493c36f520700869ed9bc3bbee60a8673015ebf7b1a8683bef511c5ec7ff0d1879dab17f107a399ed89ba98dadc5de43556aa8fab8e6679f85f90c863124127013e7584f7236c8eb280f3f491e1bc381bccc57318069c5b286d6169660db83b181b878255b862f1667cfd857e193e607eb53c60feaeedddbcda6883baeeefd0af0a8d803c8b9a305bb41dad29d921dbcf6e1495ef52d8eeef4f06401608ee563ff577827ba34dbb712f197f1501a2188af187fd99402e1b0af1b4d23d9c1026922bbb8d80cbaf8073ff2a83b9303d02c3894b67f5b3aed11d26273418bd72371ad60821b29ed3528b2f60fbb239ce9ccc953924f9d4f9",
+        "response_hex": "0f000104080401009bd176d7bf8d73acc7812b51d8d18715321774dc035b1c752780e3dbfeeff193b206e0ee4c6ee3b401be9927a35f37c9f90928a294c9990160ce6082a033965334f3aa30e4a5e0116eb2a11afcd6e1c68ec7a31bdb8913ae5b3d34d549d487b46702f11d12cfb6ce134bad6f26132050fa69a5499d40e5eab3e5d364240d8d7a09b72d69db8fc111c8338b181c46b062d5e3f6d90c044be6e108f88c14d2a76ed282f77a41dba9e312113a905ba051b0e2d1f651d50b9064d538d9910733a9915423c6b56a27b32013ef6d343e4cf1fd1ed5090e15a34fac54df3e3c336eddafdf5dcb696d76d6b5199ce4a237d291dcc407a358219c1059a0232de368126d73",
         "note": "PSS is randomised: signing the same content twice gives different bytes. That is expected, and it is why a signature cannot be compared against a fixture.",
         "request_fields": [
           {
@@ -7336,7 +7336,7 @@
             "offset": 8,
             "length": 256,
             "field": "certificate_verify.signature",
-            "value": "over 64 spaces, \"TLS 1.3, server CertificateVerify\", a zero byte and Transcript-Hash(ClientHello..Certificate) — 8bec99a8c7a69553… (256 bytes)",
+            "value": "over 64 spaces, \"TLS 1.3, server CertificateVerify\", a zero byte and Transcript-Hash(ClientHello..Certificate) — 9bd176d7bf8d73ac… (256 bytes)",
             "varies": true
           }
         ]
@@ -7358,9 +7358,9 @@
         "title": "The message that ends the server's flight",
         "kind": "wire",
         "request": "The CertificateVerify that comes immediately before it",
-        "request_hex": "0f00004b040300473045022100875b80f34552a424d327a7220505f36f9ed2a8da6c35dae6e9c988a869b8750602207359a4e6f41ef0a845cebfed6c6a2dbef7e65f707c01156f9f910794ddacb5ba",
+        "request_hex": "0f00004b040300473045022100c1a41b83df7325e0f363e3328e3f2e3aecbaec9927a1fb7b50834a04ea89d1ac02205f55274311a1401f6134c3feccefc35209f1fddbe5369abb7fa108d1a89ee877",
         "response": "`14`, `00 00 20` (or `00 00 30` under SHA-384), and the verify_data — an HMAC and nothing else.",
-        "response_hex": "14000030e33f182d02d512d1d010a4fb02748e798e7127e26c9d672fff6d88371e38d6aa04c310730871bb7013c323ff841d4440",
+        "response_hex": "140000308e84c878db0baa85e3c9c9bfc54277c28499f8bf1057706eaec372423d5811051d31e185adf03b8ccbfa388cb6bf1158",
         "note": "Once this verifies, the client knows the server holds the handshake keys and that neither side's view of the transcript has been tampered with.",
         "request_fields": [
           {
@@ -7391,7 +7391,7 @@
             "offset": 8,
             "length": 71,
             "field": "certificate_verify.signature",
-            "value": "over 64 spaces, \"TLS 1.3, server CertificateVerify\", a zero byte and Transcript-Hash(ClientHello..Certificate) — 3045022100875b80… (71 bytes)",
+            "value": "over 64 spaces, \"TLS 1.3, server CertificateVerify\", a zero byte and Transcript-Hash(ClientHello..Certificate) — 3045022100c1a41b… (71 bytes)",
             "varies": true
           }
         ],
@@ -7412,7 +7412,7 @@
             "offset": 4,
             "length": 48,
             "field": "finished.verify_data",
-            "value": "e33f182d02d512d1d010a4fb02748e798e7127e26c9d672fff6d88371e38d6aa04c310730871bb7013c323ff841d4440 — HMAC(finished_key, Transcript-Hash(everything before this message))",
+            "value": "8e84c878db0baa85e3c9c9bfc54277c28499f8bf1057706eaec372423d5811051d31e185adf03b8ccbfa388cb6bf1158 — HMAC(finished_key, Transcript-Hash(everything before this message))",
             "varies": true
           }
         ]
@@ -7434,9 +7434,9 @@
         "title": "The client's Finished closes the handshake",
         "kind": "wire",
         "request": "The server's Finished, which the client has just verified",
-        "request_hex": "14000030538d2614918867c273887667e04c9c6f859a72c65c3a57ca9b77c8a5d7341da12b9a722cf11342f5564c28279b5d8237",
+        "request_hex": "14000030cdb743ac6874ff1f69df10ab1b1505ca5e665f80014a7a3f8eb3c46c494d63224f03f7ea1e47b531640bb587a8ff739a",
         "response": "The client's own `14` + uint24 length + verify_data, encrypted under the *client* handshake keys — the last message before application keys take over.",
-        "response_hex": "14000030faa52fad8398d1adb616946362daa6b03a02d6db1ade64d93d4a79ecb4420c6be49d7e2f89127c7b1f3a08c4febc37d0",
+        "response_hex": "140000306c6775bd9a5350ad966718ca7f0bcf1d26f30e511aca019862b069cc07e1f3615f718fb497cd9ccf238f7b9152452f7d",
         "note": "Two Finished messages, two different finished keys, two different transcripts. The client's covers the server's, so it can only be produced after it.",
         "request_fields": [
           {
@@ -7455,7 +7455,7 @@
             "offset": 4,
             "length": 48,
             "field": "finished.verify_data",
-            "value": "538d2614918867c273887667e04c9c6f859a72c65c3a57ca9b77c8a5d7341da12b9a722cf11342f5564c28279b5d8237 — HMAC(finished_key, Transcript-Hash(everything before this message))",
+            "value": "cdb743ac6874ff1f69df10ab1b1505ca5e665f80014a7a3f8eb3c46c494d63224f03f7ea1e47b531640bb587a8ff739a — HMAC(finished_key, Transcript-Hash(everything before this message))",
             "varies": true
           }
         ],
@@ -7476,7 +7476,7 @@
             "offset": 4,
             "length": 48,
             "field": "finished.verify_data",
-            "value": "faa52fad8398d1adb616946362daa6b03a02d6db1ade64d93d4a79ecb4420c6be49d7e2f89127c7b1f3a08c4febc37d0 — HMAC(finished_key, Transcript-Hash(everything before this message))",
+            "value": "6c6775bd9a5350ad966718ca7f0bcf1d26f30e511aca019862b069cc07e1f3615f718fb497cd9ccf238f7b9152452f7d — HMAC(finished_key, Transcript-Hash(everything before this message))",
             "varies": true
           }
         ]
@@ -7500,7 +7500,7 @@
         "request": "A perfectly good ClientHello, and then a plaintext Finished where the server expects to be talking next",
         "request_hex": "16030300b2010000ae0303d26a5c754d88dd28294fde76a5ccca3665a2b5d89f1f49f3f6b5c29a117e5631209c6ac86c34ea92595ef90dbf32e7cdf1cc93412d9607f93cacb7b2592dd3266300061302130313010100005f0000000e000c0000096c6f63616c686f7374002b0003020304000a00060004001d0017000d000e000c040308040805080608070401003300260024001d0020f030d86c01d96b9314bec055d4d10f823f99c73a7fe8f4ef981fd92ce68fdd1c1603030024140000200000000000000000000000000000000000000000000000000000000000000000",
         "response": "The ServerHello and its flight may go out first, and then a fatal alert — unexpected_message(10) is the one RFC 8446 names.",
-        "response_hex": "160303007a0200007603039e98517cd89a860910f51be60ba548395a63d4c9f6c441333f80ee29b68c5e3f209c6ac86c34ea92595ef90dbf32e7cdf1cc93412d9607f93cacb7b2592dd32663130200002e002b0002030400330024001d0020a9d7ded01b4dd40df98054ec4dd230e19f9c911e38b226498d1718a246dcf505140303000101170303002de5463ee563f908c429cdfe4648aaa4c8ac83926e92594c2457e5aec8bb165dc723f7530875a9ffa7876c0fc7c817030301d98dad653ec254a4158b154f0129c27912d68c0368257489cdfcdf3af74e1a3adec8bb7b07937b07ea218ff395a2b6bef9f008753b1539d0f34361583fc5ed052d65e4030fdc80aa739fd18b4c2b44ffb5f3feb83ec6a9574926c1ec5921b6823a60e5d82b93d79ad33795fdc6c7fcfca0b0a53c566ea2113218a14138024eb8406b4bd284a450989dc14f7cf0074607982c982a46cd6640f0750b0d425b8f26741f27dbf47dde2f5ed59ef6b98db56270a28d6f6d9c3e2a493956dce107cec8203554876eb9d9142137bd2479a9770d384a1e5095caf59d208abe2a53ecba03b765414195a11149099e0c3a26b1252179d90b1a6dbf603ea0266076ce3739a152418a62a786894fb5632c2166f30719da04b1e82dbcb4153c5e8e84bc58f2be2a21a6167afd64fafc615244d4374b68a6e87ea532250c426ff15397eab606e8479a8d0f8bd93a082b8ac6398f5acdc34db48316c93bbb4aee927e9fff670010c024e9411919fce0e508797dc52d76d16ae9fd61e153be144155f67f7cb9efb7104927c9108ea32849e711bea71ff32cb8c17fde81f605e346d28b952d9cdeba129ca1e7ec13de308fd8b10064c4e961e3ce64a8a63edface41c0f6cabe9f8df52db3ec04af873426a4847058d3b3cd6ea99df02ab0581bfd0211703030061489e7461cc7ed01f7339045ffe8eb2bad18c4ca696e7a09491a9309d3df8afc553e5ae53a790674c4d990974411f0cd58f79838f8d0e9e9d3e687167908297860f3291a969f6d6096f38813501ad5b330e1e4efcd73d5e6e1a1d09c46bd92a34b61703030045d2f8e390839f9ff4eb4015b46e04fc841ad2856f49aae4de073193505f06a613070720ad73fd9d57cbc5442bf42045ecacec4cfd3ba2046fb0766bd94f3a34535fde637ede170303001300c12b94cf73f8dda8c3bf31cd9b26f3c99cdc",
+        "response_hex": "160303007a020000760303692f2b96bdb8f9662a44f832076ada2c4328ec2ea725a7d35e7f6772f0806959209c6ac86c34ea92595ef90dbf32e7cdf1cc93412d9607f93cacb7b2592dd32663130200002e002b0002030400330024001d0020f5c1db169b3007c00455b1a2b08ed68c730a8dc6afd48371cfe9299b5004e307140303000101170303002d2123e87ab3e95cc3f8541a787ec2851e28226b098d6abdb50a95a83997d2a1b01bbcf654bef02a0628379c534e17030301d962b9d1084292f63a963414f3880d2b5f9c9703c530476b97890a074e1e9675af1e83ca14dc8aa99b945fecff43973b7778198ed577f873f7486abeffe7f618999d2e3a318137c510a2486e87e6d09479c7cf4e58044783da50b114f46f99d1058cb78a53f4a472ae5f49e5babde45dcb48556d9e7af9dc634022019dfa9b9d38cc4829d65becb264128eca49c891b06fc24aff7141a86ddcf2d06b16cbbeb0cd6ae8fed5775ab3cc2e50b0c494e57387ee9be3b16c31b4297e388bdafb46377d4dfee00be0a4e616cc6674ab5de8bd3b8d28864603d3fdbc2b23e1086cff37d15edfa1fcf844c1d7bc0015889a118cdf18f6230198c798ecc525eee7a62189572cdac4ec4572b9c13d9ea56f04fa3006cf178a6717016de4e7518875f7d836636cb40b9a92c3bf4bedb7da0e4a83281c382f1b6ae0cdb58980240644f0bc83d1ce8c508dbd23327aeb60a21e8e06670f09d134dd0dc499a5a99e0f92711ee4ba98dc4802ccee9cf12bab702d7c8ad256c87faf0ed302f49931aca7ed3d88bd2730fee9a996c0ff91445f0a0d9ff75fddbf9a48bd332802f46edc20c2c2a8075563b3d041496c68c87bb7fee49f0be0f992c986815a40d3089e7e97586a3619700878e2046739ef3a055bb36c6e458a9c4c3e3adbeed43e84561703030060b28c126da3ae2ab7b3971590608c33daa94cb16a542239fc963deb21ef4c61741549f40bee25c62cf0d81dc3e49338a195548bc909dcb7e5dd901b312a228bdcff312e3b980d0dbf250da8f2206a125798f8586e39c9c58d3540fd63aec55242170303004568bccf8a339bcb9ce566603f7ff497738ea4c37bf88d1aec57a1084fe9845c9617261423c721ac3388f7d1c849a9778f7f603b1ed7007329d30e9520f0d2f6da0ccf3ac14317030300134277c4c6d8b3a1e121b0f9ca7387581839ba63",
         "note": "The Finished is well-formed. It is only wrong because of where it is, which is why the state machine has to be a real one and not a sequence of parsers.",
         "request_fields": [
           {
@@ -7861,7 +7861,7 @@
             "offset": 11,
             "length": 32,
             "field": "server_hello.random",
-            "value": "9e98517cd89a860910f51be60ba548395a63d4c9f6c441333f80ee29b68c5e3f",
+            "value": "692f2b96bdb8f9662a44f832076ada2c4328ec2ea725a7d35e7f6772f0806959",
             "varies": true
           },
           {
@@ -7941,7 +7941,7 @@
             "offset": 95,
             "length": 32,
             "field": "server_hello.extensions[1].server_share.key_exchange",
-            "value": "a9d7ded01b4dd40d… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
+            "value": "f5c1db169b3007c0… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
             "varies": true
           },
           {
@@ -8034,60 +8034,60 @@
             "offset": 664,
             "length": 2,
             "field": "record4.record.length",
-            "value": "97 (bytes that follow)"
+            "value": "96 (bytes that follow)"
           },
           {
             "offset": 666,
-            "length": 97,
+            "length": 96,
             "field": "record4.record.encrypted_record",
-            "value": "97 bytes: the AEAD ciphertext plus its 16-byte tag. The real content type is inside it, after the content and before the padding.",
+            "value": "96 bytes: the AEAD ciphertext plus its 16-byte tag. The real content type is inside it, after the content and before the padding.",
             "varies": true
           },
           {
-            "offset": 763,
+            "offset": 762,
             "length": 1,
             "field": "record5.record.type",
             "value": "application_data(23)"
           },
           {
-            "offset": 764,
+            "offset": 763,
             "length": 2,
             "field": "record5.record.legacy_record_version",
             "value": "0x0303"
           },
           {
-            "offset": 766,
+            "offset": 765,
             "length": 2,
             "field": "record5.record.length",
             "value": "69 (bytes that follow)"
           },
           {
-            "offset": 768,
+            "offset": 767,
             "length": 69,
             "field": "record5.record.encrypted_record",
             "value": "69 bytes: the AEAD ciphertext plus its 16-byte tag. The real content type is inside it, after the content and before the padding.",
             "varies": true
           },
           {
-            "offset": 837,
+            "offset": 836,
             "length": 1,
             "field": "record6.record.type",
             "value": "application_data(23)"
           },
           {
-            "offset": 838,
+            "offset": 837,
             "length": 2,
             "field": "record6.record.legacy_record_version",
             "value": "0x0303"
           },
           {
-            "offset": 840,
+            "offset": 839,
             "length": 2,
             "field": "record6.record.length",
             "value": "19 (bytes that follow)"
           },
           {
-            "offset": 842,
+            "offset": 841,
             "length": 19,
             "field": "record6.record.encrypted_record",
             "value": "19 bytes: the AEAD ciphertext plus its 16-byte tag. The real content type is inside it, after the content and before the padding.",
@@ -8241,9 +8241,9 @@
         "title": "One line in, one line out",
         "kind": "wire",
         "request": "An application_data record whose plaintext is `hello\\n` — six bytes inside the AEAD, plus the inner content type and the tag",
-        "request_hex": "170303001744aa4c547a16708c31a9a39794f9fd66278ffb80d7c6fc",
+        "request_hex": "1703030017fface4c2f2a5932312d6ad8f47ece9bbca2d86fda6ee05",
         "response": "An application_data record whose plaintext is `olleh\\n`. The record on the wire is opaque; only the length gives its size away.",
-        "response_hex": "17030300173389991ab0016b207761215e11b8f293f9387a001af7bb",
+        "response_hex": "1703030017d6868b6ef311de69acf50a307cbf874c3d2b99b6aff78f",
         "note": "Compare the two record lengths in the hex: both are 6 + 1 + 16 = 23 bytes of ciphertext. The extra byte is the inner content_type and the 16 are the tag.",
         "request_fields": [
           {
@@ -8317,9 +8317,9 @@
         "title": "An echo under AES-128-GCM",
         "kind": "wire",
         "request": "`suite\\n` as one application_data record under TLS_AES_128_GCM_SHA256",
-        "request_hex": "17030300177ee905a9b917876cb2a3b606ecf174643c498505db24ee",
+        "request_hex": "17030300177be183b556600d5bfd911f943513057d996ffd8cc7b8b7",
         "response": "`etius\\n`, the same way back.",
-        "response_hex": "17030300177df5035ac63900a75aac547913bdccedad8a5fd450b74f",
+        "response_hex": "1703030017887e9b338a9ba6ba8741d5c78f7ec3cd27fa225974f222",
         "note": "The record layer is suite-agnostic: change the AEAD and the bytes on the wire keep the same shape. Only the key length and the tag's contents differ.",
         "request_fields": [
           {
@@ -8382,7 +8382,7 @@
         "request": "cipher_suites holds only 13 03",
         "request_hex": "010000aa0303b7ac4c189f67feb42baf1b1b1542aa292a8469cee61c7a81a75fb7df6a68be87203ec46b314c5ed5f06e56d5cced77dbced9f7b53897537da4315f4283df6c265b000213030100005f0000000e000c0000096c6f63616c686f7374002b0003020304000a00060004001d0017000d000e000c040308040805080608070401003300260024001d0020c10d0a531f338957d0e88df9ead080723e11f39e90c433fe2024a307b1cc4c4e",
         "response": "server_hello.cipher_suite is 13 03; everything else looks identical.",
-        "response_hex": "0200007603038b694c0da6215de89a0cb8674836dda39520f228051e2520db94575ed4bac270203ec46b314c5ed5f06e56d5cced77dbced9f7b53897537da4315f4283df6c265b130300002e002b0002030400330024001d0020cb94ec4f089479aeda86bc2a4525cbe4d8d47f199300f569fb1a61a323d3a523",
+        "response_hex": "020000760303baea18d311f7a72fc89775805cc50c491b69520b7584802a993971befff0a08f203ec46b314c5ed5f06e56d5cced77dbced9f7b53897537da4315f4283df6c265b130300002e002b0002030400330024001d002073e2a55e7c0d3167dbe029c8651b1a1b311fd67b1f89ff8c47a1d921c343bc61",
         "note": "The suite changes the AEAD and, for 0x1302, the hash — and nothing else about the record layer. Same five header bytes, same inner content type, same nonce rule.",
         "request_fields": [
           {
@@ -8658,7 +8658,7 @@
             "offset": 6,
             "length": 32,
             "field": "server_hello.random",
-            "value": "8b694c0da6215de89a0cb8674836dda39520f228051e2520db94575ed4bac270",
+            "value": "baea18d311f7a72fc89775805cc50c491b69520b7584802a993971befff0a08f",
             "varies": true
           },
           {
@@ -8738,7 +8738,7 @@
             "offset": 90,
             "length": 32,
             "field": "server_hello.extensions[1].server_share.key_exchange",
-            "value": "cb94ec4f089479ae… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
+            "value": "73e2a55e7c0d3167… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
             "varies": true
           }
         ]
@@ -8749,9 +8749,9 @@
         "title": "What is really inside an encrypted record",
         "kind": "wire",
         "request": "`pad\\n` as application data. Inside the AEAD the plaintext is `pad\\n` followed by the byte 0x17, and then as many zero bytes as the sender likes.",
-        "request_hex": "1703030015f75eb72212e78a8a159dda9c0fafb39b4902e85524",
+        "request_hex": "1703030015b8446a32c5052f1de8afd4633f218e8f68456b7f2d",
         "response": "The answer's plaintext is `dap\\n` || 0x17, with whatever padding the server chose. Both records say application_data(23) in the clear.",
-        "response_hex": "1703030015026fe47184d5a3c858d4626a6c476125df53fce24e",
+        "response_hex": "1703030015f301df52fc647e300bf44c3238fed4925554446b8b",
         "note": "The outer content type of every protected record is 23, always — even for a handshake message or an alert. The real type is the last non-zero byte of the decrypted fragment.",
         "request_fields": [
           {
@@ -8825,9 +8825,9 @@
         "title": "A short line, for scale",
         "kind": "wire",
         "request": "`size\\n` — five bytes of content in a 22-byte ciphertext",
-        "request_hex": "1703030016b883a8be0a5197c50c6bf049600d629dc20fa5b72ad5",
+        "request_hex": "17030300164ce663696c089ff7db1f015095f99b0a0141ab3b45f4",
         "response": "`ezis\\n`, the same shape back.",
-        "response_hex": "1703030016ff6a27103e7272a6d9604d4d687dfe3f777817ca6e73",
+        "response_hex": "170303001607c75ab380801a656352ddcb997f16afe554045bea6f",
         "note": "Every protected record costs five header bytes, one inner type byte and a 16-byte tag. At one byte per record that is 22 bytes on the wire for one — legal, and a good reason to batch.",
         "request_fields": [
           {
@@ -8901,9 +8901,9 @@
         "title": "The last line before a close",
         "kind": "wire",
         "request": "`bye\\n`, and then an alert record carrying `01 00` — warning, close_notify",
-        "request_hex": "170303001534162d402477d133a2307dc8db8e9b4b8b1419d034",
+        "request_hex": "170303001592d55627fa82f4648ad0ea4a8c147676c0e5ed1620",
         "response": "`eyb\\n`, and then the server's own close_notify, also encrypted, before it closes the socket.",
-        "response_hex": "1703030015c9f32383e0e651c16f663f28404ab33ee21490b1eb",
+        "response_hex": "17030300157f03f1df00ad35fe27bd6625cac32b636c91e74d7a",
         "note": "The alert is two bytes of plaintext inside an application_data record. Its ciphertext is 2 + 1 + 16 = 19 bytes, which is how you spot one without keys — and all you can tell is that *something* two bytes long was said.",
         "request_fields": [
           {
@@ -8977,9 +8977,9 @@
         "title": "A record that is not tampered with, for comparison",
         "kind": "wire",
         "request": "`good\\n` sealed with the client's application keys",
-        "request_hex": "1703030016838eefc1776ad368707fc980eb7594d14d8c62bc38a2",
+        "request_hex": "1703030016266b96a64446cc67ce54beecd7e3944a1e1508db686e",
         "response": "`doog\\n` back. Flip any bit of that ciphertext and this stops happening.",
-        "response_hex": "17030300160f251d85aa8e017c97bd3a61b55a6bb01c7e758ec7ca",
+        "response_hex": "1703030016de20d14c6dfc58b93fcc2fb91ca401aa37084661ddd7",
         "note": "AEAD is all-or-nothing: one changed bit anywhere in the ciphertext, the tag, or the five header bytes that make up the additional data, and decryption fails outright. There is no partially valid record.",
         "request_fields": [
           {
@@ -9482,7 +9482,7 @@
         "request": "cipher_suites begins with 00 ff (the renegotiation SCSV) and the extensions end with ff 01 00 01 00 (renegotiation_info, empty)",
         "request_hex": "16030300b9010000b5030365f73cc1325c85f191d9f9af604c16658a59c4254b5301dc6df18b27cc8068b420b8ae533494a2fa9cd39de963dc103c9c6e7acda6ed35468a024330a54fc8e94f000800ff130213031301010000640000000e000c0000096c6f63616c686f7374002b0003020304000a00060004001d0017000d000e000c040308040805080608070401003300260024001d0020f091eacbd9bb6884de15709894f5650cbe83337102b28352ee51692dd5a76b6bff01000100",
         "response": "An ordinary ServerHello. Both are skipped like anything else unrecognised.",
-        "response_hex": "160303007a020000760303806e27ac29622b060e6d95787ef0b432af64d573f4d7d91adb621e52a833cd1320b8ae533494a2fa9cd39de963dc103c9c6e7acda6ed35468a024330a54fc8e94f130200002e002b0002030400330024001d00205d729c74f39f2e496fe46f10418c5c7c05bcbaa09909b9dc73c4e60165b50c26",
+        "response_hex": "160303007a020000760303f8d90b93b88617c0f6c3746d98448826a5a8d58f2bbd21c44822c64b3176ec3d20b8ae533494a2fa9cd39de963dc103c9c6e7acda6ed35468a024330a54fc8e94f130200002e002b0002030400330024001d0020af57fd331b7f21a2bbc25a6cb66d66c9379f359b16a7fd17370241e31b87507f",
         "note": "Real clients still send these. A TLS 1.3 server must not try to honour them, and must not refuse a hello for carrying them.",
         "request_fields": [
           {
@@ -9831,7 +9831,7 @@
             "offset": 11,
             "length": 32,
             "field": "server_hello.random",
-            "value": "806e27ac29622b060e6d95787ef0b432af64d573f4d7d91adb621e52a833cd13",
+            "value": "f8d90b93b88617c0f6c3746d98448826a5a8d58f2bbd21c44822c64b3176ec3d",
             "varies": true
           },
           {
@@ -9911,7 +9911,7 @@
             "offset": 95,
             "length": 32,
             "field": "server_hello.extensions[1].server_share.key_exchange",
-            "value": "5d729c74f39f2e49… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
+            "value": "af57fd331b7f21a2… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
             "varies": true
           }
         ]
@@ -9933,9 +9933,9 @@
         "title": "What each of the fifty connections does",
         "kind": "wire",
         "request": "A full handshake, then `conn00\\n` as application data, then close_notify",
-        "request_hex": "1703030018d493c1b968837013f8be8e0fa3f4286ff2eee55f53fa963c",
+        "request_hex": "170303001809505c31cd7a80514b571ef5d6dffc248917ceef05f8bc98",
         "response": "`00nnoc\\n`, and a close_notify back.",
-        "response_hex": "1703030018e4fd3169b7e83f7a29ac3e20b919ba88c396f1519f2cb01c",
+        "response_hex": "170303001897115c96ad28817d38ed4e5546a6f4b6dd0c62d05efdf2b9",
         "note": "Fifty of these at once. Nothing about any one of them is unusual — the test is whether the fiftieth is as correct as the first.",
         "request_fields": [
           {
@@ -10022,7 +10022,7 @@
         "request": "A well-formed ClientHello on a fresh connection",
         "request_hex": "16030300b2010000ae0303d8f3cd619e6e0af5e0d2d6afe5f52573781bf3340c4c68bf458563f7dc796c93201e14bda8fac930cb88d4364333ec090112d43eba27cc26a3a2ab2964631c79da00061302130313010100005f0000000e000c0000096c6f63616c686f7374002b0003020304000a00060004001d0017000d000e000c040308040805080608070401003300260024001d0020270cdad807c464437e9295bc0ef1652ac481a7525003555a67844036a577c609",
         "response": "A ServerHello. The garbage changed nothing.",
-        "response_hex": "160303007a0200007603032759d51aac8777172b34e82eb1ff13f67b6407bafa357daf0e604d36a3758cd6201e14bda8fac930cb88d4364333ec090112d43eba27cc26a3a2ab2964631c79da130200002e002b0002030400330024001d002063fdb6d77590abfb65726ae4836e85fb638f1d5d79fef1c40ac632f3fc9cae06",
+        "response_hex": "160303007a020000760303173c21f79b0a5e94cf0949939ef70e150f23f85c440ab916b3b6bfbf49c9f600201e14bda8fac930cb88d4364333ec090112d43eba27cc26a3a2ab2964631c79da130200002e002b0002030400330024001d0020fe7a6ae0481760163c81678c8939297f827fa3c4ea6fff87dd432ebd6da1f144",
         "note": "This is the half of the stage that is easy to miss: surviving the bad connection is only half of it, the accept loop has to still be running afterwards.",
         "request_fields": [
           {
@@ -10346,7 +10346,7 @@
             "offset": 11,
             "length": 32,
             "field": "server_hello.random",
-            "value": "2759d51aac8777172b34e82eb1ff13f67b6407bafa357daf0e604d36a3758cd6",
+            "value": "173c21f79b0a5e94cf0949939ef70e150f23f85c440ab916b3b6bfbf49c9f600",
             "varies": true
           },
           {
@@ -10426,7 +10426,7 @@
             "offset": 95,
             "length": 32,
             "field": "server_hello.extensions[1].server_share.key_exchange",
-            "value": "63fdb6d77590abfb… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
+            "value": "fe7a6ae048176016… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
             "varies": true
           }
         ]
@@ -10463,7 +10463,7 @@
         "request": "A ClientHello naming x25519 and secp256r1 in supported_groups, with an empty key_share list",
         "request_hex": "010000ae03034281428eb258325d521b095768f7e7797927eb4041dea26a735aed53e74ee97d201bb52b617dac4878922066c439a24551f375b98d92ecd906a8ab5f56c231c11e00061302130313010100005f0000000e000c0000096c6f63616c686f7374002b0003020304000a00060004001d0017000d000e000c040308040805080608070401003300260024001d0020602f277f61f14a06fb291e873d7d46e42b527d076c6b0536dd3ef9cd60cbe533",
         "response": "A ServerHello whose random is CF 21 AD 74 … 33 9C and whose key_share holds two bytes: the group it wants.",
-        "response_hex": "02000076030373324aec6d1c8140caf5f74818ac048d891951715efec6599fa6fb0071763b0d201bb52b617dac4878922066c439a24551f375b98d92ecd906a8ab5f56c231c11e130200002e002b0002030400330024001d0020a198c12d747e53dc4e5ff4b13eb926f7e3f182876773ff2b281b02d2da45cc2b",
+        "response_hex": "0200007603032750b33d3ea9decd594382a1ba5e4c2c377fe54702586c345987921a626eb6af201bb52b617dac4878922066c439a24551f375b98d92ecd906a8ab5f56c231c11e130200002e002b0002030400330024001d00207b1472b29b45819cb9fe09843a78127ed657d7185d39ff1d3d3e4cfa69c06a48",
         "note": "Look at the random in the hex: it is not random at all. Any ServerHello carrying SHA-256(\"HelloRetryRequest\") is a retry, and the client must not treat it as a completed key exchange.",
         "request_fields": [
           {
@@ -10751,7 +10751,7 @@
             "offset": 6,
             "length": 32,
             "field": "server_hello.random",
-            "value": "73324aec6d1c8140caf5f74818ac048d891951715efec6599fa6fb0071763b0d",
+            "value": "2750b33d3ea9decd594382a1ba5e4c2c377fe54702586c345987921a626eb6af",
             "varies": true
           },
           {
@@ -10831,7 +10831,7 @@
             "offset": 90,
             "length": 32,
             "field": "server_hello.extensions[1].server_share.key_exchange",
-            "value": "a198c12d747e53dc… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
+            "value": "7b1472b29b45819c… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
             "varies": true
           }
         ]
@@ -10853,9 +10853,9 @@
         "title": "A line before the keys rotate",
         "kind": "wire",
         "request": "`rotate\\n` under application_traffic_secret_0",
-        "request_hex": "170303001804ba3b36153126744f3087e153ab658e861a9a1f441a5b14",
+        "request_hex": "17030300181e062b20793da4201d531595651a734d73684babe64923fe",
         "response": "`etator\\n` back. A `18 00 00 01 00` KeyUpdate follows, and then the same exchange works under secret_1.",
-        "response_hex": "17030300188f955adc4b5b8d86c8420a83912e55a6be24855e0a6007cd",
+        "response_hex": "1703030018dcb2f156a779f0944472f5882e507961bdb77401ac65c1ee",
         "note": "The KeyUpdate message is five bytes: type 24, a uint24 length of 1, and the request_update byte. Everything else about it is derivation.",
         "request_fields": [
           {
@@ -10929,9 +10929,9 @@
         "title": "A NewSessionTicket",
         "kind": "wire",
         "request": "The client's Finished, which is what the resumption secret is taken over",
-        "request_hex": "14000030baf2e65c8ce085f5263ed3618b91ca1bbe8d9e7bf90d8dff0a1c1da00ff987b2ebf27f7529f6010e3f84d92ba555a627",
+        "request_hex": "140000308bd63f084159a63c2950a3631fb314b41659df5cafa0e7cf807d93809fea41c997676e4aab7bab672636d76b2515cb2f",
         "response": "`04`, a uint24 length, ticket_lifetime, ticket_age_add, a ticket_nonce, the opaque ticket itself, and an extensions block.",
-        "response_hex": "040000e500001c20416dce0008000000000000000000d04ed6b5ec736ca989487f59f314e9223b6adf64476406965c46fb140dcf22bfd65cf64bdb4f4a66f65b0d9bc13d10d6f855a4bc9d33a9496b4d23f375a7307c6f5cb32341e08d014b617030edf1551d5426a1842ad260e49541bb4d7e7426e349e87bcd51a54243156dc54420e78c19c7c27a60a0095606146a0ea4f1ad168f6217062a6b8f4af6576bae1fa649b80ce09be286ad5fd4eca9745a8efb75d271377283e688e0a9e58566c433a7bc525ff3d852a82e37c64c337dd74a7e45fad7774912b54bc894d23443d07422353535c00000",
+        "response_hex": "040000e500001c20baf7cf1408000000000000000000d0dea6970a6d0a83431f420fdf25f023528ef506424c9e99f43da12bc9e2d227e3015cfb321d4bde1a5a7496d51519b6f051b8eb3db96f9377e562fed2b16732ab34943c36fff0a03f49d93537e1423f1f1f6e24557180f4a4f523f18da56857574b3633753130648fe60b30d32c8ff63f4c9b2f353688d3b20306ef649000b068fc0ad0f5895ddb3085114fb74254d577b4039dc300ae5a2287b1fc4104df466323d698e367b94e30f9471a8823f74f34f13b5ab705f85e6d9b4c40f5bd45b3ad509f7b9d5a82490f49c725756eeb51850000",
         "note": "The ticket is opaque to the client: it is whatever the server needs to recover the PSK, usually its own state sealed under a key only it holds.",
         "request_fields": [
           {
@@ -10950,7 +10950,7 @@
             "offset": 4,
             "length": 48,
             "field": "finished.verify_data",
-            "value": "baf2e65c8ce085f5263ed3618b91ca1bbe8d9e7bf90d8dff0a1c1da00ff987b2ebf27f7529f6010e3f84d92ba555a627 — HMAC(finished_key, Transcript-Hash(everything before this message))",
+            "value": "8bd63f084159a63c2950a3631fb314b41659df5cafa0e7cf807d93809fea41c997676e4aab7bab672636d76b2515cb2f — HMAC(finished_key, Transcript-Hash(everything before this message))",
             "varies": true
           }
         ],
@@ -10977,7 +10977,7 @@
             "offset": 8,
             "length": 4,
             "field": "new_session_ticket.ticket_age_add",
-            "value": "0x416dce00 — added to the client's ticket age so it cannot be correlated",
+            "value": "0xbaf7cf14 — added to the client's ticket age so it cannot be correlated",
             "varies": true
           },
           {
@@ -11002,7 +11002,7 @@
             "offset": 23,
             "length": 208,
             "field": "new_session_ticket.ticket",
-            "value": "4ed6b5ec736ca989… (208 bytes) — opaque to the client; it becomes the PSK identity",
+            "value": "dea6970a6d0a8343… (208 bytes) — opaque to the client; it becomes the PSK identity",
             "varies": true
           },
           {
@@ -11438,6 +11438,757 @@
         "response_fields": []
       }
     ],
+    "46": [
+      {
+        "title": "A CertificateRequest, field by field",
+        "kind": "wire",
+        "request": "An ordinary ClientHello, against a server that wants a client certificate",
+        "request_hex": "010000ae030359355d86896eb9234e8d0bc28b2d7a376703439ae606676af78e009a47b9b3232099f3028198c7b0af9c8da320663b7bb0fe71536c9e734289c736b371d037388e00061302130313010100005f0000000e000c0000096c6f63616c686f7374002b0003020304000a00060004001d0017000d000e000c040308040805080608070401003300260024001d0020c2f2cf26448d8c3b296aa895835a7a83ebd665d36195def948c8c61ed5b7c443",
+        "response": "`0d`, a uint24 length, `00` for the empty certificate_request_context, then a uint16-counted extensions block holding signature_algorithms(13).",
+        "response_hex": "0d00006200005f000d002a002809050906090404030503060308070808081a081b081c0809080a080b080408050806040105010601001b000706000200010003002f00220020001e301c311a301806035504030c11746c737465737420636c69656e74204341",
+        "note": "Two bytes of context and a list of schemes is the whole message: TLS 1.2's certificate_types and its own copy of the CA list are gone. Note where it sits — after EncryptedExtensions, before the server's Certificate, and encrypted, so nobody watching the connection can tell that client authentication is in play.",
+        "request_fields": [
+          {
+            "offset": 0,
+            "length": 1,
+            "field": "client_hello.msg_type",
+            "value": "client_hello(1)"
+          },
+          {
+            "offset": 1,
+            "length": 3,
+            "field": "client_hello.length",
+            "value": "174 (bytes of body that follow)"
+          },
+          {
+            "offset": 4,
+            "length": 2,
+            "field": "client_hello.legacy_version",
+            "value": "0x0303 (TLS 1.3 pins this at 0x0303; the real version is in supported_versions)"
+          },
+          {
+            "offset": 6,
+            "length": 32,
+            "field": "client_hello.random",
+            "value": "59355d86896eb9234e8d0bc28b2d7a376703439ae606676af78e009a47b9b323",
+            "varies": true
+          },
+          {
+            "offset": 38,
+            "length": 1,
+            "field": "client_hello.legacy_session_id.length",
+            "value": "32"
+          },
+          {
+            "offset": 39,
+            "length": 32,
+            "field": "client_hello.legacy_session_id",
+            "value": "99f3028198c7b0af9c8da320663b7bb0fe71536c9e734289c736b371d037388e (the server must echo this back byte for byte)",
+            "varies": true
+          },
+          {
+            "offset": 71,
+            "length": 2,
+            "field": "client_hello.cipher_suites.length",
+            "value": "6 bytes, 3 suites"
+          },
+          {
+            "offset": 73,
+            "length": 2,
+            "field": "client_hello.cipher_suites[0]",
+            "value": "TLS_AES_256_GCM_SHA384(0x1302)"
+          },
+          {
+            "offset": 75,
+            "length": 2,
+            "field": "client_hello.cipher_suites[1]",
+            "value": "TLS_CHACHA20_POLY1305_SHA256(0x1303)"
+          },
+          {
+            "offset": 77,
+            "length": 2,
+            "field": "client_hello.cipher_suites[2]",
+            "value": "TLS_AES_128_GCM_SHA256(0x1301)"
+          },
+          {
+            "offset": 79,
+            "length": 1,
+            "field": "client_hello.legacy_compression_methods.length",
+            "value": "1"
+          },
+          {
+            "offset": 80,
+            "length": 1,
+            "field": "client_hello.legacy_compression_methods",
+            "value": "null(0) — TLS 1.3 allows nothing else"
+          },
+          {
+            "offset": 81,
+            "length": 2,
+            "field": "client_hello.extensions.length",
+            "value": "95 bytes of extensions"
+          },
+          {
+            "offset": 83,
+            "length": 2,
+            "field": "client_hello.extensions[0].extension_type",
+            "value": "server_name(0)"
+          },
+          {
+            "offset": 85,
+            "length": 2,
+            "field": "client_hello.extensions[0].length",
+            "value": "14 bytes"
+          },
+          {
+            "offset": 87,
+            "length": 2,
+            "field": "client_hello.extensions[0].server_name_list.length",
+            "value": "12 bytes"
+          },
+          {
+            "offset": 89,
+            "length": 1,
+            "field": "client_hello.extensions[0].server_name_list[0].name_type",
+            "value": "host_name(0)"
+          },
+          {
+            "offset": 90,
+            "length": 2,
+            "field": "client_hello.extensions[0].server_name_list[0].host_name.length",
+            "value": "9"
+          },
+          {
+            "offset": 92,
+            "length": 9,
+            "field": "client_hello.extensions[0].server_name_list[0].host_name",
+            "value": "'localhost'"
+          },
+          {
+            "offset": 101,
+            "length": 2,
+            "field": "client_hello.extensions[1].extension_type",
+            "value": "supported_versions(43)"
+          },
+          {
+            "offset": 103,
+            "length": 2,
+            "field": "client_hello.extensions[1].length",
+            "value": "3 bytes"
+          },
+          {
+            "offset": 105,
+            "length": 1,
+            "field": "client_hello.extensions[1].versions.length",
+            "value": "2"
+          },
+          {
+            "offset": 106,
+            "length": 2,
+            "field": "client_hello.extensions[1].versions[0]",
+            "value": "TLS 1.3 (0x0304)"
+          },
+          {
+            "offset": 108,
+            "length": 2,
+            "field": "client_hello.extensions[2].extension_type",
+            "value": "supported_groups(10)"
+          },
+          {
+            "offset": 110,
+            "length": 2,
+            "field": "client_hello.extensions[2].length",
+            "value": "6 bytes"
+          },
+          {
+            "offset": 112,
+            "length": 2,
+            "field": "client_hello.extensions[2].named_group_list.length",
+            "value": "4 bytes"
+          },
+          {
+            "offset": 114,
+            "length": 2,
+            "field": "client_hello.extensions[2].named_group_list[0]",
+            "value": "x25519(0x001d)"
+          },
+          {
+            "offset": 116,
+            "length": 2,
+            "field": "client_hello.extensions[2].named_group_list[1]",
+            "value": "secp256r1(0x0017)"
+          },
+          {
+            "offset": 118,
+            "length": 2,
+            "field": "client_hello.extensions[3].extension_type",
+            "value": "signature_algorithms(13)"
+          },
+          {
+            "offset": 120,
+            "length": 2,
+            "field": "client_hello.extensions[3].length",
+            "value": "14 bytes"
+          },
+          {
+            "offset": 122,
+            "length": 2,
+            "field": "client_hello.extensions[3].supported_signature_algorithms.length",
+            "value": "12 bytes"
+          },
+          {
+            "offset": 124,
+            "length": 2,
+            "field": "client_hello.extensions[3].supported_signature_algorithms[0]",
+            "value": "ecdsa_secp256r1_sha256(0x0403)"
+          },
+          {
+            "offset": 126,
+            "length": 2,
+            "field": "client_hello.extensions[3].supported_signature_algorithms[1]",
+            "value": "rsa_pss_rsae_sha256(0x0804)"
+          },
+          {
+            "offset": 128,
+            "length": 2,
+            "field": "client_hello.extensions[3].supported_signature_algorithms[2]",
+            "value": "rsa_pss_rsae_sha384(0x0805)"
+          },
+          {
+            "offset": 130,
+            "length": 2,
+            "field": "client_hello.extensions[3].supported_signature_algorithms[3]",
+            "value": "rsa_pss_rsae_sha512(0x0806)"
+          },
+          {
+            "offset": 132,
+            "length": 2,
+            "field": "client_hello.extensions[3].supported_signature_algorithms[4]",
+            "value": "ed25519(0x0807)"
+          },
+          {
+            "offset": 134,
+            "length": 2,
+            "field": "client_hello.extensions[3].supported_signature_algorithms[5]",
+            "value": "rsa_pkcs1_sha256(0x0401)"
+          },
+          {
+            "offset": 136,
+            "length": 2,
+            "field": "client_hello.extensions[4].extension_type",
+            "value": "key_share(51)"
+          },
+          {
+            "offset": 138,
+            "length": 2,
+            "field": "client_hello.extensions[4].length",
+            "value": "38 bytes"
+          },
+          {
+            "offset": 140,
+            "length": 2,
+            "field": "client_hello.extensions[4].client_shares.length",
+            "value": "36 bytes"
+          },
+          {
+            "offset": 142,
+            "length": 2,
+            "field": "client_hello.extensions[4].client_shares[0].group",
+            "value": "x25519(0x001d)"
+          },
+          {
+            "offset": 144,
+            "length": 2,
+            "field": "client_hello.extensions[4].client_shares[0].key_exchange.length",
+            "value": "32"
+          },
+          {
+            "offset": 146,
+            "length": 32,
+            "field": "client_hello.extensions[4].client_shares[0].key_exchange",
+            "value": "c2f2cf26448d8c3b… (32 bytes) — the client's ephemeral public key",
+            "varies": true
+          }
+        ],
+        "response_fields": [
+          {
+            "offset": 0,
+            "length": 1,
+            "field": "certificate_request.msg_type",
+            "value": "certificate_request(13)"
+          },
+          {
+            "offset": 1,
+            "length": 3,
+            "field": "certificate_request.length",
+            "value": "98 (bytes of body that follow)"
+          },
+          {
+            "offset": 4,
+            "length": 98,
+            "field": "certificate_request.body",
+            "value": "98 bytes"
+          }
+        ]
+      }
+    ],
+    "47": [
+      {
+        "title": "The client's own Certificate",
+        "kind": "wire",
+        "request": "The request the client is answering",
+        "request_hex": "0d00006200005f000d002a002809050906090404030503060308070808081a081b081c0809080a080b080408050806040105010601001b000706000200010003002f00220020001e301c311a301806035504030c11746c737465737420636c69656e74204341",
+        "response": "`0b`, a uint24 length, the echoed context (`00`), a uint24 list length, then one entry: the DER and its own `00 00` extensions block.",
+        "response_hex": "0b00019c000001980001933082018f30820135a00302010202145079c82c4331bffcc2c271ee499853052805cc36300a06082a8648ce3d040302301c311a301806035504030c11746c737465737420636c69656e74204341301e170d3234303130313030303030305a170d3335303130313030303030305a30193117301506035504030c0e746c737465737420636c69656e743059301306072a8648ce3d020106082a8648ce3d0301070342000453e3e1aeba540c745b5bb40fc590ec7c774589795c305c61cfcffb7b2a944b76fd185d6d63ab76ba650b4a7422d04b0f3c7bf42bc0b7ef9799f0f3ae92a5994ca3583056300f0603551d0f0101ff0405030307800030130603551d25040c300a06082b06010505070302301d0603551d0e041604147d802a7fb3c6616daa314b3465e1f33746dd981e300f0603551d130101ff04053003010100300a06082a8648ce3d040302034800304502205bb9aa1e5cde7263b20d2d6da0458ea901b6aa25995eea7d9829088dc674a892022100958d56b6cd6942a5a80cd909276482881c825bf05dc6df8df4b20e1e931f98230000",
+        "note": "The same message shape the server sent, in the other direction. The context byte is copied from the request rather than assumed empty.",
+        "request_fields": [
+          {
+            "offset": 0,
+            "length": 1,
+            "field": "certificate_request.msg_type",
+            "value": "certificate_request(13)"
+          },
+          {
+            "offset": 1,
+            "length": 3,
+            "field": "certificate_request.length",
+            "value": "98 (bytes of body that follow)"
+          },
+          {
+            "offset": 4,
+            "length": 98,
+            "field": "certificate_request.body",
+            "value": "98 bytes"
+          }
+        ],
+        "response_fields": [
+          {
+            "offset": 0,
+            "length": 1,
+            "field": "certificate.msg_type",
+            "value": "certificate(11)"
+          },
+          {
+            "offset": 1,
+            "length": 3,
+            "field": "certificate.length",
+            "value": "412 (bytes of body that follow)"
+          },
+          {
+            "offset": 4,
+            "length": 1,
+            "field": "certificate.certificate_request_context.length",
+            "value": "0 — a server's Certificate always carries an empty context"
+          },
+          {
+            "offset": 5,
+            "length": 3,
+            "field": "certificate.certificate_list.length",
+            "value": "408 bytes"
+          },
+          {
+            "offset": 8,
+            "length": 3,
+            "field": "certificate.certificate_list[0].cert_data.length",
+            "value": "403 bytes"
+          },
+          {
+            "offset": 11,
+            "length": 403,
+            "field": "certificate.certificate_list[0].cert_data",
+            "value": "a DER X.509 certificate — entry 0 is the end-entity certificate, and each later entry certifies the one before it",
+            "varies": true
+          },
+          {
+            "offset": 414,
+            "length": 2,
+            "field": "certificate.certificate_list[0].extensions.length",
+            "value": "0 — every entry carries its own extensions block, new in TLS 1.3"
+          }
+        ]
+      },
+      {
+        "title": "The client's CertificateVerify",
+        "kind": "wire",
+        "request": "The certificate whose key is about to be proven",
+        "request_hex": "0b00019c000001980001933082018f30820135a00302010202145079c82c4331bffcc2c271ee499853052805cc36300a06082a8648ce3d040302301c311a301806035504030c11746c737465737420636c69656e74204341301e170d3234303130313030303030305a170d3335303130313030303030305a30193117301506035504030c0e746c737465737420636c69656e743059301306072a8648ce3d020106082a8648ce3d0301070342000453e3e1aeba540c745b5bb40fc590ec7c774589795c305c61cfcffb7b2a944b76fd185d6d63ab76ba650b4a7422d04b0f3c7bf42bc0b7ef9799f0f3ae92a5994ca3583056300f0603551d0f0101ff0405030307800030130603551d25040c300a06082b06010505070302301d0603551d0e041604147d802a7fb3c6616daa314b3465e1f33746dd981e300f0603551d130101ff04053003010100300a06082a8648ce3d040302034800304502205bb9aa1e5cde7263b20d2d6da0458ea901b6aa25995eea7d9829088dc674a892022100958d56b6cd6942a5a80cd909276482881c825bf05dc6df8df4b20e1e931f98230000",
+        "response": "`0f`, a uint24 length, the SignatureScheme, and a uint16-length signature.",
+        "response_hex": "0f00004b040300473045022100e54287bcc0a51c8a36de13ebbd6e17c776f9c75c3c3a57d7897112f621a3292e02204710ec72d2d8006249689f146cf21ef3bd953310bf5b201cec878c1c7777e513",
+        "note": "The signature is over 64 spaces, then \"TLS 1.3, client CertificateVerify\", then a zero byte, then the transcript hash taken *after* the Certificate above. Getting the context string or the hash boundary wrong produces a signature that is perfectly valid over the wrong thing, which is why the server's rejection is decrypt_error rather than a decode error.",
+        "request_fields": [
+          {
+            "offset": 0,
+            "length": 1,
+            "field": "certificate.msg_type",
+            "value": "certificate(11)"
+          },
+          {
+            "offset": 1,
+            "length": 3,
+            "field": "certificate.length",
+            "value": "412 (bytes of body that follow)"
+          },
+          {
+            "offset": 4,
+            "length": 1,
+            "field": "certificate.certificate_request_context.length",
+            "value": "0 — a server's Certificate always carries an empty context"
+          },
+          {
+            "offset": 5,
+            "length": 3,
+            "field": "certificate.certificate_list.length",
+            "value": "408 bytes"
+          },
+          {
+            "offset": 8,
+            "length": 3,
+            "field": "certificate.certificate_list[0].cert_data.length",
+            "value": "403 bytes"
+          },
+          {
+            "offset": 11,
+            "length": 403,
+            "field": "certificate.certificate_list[0].cert_data",
+            "value": "a DER X.509 certificate — entry 0 is the end-entity certificate, and each later entry certifies the one before it",
+            "varies": true
+          },
+          {
+            "offset": 414,
+            "length": 2,
+            "field": "certificate.certificate_list[0].extensions.length",
+            "value": "0 — every entry carries its own extensions block, new in TLS 1.3"
+          }
+        ],
+        "response_fields": [
+          {
+            "offset": 0,
+            "length": 1,
+            "field": "certificate_verify.msg_type",
+            "value": "certificate_verify(15)"
+          },
+          {
+            "offset": 1,
+            "length": 3,
+            "field": "certificate_verify.length",
+            "value": "75 (bytes of body that follow)"
+          },
+          {
+            "offset": 4,
+            "length": 2,
+            "field": "certificate_verify.algorithm",
+            "value": "ecdsa_secp256r1_sha256(0x0403)"
+          },
+          {
+            "offset": 6,
+            "length": 2,
+            "field": "certificate_verify.signature.length",
+            "value": "71 bytes"
+          },
+          {
+            "offset": 8,
+            "length": 71,
+            "field": "certificate_verify.signature",
+            "value": "over 64 spaces, \"TLS 1.3, server CertificateVerify\", a zero byte and Transcript-Hash(ClientHello..Certificate) — 3045022100e54287… (71 bytes)",
+            "varies": true
+          }
+        ]
+      }
+    ],
+    "48": [
+      {
+        "title": "What a server asks for when it will insist",
+        "kind": "wire",
+        "request": "A hello against a server that requires a client certificate",
+        "request_hex": "010000ae0303aa03045830355a21321adab1ee8527611c8dbd262184e1abb1506fdff12df7ab20a0146ca317bb7e1c747a48b4b1dbdbfca6c90a52c12df202c3803960d1b8519500061302130313010100005f0000000e000c0000096c6f63616c686f7374002b0003020304000a00060004001d0017000d000e000c040308040805080608070401003300260024001d0020a8ddf2b536240a5da7b08552e09682c281d1415eb91fecd49643546bd7a5fd11",
+        "response": "The same CertificateRequest a merely-asking server sends.",
+        "response_hex": "0d00006200005f000d002a002809050906090404030503060308070808081a081b081c0809080a080b080408050806040105010601001b000706000200010003002f00220020001e301c311a301806035504030c11746c737465737420636c69656e74204341",
+        "note": "Worth comparing with stage 46's example byte for byte: they are identical. Nothing in the request says whether the server will insist, so a client cannot tell in advance whether declining will cost it the connection.",
+        "request_fields": [
+          {
+            "offset": 0,
+            "length": 1,
+            "field": "client_hello.msg_type",
+            "value": "client_hello(1)"
+          },
+          {
+            "offset": 1,
+            "length": 3,
+            "field": "client_hello.length",
+            "value": "174 (bytes of body that follow)"
+          },
+          {
+            "offset": 4,
+            "length": 2,
+            "field": "client_hello.legacy_version",
+            "value": "0x0303 (TLS 1.3 pins this at 0x0303; the real version is in supported_versions)"
+          },
+          {
+            "offset": 6,
+            "length": 32,
+            "field": "client_hello.random",
+            "value": "aa03045830355a21321adab1ee8527611c8dbd262184e1abb1506fdff12df7ab",
+            "varies": true
+          },
+          {
+            "offset": 38,
+            "length": 1,
+            "field": "client_hello.legacy_session_id.length",
+            "value": "32"
+          },
+          {
+            "offset": 39,
+            "length": 32,
+            "field": "client_hello.legacy_session_id",
+            "value": "a0146ca317bb7e1c747a48b4b1dbdbfca6c90a52c12df202c3803960d1b85195 (the server must echo this back byte for byte)",
+            "varies": true
+          },
+          {
+            "offset": 71,
+            "length": 2,
+            "field": "client_hello.cipher_suites.length",
+            "value": "6 bytes, 3 suites"
+          },
+          {
+            "offset": 73,
+            "length": 2,
+            "field": "client_hello.cipher_suites[0]",
+            "value": "TLS_AES_256_GCM_SHA384(0x1302)"
+          },
+          {
+            "offset": 75,
+            "length": 2,
+            "field": "client_hello.cipher_suites[1]",
+            "value": "TLS_CHACHA20_POLY1305_SHA256(0x1303)"
+          },
+          {
+            "offset": 77,
+            "length": 2,
+            "field": "client_hello.cipher_suites[2]",
+            "value": "TLS_AES_128_GCM_SHA256(0x1301)"
+          },
+          {
+            "offset": 79,
+            "length": 1,
+            "field": "client_hello.legacy_compression_methods.length",
+            "value": "1"
+          },
+          {
+            "offset": 80,
+            "length": 1,
+            "field": "client_hello.legacy_compression_methods",
+            "value": "null(0) — TLS 1.3 allows nothing else"
+          },
+          {
+            "offset": 81,
+            "length": 2,
+            "field": "client_hello.extensions.length",
+            "value": "95 bytes of extensions"
+          },
+          {
+            "offset": 83,
+            "length": 2,
+            "field": "client_hello.extensions[0].extension_type",
+            "value": "server_name(0)"
+          },
+          {
+            "offset": 85,
+            "length": 2,
+            "field": "client_hello.extensions[0].length",
+            "value": "14 bytes"
+          },
+          {
+            "offset": 87,
+            "length": 2,
+            "field": "client_hello.extensions[0].server_name_list.length",
+            "value": "12 bytes"
+          },
+          {
+            "offset": 89,
+            "length": 1,
+            "field": "client_hello.extensions[0].server_name_list[0].name_type",
+            "value": "host_name(0)"
+          },
+          {
+            "offset": 90,
+            "length": 2,
+            "field": "client_hello.extensions[0].server_name_list[0].host_name.length",
+            "value": "9"
+          },
+          {
+            "offset": 92,
+            "length": 9,
+            "field": "client_hello.extensions[0].server_name_list[0].host_name",
+            "value": "'localhost'"
+          },
+          {
+            "offset": 101,
+            "length": 2,
+            "field": "client_hello.extensions[1].extension_type",
+            "value": "supported_versions(43)"
+          },
+          {
+            "offset": 103,
+            "length": 2,
+            "field": "client_hello.extensions[1].length",
+            "value": "3 bytes"
+          },
+          {
+            "offset": 105,
+            "length": 1,
+            "field": "client_hello.extensions[1].versions.length",
+            "value": "2"
+          },
+          {
+            "offset": 106,
+            "length": 2,
+            "field": "client_hello.extensions[1].versions[0]",
+            "value": "TLS 1.3 (0x0304)"
+          },
+          {
+            "offset": 108,
+            "length": 2,
+            "field": "client_hello.extensions[2].extension_type",
+            "value": "supported_groups(10)"
+          },
+          {
+            "offset": 110,
+            "length": 2,
+            "field": "client_hello.extensions[2].length",
+            "value": "6 bytes"
+          },
+          {
+            "offset": 112,
+            "length": 2,
+            "field": "client_hello.extensions[2].named_group_list.length",
+            "value": "4 bytes"
+          },
+          {
+            "offset": 114,
+            "length": 2,
+            "field": "client_hello.extensions[2].named_group_list[0]",
+            "value": "x25519(0x001d)"
+          },
+          {
+            "offset": 116,
+            "length": 2,
+            "field": "client_hello.extensions[2].named_group_list[1]",
+            "value": "secp256r1(0x0017)"
+          },
+          {
+            "offset": 118,
+            "length": 2,
+            "field": "client_hello.extensions[3].extension_type",
+            "value": "signature_algorithms(13)"
+          },
+          {
+            "offset": 120,
+            "length": 2,
+            "field": "client_hello.extensions[3].length",
+            "value": "14 bytes"
+          },
+          {
+            "offset": 122,
+            "length": 2,
+            "field": "client_hello.extensions[3].supported_signature_algorithms.length",
+            "value": "12 bytes"
+          },
+          {
+            "offset": 124,
+            "length": 2,
+            "field": "client_hello.extensions[3].supported_signature_algorithms[0]",
+            "value": "ecdsa_secp256r1_sha256(0x0403)"
+          },
+          {
+            "offset": 126,
+            "length": 2,
+            "field": "client_hello.extensions[3].supported_signature_algorithms[1]",
+            "value": "rsa_pss_rsae_sha256(0x0804)"
+          },
+          {
+            "offset": 128,
+            "length": 2,
+            "field": "client_hello.extensions[3].supported_signature_algorithms[2]",
+            "value": "rsa_pss_rsae_sha384(0x0805)"
+          },
+          {
+            "offset": 130,
+            "length": 2,
+            "field": "client_hello.extensions[3].supported_signature_algorithms[3]",
+            "value": "rsa_pss_rsae_sha512(0x0806)"
+          },
+          {
+            "offset": 132,
+            "length": 2,
+            "field": "client_hello.extensions[3].supported_signature_algorithms[4]",
+            "value": "ed25519(0x0807)"
+          },
+          {
+            "offset": 134,
+            "length": 2,
+            "field": "client_hello.extensions[3].supported_signature_algorithms[5]",
+            "value": "rsa_pkcs1_sha256(0x0401)"
+          },
+          {
+            "offset": 136,
+            "length": 2,
+            "field": "client_hello.extensions[4].extension_type",
+            "value": "key_share(51)"
+          },
+          {
+            "offset": 138,
+            "length": 2,
+            "field": "client_hello.extensions[4].length",
+            "value": "38 bytes"
+          },
+          {
+            "offset": 140,
+            "length": 2,
+            "field": "client_hello.extensions[4].client_shares.length",
+            "value": "36 bytes"
+          },
+          {
+            "offset": 142,
+            "length": 2,
+            "field": "client_hello.extensions[4].client_shares[0].group",
+            "value": "x25519(0x001d)"
+          },
+          {
+            "offset": 144,
+            "length": 2,
+            "field": "client_hello.extensions[4].client_shares[0].key_exchange.length",
+            "value": "32"
+          },
+          {
+            "offset": 146,
+            "length": 32,
+            "field": "client_hello.extensions[4].client_shares[0].key_exchange",
+            "value": "a8ddf2b536240a5d… (32 bytes) — the client's ephemeral public key",
+            "varies": true
+          }
+        ],
+        "response_fields": [
+          {
+            "offset": 0,
+            "length": 1,
+            "field": "certificate_request.msg_type",
+            "value": "certificate_request(13)"
+          },
+          {
+            "offset": 1,
+            "length": 3,
+            "field": "certificate_request.length",
+            "value": "98 (bytes of body that follow)"
+          },
+          {
+            "offset": 4,
+            "length": 98,
+            "field": "certificate_request.body",
+            "value": "98 bytes"
+          }
+        ]
+      }
+    ],
     "5": [
       {
         "title": "One ClientHello, three handshake records",
@@ -11445,7 +12196,7 @@
         "request": "The same ClientHello message as always, cut into three pieces and sent as three handshake records back to back",
         "request_hex": "160303003c010000ae0303d977ab7d3890b1b92ad9ae0cb722486fd8d58e1c098963af32a934a99dfdec3c20262c6f02ca58c3a6c9c9c9df0e83e16aca4437a3e5160303003cf7331773a5e1de0dee51d700061302130313010100005f0000000e000c0000096c6f63616c686f7374002b0003020304000a00060004001d0017000d160303003a000e000c040308040805080608070401003300260024001d002097460ae0d0e0f03844c99a5115a2db09c1eb131eddca5050dc1bee166d255c49",
         "response": "One ServerHello, exactly as if the hello had arrived in a single record. Nothing about the answer changes.",
-        "response_hex": "160303007a02000076030348ef96f893e792a43179eac58ba31d5055a911af63c558cb518c55cc7000594420262c6f02ca58c3a6c9c9c9df0e83e16aca4437a3e5f7331773a5e1de0dee51d7130200002e002b0002030400330024001d002084c76d3d6a207b77609b22fd405beaaf0e62171dadfc507357c64deea916e82c",
+        "response_hex": "160303007a020000760303d35255891227720f9f5448197b952462c7234b6823ee16d1f5b333328f45f52c20262c6f02ca58c3a6c9c9c9df0e83e16aca4437a3e5f7331773a5e1de0dee51d7130200002e002b0002030400330024001d0020b3c5d5c6b907f4a1966689c748480d784f404eb902d388c907d7404ac87c9175",
         "note": "Look at the three record headers in the request: each has its own length, and the handshake header's uint24 length spans all three. Reassemble, then parse.",
         "request_fields": [
           {
@@ -11544,7 +12295,7 @@
             "offset": 11,
             "length": 32,
             "field": "server_hello.random",
-            "value": "48ef96f893e792a43179eac58ba31d5055a911af63c558cb518c55cc70005944",
+            "value": "d35255891227720f9f5448197b952462c7234b6823ee16d1f5b333328f45f52c",
             "varies": true
           },
           {
@@ -11624,7 +12375,7 @@
             "offset": 95,
             "length": 32,
             "field": "server_hello.extensions[1].server_share.key_exchange",
-            "value": "84c76d3d6a207b77… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
+            "value": "b3c5d5c6b907f4a1… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
             "varies": true
           }
         ]
@@ -11648,7 +12399,7 @@
         "request": "A ClientHello",
         "request_hex": "010000ae030320bb4e6f80d75c251274debc28ee5283c39f41d7aa519e72d9ba6fdf8d655aa720989a40743f4cb9e61bc26b5d3b7e2cdd458cfec024d3f2f0c9908c8bf2afd83300061302130313010100005f0000000e000c0000096c6f63616c686f7374002b0003020304000a00060004001d0017000d000e000c040308040805080608070401003300260024001d0020d70603b81c55caaa8ba250ecb442d94a250d5520a9e51ecc97447a61af853956",
         "response": "EncryptedExtensions, Certificate, CertificateVerify and Finished, each with its own four-byte header, one after the other.",
-        "response_hex": "080000180016000a0012001011ec001d0017001e00180019010001010b0001c4000001c00001bb308201b73082015da003020102021447a04d5d7708feeaec52c950f90e203cb0301996300a06082a8648ce3d04030230173115301306035504030c0c746c7374657374206c656166301e170d3234303130313030303030305a170d3335303130313030303030305a30173115301306035504030c0c746c7374657374206c6561663059301306072a8648ce3d020106082a8648ce3d0301070342000447a88f1cbf5f0a0dbc5b93a22191cc4e4f8859568d4d5edf01e93ba94a05f1233c672b516ca470797c85d5f0ed9afeda87d643f10f2f215fb0d2b5c74008f018a38186308183302b0603551d110424302282096c6f63616c686f737487047f000001820f746c73746573742e696e76616c6964300f0603551d0f0101ff0405030307a00030130603551d25040c300a06082b06010505070301301d0603551d0e041604145ab3987b6ae55fdd8fc5fbc950498f1a58a222ec300f0603551d130101ff04053003010100300a06082a8648ce3d0403020348003045022100bb8b43522f57fd12d7c7205732daa32c0cdb710440c75c1fb34f17b32d4fc05a02204af7e869782a11d1d563c2ced981dfafe5853868582099b4585d7b229dc2b14500000f00004b040300473045022100aef7e8873c25fa2ed42d534e92e8e35a729ac7aa9ac6bab03f9d4ead7eaddcac0220093ae3c8153e85e44fd95db18aab60a55c9fb4cbe0a912459aadcf84084d82ed1400003059ae2aa7f9c0fc27296a1d93888bd410197dd98644e3853dbc78e4d7477c20684bf7d38336ebc9eb336dba15c1ef27cb",
+        "response_hex": "080000180016000a0012001011ec001d0017001e00180019010001010b0001c4000001c00001bb308201b73082015da00302010202147f466e2a61c2e4f6dd0771ad18fef70e940e6dd1300a06082a8648ce3d04030230173115301306035504030c0c746c7374657374206c656166301e170d3234303130313030303030305a170d3335303130313030303030305a30173115301306035504030c0c746c7374657374206c6561663059301306072a8648ce3d020106082a8648ce3d0301070342000431bd7f410456259ed1d3d16e42fb50d4e3cdbf4cdd6f6fd99d52012ace17f77bb097bcc29702dcc8d86fba155dbd2324aac1522218a18362f651bbd509586889a38186308183302b0603551d110424302282096c6f63616c686f737487047f000001820f746c73746573742e696e76616c6964300f0603551d0f0101ff0405030307a00030130603551d25040c300a06082b06010505070301301d0603551d0e041604147bb5f3da7b2cffba017b9a0596d50da00f4e5861300f0603551d130101ff04053003010100300a06082a8648ce3d0403020348003045022100faee0291b5c7777c687ce370aac1c9cd004ebc4954ceb78041a834fad6eab0a402204481c17d307c2600987b97aa62ab678866d4d3b42a7fac58221695b1b0ea92cf00000f00004b04030047304502205f4fecedf70f45b08cfc771e214b924c141586781d57aa4f76484e468b0b11f1022100b12d4a29b146a25773c5d4ee3b93f521bd7702db04d159db9f0ae86c64684f1a14000030cdf170cb33df5ebd9925d01f54efdaddb143e43d049c76b8c0ba185ffb58e4b6efc148008ea35e4b8877e29aa61f0e10",
         "note": "These four usually travel in one or two records. Loop over a record's fragment until it is empty; do not assume one record is one message.",
         "request_fields": [
           {
@@ -12069,7 +12820,7 @@
             "offset": 492,
             "length": 71,
             "field": "certificate_verify.signature",
-            "value": "over 64 spaces, \"TLS 1.3, server CertificateVerify\", a zero byte and Transcript-Hash(ClientHello..Certificate) — 3045022100aef7e8… (71 bytes)",
+            "value": "over 64 spaces, \"TLS 1.3, server CertificateVerify\", a zero byte and Transcript-Hash(ClientHello..Certificate) — 304502205f4feced… (71 bytes)",
             "varies": true
           },
           {
@@ -12088,7 +12839,7 @@
             "offset": 567,
             "length": 48,
             "field": "finished.verify_data",
-            "value": "59ae2aa7f9c0fc27296a1d93888bd410197dd98644e3853dbc78e4d7477c20684bf7d38336ebc9eb336dba15c1ef27cb — HMAC(finished_key, Transcript-Hash(everything before this message))",
+            "value": "cdf170cb33df5ebd9925d01f54efdaddb143e43d049c76b8c0ba185ffb58e4b6efc148008ea35e4b8877e29aa61f0e10 — HMAC(finished_key, Transcript-Hash(everything before this message))",
             "varies": true
           }
         ]
@@ -12441,7 +13192,7 @@
         "request": "A complete ClientHello, immediately followed by a TCP FIN on the client's write half. No Finished will ever arrive.",
         "request_hex": "16030300b2010000ae0303f6c505b07647790acb999710523b30ee1c7b89ad287ce35be324d2e818f311fd2093652be0fb5a2d3d93828178891d60fb9ccf9ba99539e46960ac6ba3b1c8395f00061302130313010100005f0000000e000c0000096c6f63616c686f7374002b0003020304000a00060004001d0017000d000e000c040308040805080608070401003300260024001d0020daaf6f117da3e53162f21088f2f5d808de17be510ebcc01a30d662c8e714884f",
         "response": "The server may send its whole flight anyway, and then closes. Either way the process survives and the next connection is accepted.",
-        "response_hex": "160303007a020000760303acfa905b17a41bdaaa85d8c4ba6d168832d1991d09356d2efd358b2e2b5fb42b2093652be0fb5a2d3d93828178891d60fb9ccf9ba99539e46960ac6ba3b1c8395f130200002e002b0002030400330024001d00205b162ce9ac326053d8ceff7c79670a2c8f8464ff187139628ec085ceb2b35623140303000101170303002db524d630c89a699fad81b5bb917f1c35cbacec2fd4725cdbe504346d243d18a568ea67c45ffb0ef3f83ab0983d17030301d93891592f589ff2d0b4d5d17b74a3f21bb5687a7adc469a298fd472d3c6f6f54885038b6cf90c9d043f5a5f49947c3257309a3c1994f8bbc4bbba30acd8b291d91a67ba19d1e7698bac0880feb79cf745ab9c07aed0a0bb7af290bf6378367f956df7447aa0437cc4a8053aa16daca47fc1161efe71f030732f6c5ad8b2766a45d9a248d1813ebbdc152eadfc2c2dc1cb29bc5c748196413c673503509016edfbbc724c8431c58bc1a3506cfba3ea9e0496b8ceb6c3ce01ca0160335ffe6422664ab2d62841ad3daceb8821d145b09dc9dd1a31ad895f3ab4bb7bc72ad5f4475cb7d1b8ba7352922de31f351f6c1d0fc6dced6ca31de04f9846ab8fe5d3a67ab2fbcbb73cebf45829fb7656c54f7e463329612b5cf3d87f756cbc067230912d6fc6f0c256bad22916434a2a0ffba28e78639fee265ea902960baa2740045d337f216a17ac8fe9c8fb9c701cfb0ef74615725613487513303f38ee3fc064e9c68878190e1397f484add39e3f32800feb7f17330fa9d070b1ebd193e35abff82ed9d534026176f80f8372e24cc11b61b8987a291649e77c3ee6122d80f5826a2b30f114d5dc796efbfc2f010c165c9a1cc6de47a41c4915a67aec64efa5a826c426a9264577d42738373f2d9db2c743d064e63848ee5678685b43170303005fab937c8429f12f9ce7911e65a2e744c49865f23f84693ce69657d43483c02b75d9a7dd78b199ce3672455d4328b6187c29a8c20070e8a6725a2cfd41337e2ca12dd533f26b7faf379a0525a2bc7b3f38e5b503233053081711d61bde9e24d817030300455e923156b7e8c6ea63ad343a5989c9e7b3121da48c4c04bfaf88ae8de36baa0a10a1aac304b1855cc8790d4999c08f579291af91d3f7681c1ac3c4eac0773327b131982803",
+        "response_hex": "160303007a020000760303246abadda9caaa511189c0d58acbd5e4931f95459d9c96f863128f3a630a9dca2093652be0fb5a2d3d93828178891d60fb9ccf9ba99539e46960ac6ba3b1c8395f130200002e002b0002030400330024001d0020e8a3fff7c3269ebd34cc239946daa26582c68818a114d828284c89cf9921ca18140303000101170303002d18fbdd7f0754cf2b0429eb020d0880b102324a9105f931b94be35c0d458fb6c6b047e8011ddd2aa505faab03be17030301d9444248443f6631c35a2fff21ccb8588e0ea9d8abdc6e4fb90ba4862734be16482af35186974700c0b8c002e4605bb93df02c3cd3ee3c13bbb4056927ec87ca60ae929ff091ec0867795e6c5094d924a4e910eb0507a520d2a5200f70674924512f51d5da0655f5de27f8d38b4810246757608d8bbb416696fa800be8dab2e633af52f4491636d81268ec19dada6db99e2e6d97bed6f7dadf7496a6aca5490c1a4efe4b6cf073a22775b1afee0f79ca41c123b33f11c873fa8ab16c738e09fbc8c133bba3fdd9ee679822bed03e01e2ccbd0fa86f1be2b27bc443354fd6c32eba94edd17bf579c568983a073a0ac865a2d93ff6bf189ee08efafe56a5dcd4d705e1f23e5a07f0131a0f09f0a4f437c9c450b0efb77ffb8fb186a1d9ab6f3b1aedf592e2e8dc2fd674d5089cdf05d6bb03a1633921267ee13de8ff7db7de649b345a245bf6a5f9fcd82901a103ad6b000df8a506979da2de6c4e9a515b4e6c0449e948cff19b9f677b2fb28eab016484e0769dfb1704c11372c8c7854fee8ba8e917416b665c37721577b78861ac13f72a8205645544f848e5fc0c1d5b20ef0b315a4e8272a02ea08d39fbce0a300de1525dcb8e633d970cf63ee381515dc7c7ed126e87103d2a67641d09f94ed0bde91157d2fc6f5fabfd532117030300609bdf32a4e83a81d5ee550ebe002b16b0e42d134062225ccb154f9eb4d00ed6d1c941b6d654a7eea5328e91f00aff5dd8fcaefb279b808faa7262b8c4a10bef79db5840439e0ad804ba76948ee3ed05344e7f8b2c99653e9da09cb5703e31a65617030300452c2ff17e8e5374afc2ac80c99b32839bf2861393e60a6c27d83b2de0008fc264f0aa7d1b6dabdbcac866321c840f47193c4220fd93612eaaf5963742e72cc92be5aa8a6349",
         "note": "read() == 0 means the peer will send nothing more. Free that connection's state and return to accept(); it is not an error condition.",
         "request_fields": [
           {
@@ -12765,7 +13516,7 @@
             "offset": 11,
             "length": 32,
             "field": "server_hello.random",
-            "value": "acfa905b17a41bdaaa85d8c4ba6d168832d1991d09356d2efd358b2e2b5fb42b",
+            "value": "246abadda9caaa511189c0d58acbd5e4931f95459d9c96f863128f3a630a9dca",
             "varies": true
           },
           {
@@ -12845,7 +13596,7 @@
             "offset": 95,
             "length": 32,
             "field": "server_hello.extensions[1].server_share.key_exchange",
-            "value": "5b162ce9ac326053… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
+            "value": "e8a3fff7c3269ebd… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
             "varies": true
           },
           {
@@ -12938,35 +13689,35 @@
             "offset": 664,
             "length": 2,
             "field": "record4.record.length",
-            "value": "95 (bytes that follow)"
+            "value": "96 (bytes that follow)"
           },
           {
             "offset": 666,
-            "length": 95,
+            "length": 96,
             "field": "record4.record.encrypted_record",
-            "value": "95 bytes: the AEAD ciphertext plus its 16-byte tag. The real content type is inside it, after the content and before the padding.",
+            "value": "96 bytes: the AEAD ciphertext plus its 16-byte tag. The real content type is inside it, after the content and before the padding.",
             "varies": true
           },
           {
-            "offset": 761,
+            "offset": 762,
             "length": 1,
             "field": "record5.record.type",
             "value": "application_data(23)"
           },
           {
-            "offset": 762,
+            "offset": 763,
             "length": 2,
             "field": "record5.record.legacy_record_version",
             "value": "0x0303"
           },
           {
-            "offset": 764,
+            "offset": 765,
             "length": 2,
             "field": "record5.record.length",
             "value": "69 (bytes that follow)"
           },
           {
-            "offset": 766,
+            "offset": 767,
             "length": 69,
             "field": "record5.record.encrypted_record",
             "value": "69 bytes: the AEAD ciphertext plus its 16-byte tag. The real content type is inside it, after the content and before the padding.",
@@ -12993,7 +13744,7 @@
         "request": "legacy_version 0x0303, and a supported_versions extension whose list holds 0x0304",
         "request_hex": "010000ae03034bbc1e841fa5581da6175711c6aab9512a4fb8ce1fc47e4666a08fc3cba1c0bc2012c63c9622ceddb0ce7a2759414076b742d5614f70b12a596fc8b6c7b723a31200061302130313010100005f0000000e000c0000096c6f63616c686f7374002b0003020304000a00060004001d0017000d000e000c040308040805080608070401003300260024001d0020b4e4f07705b306b7164ae310bcfec9b315eb5599ae52a5772ad7585f23f0e55b",
         "response": "legacy_version 0x0303 again, and a supported_versions extension holding the two bytes 0x0304.",
-        "response_hex": "020000760303a13173db3f036029f032b0cab631720aec19afc20912c2470018c7ffa10f300e2012c63c9622ceddb0ce7a2759414076b742d5614f70b12a596fc8b6c7b723a312130200002e002b0002030400330024001d002048f24509860bc46603e53087004ed48eff46fc0a6ff02fc8213ff0387a529f5c",
+        "response_hex": "0200007603033608a2847da87b5bfa001dd38a1027f55ce4b39f020488daad6e03d5ac8170c92012c63c9622ceddb0ce7a2759414076b742d5614f70b12a596fc8b6c7b723a312130200002e002b0002030400330024001d00206f0a5fc148a39badfd5ad7bba9140445a67d1f0966f29dc7c5d454038326e904",
         "note": "Both messages say 0x0303 in the field called `version`, and neither of them means it. Negotiate from the extension; the field is there so a 1990s middlebox does not panic.",
         "request_fields": [
           {
@@ -13281,7 +14032,7 @@
             "offset": 6,
             "length": 32,
             "field": "server_hello.random",
-            "value": "a13173db3f036029f032b0cab631720aec19afc20912c2470018c7ffa10f300e",
+            "value": "3608a2847da87b5bfa001dd38a1027f55ce4b39f020488daad6e03d5ac8170c9",
             "varies": true
           },
           {
@@ -13361,7 +14112,7 @@
             "offset": 90,
             "length": 32,
             "field": "server_hello.extensions[1].server_share.key_exchange",
-            "value": "48f24509860bc466… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
+            "value": "6f0a5fc148a39bad… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
             "varies": true
           }
         ]

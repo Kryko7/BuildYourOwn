@@ -116,6 +116,13 @@ pub struct ServerOptions {
     pub naccept: Option<u32>,
     /// Extra arguments for the reference server only, e.g. `-num_tickets 0`.
     pub reference_args: Vec<String>,
+    /// Ask the server to request a client certificate, and whether it must insist on one.
+    ///
+    /// `None` is the default and adds no flags. `Some(false)` adds `-verify 2 -CAfile CA`,
+    /// which *requests* a certificate and carries on without one; `Some(true)` adds
+    /// `-Verify 2 -CAfile CA`, which requires one and fails the handshake otherwise. That
+    /// capital letter is the entire difference, in openssl and in the contract.
+    pub client_auth: Option<bool>,
 }
 
 impl Default for ServerOptions {
@@ -124,6 +131,7 @@ impl Default for ServerOptions {
             cert: CertKind::Leaf(KeyKind::EcdsaP256),
             naccept: None,
             reference_args: Vec::new(),
+            client_auth: None,
         }
     }
 }
@@ -140,6 +148,18 @@ impl ServerOptions {
     /// Start the server with `-naccept n`.
     pub fn with_naccept(mut self, n: u32) -> ServerOptions {
         self.naccept = Some(n);
+        self
+    }
+
+    /// Ask the server to request a client certificate (`-verify`), without requiring one.
+    pub fn requesting_client_cert(mut self) -> ServerOptions {
+        self.client_auth = Some(false);
+        self
+    }
+
+    /// Ask the server to require a client certificate (`-Verify`).
+    pub fn requiring_client_cert(mut self) -> ServerOptions {
+        self.client_auth = Some(true);
         self
     }
 

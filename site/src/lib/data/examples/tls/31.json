@@ -3,9 +3,9 @@
 		"title": "An echo under AES-128-GCM",
 		"kind": "wire",
 		"request": "`suite\\n` as one application_data record under TLS_AES_128_GCM_SHA256",
-		"request_hex": "17030300177ee905a9b917876cb2a3b606ecf174643c498505db24ee",
+		"request_hex": "17030300177be183b556600d5bfd911f943513057d996ffd8cc7b8b7",
 		"response": "`etius\\n`, the same way back.",
-		"response_hex": "17030300177df5035ac63900a75aac547913bdccedad8a5fd450b74f",
+		"response_hex": "1703030017887e9b338a9ba6ba8741d5c78f7ec3cd27fa225974f222",
 		"note": "The record layer is suite-agnostic: change the AEAD and the bytes on the wire keep the same shape. Only the key length and the tag's contents differ.",
 		"request_fields": [
 			{
@@ -68,7 +68,7 @@
 		"request": "cipher_suites holds only 13 03",
 		"request_hex": "010000aa0303b7ac4c189f67feb42baf1b1b1542aa292a8469cee61c7a81a75fb7df6a68be87203ec46b314c5ed5f06e56d5cced77dbced9f7b53897537da4315f4283df6c265b000213030100005f0000000e000c0000096c6f63616c686f7374002b0003020304000a00060004001d0017000d000e000c040308040805080608070401003300260024001d0020c10d0a531f338957d0e88df9ead080723e11f39e90c433fe2024a307b1cc4c4e",
 		"response": "server_hello.cipher_suite is 13 03; everything else looks identical.",
-		"response_hex": "0200007603038b694c0da6215de89a0cb8674836dda39520f228051e2520db94575ed4bac270203ec46b314c5ed5f06e56d5cced77dbced9f7b53897537da4315f4283df6c265b130300002e002b0002030400330024001d0020cb94ec4f089479aeda86bc2a4525cbe4d8d47f199300f569fb1a61a323d3a523",
+		"response_hex": "020000760303baea18d311f7a72fc89775805cc50c491b69520b7584802a993971befff0a08f203ec46b314c5ed5f06e56d5cced77dbced9f7b53897537da4315f4283df6c265b130300002e002b0002030400330024001d002073e2a55e7c0d3167dbe029c8651b1a1b311fd67b1f89ff8c47a1d921c343bc61",
 		"note": "The suite changes the AEAD and, for 0x1302, the hash — and nothing else about the record layer. Same five header bytes, same inner content type, same nonce rule.",
 		"request_fields": [
 			{
@@ -344,7 +344,7 @@
 				"offset": 6,
 				"length": 32,
 				"field": "server_hello.random",
-				"value": "8b694c0da6215de89a0cb8674836dda39520f228051e2520db94575ed4bac270",
+				"value": "baea18d311f7a72fc89775805cc50c491b69520b7584802a993971befff0a08f",
 				"varies": true
 			},
 			{
@@ -424,7 +424,7 @@
 				"offset": 90,
 				"length": 32,
 				"field": "server_hello.extensions[1].server_share.key_exchange",
-				"value": "cb94ec4f089479ae… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
+				"value": "73e2a55e7c0d3167… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
 				"varies": true
 			}
 		]

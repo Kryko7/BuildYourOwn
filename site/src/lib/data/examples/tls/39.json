@@ -3,9 +3,9 @@
 		"title": "What each of the fifty connections does",
 		"kind": "wire",
 		"request": "A full handshake, then `conn00\\n` as application data, then close_notify",
-		"request_hex": "1703030018d493c1b968837013f8be8e0fa3f4286ff2eee55f53fa963c",
+		"request_hex": "170303001809505c31cd7a80514b571ef5d6dffc248917ceef05f8bc98",
 		"response": "`00nnoc\\n`, and a close_notify back.",
-		"response_hex": "1703030018e4fd3169b7e83f7a29ac3e20b919ba88c396f1519f2cb01c",
+		"response_hex": "170303001897115c96ad28817d38ed4e5546a6f4b6dd0c62d05efdf2b9",
 		"note": "Fifty of these at once. Nothing about any one of them is unusual — the test is whether the fiftieth is as correct as the first.",
 		"request_fields": [
 			{

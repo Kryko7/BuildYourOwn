@@ -5,7 +5,7 @@
 		"request": "An ordinary ClientHello. A real browser also puts a GREASE extension type first and a GREASE cipher suite at the head of the list.",
 		"request_hex": "010000ae0303bd15fc4ae6a7e72c931b9440c5d02a366f43c283f30fef546243cb2ff72d184220b65de6d9d473176aff7bac1fb86d5b41482ee2bac00f2d33f834ebc8a024462100061302130313010100005f0000000e000c0000096c6f63616c686f7374002b0003020304000a00060004001d0017000d000e000c040308040805080608070401003300260024001d00207bc13cfaa4de62c0128f866ca7389a5c85859526f9aa303f8750c36cb7de3e25",
 		"response": "An ordinary ServerHello. Nothing GREASE-shaped comes back.",
-		"response_hex": "020000760303c0bd2a126c936f95883c874c79e1dd546f1c6888222ff333099278a98841b14920b65de6d9d473176aff7bac1fb86d5b41482ee2bac00f2d33f834ebc8a0244621130200002e002b0002030400330024001d0020cb0795b2d95b0b719567540bb8866b25901de7ca11341e33809d14d2e1848e68",
+		"response_hex": "020000760303042481c7a483caf303dd0eff6f5ca67b997f70d148d6e89d2d875ffa8244d4fe20b65de6d9d473176aff7bac1fb86d5b41482ee2bac00f2d33f834ebc8a0244621130200002e002b0002030400330024001d002091334f49b4ea269c60d705ce85cb95b0357884c4c50f667f4f5cbc8d8901f664",
 		"note": "GREASE values are reserved forever and will never mean anything. Their entire purpose is to break servers that do not skip what they do not recognise — which is how the ecosystem stays extensible.",
 		"request_fields": [
 			{
@@ -293,7 +293,7 @@
 				"offset": 6,
 				"length": 32,
 				"field": "server_hello.random",
-				"value": "c0bd2a126c936f95883c874c79e1dd546f1c6888222ff333099278a98841b149",
+				"value": "042481c7a483caf303dd0eff6f5ca67b997f70d148d6e89d2d875ffa8244d4fe",
 				"varies": true
 			},
 			{
@@ -373,7 +373,7 @@
 				"offset": 90,
 				"length": 32,
 				"field": "server_hello.extensions[1].server_share.key_exchange",
-				"value": "cb0795b2d95b0b71… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
+				"value": "91334f49b4ea269c… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
 				"varies": true
 			}
 		]

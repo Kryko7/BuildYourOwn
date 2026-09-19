@@ -11,14 +11,17 @@
 //! and then [`Client::echo_line`].
 
 use super::buf::Writer;
+use crate::certs::ClientAuth;
+
 use super::conn::{Incoming, TlsConn};
 use super::crypto::{KeySchedule, Suite, TrafficKeys, Transcript};
 use super::msg::{
     alpn_extension, client_key_share_extension, cookie_extension, default_signature_algorithms,
     encode_handshake, find_extension, parse_extensions, psk_key_exchange_modes_extension,
     server_name_extension, signature_algorithms_extension, supported_groups_extension,
-    supported_versions_extension, Alert, CertificateMsg, CertificateVerifyMsg, ClientHello,
-    Extension, KeyExchange, KeyUpdate, NewSessionTicket, ServerHello,
+    supported_versions_extension, Alert, CertificateMsg, CertificateRequestMsg,
+    CertificateVerifyMsg, ClientHello, Extension, KeyExchange, KeyUpdate, NewSessionTicket,
+    ServerHello,
 };
 use super::sig::{self, PublicKey};
 use super::{
@@ -254,6 +257,15 @@ pub struct Client {
     pub certificate_verify_bytes: Vec<u8>,
     /// A CertificateRequest, if the server asked for a client certificate.
     pub certificate_request: Option<Vec<u8>>,
+    /// The same message, parsed.
+    pub certificate_request_msg: Option<CertificateRequestMsg>,
+    /// Whether the client handshake keys are already installed (installing resets the
+    /// record sequence number, so it must happen exactly once).
+    client_handshake_keys_installed: bool,
+    /// The client's own Certificate message bytes, when it authenticated.
+    pub client_certificate_bytes: Vec<u8>,
+    /// The client's own CertificateVerify message bytes, when it authenticated.
+    pub client_certificate_verify_bytes: Vec<u8>,
     /// The server's Finished message bytes.
     pub server_finished_bytes: Vec<u8>,
     /// The `verify_data` the server sent.
@@ -330,6 +342,10 @@ impl Client {
             certificate_request: None,
             server_finished_bytes: Vec::new(),
             server_verify_data: Vec::new(),
+            certificate_request_msg: None,
+            client_handshake_keys_installed: false,
+            client_certificate_bytes: Vec::new(),
+            client_certificate_verify_bytes: Vec::new(),
             client_finished_bytes: Vec::new(),
             server_public_key: None,
             hash_after_client_hello: Vec::new(),
@@ -643,6 +659,8 @@ impl Client {
                     self.hash_after_encrypted_extensions = transcript.current();
                 }
                 HandshakeType::CERTIFICATE_REQUEST => {
+                    self.certificate_request_msg =
+                        Some(CertificateRequestMsg::parse(&message.body)?);
                     self.certificate_request = Some(message.raw.clone());
                     transcript.push(&message.raw, "certificate_request");
                 }
@@ -731,6 +749,124 @@ impl Client {
     // Flight 3: the client's Finished
     // -----------------------------------------------------------------------------------
 
+    /// Answer a CertificateRequest with a Certificate and a CertificateVerify.
+    ///
+    /// Both go out under the client's *handshake* keys and both go into the transcript
+    /// before Finished is computed — which is the point of the exercise: the server's
+    /// verify_data covers the client's certificate, so authenticating changes the Finished
+    /// on both sides. Call this after [`read_server_flight`] and before
+    /// [`send_client_finished`].
+    pub async fn send_client_auth(&mut self, auth: &ClientAuth) -> TlsResult<()> {
+        let request = self.certificate_request_msg.clone().ok_or_else(|| {
+            TlsError::Protocol(
+                "the server never sent a certificate_request, so there is nothing to answer".into(),
+            )
+        })?;
+        let accepted = request.signature_algorithms()?;
+        if !accepted.contains(&auth.scheme) {
+            return Err(TlsError::Protocol(format!(
+                "the server's certificate_request does not accept 0x{:04x}, the scheme the \
+                 suite's client certificate uses",
+                auth.scheme
+            )));
+        }
+        let cert = CertificateMsg::one(&request.context, &auth.client_der);
+        self.send_client_certificate_bytes(&encode_handshake(
+            HandshakeType::CERTIFICATE,
+            &cert.encode_body(),
+        ))
+        .await?;
+
+        let hash = self
+            .transcript
+            .as_ref()
+            .ok_or_else(|| TlsError::Protocol("no transcript".into()))?
+            .current();
+        let signature = sig::sign_pem(
+            &auth.key_pkcs8_pem,
+            auth.scheme,
+            &sig::client_signed_content(&hash),
+        )?;
+        let cv = CertificateVerifyMsg {
+            algorithm: auth.scheme,
+            signature,
+        };
+        self.send_client_certificate_verify_bytes(&encode_handshake(
+            HandshakeType::CERTIFICATE_VERIFY,
+            &cv.encode_body(),
+        ))
+        .await
+    }
+
+    /// Send an empty Certificate: "I have nothing you would accept".
+    ///
+    /// Legal, and the whole difference between a server that *requests* a certificate and
+    /// one that *requires* it — the first carries on, the second sends an alert.
+    pub async fn send_empty_client_certificate(&mut self) -> TlsResult<()> {
+        let context = self
+            .certificate_request_msg
+            .as_ref()
+            .map(|r| r.context.clone())
+            .unwrap_or_default();
+        let cert = CertificateMsg::none(&context);
+        self.send_client_certificate_bytes(&encode_handshake(
+            HandshakeType::CERTIFICATE,
+            &cert.encode_body(),
+        ))
+        .await
+    }
+
+    /// Send a Certificate the caller built, for the tests that build a wrong one.
+    pub async fn send_client_certificate_bytes(&mut self, message: &[u8]) -> TlsResult<()> {
+        self.write_client_handshake(message).await?;
+        self.client_certificate_bytes = message.to_vec();
+        self.transcript
+            .as_mut()
+            .ok_or_else(|| TlsError::Protocol("no transcript".into()))?
+            .push(message, "client certificate");
+        Ok(())
+    }
+
+    /// Send a CertificateVerify the caller built, for the tests that build a wrong one.
+    pub async fn send_client_certificate_verify_bytes(&mut self, message: &[u8]) -> TlsResult<()> {
+        self.write_client_handshake(message).await?;
+        self.client_certificate_verify_bytes = message.to_vec();
+        self.transcript
+            .as_mut()
+            .ok_or_else(|| TlsError::Protocol("no transcript".into()))?
+            .push(message, "client certificate_verify");
+        Ok(())
+    }
+
+    /// Install the client's handshake keys, once.
+    ///
+    /// Installing them resets the record sequence number to zero, which is right the first
+    /// time and wrong every time after: a client that authenticates writes three protected
+    /// handshake records (Certificate, CertificateVerify, Finished) and the nonce for each
+    /// is built from a sequence number that must keep counting. Re-installing per message
+    /// encrypts all three under nonce zero, and the server's second record fails its MAC.
+    fn ensure_client_handshake_keys(&mut self) -> TlsResult<()> {
+        if self.client_handshake_keys_installed {
+            return Ok(());
+        }
+        let keys = self
+            .schedule
+            .as_ref()
+            .ok_or_else(|| TlsError::Crypto("no key schedule".into()))?
+            .client_handshake
+            .clone()
+            .ok_or_else(|| TlsError::Crypto("no client handshake keys".into()))?;
+        self.conn.layer.set_write(keys);
+        self.client_handshake_keys_installed = true;
+        Ok(())
+    }
+
+    /// Write one handshake message under the client's handshake keys.
+    async fn write_client_handshake(&mut self, message: &[u8]) -> TlsResult<()> {
+        self.ensure_client_handshake_keys()?;
+        self.conn.write_handshake(message).await
+    }
+
     /// Send the client's Finished and switch both directions to application keys.
     pub async fn send_client_finished(&mut self) -> TlsResult<()> {
         let verify_data = self.client_verify_data()?;
@@ -741,15 +877,7 @@ impl Client {
     /// Send a Finished message the caller built, which is how the "a wrong Finished is
     /// `decrypt_error`" test sends a deliberately bad one.
     pub async fn send_client_finished_bytes(&mut self, message: &[u8]) -> TlsResult<()> {
-        let schedule = self
-            .schedule
-            .as_ref()
-            .ok_or_else(|| TlsError::Crypto("no key schedule".into()))?;
-        let client_handshake = schedule
-            .client_handshake
-            .clone()
-            .ok_or_else(|| TlsError::Crypto("no client handshake keys".into()))?;
-        self.conn.layer.set_write(client_handshake);
+        self.ensure_client_handshake_keys()?;
         self.conn.write_handshake(message).await?;
         self.client_finished_bytes = message.to_vec();
         let transcript = self
@@ -790,7 +918,21 @@ impl Client {
             .client_handshake
             .as_ref()
             .ok_or_else(|| TlsError::Crypto("no client handshake keys".into()))?;
-        schedule.verify_data(keys, &self.hash_after_server_finished)
+        // RFC 8446 §4.4.4: the client's verify_data is over the transcript up to and
+        // including its own CertificateVerify, when it sent one. Without client
+        // authentication nothing stands between the server's Finished and the client's, so
+        // the cached hash is that same value — but once the client authenticates, the two
+        // differ by two messages and using the cached one produces a Finished the server
+        // rejects with decrypt_error.
+        let hash = if self.client_certificate_bytes.is_empty() {
+            self.hash_after_server_finished.clone()
+        } else {
+            self.transcript
+                .as_ref()
+                .ok_or_else(|| TlsError::Protocol("no transcript".into()))?
+                .current()
+        };
+        schedule.verify_data(keys, &hash)
     }
 
     /// The whole handshake: hello, retry if asked, the server's flight, and Finished.
@@ -799,6 +941,42 @@ impl Client {
         self.maybe_send_ccs().await?;
         self.read_server_hello().await?;
         self.read_server_flight().await?;
+        self.send_client_finished().await?;
+        Ok(())
+    }
+
+    /// Everything up to and including the server's Finished, stopping before the client's
+    /// own flight — where a test that builds its own Certificate or CertificateVerify picks
+    /// up.
+    pub async fn handshake_through_server_flight(&mut self) -> TlsResult<()> {
+        self.send_client_hello().await?;
+        self.maybe_send_ccs().await?;
+        self.read_server_hello().await?;
+        self.read_server_flight().await
+    }
+
+    /// A full handshake that answers the server's CertificateRequest along the way.
+    ///
+    /// The only difference from [`handshake`](Self::handshake) is the two messages sent
+    /// between the server's flight and the client's Finished — which is exactly what client
+    /// authentication is.
+    pub async fn handshake_with_client_auth(&mut self, auth: &ClientAuth) -> TlsResult<()> {
+        self.send_client_hello().await?;
+        self.maybe_send_ccs().await?;
+        self.read_server_hello().await?;
+        self.read_server_flight().await?;
+        self.send_client_auth(auth).await?;
+        self.send_client_finished().await?;
+        Ok(())
+    }
+
+    /// A full handshake that answers the CertificateRequest with an empty Certificate.
+    pub async fn handshake_declining_client_auth(&mut self) -> TlsResult<()> {
+        self.send_client_hello().await?;
+        self.maybe_send_ccs().await?;
+        self.read_server_hello().await?;
+        self.read_server_flight().await?;
+        self.send_empty_client_certificate().await?;
         self.send_client_finished().await?;
         Ok(())
     }

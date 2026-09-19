@@ -5,7 +5,7 @@
 		"request": "The same ClientHello message as always, cut into three pieces and sent as three handshake records back to back",
 		"request_hex": "160303003c010000ae0303d977ab7d3890b1b92ad9ae0cb722486fd8d58e1c098963af32a934a99dfdec3c20262c6f02ca58c3a6c9c9c9df0e83e16aca4437a3e5160303003cf7331773a5e1de0dee51d700061302130313010100005f0000000e000c0000096c6f63616c686f7374002b0003020304000a00060004001d0017000d160303003a000e000c040308040805080608070401003300260024001d002097460ae0d0e0f03844c99a5115a2db09c1eb131eddca5050dc1bee166d255c49",
 		"response": "One ServerHello, exactly as if the hello had arrived in a single record. Nothing about the answer changes.",
-		"response_hex": "160303007a02000076030348ef96f893e792a43179eac58ba31d5055a911af63c558cb518c55cc7000594420262c6f02ca58c3a6c9c9c9df0e83e16aca4437a3e5f7331773a5e1de0dee51d7130200002e002b0002030400330024001d002084c76d3d6a207b77609b22fd405beaaf0e62171dadfc507357c64deea916e82c",
+		"response_hex": "160303007a020000760303d35255891227720f9f5448197b952462c7234b6823ee16d1f5b333328f45f52c20262c6f02ca58c3a6c9c9c9df0e83e16aca4437a3e5f7331773a5e1de0dee51d7130200002e002b0002030400330024001d0020b3c5d5c6b907f4a1966689c748480d784f404eb902d388c907d7404ac87c9175",
 		"note": "Look at the three record headers in the request: each has its own length, and the handshake header's uint24 length spans all three. Reassemble, then parse.",
 		"request_fields": [
 			{
@@ -104,7 +104,7 @@
 				"offset": 11,
 				"length": 32,
 				"field": "server_hello.random",
-				"value": "48ef96f893e792a43179eac58ba31d5055a911af63c558cb518c55cc70005944",
+				"value": "d35255891227720f9f5448197b952462c7234b6823ee16d1f5b333328f45f52c",
 				"varies": true
 			},
 			{
@@ -184,7 +184,7 @@
 				"offset": 95,
 				"length": 32,
 				"field": "server_hello.extensions[1].server_share.key_exchange",
-				"value": "84c76d3d6a207b77… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
+				"value": "b3c5d5c6b907f4a1… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
 				"varies": true
 			}
 		]

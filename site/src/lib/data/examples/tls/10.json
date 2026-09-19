@@ -5,7 +5,7 @@
 		"request": "cipher_suites holds one entry: 13 01",
 		"request_hex": "010000aa030389298a097e488abae58c7f302c4ed30cd39684f1a1dc59acb447f4de8e3ec73020859cdd20e50bb88d3c2e306c12536a3ec47f8956b3b5ebc06b9129dd84164f3d000213010100005f0000000e000c0000096c6f63616c686f7374002b0003020304000a00060004001d0017000d000e000c040308040805080608070401003300260024001d0020ac898c5fb8807599c901f2532dbc537548fdbd10135988356ddd7f59604a5249",
 		"response": "server_hello.cipher_suite echoes 13 01, two bytes and no list around them.",
-		"response_hex": "020000760303fef5190669f448112afeaaa6c0ec53623ee01502d970b464a6603da713d3f01820859cdd20e50bb88d3c2e306c12536a3ec47f8956b3b5ebc06b9129dd84164f3d130100002e002b0002030400330024001d0020d63731eb82a063d0b0d47c2e1c04b21bb60bbd92ca78b5a7107c2318221a8b4a",
+		"response_hex": "020000760303fd0e7df1d4f736607024d8693ccde579c564668c9cd08062a749526a7d4738ce20859cdd20e50bb88d3c2e306c12536a3ec47f8956b3b5ebc06b9129dd84164f3d130100002e002b0002030400330024001d0020f8fff10840ac78400daa5fab962c6731ebcf9c268086d6e3a72aa2b006624f65",
 		"note": "0x1301 means SHA-256 and AES-128-GCM: a 32-byte transcript hash, 32-byte secrets, a 16-byte key and a 12-byte IV.",
 		"request_fields": [
 			{
@@ -281,7 +281,7 @@
 				"offset": 6,
 				"length": 32,
 				"field": "server_hello.random",
-				"value": "fef5190669f448112afeaaa6c0ec53623ee01502d970b464a6603da713d3f018",
+				"value": "fd0e7df1d4f736607024d8693ccde579c564668c9cd08062a749526a7d4738ce",
 				"varies": true
 			},
 			{
@@ -361,7 +361,7 @@
 				"offset": 90,
 				"length": 32,
 				"field": "server_hello.extensions[1].server_share.key_exchange",
-				"value": "d63731eb82a063d0… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
+				"value": "f8fff10840ac7840… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
 				"varies": true
 			}
 		]
@@ -372,7 +372,7 @@
 		"request": "cipher_suites holds 13 03",
 		"request_hex": "010000aa03039de64b4bc34548bb6eba7a4447670218f978fd10a93a5ef720c92adad79d9c2020914185ca91adb4bff4f95b778a9a6e178d481979b26cc8462ea03f1ebb2b744c000213030100005f0000000e000c0000096c6f63616c686f7374002b0003020304000a00060004001d0017000d000e000c040308040805080608070401003300260024001d00200a6709a8976b5ba9eb0fa9d47bc1e62a04f608128c0ce913c918a725c3e1176f",
 		"response": "server_hello.cipher_suite is 13 03.",
-		"response_hex": "02000076030308ece18f25baeb3c6803a4e11e65c32365d3a09c940766db0f90560e546da0f020914185ca91adb4bff4f95b778a9a6e178d481979b26cc8462ea03f1ebb2b744c130300002e002b0002030400330024001d00200cd83a044fef00a2a7d049bcc18e3d7ae38b14a13f5839aaf93dd9c339567b0e",
+		"response_hex": "020000760303378edc57bc451c99baeeff586c09b88adcb80edd695c022abb0ed7fd12ee9d2320914185ca91adb4bff4f95b778a9a6e178d481979b26cc8462ea03f1ebb2b744c130300002e002b0002030400330024001d002017543823daceebeea4d4ca6b8162e9e77f94f8b1b5292c459ea4ca39800a0a6d",
 		"note": "0x1303 is SHA-256 like 0x1301, but a 32-byte AEAD key. Only 0x1302 switches the hash to SHA-384 — and then every secret, every transcript hash and the finished key all become 48 bytes.",
 		"request_fields": [
 			{
@@ -648,7 +648,7 @@
 				"offset": 6,
 				"length": 32,
 				"field": "server_hello.random",
-				"value": "08ece18f25baeb3c6803a4e11e65c32365d3a09c940766db0f90560e546da0f0",
+				"value": "378edc57bc451c99baeeff586c09b88adcb80edd695c022abb0ed7fd12ee9d23",
 				"varies": true
 			},
 			{
@@ -728,7 +728,7 @@
 				"offset": 90,
 				"length": 32,
 				"field": "server_hello.extensions[1].server_share.key_exchange",
-				"value": "0cd83a044fef00a2… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
+				"value": "17543823daceebee… (32 bytes) — the server's ephemeral public key; the (EC)DHE shared secret comes from this",
 				"varies": true
 			}
 		]

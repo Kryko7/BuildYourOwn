@@ -451,7 +451,7 @@ Requirements added by the user:
 | Dir | Track id | You build | Reference for `--validate` |
 |---|---|---|---|
 | `wasmtest/` | `wasm` | a WebAssembly runtime (binary decoder + validator + interpreter + WASI preview1 + fixed-width SIMD) | `wasmtime` 48.0.2, downloaded and cached in `~/.cache/wasmtest` |
-| `tlstest/` | `tls` | a TLS 1.3 server (RFC 8446) | `openssl s_server` from the system OpenSSL 3.x |
+| `tlstest/` | `tls` | a TLS 1.3 server (RFC 8446), client authentication included | `openssl s_server` from the system OpenSSL 3.x |
 | `linktest/` | `link` | a static ELF64 linker for x86-64 | `/usr/bin/ld` (GNU ld) |
 | `disttest/` | `dist` | a distributed system, in four ladders: primitives → algorithms → a durable node → a replicated cluster | `etcd` 3.7.1, cached in `~/.cache/disttest` (node, cluster) and this crate's own `reference_primitives` / `reference_algorithms` examples (primitives, algorithms) |
 
@@ -610,16 +610,16 @@ buildable at every step.
 | Track | Stages / tests | `--validate` against | Wall clock |
 |---|---|---|---|
 | `wasm` | 48 / 381 | wasmtime 48.0.2 | 20 s |
-| `tls` | 45 / 321 | `openssl s_server` 3.6.4 | 73 s (1 documented skip) |
+| `tls` | 48 / 343 | `openssl s_server` 3.6.4 | 75 s (1 documented skip) |
 | `link` | 42 / 341 | GNU ld 2.47 | 4 s |
 | `dist` primitives | 20 / 183 | `examples/reference_primitives` | 5 s |
 | `dist` algorithms | 22 / 245 | `examples/reference_algorithms` | 0.5 s |
 | `dist` node | 15 / 128 | etcd 3.7.1 | 108 s |
 | `dist` cluster | 20 / 164 | etcd 3.7.1 | 859 s |
 
-With shell (70/592) and kafka (45/296) that is **2 651 tests over six tracks**, every one of
+With shell (70/592) and kafka (45/296) that is **2 673 tests over six tracks**, every one of
 them green against the real implementation. `byo` carries a six-entry registry (98 tests), the
-site renders six trails from those catalogs (327 stage pages prerendered), and `install.sh`
+site renders six trails from those catalogs (330 stage pages prerendered), and `install.sh`
 builds and installs all of it.
 
 Verified after the build, in a sandbox `BYO_HOME`: `install.sh --skip-site` → `byo tracks`
