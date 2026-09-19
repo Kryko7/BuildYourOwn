@@ -42,7 +42,7 @@ fn catalog_has_the_shape_the_site_expects() {
     assert!(cat["generatedAt"].is_string());
 
     let sections = cat["sections"].as_array().expect("sections array");
-    assert_eq!(sections.len(), 6);
+    assert_eq!(sections.len(), stages::sections().len());
     let mut numbers: Vec<u64> = sections
         .iter()
         .flat_map(|s| {
@@ -56,7 +56,7 @@ fn catalog_has_the_shape_the_site_expects() {
     numbers.sort_unstable();
     assert_eq!(
         numbers,
-        (1..=u64::from(catalog::PLANNED_STAGES)).collect::<Vec<u64>>(),
+        (1..=u64::from(catalog::planned_stages())).collect::<Vec<u64>>(),
         "the sections must cover every planned stage, implemented or not"
     );
 
@@ -128,7 +128,7 @@ fn plan_md_lists_every_stage() {
     let ticks = catalog::plan_ticks(&plan);
     assert_eq!(
         ticks.len(),
-        catalog::PLANNED_STAGES as usize,
+        catalog::planned_stages() as usize,
         "PLAN.md must carry a tickbox for every planned stage"
     );
     for s in stages::all() {
@@ -140,7 +140,7 @@ fn plan_md_lists_every_stage() {
     }
     let text = std::fs::read_to_string(&plan).expect("read PLAN.md");
     let implemented: Vec<u32> = stages::all().iter().map(|s| s.number).collect();
-    for n in 1..=catalog::PLANNED_STAGES {
+    for n in 1..=catalog::planned_stages() {
         let line = text
             .lines()
             .find(|l| l.contains(&format!("**Stage {n:02}**")))

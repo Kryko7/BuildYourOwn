@@ -96,6 +96,12 @@ pub const SHT_NOTE: u32 = 7;
 pub const SHT_NOBITS: u32 = 8;
 /// Relocations without addends.
 pub const SHT_REL: u32 = 9;
+/// An array of function pointers run before `main`.
+pub const SHT_INIT_ARRAY: u32 = 14;
+/// An array of function pointers run after it.
+pub const SHT_FINI_ARRAY: u32 = 15;
+/// An array run before even the init array.
+pub const SHT_PREINIT_ARRAY: u32 = 16;
 /// A section the suite uses to check "unknown types are handled sensibly".
 pub const SHT_UNKNOWN_OS: u32 = 0x6000_0042;
 
@@ -113,6 +119,8 @@ pub const SHF_STRINGS: u64 = 0x20;
 pub const SHF_INFO_LINK: u64 = 0x40;
 /// The section is a member of a group.
 pub const SHF_GROUP: u64 = 0x200;
+/// Thread-local storage: one copy per thread, not one per process.
+pub const SHF_TLS: u64 = 0x400;
 
 /// Undefined section index: the symbol is a reference, not a definition.
 pub const SHN_UNDEF: u16 = 0;
@@ -143,6 +151,8 @@ pub const PT_NOTE: u32 = 4;
 pub const PT_PHDR: u32 = 6;
 /// TLS template.
 pub const PT_TLS: u32 = 7;
+/// The unwinder's binary search table, written by `--eh-frame-hdr`.
+pub const PT_GNU_EH_FRAME: u32 = 0x6474_e550;
 /// Stack permissions (`p_flags` without `PF_X` means a non-executable stack).
 pub const PT_GNU_STACK: u32 = 0x6474_e551;
 /// The x86 feature-bit note GNU ld copies out of its inputs.
@@ -257,6 +267,8 @@ pub const R_X86_64_8: u32 = 14;
 pub const R_X86_64_PC8: u32 = 15;
 /// `S + A - P`, 64 bits.
 pub const R_X86_64_PC64: u32 = 24;
+/// An offset from the thread pointer, for the local-exec TLS model.
+pub const R_X86_64_TPOFF32: u32 = 23;
 /// Like [`R_X86_64_GOTPCREL`], but the linker may relax the instruction.
 pub const R_X86_64_GOTPCRELX: u32 = 41;
 /// Like [`R_X86_64_GOTPCRELX`] for a REX-prefixed instruction.
@@ -296,6 +308,9 @@ pub fn section_type_name(sh_type: u32) -> String {
         SHT_DYNAMIC => "DYNAMIC".into(),
         SHT_NOTE => "NOTE".into(),
         SHT_NOBITS => "NOBITS".into(),
+        SHT_INIT_ARRAY => "INIT_ARRAY".into(),
+        SHT_FINI_ARRAY => "FINI_ARRAY".into(),
+        SHT_PREINIT_ARRAY => "PREINIT_ARRAY".into(),
         SHT_REL => "REL".into(),
         other => format!("0x{other:x}"),
     }
@@ -311,6 +326,7 @@ pub fn segment_type_name(p_type: u32) -> String {
         PT_NOTE => "NOTE".into(),
         PT_PHDR => "PHDR".into(),
         PT_TLS => "TLS".into(),
+        PT_GNU_EH_FRAME => "GNU_EH_FRAME".into(),
         PT_GNU_STACK => "GNU_STACK".into(),
         PT_GNU_PROPERTY => "GNU_PROPERTY".into(),
         other => format!("0x{other:x}"),

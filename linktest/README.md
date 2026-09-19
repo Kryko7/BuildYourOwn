@@ -3,7 +3,7 @@
 A self-contained, stage-by-stage conformance tester for **static ELF64 x86-64 linkers**,
 written in Rust. It drives **any** linker binary as a black box — real relocatable objects,
 real archives, real machine code — and then does the only thing that settles the argument:
-it **runs the binary your linker produced**. 42 stages, 341 tests, all validated against
+it **runs the binary your linker produced**. 44 stages, 359 tests, all validated against
 GNU ld 2.47. Every stage also carries worked examples — 87 of them — each a real `.o`,
 annotated field by field, next to the linker command line and the exact stdout and exit
 status the linked program must produce.

@@ -251,3 +251,20 @@ follow".
 42 stages, 341 tests, 15 stages marked `[ext]`. The suite self-check is
 `linktest --linker gnu_ld --validate --all`; it must be all green, and `cargo test` proves
 `catalog.json` and this file still match the stage registry.
+
+## G. What real toolchains expect
+
+Two things a static linker has to do before it can link a program a compiler produced, and
+neither of them is a relocation: run the code that runs before `main`, and delete the code
+nothing can reach.
+
+- [ ] **Stage 43** — Init and fini arrays **[ext]** (`src/stages/s43_init_arrays.rs`, 9 tests)
+  - `.init_array` is `SHT_INIT_ARRAY`, allocated and writable, and holds an array of 8-byte function pointers — concatenate the inputs' copies in command-line order
+  - `__init_array_start` and `__init_array_end` come from no object file: the linker defines them at the two ends of the section it produced
+  - When nothing has an `.init_array`, those two symbols must still resolve and must be equal, so a walker runs zero times instead of walking nothing
+  - `.fini_array` is the same in every respect, with its own pair of symbols, and is walked backwards at exit
+- [ ] **Stage 44** — --gc-sections: deleting what nothing reaches **[ext]** (`src/stages/s44_gc_sections.rs`, 9 tests)
+  - Treat allocated sections as nodes and relocations as edges: mark everything reachable from the roots, then drop every section that was not marked
+  - The entry point's section is a root, and so is `.init_array` — nothing references a constructor, so marking only from the entry deletes them all
+  - Reachability is transitive and runs through data too: a function that references a string keeps the section holding the string
+  - Without the flag nothing is dropped, so the same inputs must link both ways and differ only in what came out

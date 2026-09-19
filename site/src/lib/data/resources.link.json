@@ -1240,5 +1240,106 @@
 		"minutes": 40,
 		"free": true,
 		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "link-maskray-init-array",
+		"title": "Init, ctors, and init_array (MaskRay)",
+		"url": "https://maskray.me/blog/2021-11-07-init-ctors-init-array",
+		"type": "article",
+		"level": "core",
+		"track": "link",
+		"stages": [
+			43
+		],
+		"concepts": [
+			"init-array",
+			"constructors",
+			"linker-defined-symbols"
+		],
+		"why": "The whole history and the current rules in one place: why .init_array replaced .ctors, what order the entries run in, and where __init_array_start comes from. Written by an lld maintainer, so the corner cases are the ones that actually came up.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "link-maskray-gc-sections",
+		"title": "Linker garbage collection (MaskRay)",
+		"url": "https://maskray.me/blog/2021-02-28-linker-garbage-collection",
+		"type": "article",
+		"level": "core",
+		"track": "link",
+		"stages": [
+			44
+		],
+		"concepts": [
+			"gc-sections",
+			"reachability",
+			"roots"
+		],
+		"why": "How the mark-and-sweep is actually implemented, which sections are roots and why, and the interaction with KEEP and with .init_array that stage 44's last test is about.",
+		"minutes": 30,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "link-airs-linkers",
+		"title": "Linkers, part 1 (Ian Lance Taylor)",
+		"url": "https://www.airs.com/blog/archives/42",
+		"type": "article",
+		"level": "intro",
+		"track": "link",
+		"stages": [
+			43,
+			44
+		],
+		"concepts": [
+			"linkers",
+			"history",
+			"design"
+		],
+		"why": "Twenty short posts by the author of gold on what a linker does and why it is shaped the way it is. Worth reading end to end at some point on this track; the sections on garbage collection and on initialisation order are the ones for stages 43 and 44.",
+		"minutes": 180,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "link-gcc-initialization",
+		"title": "Initialization routines (GCC internals)",
+		"url": "https://gcc.gnu.org/onlinedocs/gccint/Initialization.html",
+		"type": "doc",
+		"level": "deep",
+		"track": "link",
+		"stages": [
+			43
+		],
+		"concepts": [
+			"constructors",
+			"init-array",
+			"abi"
+		],
+		"why": "The compiler's half of the contract: what GCC emits for a constructor and what it assumes the linker and the startup code will do with it. Read it to see that the linker's job here is small and load-bearing.",
+		"minutes": 20,
+		"free": true,
+		"checkedAt": "2026-09-19"
+	},
+	{
+		"id": "link-ld-options",
+		"title": "ld command line options (GNU binutils manual)",
+		"url": "https://sourceware.org/binutils/docs/ld/Options.html",
+		"type": "doc",
+		"level": "core",
+		"track": "link",
+		"stages": [
+			44
+		],
+		"concepts": [
+			"gc-sections",
+			"linker-flags",
+			"reference"
+		],
+		"why": "The reference for --gc-sections, --print-gc-sections and the KEEP-related flags, plus the warning that garbage collection is unsafe when something reaches a section in a way no relocation records.",
+		"minutes": 15,
+		"free": true,
+		"checkedAt": "2026-09-19"
 	}
 ]

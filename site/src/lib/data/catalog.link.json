@@ -1,6 +1,6 @@
 {
 	"track": "link",
-	"generatedAt": "2026-09-19T05:05:20.894Z",
+	"generatedAt": "2026-09-19T08:42:39.920Z",
 	"sections": [
 		{
 			"id": "A",
@@ -78,6 +78,14 @@
 				40,
 				41,
 				42
+			]
+		},
+		{
+			"id": "G",
+			"title": "What real toolchains expect",
+			"stages": [
+				43,
+				44
 			]
 		}
 	],
@@ -2051,12 +2059,120 @@
 				}
 			],
 			"exampleCount": 2
+		},
+		{
+			"number": 43,
+			"slug": "init_arrays",
+			"name": "Init and fini arrays",
+			"ext": true,
+			"section": "G",
+			"file": "src/stages/s43_init_arrays.rs",
+			"planDone": false,
+			"hints": [
+				"`.init_array` is `SHT_INIT_ARRAY`, allocated and writable, and holds an array of 8-byte function pointers — concatenate the inputs' copies in command-line order",
+				"`__init_array_start` and `__init_array_end` come from no object file: the linker defines them at the two ends of the section it produced",
+				"When nothing has an `.init_array`, those two symbols must still resolve and must be equal, so a walker runs zero times instead of walking nothing",
+				"`.fini_array` is the same in every respect, with its own pair of symbols, and is walked backwards at exit"
+			],
+			"tests": [
+				{
+					"name": "an .init_array section survives the link with its type",
+					"ext": true
+				},
+				{
+					"name": "it is allocated and writable",
+					"ext": true
+				},
+				{
+					"name": "the entries of several objects are concatenated",
+					"ext": true
+				},
+				{
+					"name": "in the order the objects were given on the command line",
+					"ext": true
+				},
+				{
+					"name": "the linker defines __init_array_start and __init_array_end",
+					"ext": true
+				},
+				{
+					"name": "and they bracket exactly the section it built",
+					"ext": true
+				},
+				{
+					"name": "with no .init_array anywhere, the symbols are still defined and equal",
+					"ext": true
+				},
+				{
+					"name": ".fini_array gets the same treatment",
+					"ext": true
+				},
+				{
+					"name": "a program walks the array and the constructors actually run",
+					"ext": true
+				}
+			],
+			"exampleCount": 1
+		},
+		{
+			"number": 44,
+			"slug": "gc_sections",
+			"name": "--gc-sections: deleting what nothing reaches",
+			"ext": true,
+			"section": "G",
+			"file": "src/stages/s44_gc_sections.rs",
+			"planDone": false,
+			"hints": [
+				"Treat allocated sections as nodes and relocations as edges: mark everything reachable from the roots, then drop every section that was not marked",
+				"The entry point's section is a root, and so is `.init_array` — nothing references a constructor, so marking only from the entry deletes them all",
+				"Reachability is transitive and runs through data too: a function that references a string keeps the section holding the string",
+				"Without the flag nothing is dropped, so the same inputs must link both ways and differ only in what came out"
+			],
+			"tests": [
+				{
+					"name": "without the flag, an unreachable section is kept",
+					"ext": true
+				},
+				{
+					"name": "with it, the unreachable section is gone",
+					"ext": true
+				},
+				{
+					"name": "what the entry point calls is kept",
+					"ext": true
+				},
+				{
+					"name": "and what that calls, transitively",
+					"ext": true
+				},
+				{
+					"name": "a section reachable only from a dropped one goes too",
+					"ext": true
+				},
+				{
+					"name": "data a kept function references is kept",
+					"ext": true
+				},
+				{
+					"name": ".init_array is a root, so constructors survive",
+					"ext": true
+				},
+				{
+					"name": "the collected program still runs",
+					"ext": true
+				},
+				{
+					"name": "collecting does not change what the program does",
+					"ext": true
+				}
+			],
+			"exampleCount": 1
 		}
 	],
 	"totals": {
-		"stages": 42,
-		"tests": 341,
-		"ext": 15
+		"stages": 44,
+		"tests": 359,
+		"ext": 17
 	},
 	"source": "linktest/catalog.json"
 }

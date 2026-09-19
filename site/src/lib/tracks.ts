@@ -242,14 +242,15 @@ export const tracks: Record<TrackId, TrackMeta> = {
 		reference: '/usr/bin/ld (GNU ld)',
 		reportPath: '/__reports/link.json',
 		examples: 'bytes',
-		plannedStages: 42,
+		plannedStages: 44,
 		sectionBadges: {
 			A: { badge: 'The Woodpile', icon: '🌰' },
 			B: { badge: 'Assembly Arbour', icon: '🌱' },
 			C: { badge: 'Name Nursery', icon: '🏷' },
 			D: { badge: 'Patch Meadow', icon: '🧵' },
 			E: { badge: 'Archive Alley', icon: '📚' },
-			F: { badge: 'The Far Orchard', icon: '🌳' }
+			F: { badge: 'The Far Orchard', icon: '🌳' },
+			G: { badge: 'The Toolshed', icon: '🧰' }
 		}
 	},
 	dist: {

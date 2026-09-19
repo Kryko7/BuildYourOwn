@@ -8,7 +8,15 @@ use std::collections::BTreeMap;
 use std::path::Path;
 
 /// How many stages the plan has, implemented or not.
-pub const PLANNED_STAGES: u32 = 42;
+///
+/// Counted from the section table rather than written down, so adding a stage to the plan
+/// cannot leave this behind — which it did, silently, until the day it was noticed.
+pub fn planned_stages() -> u32 {
+    crate::stages::sections()
+        .iter()
+        .map(|s| s.stages.len() as u32)
+        .sum()
+}
 
 /// A section entry of the catalog.
 #[derive(Serialize)]
@@ -226,7 +234,7 @@ pub fn list(stages: &[Stage], plan: &Path) {
         );
     }
     let total: usize = stages.iter().map(|s| s.tests.len()).sum();
-    let planned = PLANNED_STAGES as usize - stages.len();
+    let planned = planned_stages() as usize - stages.len();
     println!(
         "\n{} stages implemented, {total} tests ({planned} stages still planned)",
         stages.len()
@@ -259,7 +267,10 @@ mod tests {
             serde_json::from_str(&to_json(&cat).expect("json")).expect("parse");
         assert_eq!(v["track"], "link");
         assert_eq!(v["generatedAt"], "2026-01-01T00:00:00Z");
-        assert_eq!(v["sections"].as_array().map(Vec::len), Some(6));
+        assert_eq!(
+            v["sections"].as_array().map(Vec::len),
+            Some(crate::stages::sections().len())
+        );
         let first = &v["stages"][0];
         assert_eq!(first["number"], 1);
         assert!(first["file"]

@@ -66,6 +66,8 @@ mod s39_large_sections;
 mod s40_fuzz;
 mod s41_determinism;
 mod s42_toolchain_interop;
+mod s43_init_arrays;
+mod s44_gc_sections;
 
 /// Every implemented stage, in ascending order.
 pub fn all() -> Vec<Stage> {
@@ -112,6 +114,8 @@ pub fn all() -> Vec<Stage> {
         s40_fuzz::stage(),
         s41_determinism::stage(),
         s42_toolchain_interop::stage(),
+        s43_init_arrays::stage(),
+        s44_gc_sections::stage(),
     ];
     v.sort_by_key(|s| s.number);
     v
@@ -160,6 +164,11 @@ pub fn sections() -> &'static [Section] {
             id: "f",
             title: "Real programs, robustness, scale",
             stages: &[37, 38, 39, 40, 41, 42],
+        },
+        Section {
+            id: "g",
+            title: "What real toolchains expect",
+            stages: &[43, 44],
         },
     ]
 }
@@ -778,7 +787,11 @@ mod tests {
     fn sections_cover_the_whole_plan_once() {
         let mut all_numbers: Vec<u32> = sections().iter().flat_map(|s| s.stages.to_vec()).collect();
         all_numbers.sort_unstable();
-        assert_eq!(all_numbers, (1..=42).collect::<Vec<u32>>());
+        assert_eq!(
+            all_numbers,
+            (1..=all_numbers.len() as u32).collect::<Vec<u32>>(),
+            "the sections must cover 1..=n once each, with no gap and no repeat"
+        );
     }
 
     #[test]
