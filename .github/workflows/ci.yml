@@ -97,7 +97,12 @@ jobs:
           key: ref-${{ matrix.crate }}-${{ runner.os }}
       # These are the commands the READMEs tell a reader to run, run exactly as written:
       # from the repo root, against the one workspace target directory.
-      - run: cargo build --release --examples -p ${{ matrix.crate }}
+      #
+      # `--bins --examples`, not `--examples`: target filters are a selection, so
+      # `--examples` alone builds the examples and *not the tester*, and cargo says so in a
+      # warning that is easy to scroll past. The dist ladders need the examples too, because
+      # reference_primitives and reference_algorithms are what they validate against.
+      - run: cargo build --release --bins --examples -p ${{ matrix.crate }}
       - run: ${{ matrix.run }}
 
   discriminates:
@@ -135,7 +140,7 @@ jobs:
         with:
           path: ~/.cache/disttest
           key: ref-disttest-${{ runner.os }}
-      - run: cargo build --release --examples -p disttest
+      - run: cargo build --release --bins --examples -p disttest
       # Roughly fifteen minutes: three- and five-node etcd clusters with fault injection.
       - run: target/release/disttest --target etcd --validate --from 36 --until 55
       - name: No stray reference processes or temp dirs were left behind

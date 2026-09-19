@@ -74,6 +74,31 @@ fn ci_runs_exactly_the_commands_the_plan_promises() {
 }
 
 #[test]
+fn every_build_step_actually_builds_the_binary_it_then_runs() {
+    // `--examples` is a target *filter*, not an addition: `cargo build --examples -p x`
+    // builds the examples and not the binary, and says so in a warning
+    // ("target filter `examples` specified, but no targets matched; this is a no-op")
+    // that is easy to scroll past in a CI log. The validate jobs then failed on a missing
+    // file, one commit after they failed on a wrong path.
+    let workflow = read(&repo_root().join(".github/workflows/ci.yml"));
+    let mut offenders = Vec::new();
+    for (n, line) in workflow.lines().enumerate() {
+        let trimmed = line.trim();
+        if !trimmed.contains("cargo build") {
+            continue;
+        }
+        if trimmed.contains("--examples") && !trimmed.contains("--bins") {
+            offenders.push(format!("ci.yml:{}: {trimmed}", n + 1));
+        }
+    }
+    assert!(
+        offenders.is_empty(),
+        "these build examples but not the binary the next step runs:\n{}",
+        offenders.join("\n")
+    );
+}
+
+#[test]
 fn no_document_still_points_at_a_per_crate_target_directory() {
     // The workspace has one target directory at the root. `./target/release/<tester>` was
     // right before it and is wrong now: it resolves to `<crate>/target/release`, which cargo
