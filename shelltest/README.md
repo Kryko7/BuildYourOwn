@@ -41,7 +41,7 @@ Stage 05 echo builtin
 Stage 05  echo builtin                       7/9 passed
 ```
 
-Run `shelltest --shell examples/broken_shell.sh --until 5` to see a deliberately broken
+Run `target/release/shelltest --shell shelltest/examples/broken_shell.sh --until 5` to see a deliberately broken
 shell fail. Add `--keep-tmp` to keep each test's sandbox directory, `--verbose` to see
 input/output for passing tests too, `--json report.json` for a machine-readable report.
 
@@ -57,8 +57,9 @@ shelltest --shell <name|path> [--stage N] [--until N] [--from N] [--all]
 
 - `--shell` takes a name from `shells.yaml` (`bash`, `zsh`, `dash`, `my_shell`) or a path.
   A path is used as the command in both pipe and pty mode.
-- `--validate` runs everything against a *registered reference shell* and words failures
-  as suite bugs. `shelltest --shell bash --validate` must be all green.
+- `--validate` runs against a *registered reference shell* and words failures as suite
+  bugs. On its own it runs every stage; `--stage`/`--from`/`--until` narrow it.
+  `shelltest --shell bash --validate` must be all green.
 - `--skip-ext` hides tests tagged `ext` (stages beyond the core track);
   `--tag ext` runs only those.
 - Exit code is 0 only when every selected test passed (2 on a harness/usage error).
@@ -91,7 +92,8 @@ is `skip_on: [bash]` with a reason. Your shell needs to:
 Sandbox: every test runs in a fresh temp dir with `cwd={TMP}`, `PATH={TMP}/bin[:host PATH]`,
 `HOME={TMP}/home`, `HISTFILE={TMP}/.history`, `TERM=dumb`, `LANG=LC_ALL=C` and nothing else
 in the environment. Fixture executables are `#!/bin/sh` scripts. Host tools used by tests
-are limited to `sh cat ls wc sleep true false head`; anything that inspects PATH uses
+are limited to `sh cat ls wc sleep true false head rm` (stage 57's zombie check also reads
+Linux's `/proc`); anything that inspects PATH uses
 `path_isolated: true`, which removes the host PATH entirely.
 
 ## Normalization (what "exact" means)
@@ -179,10 +181,13 @@ Pty mode: the shell runs as session leader with the pty as its controlling termi
 (120x24, `TERM=dumb`). If the shell is still running after the last step it is stopped
 by the harness and the exit code shows `(still running; stopped by harness)`; send
 `exit\r` when you want to assert on the exit code. A `wait` that never matches fails the
-test as a timeout with the partial terminal shown.
+test as a timeout with the partial terminal shown; if the shell exits first, the `wait`
+ends there and the next step that needs the shell fails with "shell exited before step N".
 
 Timeouts: 5 s by default (`--timeout-ms`, or `timeout_ms` per test). A hung shell gets
 SIGHUP, SIGTERM, then SIGKILL and the test is reported as a timeout with partial output.
+Whatever the shell leaves running when a test ends (background jobs, grandchildren) is
+killed with it: its process group, and in pty mode on Linux its whole session.
 
 ## Registering a shell
 
@@ -207,7 +212,8 @@ declared but not installed on every system.
 
 ## Reference shells and `skip_on`
 
-- **bash 5.x**: `shelltest --shell bash --validate` passes 427/427 (one skip). The only
+- **bash 5.x** (validated on 5.3): `shelltest --shell bash --validate` passes 591/591
+  (one skip). The only
   `skip_on: [bash]` is stage 7 "a non-executable file in PATH is not reported": bash's
   `type` falls back to non-executable files.
 - **zsh 5.9**: 47 tests are `skip_on: [zsh]` because zsh words errors differently
@@ -217,8 +223,8 @@ declared but not installed on every system.
   purpose: zsh's completion menus (stages 30–35), `~unknownuser` and dotfile globbing
   errors, HISTFILE format (stage 47) and `%` partial-line handling in stage 57.
 - **dash**: no completion, history or line editing, so stages 30–35, 41–47, 50, 55 cannot
-  pass; the basics do. No `skip_on: [dash]` entries are shipped because dash was not
-  available to validate them.
+  pass; the basics do. The only `skip_on: [dash]` is stage 70's `set -o pipefail` test;
+  no others are shipped because dash was not available to validate them.
 
 ## Adding tests
 
@@ -250,7 +256,7 @@ src/normalize.rs     prompt/ANSI stripping, placeholders
 src/matchers.rs      exact/regex/contains/not_contains/lines_*
 src/report.rs        colored output, unified diffs, JSON
 tests/selftest.rs    runs the YAML suite against bash
-tests/stages/        57 stage files
+tests/stages/        70 stage files
 examples/broken_shell.sh
 PLAN.md              tickboxes per stage with implementation hints
 ```

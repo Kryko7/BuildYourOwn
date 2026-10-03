@@ -124,7 +124,7 @@ tests:
       stdout: "one"
       exit_code: 1
 
-  - name: "pipefail reports the first failing command in a pipeline"
+  - name: "pipefail reports the last failing command in a pipeline"
     tags: [ext]
     skip_on: [dash]
     reason: "set -o pipefail is a bash/zsh extension, not in POSIX, and dash does not have it"
@@ -132,9 +132,10 @@ tests:
       path_isolated: true
       executables:
         fail3: "exit 3"
+        fail4: "exit 4"
         pass: "exit 0"
-      files: { "s.sh": "fail3 | pass\necho without=$?\nset -o pipefail\nfail3 | pass\necho with=$?\n" }
+      files: { "s.sh": "fail3 | pass\necho without=$?\nset -o pipefail\nfail3 | pass\necho with=$?\nfail3 | fail4 | pass\necho rightmost=$?\n" }
     shell_args: ["{TMP}/s.sh"]
     expect:
-      stdout: "without=0\nwith=3"
+      stdout: "without=0\nwith=3\nrightmost=4"
       exit_code: 0

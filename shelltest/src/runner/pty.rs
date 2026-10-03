@@ -1,7 +1,9 @@
 //! Pty mode: the shell runs as a session leader on a pseudo-terminal, and the test
 //! drives it with send/wait/sleep steps. This is the only module with `unsafe`.
 
-use super::{kill_child, read_available, set_nonblocking, Captured, ExitInfo, ReadState};
+use super::{
+    kill_child, kill_leftovers, read_available, set_nonblocking, Captured, ExitInfo, ReadState,
+};
 use crate::loader::Step;
 use anyhow::{Context, Result};
 use nix::errno::Errno;
@@ -195,6 +197,7 @@ pub fn run(cmd: Command, steps: &[Step], timeout: Duration) -> Result<Captured> 
             Some(ExitInfo::Killed)
         }
     };
+    kill_leftovers(s.child.id(), true);
     let _ = read_available(&s.master, &mut s.buf);
     cap.terminal = s.buf;
     Ok(cap)
@@ -272,6 +275,30 @@ mod tests {
         ];
         let cap = run(sh(), &steps, Duration::from_secs(5)).unwrap();
         assert!(cap.step_error.as_deref().unwrap_or("").contains("step 4"));
+    }
+
+    #[test]
+    fn background_jobs_in_their_own_group_do_not_outlive_the_test() {
+        // An interactive shell with job control puts `sleep &` in a process group of its
+        // own, so killing the shell's group is not enough; the whole session must go.
+        let steps = vec![
+            Step::Wait("$ ".into()),
+            Step::Send("sleep 30 & echo pid=$!\r".into()),
+            Step::Wait("$ ".into()),
+            Step::Send("exit\r".into()),
+        ];
+        let cap = run(sh(), &steps, Duration::from_secs(5)).unwrap();
+        let text = term(&cap);
+        let pid: i32 = text
+            .split("pid=")
+            .nth(2)
+            .and_then(|r| r.split_whitespace().next())
+            .and_then(|p| p.parse().ok())
+            .unwrap_or_else(|| panic!("no pid in {text:?}"));
+        assert!(
+            super::super::tests::gone_soon(pid),
+            "background sleep {pid} survived the test"
+        );
     }
 
     #[test]

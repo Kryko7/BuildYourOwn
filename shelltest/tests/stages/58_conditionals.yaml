@@ -54,7 +54,9 @@ tests:
   - name: "a whole pipeline can be the condition"
     tags: [ext]
     fixtures:
-      files: { "s.sh": "if echo hello | grep -q hello; then echo found; fi\nif echo hello | grep -q zzz; then echo bad; else echo missing; fi\n" }
+      executables:
+        has: 'while read l; do case "$l" in *"$1"*) exit 0;; esac; done; exit 1'
+      files: { "s.sh": "if echo hello | has hello; then echo found; fi\nif echo hello | has zzz; then echo bad; else echo missing; fi\n" }
     shell_args: ["{TMP}/s.sh"]
     expect:
       stdout: "found\nmissing"

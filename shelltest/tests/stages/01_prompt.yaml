@@ -20,8 +20,12 @@ tests:
     steps:
       - wait: "$ "
       - sleep_ms: 300
+      # A shell that exited during the pause fails here ("shell exited before step 3");
+      # one that re-printed the prompt fails the regex.
+      - send: "\r"
+      - wait: "$ "
     expect:
-      terminal: { regex: "^\\$ $" }
+      terminal: { regex: "^\\$ \n\\$ $" }
 
   - name: "an empty line produces a fresh prompt"
     mode: pty

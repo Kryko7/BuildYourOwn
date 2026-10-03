@@ -382,9 +382,72 @@ pub(crate) fn kill_child(child: &mut Child) -> ExitStatus {
     child.wait().unwrap_or_else(|_| ExitStatus::from_raw(9))
 }
 
+/// SIGKILL whatever the shell left running once the test is over: background jobs and
+/// grandchildren would otherwise outlive the test (and its deleted sandbox) and pile up
+/// over a full run. `pid` is the shell's pid, which is also its process-group id in both
+/// modes. With `session` (pty mode, where the shell is a session leader) every other
+/// process in that session is killed too, which catches jobs a job-control shell moved
+/// into groups of their own; that part needs /proc and is Linux-only.
+///
+/// Safe to call after the shell has been reaped: a pid stays reserved while any process
+/// still uses it as a group or session id, so the signals reach the leftovers and nothing
+/// else.
+pub(crate) fn kill_leftovers(pid: u32, session: bool) {
+    let pid = pid as i32;
+    let _ = kill(Pid::from_raw(-pid), Signal::SIGKILL);
+    #[cfg(target_os = "linux")]
+    if session {
+        for member in session_members(pid) {
+            let _ = kill(Pid::from_raw(member), Signal::SIGKILL);
+        }
+    }
+    #[cfg(not(target_os = "linux"))]
+    let _ = session;
+}
+
+/// Pids whose session id is `sid`, read from /proc/<pid>/stat.
+#[cfg(target_os = "linux")]
+fn session_members(sid: i32) -> Vec<i32> {
+    let Ok(dir) = std::fs::read_dir("/proc") else {
+        return vec![];
+    };
+    dir.filter_map(|e| {
+        let pid: i32 = e.ok()?.file_name().to_str()?.parse().ok()?;
+        let stat = std::fs::read_to_string(format!("/proc/{pid}/stat")).ok()?;
+        // The command name is in parentheses and may contain anything, so parse after
+        // the last ')': state ppid pgrp session ...
+        let rest = &stat[stat.rfind(')')? + 1..];
+        let session: i32 = rest.split_whitespace().nth(3)?.parse().ok()?;
+        (session == sid && pid != sid).then_some(pid)
+    })
+    .collect()
+}
+
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
+
+    /// True once `pid` no longer exists (or is only a zombie awaiting its new parent).
+    pub(crate) fn gone_soon(pid: i32) -> bool {
+        let start = Instant::now();
+        while start.elapsed() < Duration::from_secs(3) {
+            let alive = kill(Pid::from_raw(pid), None).is_ok();
+            let zombie = std::fs::read_to_string(format!("/proc/{pid}/stat"))
+                .map(|s| {
+                    s.rsplit(')')
+                        .next()
+                        .unwrap_or("")
+                        .trim_start()
+                        .starts_with('Z')
+                })
+                .unwrap_or(false);
+            if !alive || zombie {
+                return true;
+            }
+            std::thread::sleep(Duration::from_millis(20));
+        }
+        false
+    }
 
     #[test]
     fn keys_sugar_waits_for_prompt_after_enter() {

@@ -85,6 +85,19 @@ fn broken_example_shell_fails_visibly() {
 }
 
 #[test]
+fn validate_honours_an_explicit_stage() {
+    // The README's workflow for a new test is `--validate --stage NN`; that must check
+    // stage NN against the reference, not silently run the whole suite.
+    let (ok, text) = run(shelltest().args(["--shell", "bash", "--validate", "--stage", "5"]));
+    assert!(ok, "{text}");
+    assert!(text.contains("Stage 05"), "{text}");
+    assert!(
+        !text.contains("Stage 06"),
+        "--stage 5 ran other stages:\n{text}"
+    );
+}
+
+#[test]
 fn json_report_is_written() {
     let dir = tempfile::tempdir().unwrap();
     let json = dir.path().join("report.json");

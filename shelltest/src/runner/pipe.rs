@@ -1,6 +1,8 @@
 //! Pipe mode: the shell reads a script from stdin; stdout/stderr are captured separately.
 
-use super::{kill_child, read_available, set_nonblocking, Captured, ExitInfo, ReadState};
+use super::{
+    kill_child, kill_leftovers, read_available, set_nonblocking, Captured, ExitInfo, ReadState,
+};
 use anyhow::{Context, Result};
 use nix::errno::Errno;
 use nix::poll::{poll, PollFd, PollFlags, PollTimeout};
@@ -83,6 +85,7 @@ pub fn run(mut cmd: Command, input: &[u8], timeout: Duration) -> Result<Captured
             break;
         }
     }
+    kill_leftovers(child.id(), false);
     Ok(cap)
 }
 
@@ -144,5 +147,15 @@ mod tests {
         let cap = run(sh(), b"sleep 5 &\necho done\n", Duration::from_secs(10)).unwrap();
         assert_eq!(cap.stdout, b"done\n");
         assert!(start.elapsed() < Duration::from_secs(3));
+    }
+
+    #[test]
+    fn background_children_do_not_outlive_the_test() {
+        let cap = run(sh(), b"sleep 30 &\necho $!\n", Duration::from_secs(10)).unwrap();
+        let pid: i32 = String::from_utf8_lossy(&cap.stdout).trim().parse().unwrap();
+        assert!(
+            super::super::tests::gone_soon(pid),
+            "background sleep {pid} survived the test"
+        );
     }
 }

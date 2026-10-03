@@ -3,8 +3,9 @@ name: "Background jobs: &, jobs, wait"
 tests:
   - name: "cmd & returns to the prompt immediately"
     tags: [ext]
+    # The job outlives the timeout, so a shell that runs it in the foreground times out.
     timeout_ms: 3000
-    input: ["sleep 2 &", "echo immediate", "exit 0"]
+    input: ["sleep 10 &", "echo immediate", "exit 0"]
     expect:
       stdout: "immediate"
       exit_code: 0
@@ -20,6 +21,7 @@ tests:
     tags: [ext]
     fixtures:
       path_isolated: true
+      env: { PATH: "{BIN}:/usr/bin:/bin" }
       executables:
         slow_echo: "sleep 0.3; echo from-background"
     input: ["slow_echo &", "wait", "echo after-wait", "exit 0"]
@@ -36,8 +38,11 @@ tests:
     tags: [ext]
     fixtures:
       path_isolated: true
+      env: { PATH: "{BIN}:/usr/bin:/bin" }
       executables:
-        mark: 'sleep 0.1; : > "{TMP}/done_$1"'
+        # Detached from the output pipes, so the harness does not wait for the jobs
+        # itself: only the shell's `wait` can make the files exist in time.
+        mark: 'exec >/dev/null 2>&1; sleep 0.1; : > "{TMP}/done_$1"'
     input: ["mark a &", "mark b &", "mark c &", "wait", "exit 0"]
     expect:
       files:
@@ -48,7 +53,7 @@ tests:
   - name: "foreground commands still run while a job is in the background"
     tags: [ext]
     timeout_ms: 3000
-    input: ["sleep 1 &", "echo one", "echo two", "exit 0"]
+    input: ["sleep 10 &", "echo one", "echo two", "exit 0"]
     expect:
       stdout: "one\ntwo"
 
@@ -56,6 +61,7 @@ tests:
     tags: [ext]
     fixtures:
       path_isolated: true
+      env: { PATH: "{BIN}:/usr/bin:/bin" }
       executables:
         fail3: "exit 3"
     input: ["sleep 0.2 &", "fail3", "echo $?", "wait", "exit 0"]

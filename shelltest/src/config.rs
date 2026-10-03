@@ -78,11 +78,16 @@ pub fn resolve_shell(spec: &str, shells: &BTreeMap<String, ShellDef>) -> Result<
 }
 
 /// Children run with a controlled PATH and cwd, so the program must be absolute up front.
+///
+/// Symlinks are deliberately *not* resolved: the runner passes the file name as argv[0],
+/// and shells read it (`/bin/sh` -> bash enters POSIX mode, a busybox link picks its
+/// applet), so `--shell /bin/sh` must still be launched as `sh`.
 pub fn resolve_program(prog: &str) -> Result<String> {
     let p = Path::new(prog);
     if prog.contains('/') {
-        let abs =
-            std::fs::canonicalize(p).with_context(|| format!("shell binary not found: {prog}"))?;
+        p.metadata()
+            .with_context(|| format!("shell binary not found: {prog}"))?;
+        let abs = std::path::absolute(p).with_context(|| format!("cannot make {prog} absolute"))?;
         return Ok(abs.to_string_lossy().to_string());
     }
     let path = std::env::var_os("PATH").unwrap_or_default();
@@ -127,5 +132,16 @@ mod tests {
         let def = resolve_shell("/bin/sh", &shells).unwrap();
         assert_eq!(def.name, "sh");
         assert_eq!(def.pty_command, def.pipe_command);
+    }
+
+    #[test]
+    fn symlinked_shells_keep_their_own_name() {
+        // argv[0] is taken from this path, and shells behave differently by name.
+        let dir = tempfile::tempdir().unwrap();
+        let link = dir.path().join("my_sh");
+        std::os::unix::fs::symlink("/bin/sh", &link).unwrap();
+        let resolved = resolve_program(link.to_str().unwrap()).unwrap();
+        assert_eq!(Path::new(&resolved), link);
+        assert!(resolve_program("./definitely/not/here").is_err());
     }
 }

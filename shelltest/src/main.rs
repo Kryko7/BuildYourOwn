@@ -151,12 +151,16 @@ fn list_stages(stages: &[Stage], tests_dir: &Path) {
 }
 
 fn select<'a>(cli: &Cli, stages: &'a [Stage]) -> Result<Vec<&'a Stage>> {
-    let (lo, hi) = if cli.all || cli.validate {
+    // `--validate` alone means the whole suite, but an explicit selection still narrows it
+    // (`--validate --stage NN` is how a new test is checked against the reference).
+    let (lo, hi) = if cli.all {
         (0, u32::MAX)
     } else if let Some(n) = cli.stage {
         (n, n)
     } else if cli.from.is_some() || cli.until.is_some() {
         (cli.from.unwrap_or(0), cli.until.unwrap_or(u32::MAX))
+    } else if cli.validate {
+        (0, u32::MAX)
     } else {
         bail!("select stages with --stage N, --until N, --from N, --all or --validate");
     };

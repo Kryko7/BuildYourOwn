@@ -29,6 +29,7 @@ tests:
     tags: [ext]
     fixtures:
       path_isolated: true
+      env: { PATH: "{BIN}:/usr/bin:/bin" }
       executables:
         fail7: "cat >/dev/null; exit 7"
     input: ["echo x | fail7", "echo $?", "exit 0"]
@@ -39,6 +40,7 @@ tests:
     tags: [ext]
     fixtures:
       path_isolated: true
+      env: { PATH: "{BIN}:/usr/bin:/bin" }
       executables:
         ok: "cat >/dev/null; exit 0"
     input: ["nope_cmd | ok", "echo $?", "exit 0"]
