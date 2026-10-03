@@ -32,10 +32,17 @@ for b in "${BINARIES[@]}"; do
 done
 
 if [ "$PURGE" = 1 ]; then
+  # `rm -rf` on a mistyped BYO_HOME would be unrecoverable; refuse the obvious disasters.
+  home_abs="$(cd "$BYO_HOME" 2>/dev/null && pwd -P || printf '%s' "$BYO_HOME")"
+  case "$home_abs" in
+    /|"$HOME"|"$(cd "$HOME" && pwd -P)"|/usr|/usr/*|/etc|/bin|/sbin|/lib|/lib64|/opt|/var)
+      echo "uninstall.sh: refusing to delete BYO_HOME=$BYO_HOME" >&2; exit 1 ;;
+  esac
   if [ -d "$BYO_HOME" ]; then
     if [ "$YES" != 1 ]; then
       printf 'Delete %s (progress, run history, catalogs, installed site)? Type yes: ' "$BYO_HOME"
-      read -r answer
+      answer=""
+      read -r answer || true   # EOF (no terminal) is a "no", not a silent set -e exit
       [ "$answer" = yes ] || { echo "kept $BYO_HOME"; exit 0; }
     fi
     rm -rf "$BYO_HOME"

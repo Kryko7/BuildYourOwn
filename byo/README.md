@@ -124,7 +124,8 @@ Details:
 - The command line is built from the registry: the track's target flag, then whichever of its
   data files exist in `$BYO_HOME`, then its extra keys — and your flags last, so they win.
 - With no stage selector, `--all` is added (the testers require an explicit selection).
-- If you pass your own `--json path`, that file is used for ingestion too.
+- If you pass your own `--json path`, that file is used for ingestion too (a relative path is
+  relative to the project root, where the tester runs).
 - `--list` runs are not recorded.
 - `byo <track> …` (e.g. `byo shell …`, `byo dist …`) is an explicit-track alias for
   `byo test`. It also works outside a project when the target is given inline:
@@ -146,7 +147,9 @@ binary is installed.
 
 Manual progress. Outside a project, add `--track <id>`.
 
-Progress is also **derived**: after every run, a stage whose latest run passed every test it
+Progress is also **derived**: after every run (except a `--validate` run, which checks the
+suite against the reference rather than your program and is recorded without touching the
+map), a stage whose latest run passed every test it
 ran becomes `done`; a stage with some failures becomes `in_progress`; one with only failures
 becomes `failed`. Notes always survive. `byo note N ""` clears a note.
 
@@ -172,7 +175,8 @@ byo db set-site-source ~/…/site      # where `byo site --rebuild` should build
 ### `byo doctor`
 
 Generic checks (`byo` itself, the data directory, the database schema, the installed site,
-`npm`, port 4321, `~/.local/bin` on `PATH`, the `byo.toml` here) plus **per-track rows**:
+`npm`, port 4321, the directory `byo` runs from — `$BYO_BIN_DIR`, default `~/.local/bin` — on
+`PATH`, the `byo.toml` here) plus **per-track rows**:
 
 ```
 ok   shell tester           shelltest 0.1.0 (~/.local/bin/shelltest)

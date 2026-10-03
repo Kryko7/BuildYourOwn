@@ -1,6 +1,6 @@
 {
 	"track": "tls",
-	"generatedAt": "2026-09-19T07:26:44.690Z",
+	"generatedAt": "2026-10-03T10:21:58.907Z",
 	"sections": [
 		{
 			"id": "A",
@@ -506,7 +506,7 @@
 					"name": "the refusal is a fatal alert, never a warning"
 				},
 				{
-					"name": "a hello offering only an unimplementable group is refused"
+					"name": "a hello offering only ffdhe2048 is refused or retried, never answered"
 				},
 				{
 					"name": "the server still serves an acceptable client afterwards"
@@ -914,10 +914,10 @@
 					"name": "the server's own CCS, if any, is plaintext and one byte"
 				},
 				{
-					"name": "a CCS carrying a byte other than 0x01 does not crash the server"
+					"name": "a CCS carrying a byte other than 0x01 is refused"
 				},
 				{
-					"name": "a CCS before the ClientHello does not crash the server"
+					"name": "a CCS before the ClientHello is refused"
 				}
 			],
 			"exampleCount": 2

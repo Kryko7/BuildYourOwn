@@ -1,6 +1,6 @@
 {
 	"track": "shell",
-	"generatedAt": "2026-09-19T06:43:26.968Z",
+	"generatedAt": "2026-10-03T10:21:58.907Z",
 	"sections": [
 		{
 			"id": "A",
@@ -180,13 +180,21 @@
 						{
 							"op": "sleep_ms",
 							"value": "300"
+						},
+						{
+							"op": "send",
+							"value": "\r"
+						},
+						{
+							"op": "wait",
+							"value": "$ "
 						}
 					],
 					"expect": [
 						{
 							"label": "terminal",
 							"kind": "regex",
-							"value": "^\\$ $"
+							"value": "^\\$ \n\\$ $"
 						}
 					]
 				},
@@ -7650,7 +7658,7 @@
 						"ext"
 					],
 					"input": [
-						"sleep 2 &",
+						"sleep 10 &",
 						"echo immediate",
 						"exit 0"
 					],
@@ -7765,7 +7773,7 @@
 						"ext"
 					],
 					"input": [
-						"sleep 1 &",
+						"sleep 10 &",
 						"echo one",
 						"echo two",
 						"exit 0"
@@ -12540,7 +12548,7 @@
 					]
 				},
 				{
-					"name": "pipefail reports the first failing command in a pipeline",
+					"name": "pipefail reports the last failing command in a pipeline",
 					"ext": true,
 					"tags": [
 						"ext"
@@ -12553,7 +12561,7 @@
 						{
 							"label": "stdout",
 							"kind": "exact",
-							"value": "without=0\nwith=3"
+							"value": "without=0\nwith=3\nrightmost=4"
 						},
 						{
 							"label": "exit code",

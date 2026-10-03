@@ -262,7 +262,12 @@ Response — the stage row after the write:
 }
 ```
 
-**Status:** `200`; `400` for a bad stage number or body; `404` for an unknown track;
+Writes are refused with `403` unless the request's `Host` is a loopback name (`127.0.0.1`,
+`localhost`, `[::1]`) and its `Origin`, when sent, is this server — so another web page open in
+the browser cannot mark stages for you.
+
+**Status:** `200`; `400` for a bad stage number or body; `403` for a cross-origin write;
+`404` for an unknown track;
 `405` when the same path is fetched with `GET`.
 
 ---

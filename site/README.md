@@ -63,7 +63,7 @@ the same thing that moves the map.
 **A byo older than this site is fine.** `/api/progress` and `/api/health` are read per registered
 track and a track the server has never heard of simply comes back empty, so a two-track `byo` still
 drives a six-track page. `GET /api/tracks` (id, title, blurb, accent, installed, testerVersion) is
-consumed when the server offers it and is `null` otherwise — it is not in `byo/API.md` yet, so
+consumed when the server offers it and is `null` otherwise (an older `byo`; the endpoint is documented in `byo/API.md`), so
 nothing on the site depends on it; the built-in registry is the fallback and the display source.
 
 Code: `src/lib/api/client.ts` (typed client over an injectable `fetch`),

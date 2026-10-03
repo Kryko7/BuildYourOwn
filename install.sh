@@ -51,6 +51,8 @@ die()  { printf '%sxx%s  %s\n' "$RED" "$OFF" "$*" >&2; exit 1; }
 note() { printf '%s    %s%s\n' "$DIM" "$*" "$OFF"; }
 
 WARNINGS=()
+# Build logs go in a private directory, not at fixed names in a shared /tmp.
+LOG_DIR="$(mktemp -d "${TMPDIR:-/tmp}/byo-install.XXXXXX")"
 
 command -v cargo >/dev/null 2>&1 || die "cargo is not on PATH — install Rust from https://rustup.rs"
 
@@ -77,23 +79,23 @@ for row in "${TRACKS[@]}"; do
     continue
   fi
   printf '  %s… ' "$tester"
-  if (cd "$REPO/$dir" && cargo build --release "${build_flags[@]}" >"/tmp/byo-build-$tester.log" 2>&1); then
+  if (cd "$REPO/$dir" && cargo build --release "${build_flags[@]}" >"$LOG_DIR/build-$tester.log" 2>&1); then
     printf '%sok%s\n' "$GREEN" "$OFF"
   else
     printf '%sfailed%s\n' "$YELLOW" "$OFF"
-    tail -20 "/tmp/byo-build-$tester.log" >&2 || true
+    tail -20 "$LOG_DIR/build-$tester.log" >&2 || true
     warn "$tester did not build; the $id track will not work until it does"
-    WARNINGS+=("$tester failed to build (see /tmp/byo-build-$tester.log)")
+    WARNINGS+=("$tester failed to build (see $LOG_DIR/build-$tester.log)")
   fi
 done
 
 printf '  %s… ' byo
 [ -d "$REPO/byo" ] || die "$REPO/byo is missing"
-if (cd "$REPO/byo" && cargo build --release >/tmp/byo-build-byo.log 2>&1); then
+if (cd "$REPO/byo" && cargo build --release >"$LOG_DIR/build-byo.log" 2>&1); then
   printf '%sok%s\n' "$GREEN" "$OFF"
 else
   printf '%sfailed%s\n' "$RED" "$OFF"
-  tail -30 /tmp/byo-build-byo.log >&2 || true
+  tail -30 "$LOG_DIR/build-byo.log" >&2 || true
   die "byo failed to build"
 fi
 
@@ -218,7 +220,11 @@ for row in "${TRACKS[@]}"; do
   fi
 done
 
-if [ -d "$REPO/site/build" ]; then
+if [ "$SKIP_SITE" = 1 ]; then
+  # --skip-site promises to leave the installed site alone; copying a stale repo build
+  # over it would quietly undo a `byo site --rebuild`.
+  note "$BYO_HOME/site (left as it is: --skip-site)"
+elif [ -d "$REPO/site/build" ]; then
   copy_tree "$REPO/site/build" "$BYO_HOME/site"
 else
   warn "no $REPO/site/build — \`byo site\` will serve a placeholder until you run \`byo site --rebuild\`"

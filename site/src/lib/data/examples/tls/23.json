@@ -2,7 +2,7 @@
 	{
 		"title": "The counter's whole life",
 		"kind": "text",
-		"request": "handshake keys installed -> 0\nthe client's Finished     -> 1\napplication keys installed -> 0\nfirst application record   -> 1\nKeyUpdate sent (under the old keys) -> 3, then new keys -> 0",
+		"request": "handshake keys installed -> 0\nthe client's Finished     -> 1\napplication keys installed -> 0\nfirst application record   -> 1\nKeyUpdate sent (under the old keys) -> 2, then new keys -> 0",
 		"request_hex": "",
 		"response": "The server counts its own writes the same way, independently. Nothing about either counter is ever transmitted.",
 		"response_hex": "",

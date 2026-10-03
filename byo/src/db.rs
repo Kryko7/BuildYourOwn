@@ -331,6 +331,11 @@ pub fn ingest(
         }
 
         // Derived progress: a stage whose latest run passed every test it ran is done.
+        // A `--validate` run checks the suite against the *reference* (bash, wasmtime, …),
+        // not the learner's program, so it is recorded but never moves their map.
+        if report.validate {
+            continue;
+        }
         let ran = st.passed + st.failed;
         let state = if ran == 0 {
             None
@@ -815,6 +820,31 @@ mod tests {
         );
         assert_eq!(rows[0].done_at.as_deref(), Some("2026-09-13T10:00:00Z"));
         assert_eq!(rows[0].last_run_id, Some(id));
+    }
+
+    #[test]
+    fn a_validate_run_is_recorded_but_moves_no_stage() {
+        let mut conn = open_memory().unwrap();
+        let mut rep = sample(
+            "bash",
+            vec![st(1, &[("a", "pass")]), st(2, &[("b", "pass")])],
+        );
+        rep.validate = true;
+        let id = ingest(
+            &mut conn,
+            Track::SHELL,
+            None,
+            &rep,
+            "--validate --all",
+            None,
+            "2026-09-13T10:00:00Z",
+        )
+        .unwrap();
+        assert_eq!(latest_run_id(&conn, Track::SHELL).unwrap(), Some(id));
+        assert!(
+            stages(&conn, Track::SHELL).unwrap().is_empty(),
+            "the reference going green is not the learner's progress"
+        );
     }
 
     #[test]

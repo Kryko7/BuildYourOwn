@@ -58,7 +58,7 @@ pub fn run(paths: &Paths) -> Result<i32> {
             Level::Warn => "\x1b[33m!\x1b[0m",
             Level::Bad => "\x1b[31m✘\x1b[0m",
         };
-        let mark = if std::env::var_os("NO_COLOR").is_some() {
+        let mark = if !crate::status::color_enabled() {
             match c.level {
                 Level::Ok => "ok  ",
                 Level::Warn => "warn",
@@ -431,21 +431,43 @@ fn port_check(port: u16) -> Check {
     }
 }
 
+/// Is the directory this `byo` runs from on `PATH`? That is where `install.sh` put it
+/// (`$BYO_BIN_DIR`, default `~/.local/bin`) and where the testers sit next to it.
 fn path_check() -> Check {
-    let Some(dir) = dirs::home_dir().map(|h| h.join(".local/bin")) else {
-        return check(Level::Warn, "PATH", "cannot determine your home directory");
+    let Some(dir) = std::env::current_exe()
+        .ok()
+        .and_then(|e| e.parent().map(Path::to_path_buf))
+    else {
+        return check(
+            Level::Warn,
+            "PATH",
+            "cannot tell where this byo is installed",
+        );
     };
-    let on_path = std::env::var_os("PATH")
-        .map(|p| std::env::split_paths(&p).any(|d| d == dir))
-        .unwrap_or(false);
-    if on_path || !dir.exists() {
+    path_check_for(&dir, std::env::var_os("PATH").as_deref())
+}
+
+fn path_check_for(dir: &Path, path_var: Option<&std::ffi::OsStr>) -> Check {
+    if dir.components().any(|c| c.as_os_str() == "target") {
+        return check(
+            Level::Ok,
+            "PATH",
+            format!("running from a build directory ({})", dir.display()),
+        );
+    }
+    let canon = |p: &Path| std::fs::canonicalize(p).unwrap_or_else(|_| p.to_path_buf());
+    let want = canon(dir);
+    let on_path =
+        path_var.is_some_and(|p| std::env::split_paths(p).any(|d| d == dir || canon(&d) == want));
+    if on_path {
         check(Level::Ok, "PATH", format!("{} is on PATH", dir.display()))
     } else {
         check(
             Level::Warn,
             "PATH",
             format!(
-                "{} is not on PATH — add `export PATH=\"$HOME/.local/bin:$PATH\"`",
+                "{} is not on PATH — add `export PATH=\"{}:$PATH\"`",
+                dir.display(),
                 dir.display()
             ),
         )
@@ -568,6 +590,28 @@ mod tests {
             "wasm needs a cached wasmtime row: {rows:#?}"
         );
         assert!(rows.iter().all(|c| c.level != Level::Bad));
+    }
+
+    #[test]
+    fn the_path_check_is_about_the_directory_byo_runs_from() {
+        let d = tempfile::tempdir().unwrap();
+        let bin = d.path().join("bin");
+        std::fs::create_dir_all(&bin).unwrap();
+        let joined = std::env::join_paths([Path::new("/usr/bin"), bin.as_path()]).unwrap();
+        assert_eq!(path_check_for(&bin, Some(&joined)).level, Level::Ok);
+        let other = std::env::join_paths([Path::new("/usr/bin")]).unwrap();
+        let c = path_check_for(&bin, Some(&other));
+        assert_eq!(c.level, Level::Warn);
+        assert!(
+            c.detail.contains(&bin.display().to_string()),
+            "{}",
+            c.detail
+        );
+        assert_eq!(path_check_for(&bin, None).level, Level::Warn);
+        assert_eq!(
+            path_check_for(Path::new("/repo/target/release"), None).level,
+            Level::Ok
+        );
     }
 
     #[test]

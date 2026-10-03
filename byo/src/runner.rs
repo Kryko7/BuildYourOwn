@@ -79,8 +79,11 @@ pub fn plan(paths: &Paths, project: &Project, user: &[String], temp_json: PathBu
         args.push("--all".into());
     }
 
+    // The tester runs in the project root, which is not necessarily the directory `byo`
+    // was started in (`byo.toml` is found by walking up), so a relative `--json` path is
+    // the tester's — resolve it there, or a run from a subdirectory reads back nothing.
     let json = match value_of(user, "--json") {
-        Some(p) => PathBuf::from(p),
+        Some(p) => project.root.join(p),
         None => {
             args.push("--json".into());
             args.push(temp_json.to_string_lossy().into_owned());
@@ -137,7 +140,13 @@ fn ingest_file(
     started_at: &str,
     elapsed: std::time::Duration,
 ) -> Result<Option<String>> {
-    if !inv.json.is_file() {
+    // The temporary file exists (empty) before the tester runs, so "no report" is also
+    // "still empty" — a tester that died before writing must not read as invalid JSON.
+    if !inv
+        .json
+        .metadata()
+        .is_ok_and(|m| m.is_file() && m.len() > 0)
+    {
         eprintln!(
             "byo: the tester wrote no JSON report ({}); nothing was recorded",
             inv.json.display()
@@ -332,7 +341,23 @@ mod tests {
             &s(&["--all", "--json", "mine.json"]),
             PathBuf::from("/tmp/r.json"),
         );
-        assert_eq!(inv.json, PathBuf::from("mine.json"));
+        assert_eq!(
+            inv.json,
+            PathBuf::from("/proj/mine.json"),
+            "relative to the root"
+        );
+        assert_eq!(
+            inv.args.iter().filter(|a| *a == "mine.json").count(),
+            1,
+            "the tester still gets the path as written: it runs in the root"
+        );
+        let abs = plan(
+            &paths,
+            &project("track = \"shell\"\nshell = \"bash\"\n"),
+            &s(&["--all", "--json=/tmp/abs.json"]),
+            PathBuf::from("/tmp/r.json"),
+        );
+        assert_eq!(abs.json, PathBuf::from("/tmp/abs.json"));
         assert_eq!(inv.args.iter().filter(|a| *a == "--json").count(), 1);
     }
 

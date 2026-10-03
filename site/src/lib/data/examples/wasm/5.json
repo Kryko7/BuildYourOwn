@@ -1,6 +1,6 @@
 [
 	{
-		"title": "A file that stops in the middle of a body",
+		"title": "A file that stops in the middle of a data segment",
 		"kind": "module",
 		"request": "`f() -> i32 { 7 }` with a memory and a data segment, cut eight bytes short so the data segment's bytes are missing  —  `run mod.wasm`",
 		"request_hex": "0061736d010000000105016000017f030201000503010001070501016600000a0601040041070b0b0b010041",

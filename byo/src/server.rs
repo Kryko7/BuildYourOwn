@@ -118,6 +118,26 @@ fn respond(
     }
     let req = api::Request::new(&method, &target, &body);
 
+    if req.path.starts_with("/api/") && !matches!(req.method.as_str(), "GET" | "HEAD") {
+        let get = |name: &'static str| {
+            request
+                .headers()
+                .iter()
+                .find(|h| h.field.equiv(name))
+                .map(|h| h.value.as_str().to_string())
+        };
+        if !api::write_allowed(get("Host").as_deref(), get("Origin").as_deref()) {
+            let r = api::Response::error(403, "writes are only accepted from the byo site itself");
+            let response = Response::from_string(r.body)
+                .with_status_code(r.status)
+                .with_header(header("Content-Type", r.content_type))
+                .with_header(header("Cache-Control", "no-store"));
+            return request
+                .respond(response)
+                .context("cannot send the API response");
+        }
+    }
+
     let api_response = {
         let guard = conn
             .lock()

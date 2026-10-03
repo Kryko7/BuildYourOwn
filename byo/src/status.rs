@@ -9,8 +9,11 @@ use rusqlite::Connection;
 use std::collections::BTreeMap;
 
 /// ANSI colouring, off when `NO_COLOR` is set or stdout is not a terminal.
-fn color_enabled() -> bool {
-    std::env::var_os("NO_COLOR").is_none() && std::env::var_os("BYO_NO_COLOR").is_none()
+pub(crate) fn color_enabled() -> bool {
+    use std::io::IsTerminal;
+    std::env::var_os("NO_COLOR").is_none()
+        && std::env::var_os("BYO_NO_COLOR").is_none()
+        && std::io::stdout().is_terminal()
 }
 
 fn paint(s: &str, code: &str) -> String {

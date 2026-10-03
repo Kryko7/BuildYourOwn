@@ -87,6 +87,11 @@ linktest  --linker gnu_ld         --validate --all
 disttest  --target etcd           --validate --all
 ```
 
+The versions in the table are the ones each suite was developed against. CI runs on
+`ubuntu-latest`, which has older system references — GNU ld 2.42 and OpenSSL 3.0 — and the
+link and tls suites are kept green against both those and the versions listed (wasmtime,
+Kafka and etcd are downloaded at the pinned versions, so they do not vary).
+
 ## Requirements
 
 **Rust 1.88 or newer.** The dependency tree uses edition 2024, which needs 1.85 just to

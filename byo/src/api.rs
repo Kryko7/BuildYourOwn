@@ -107,6 +107,34 @@ fn parse_query(qs: &str) -> HashMap<String, String> {
         .collect()
 }
 
+/// May a state-changing request (`POST /api/stages/…`) go ahead?
+///
+/// `byo site` listens on loopback only, but any web page the user has open can still send
+/// a "simple" cross-origin POST to `127.0.0.1:4321` — no preflight, so no CORS check — and
+/// a page on a rebinding DNS name can even look same-origin. So a write must be addressed
+/// to a loopback host name, and when the browser says where it came from (`Origin`, which
+/// every browser sends on a POST) that must be this very server. Clients that send no
+/// `Origin` (curl, scripts) are not browsers and are let through.
+pub fn write_allowed(host: Option<&str>, origin: Option<&str>) -> bool {
+    if let Some(host) = host {
+        let name = match host.rsplit_once(':') {
+            Some((name, port)) if !port.contains(']') => name,
+            _ => host,
+        };
+        if !matches!(
+            name.to_ascii_lowercase().as_str(),
+            "127.0.0.1" | "localhost" | "[::1]"
+        ) {
+            return false;
+        }
+    }
+    match (origin, host) {
+        (None, _) => true,
+        (Some(o), Some(h)) => o.eq_ignore_ascii_case(&format!("http://{h}")),
+        (Some(_), None) => false,
+    }
+}
+
 /// Route and run one request. `None` means "not an API path" — the caller serves a file.
 pub fn handle(conn: &Connection, ctx: &Ctx, req: &Request) -> Option<Response> {
     let rest = req.path.strip_prefix("/api/")?;
@@ -654,6 +682,26 @@ mod tests {
             bad("/api/stages/shell/1", ""),
             200,
             "an empty body is a no-op read"
+        );
+    }
+
+    #[test]
+    fn writes_must_come_from_this_origin() {
+        let ok = |h: Option<&str>, o: Option<&str>| write_allowed(h, o);
+        assert!(ok(Some("127.0.0.1:4321"), Some("http://127.0.0.1:4321")));
+        assert!(ok(Some("localhost:4321"), Some("http://localhost:4321")));
+        assert!(ok(Some("[::1]:4321"), Some("http://[::1]:4321")));
+        assert!(ok(Some("127.0.0.1:4321"), None), "curl sends no Origin");
+        assert!(ok(None, None));
+        assert!(!ok(Some("127.0.0.1:4321"), Some("https://evil.example")));
+        assert!(!ok(Some("127.0.0.1:4321"), Some("null")));
+        assert!(!ok(Some("127.0.0.1:4321"), Some("http://127.0.0.1:9999")));
+        assert!(
+            !ok(
+                Some("rebound.example:4321"),
+                Some("http://rebound.example:4321")
+            ),
+            "DNS rebinding looks same-origin; the Host gives it away"
         );
     }
 
