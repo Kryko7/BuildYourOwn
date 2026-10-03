@@ -372,7 +372,9 @@ wasm_test!(fill, |ctx| {
             ),
             case_i32(
                 "the slot before the range is untouched",
-                fill_with(0, 3, Expr::new().ref_func(THREE), 3).then(call_slot(0, 2)),
+                // Filled with `one`, so slot 2 answering 3 proves it still holds `three`
+                // from the element segment rather than the fill value.
+                fill_with(0, 3, Expr::new().ref_func(ONE), 3).then(call_slot(0, 2)),
                 3,
             ),
             case_i32(

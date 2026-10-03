@@ -428,44 +428,51 @@ wasm_test!(bitmask, |ctx| {
 });
 
 wasm_test!(shuffle, |ctx| {
-    let a = Expr::new().v128_const([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]);
+    // The operands hold bytes that are *not* their own indices — 100.. and 200.. — so a
+    // runtime that hands back the immediates instead of the bytes they select cannot pass.
+    let first: [u8; 16] = std::array::from_fn(|i| 100 + i as u8);
+    let second: [u8; 16] = std::array::from_fn(|i| 200 + i as u8);
     let both = |lanes: [u8; 16]| {
-        a.clone()
-            .v128_const([
-                16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
-            ])
+        Expr::new()
+            .v128_const(first)
+            .v128_const(second)
             .i8x16_shuffle(lanes)
     };
+    // What a correct shuffle gives: index i < 16 reads the first vector, 16..31 the second.
+    let pick = |lanes: [u8; 16]| {
+        v128_of_i8x16(lanes.map(|l| {
+            let l = l as usize;
+            (if l < 16 { first[l] } else { second[l - 16] }) as i8
+        }))
+    };
+    let cases: Vec<(&str, [u8; 16])> = vec![
+        (
+            "the identity shuffle gives the first vector back",
+            [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+        ),
+        (
+            "indices 16..31 read from the second vector",
+            [
+                16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
+            ],
+        ),
+        (
+            "the two can be interleaved",
+            [0, 16, 1, 17, 2, 18, 3, 19, 4, 20, 5, 21, 6, 22, 7, 23],
+        ),
+        ("a lane can be taken more than once", [0; 16]),
+        (
+            "and the order can be reversed",
+            [15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0],
+        ),
+    ];
     run_cases(
         ctx,
         "shuffle",
-        vec![
-            case_v128(
-                "the identity shuffle gives the first vector back",
-                both([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]),
-                v128_of_i8x16([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]),
-            ),
-            case_v128(
-                "indices 16..31 read from the second vector",
-                both([
-                    16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
-                ]),
-                v128_of_i8x16([
-                    16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
-                ]),
-            ),
-            case_v128(
-                "the two can be interleaved",
-                both([0, 16, 1, 17, 2, 18, 3, 19, 4, 20, 5, 21, 6, 22, 7, 23]),
-                v128_of_i8x16([0, 16, 1, 17, 2, 18, 3, 19, 4, 20, 5, 21, 6, 22, 7, 23]),
-            ),
-            case_v128("a lane can be taken more than once", both([0; 16]), 0),
-            case_v128(
-                "and the order can be reversed",
-                both([15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0]),
-                v128_of_i8x16([15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0]),
-            ),
-        ],
+        cases
+            .into_iter()
+            .map(|(name, lanes)| case_v128(name, both(lanes), pick(lanes)))
+            .collect(),
     )
 });
 

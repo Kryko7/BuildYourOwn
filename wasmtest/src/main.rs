@@ -205,7 +205,6 @@ fn run() -> Result<bool> {
 
     let start = Instant::now();
     let mut all: Vec<(&Stage, Vec<runner::TestResult>)> = Vec::new();
-    let mut index: u64 = 0;
     for st in &picked {
         let tests: Vec<&stages::Test> = st.tests.iter().filter(|t| wanted(t)).collect();
         if tests.is_empty() {
@@ -214,8 +213,7 @@ fn run() -> Result<bool> {
         reporter.stage_header(st);
         let mut results = Vec::new();
         for t in tests {
-            index += 1;
-            let r = runner.run_test(st, t, index);
+            let r = runner.run_test(st, t);
             reporter.test_result(&r);
             results.push(r);
         }

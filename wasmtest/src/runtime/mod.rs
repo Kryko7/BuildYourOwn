@@ -327,6 +327,13 @@ fn run_capture(
         }
         std::thread::sleep(Duration::from_millis(1));
     };
+    // The runtime itself is gone, but anything it left running in its group still holds
+    // the stdout/stderr pipes open, and the drain threads below would wait on it forever.
+    // The group is ours alone (`setpgid(0, 0)` above), so clear it out before joining.
+    // SAFETY: signalling the process group created for this child; ESRCH when it is empty.
+    unsafe {
+        libc::kill(-pid, libc::SIGKILL);
+    }
 
     let raw_stdout = out_thread.join().unwrap_or_default();
     let raw_stderr = err_thread.join().unwrap_or_default();
@@ -383,6 +390,16 @@ mod tests {
         let r = sh("sleep 30", 250);
         assert!(r.timed_out, "the harness must kill a runtime that hangs");
         assert!(r.duration < Duration::from_secs(5));
+    }
+
+    #[test]
+    fn a_background_child_cannot_hold_the_pipes_open() {
+        // The shell exits at once; the `sleep` it leaves behind keeps stdout open. Without
+        // clearing the process group the drain would wait the full 30 s.
+        let r = sh("sleep 30 & echo done", 5_000);
+        assert!(!r.timed_out);
+        assert_eq!(r.stdout.trim(), "done");
+        assert!(r.duration < Duration::from_secs(5), "{:?}", r.duration);
     }
 
     #[test]

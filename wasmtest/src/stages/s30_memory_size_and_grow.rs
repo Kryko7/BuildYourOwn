@@ -17,7 +17,9 @@
 //! allocate it.
 
 use crate::examples::ExampleSpec;
-use crate::stages::{case_i32, case_void_trap, expect, run_cases_with, trap, Stage, Test};
+use crate::stages::{
+    case_i32, case_trap, case_void_trap, expect, run_cases_with, trap, Stage, Test,
+};
 use crate::wasm::{ftype, op, Expr, Func, Limits, Module, ModuleBuilder, Op, ValType};
 use crate::wasm_test;
 
@@ -242,10 +244,10 @@ wasm_test!(failure_is_inert, |ctx| {
                 1,
             ),
             case_i32("and the failed grow really answered -1", grow(5), -1),
-            case_i32(
+            case_trap(
                 "a failed grow does not half-grow: the page after the end still traps",
-                grow_and_forget(5).memory_size().i32_const(1).op(op::I32_EQ),
-                1,
+                grow_and_forget(5).then(get32(PAGE)),
+                &[trap::MEMORY_OUT_OF_BOUNDS],
             ),
             case_void_trap(
                 "and storing into the page it did not allocate still traps",

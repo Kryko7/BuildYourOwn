@@ -301,7 +301,10 @@ fn examples() -> Vec<ExampleSpec> {
              host stored at 0x200 — on stderr, so stdout stays exactly what was written",
         )
         .command("run mod.wasm")
-        .output("hello wasi   (stdout)\n10           (stderr: the byte count)")
+        .output(
+            "hello        (stdout, from wasmtime; \"hello wasi\" is just as correct)\n\
+             6            (stderr: the byte count — 10 if both iovecs were written)",
+        )
         .note(
             "The third argument counts iovecs, not bytes. fd_write is allowed to write fewer \
              bytes than it was given and say so in *nwritten — wasmtime writes the first \

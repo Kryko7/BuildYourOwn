@@ -369,7 +369,7 @@ wasm_test!(trailing_bytes, |ctx| {
 /// Worked examples: a truncated module, and a body size that swallows its neighbour.
 fn examples() -> Vec<ExampleSpec> {
     vec![
-        ExampleSpec::module("A file that stops in the middle of a body", || {
+        ExampleSpec::module("A file that stops in the middle of a data segment", || {
             let m = good();
             m.truncated(m.len() - 8)
         })

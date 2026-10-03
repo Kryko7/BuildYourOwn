@@ -14,8 +14,8 @@
 
 use crate::assert::Check;
 use crate::examples::ExampleSpec;
-use crate::stages::{expect_rejected, single, single_with_locals, Stage, Test};
-use crate::wasm::{ftype, op, BlockType, Expr, Func, Module, ModuleBuilder, ValType};
+use crate::stages::{expect_rejected, single, Stage, Test};
+use crate::wasm::{ftype, op, BlockType, Expr, Func, FuncType, Module, ModuleBuilder, ValType};
 use crate::wasm_test;
 
 /// Stage definition.
@@ -47,9 +47,10 @@ pub fn stage() -> Stage {
 wasm_test!(add_underflow, |ctx| {
     // One operand and none. The first is the interesting one: the *height* at the end of the
     // body is right — one i32 — so only a validator that pops per instruction catches it.
-    let one = single(
+    let one = beside_seven(
         "add-one-operand",
         ftype(&[], &[ValType::I32]),
+        &[],
         Expr::new().i32_const(1).op(op::I32_ADD),
     );
     expect_rejected(
@@ -58,9 +59,10 @@ wasm_test!(add_underflow, |ctx| {
         "i32.add takes two operands and only one was pushed, even though the body would end \
          one value deep either way",
     )?;
-    let none = single(
+    let none = beside_seven(
         "add-no-operands",
         ftype(&[], &[ValType::I32]),
+        &[],
         Expr::new().op(op::I32_ADD),
     );
     expect_rejected(ctx, &none, "i32.add with an empty operand stack")?;
@@ -68,7 +70,7 @@ wasm_test!(add_underflow, |ctx| {
 });
 
 wasm_test!(drop_underflow, |ctx| {
-    let m = single("drop-empty", ftype(&[], &[]), Expr::new().drop());
+    let m = beside_seven("drop-empty", ftype(&[], &[]), &[], Expr::new().drop());
     expect_rejected(
         ctx,
         &m,
@@ -78,7 +80,7 @@ wasm_test!(drop_underflow, |ctx| {
 });
 
 wasm_test!(local_set_underflow, |ctx| {
-    let m = single_with_locals(
+    let m = beside_seven(
         "local-set-empty",
         ftype(&[], &[]),
         &[(1, ValType::I32)],
@@ -104,9 +106,10 @@ wasm_test!(call_underflow, |ctx| {
 });
 
 wasm_test!(return_underflow, |ctx| {
-    let m = single(
+    let m = beside_seven(
         "return-no-result",
         ftype(&[], &[ValType::I32]),
+        &[],
         Expr::new().return_(),
     );
     expect_rejected(
@@ -119,9 +122,10 @@ wasm_test!(return_underflow, |ctx| {
 });
 
 wasm_test!(if_underflow, |ctx| {
-    let m = single(
+    let m = beside_seven(
         "if-no-condition",
         ftype(&[], &[]),
+        &[],
         Expr::new().if_(BlockType::Empty, Expr::new().nop()),
     );
     expect_rejected(
@@ -179,8 +183,26 @@ fn call_without_arguments() -> Module {
         Func::new(Expr::new().local_get(0).local_get(1).op(op::I32_ADD)),
     );
     let f_ty = b.add_type(ftype(&[], &[ValType::I32]));
-    let f = b.add_func(f_ty, Func::new(Expr::new().call(add)));
-    b.export_func("f", f).build()
+    let caller = b.add_func(f_ty, Func::new(Expr::new().call(add)));
+    let f = b.add_func(f_ty, Func::new(Expr::new().i32_const(7)));
+    b.export_func("f", f).export_func("defect", caller).build()
+}
+
+/// A module whose export `f` is a correct `() -> i32 { 7 }` and whose export `defect` is the
+/// function under test.
+///
+/// The invalid body is kept out of `f` on purpose. When `f` itself underflows, a runtime that
+/// skips the check and runs it anyway fails at run time instead — popping an empty stack —
+/// and that failure looks exactly like a refusal from outside: non-zero exit, nothing on
+/// stdout. With the defect beside a function that works, accepting the module prints `7`,
+/// and the test can tell the difference.
+fn beside_seven(label: &str, sig: FuncType, locals: &[(u32, ValType)], body: Expr) -> Module {
+    let mut b = ModuleBuilder::new(label);
+    let seven = b.add_type(ftype(&[], &[ValType::I32]));
+    let f = b.add_func(seven, Func::new(Expr::new().i32_const(7)));
+    let ty = b.add_type(sig);
+    let bad = b.add_func(ty, Func::with_locals(locals, body));
+    b.export_func("f", f).export_func("defect", bad).build()
 }
 
 /// The one-operand `i32.add`, as a named builder for the catalog.

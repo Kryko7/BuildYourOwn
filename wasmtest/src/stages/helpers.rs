@@ -232,7 +232,7 @@ pub fn expect_trap_one_of(
     reasons: &[&str],
 ) -> Result<Run, Failure> {
     let run = ctx.invoke(m, export, args)?;
-    check_trap(m, &run, reasons)?;
+    check_trap(m, &run, reasons, true)?;
     Ok(run)
 }
 
@@ -244,11 +244,14 @@ pub fn expect_start_trap(
     reason: &str,
 ) -> Result<Run, Failure> {
     let run = ctx.start(m, args)?;
-    check_trap(m, &run, &[reason])?;
+    // A WASI command may legitimately have written output before it trapped.
+    check_trap(m, &run, &[reason], false)?;
     Ok(run)
 }
 
-fn check_trap(m: &Module, run: &Run, reasons: &[&str]) -> Result<(), Failure> {
+/// `invoked` is true for `--invoke`: a call that traps returns no value, so there is
+/// nothing it may print on stdout.
+fn check_trap(m: &Module, run: &Run, reasons: &[&str], invoked: bool) -> Result<(), Failure> {
     let wanted = reasons
         .iter()
         .map(|r| format!("'{r}'"))
@@ -272,6 +275,14 @@ fn check_trap(m: &Module, run: &Run, reasons: &[&str]) -> Result<(), Failure> {
         matched,
         first_meaningful_line(&run.stderr),
     );
+    if invoked {
+        c.that(
+            "stdout",
+            "nothing — a call that traps returns no value to print",
+            run.stdout.trim().is_empty(),
+            run.stdout.clone(),
+        );
+    }
     if !matched && !run.stderr.trim().is_empty() {
         c.note("the reason is matched as a case-insensitive substring, anywhere on stderr");
     }
@@ -520,7 +531,8 @@ pub fn run_cases_with(
             Want::Trap(reasons) => {
                 let refs: Vec<&str> = reasons.iter().map(String::as_str).collect();
                 let run = ctx.invoke(&m, &export, &argv)?;
-                check_trap(&m, &run, &refs).map_err(|f| f.note(format!("the case is '{name}'")))?;
+                check_trap(&m, &run, &refs, true)
+                    .map_err(|f| f.note(format!("the case is '{name}'")))?;
             }
         }
     }

@@ -108,7 +108,11 @@ impl Runner {
     }
 
     /// Run one test end to end.
-    pub fn run_test(&mut self, stage: &Stage, test: &Test, index: u64) -> TestResult {
+    ///
+    /// The test's RNG is seeded from `--seed` and the test's own identity (stage number and
+    /// name), never from its position in the run, so `--seed N --only "..."` replays exactly
+    /// what the unfiltered run did.
+    pub fn run_test(&mut self, stage: &Stage, test: &Test) -> TestResult {
         let started = Instant::now();
         if let Some(reason) = test.skip_reason(&self.handle.def.name) {
             return TestResult {
@@ -128,7 +132,7 @@ impl Runner {
             tmp.clone(),
             deadline,
             self.opts.seed,
-            index,
+            test_identity(stage.number, test.name),
             self.opts.verbose,
         );
         let outcome = (test.run)(&mut ctx);
@@ -155,6 +159,16 @@ impl Runner {
     }
 }
 
+/// A stable 64-bit identity for a test (FNV-1a over the stage number and the name).
+fn test_identity(stage: u32, name: &str) -> u64 {
+    let mut h: u64 = 0xcbf2_9ce4_8422_2325;
+    for b in stage.to_le_bytes().iter().chain(name.as_bytes()) {
+        h ^= u64::from(*b);
+        h = h.wrapping_mul(0x0000_0100_0000_01b3);
+    }
+    h
+}
+
 impl Drop for Runner {
     fn drop(&mut self) {
         if !self.opts.keep_tmp {
@@ -166,6 +180,13 @@ impl Drop for Runner {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_test_identity_depends_on_the_test_not_its_position() {
+        assert_eq!(test_identity(43, "a"), test_identity(43, "a"));
+        assert_ne!(test_identity(43, "a"), test_identity(43, "b"));
+        assert_ne!(test_identity(43, "a"), test_identity(44, "a"));
+    }
 
     #[test]
     fn status_serializes_like_the_other_testers() {

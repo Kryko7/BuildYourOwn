@@ -337,16 +337,15 @@ wasm_test!(value_too_wide, |ctx| {
 });
 
 wasm_test!(unterminated, |ctx| {
-    // A custom section id, then a size that keeps asking for one more byte until the file
-    // stops. There is no zero to fall back on: the module is malformed.
-    let mut e = Enc::with_header();
-    e.put(&[section::CUSTOM], "section[0].id", "custom section");
-    e.put(
-        &[0x80, 0x80, 0x80],
-        "section[0].size",
-        "a uLEB128 whose continuation bit is still set at the end of the file",
-    );
-    let m = e.finish("leb-unterminated-size");
+    // A whole working module, then a custom section id and a size that keeps asking for one
+    // more byte until the file stops. There is no zero to fall back on: the module is
+    // malformed. The good module in front is what makes the refusal observable — a decoder
+    // that gives up on the last section quietly and runs what it has prints 7.
+    let m = Fields {
+        trailer: Some(vec![section::CUSTOM, 0x80, 0x80, 0x80]),
+        ..Fields::seven()
+    }
+    .build("leb-unterminated-size");
     expect_rejected(ctx, &m, "the size field never ends")?;
 
     // The same inside a function body, where the operand of an i32.const runs off the end.

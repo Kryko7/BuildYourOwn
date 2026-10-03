@@ -503,7 +503,7 @@ wasm_test!(narrow_load, |ctx| {
                 0x1234,
             ),
             case_i64(
-                "i64.load32_u at 0 of a stored i64 is its low half",
+                "i64.load32_u at 8 of an i64 stored there is its low half",
                 store(
                     8,
                     op::I64_STORE,

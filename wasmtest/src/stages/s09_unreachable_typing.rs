@@ -163,7 +163,7 @@ wasm_test!(undefined_opcode, |ctx| {
 });
 
 wasm_test!(bad_index, |ctx| {
-    let local = single(
+    let local = beside_seven(
         "unreachable-bad-local",
         ftype(&[], &[ValType::I32]),
         Expr::new().unreachable().local_get(99),
@@ -174,17 +174,21 @@ wasm_test!(bad_index, |ctx| {
         "local 99 of a function with no parameters and no locals, behind an unreachable: \
          the polymorphic stack makes the *types* unconstrained, never the indices",
     )?;
-    let call = single(
+    let call = beside_seven(
         "unreachable-bad-call",
         ftype(&[], &[ValType::I32]),
         Expr::new().unreachable().call(99),
     );
-    expect_rejected(ctx, &call, "call 99 in a module with one function")?;
+    expect_rejected(ctx, &call, "call 99 in a module with two functions")?;
     Ok(())
 });
 
 wasm_test!(ends_at_end, |ctx| {
-    let m = polymorphic_ends();
+    let m = beside_seven(
+        "polymorphic-ends-at-end",
+        ftype(&[], &[ValType::I32]),
+        polymorphic_ends_body(),
+    );
     expect_rejected(
         ctx,
         &m,
@@ -221,14 +225,33 @@ fn br_then_junk() -> Module {
 fn undefined_opcode_module() -> Module {
     let mut b = ModuleBuilder::new("unreachable-undefined-opcode");
     let ty = b.add_type(ftype(&[], &[ValType::I32]));
-    let idx = b.add_func(
+    let bad = b.add_func(
         ty,
         Func::raw(
             &[0x00, 0x27, 0x0b],
             "unreachable, 0x27 (no such opcode), end",
         ),
     );
-    b.export_func("f", idx).build()
+    let f = b.add_func(ty, Func::new(Expr::new().i32_const(7)));
+    b.export_func("f", f).export_func("defect", bad).build()
+}
+
+/// A module whose export `f` is a correct `() -> i32 { 7 }` and whose export `defect` is the
+/// function under test.
+///
+/// Every rejection in this stage starts its broken body with `unreachable`, so if `f` were
+/// the broken function a runtime that accepted it would trap on the first instruction — and
+/// a trap looks exactly like a refusal from outside: non-zero exit, nothing on stdout. The
+/// very bug these tests are after, a validator that stops checking after `unreachable`,
+/// would pass them. With the defect beside a function that works, accepting the module
+/// prints `7`.
+fn beside_seven(label: &str, sig: crate::wasm::FuncType, body: Expr) -> Module {
+    let mut b = ModuleBuilder::new(label);
+    let ty = b.add_type(sig);
+    let bad = b.add_func(ty, Func::new(body));
+    let seven = b.add_type(ftype(&[], &[ValType::I32]));
+    let f = b.add_func(seven, Func::new(Expr::new().i32_const(7)));
+    b.export_func("f", f).export_func("defect", bad).build()
 }
 
 /// `block { unreachable } i32.add` in a `() -> i32`: valid inside the block, invalid after it.
@@ -236,10 +259,15 @@ fn polymorphic_ends() -> Module {
     single(
         "polymorphic-ends-at-end",
         ftype(&[], &[ValType::I32]),
-        Expr::new()
-            .block(BlockType::Empty, Expr::new().unreachable())
-            .op(op::I32_ADD),
+        polymorphic_ends_body(),
     )
+}
+
+/// The body of [`polymorphic_ends`].
+fn polymorphic_ends_body() -> Expr {
+    Expr::new()
+        .block(BlockType::Empty, Expr::new().unreachable())
+        .op(op::I32_ADD)
 }
 
 /// Worked examples: the lenient side, and where the leniency stops.

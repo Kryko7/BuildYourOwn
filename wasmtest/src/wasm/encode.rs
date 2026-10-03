@@ -938,6 +938,8 @@ impl ModuleBuilder {
             }
         }
 
+        customs_after(&mut e, Some(section::TYPE));
+
         if !self.imports.is_empty() {
             let items: Vec<Vec<u8>> = self.imports.iter().map(encode_import).collect();
             let body = vector(&items);
@@ -959,6 +961,8 @@ impl ModuleBuilder {
                 pos += bytes.len();
             }
         }
+
+        customs_after(&mut e, Some(section::IMPORT));
 
         if !self.funcs.is_empty() {
             let items: Vec<Vec<u8>> = self.funcs.iter().map(|t| uleb(*t as u64)).collect();
@@ -983,6 +987,8 @@ impl ModuleBuilder {
                 pos += bytes.len();
             }
         }
+
+        customs_after(&mut e, Some(section::FUNCTION));
 
         if !self.tables.is_empty() {
             let items: Vec<Vec<u8>> = self
@@ -1009,6 +1015,8 @@ impl ModuleBuilder {
             }
         }
 
+        customs_after(&mut e, Some(section::TABLE));
+
         if !self.memories.is_empty() {
             let items: Vec<Vec<u8>> = self.memories.iter().map(Limits::encode).collect();
             let body = vector(&items);
@@ -1025,6 +1033,8 @@ impl ModuleBuilder {
                 pos += bytes.len();
             }
         }
+
+        customs_after(&mut e, Some(section::MEMORY));
 
         if !self.globals.is_empty() {
             let items: Vec<Vec<u8>> = self
@@ -1056,6 +1066,8 @@ impl ModuleBuilder {
             }
         }
 
+        customs_after(&mut e, Some(section::GLOBAL));
+
         if !self.exports.is_empty() {
             let items: Vec<Vec<u8>> = self
                 .exports
@@ -1082,6 +1094,8 @@ impl ModuleBuilder {
             }
         }
 
+        customs_after(&mut e, Some(section::EXPORT));
+
         if let Some(s) = self.start {
             let body = uleb(s as u64);
             let at = e.at();
@@ -1094,6 +1108,8 @@ impl ModuleBuilder {
             );
         }
 
+        customs_after(&mut e, Some(section::START));
+
         if !self.elems.is_empty() {
             let items: Vec<Vec<u8>> = self.elems.iter().map(encode_elem).collect();
             let body = vector(&items);
@@ -1105,6 +1121,8 @@ impl ModuleBuilder {
                 pos += bytes.len();
             }
         }
+
+        customs_after(&mut e, Some(section::ELEMENT));
 
         if self.needs_data_count() {
             let body = uleb(self.data.len() as u64);
@@ -1120,6 +1138,8 @@ impl ModuleBuilder {
                 ),
             );
         }
+
+        customs_after(&mut e, Some(section::DATA_COUNT));
 
         if !self.code.is_empty() {
             let items: Vec<Vec<u8>> = self.code.iter().map(encode_func).collect();
@@ -1150,6 +1170,8 @@ impl ModuleBuilder {
             }
         }
 
+        customs_after(&mut e, Some(section::CODE));
+
         if !self.data.is_empty() {
             let items: Vec<Vec<u8>> = self.data.iter().map(encode_data).collect();
             let body = vector(&items);
@@ -1162,21 +1184,7 @@ impl ModuleBuilder {
             }
         }
 
-        for id in [
-            section::TYPE,
-            section::IMPORT,
-            section::FUNCTION,
-            section::TABLE,
-            section::MEMORY,
-            section::GLOBAL,
-            section::EXPORT,
-            section::START,
-            section::ELEMENT,
-            section::CODE,
-            section::DATA,
-        ] {
-            customs_after(&mut e, Some(id));
-        }
+        customs_after(&mut e, Some(section::DATA));
 
         e.finish(self.label.clone())
     }
@@ -1281,7 +1289,7 @@ fn encode_elem(e: &Elem) -> Vec<u8> {
                 &e.funcs.iter().map(|f| uleb(*f as u64)).collect::<Vec<_>>(),
             ));
         }
-        (ElemMode::Active { table: 0, offset }, true) => {
+        (ElemMode::Active { table: 0, offset }, true) if e.ty == ValType::FuncRef => {
             out.push(0x04);
             out.extend_from_slice(offset);
             out.extend_from_slice(&vector(&e.exprs));
@@ -1531,6 +1539,50 @@ mod tests {
             assert!(!a.field.is_empty());
         }
         assert!(m.listing(4096).contains("code[0].body"));
+    }
+
+    #[test]
+    fn a_custom_section_lands_right_after_the_section_it_names() {
+        let m = ModuleBuilder::new("placed")
+            .func_type(ftype(&[], &[]))
+            .function(0, Func::new(Expr::new()))
+            .custom("after-type", b"x", Some(section::TYPE))
+            .custom("after-code", b"y", Some(section::CODE))
+            .build();
+        let ids: Vec<u8> = m
+            .anns
+            .iter()
+            .filter(|a| a.field.ends_with(".id"))
+            .map(|a| m.bytes[a.offset])
+            .collect();
+        assert_eq!(
+            ids,
+            vec![
+                section::TYPE,
+                section::CUSTOM,
+                section::FUNCTION,
+                section::CODE,
+                section::CUSTOM
+            ]
+        );
+    }
+
+    #[test]
+    fn an_externref_expression_segment_names_its_type() {
+        // Flag 4 means "table 0, funcref expressions"; an externref segment needs flag 6.
+        let e = Elem {
+            mode: ElemMode::Active {
+                table: 0,
+                offset: const_i32(0),
+            },
+            ty: ValType::ExternRef,
+            funcs: Vec::new(),
+            exprs: vec![const_ref_null(ValType::ExternRef)],
+        };
+        let bytes = encode_elem(&e);
+        assert_eq!(bytes[0], 0x06);
+        assert_eq!(bytes[1], 0x00, "table index 0");
+        assert_eq!(bytes[2 + const_i32(0).len()], ValType::ExternRef.code());
     }
 
     #[test]

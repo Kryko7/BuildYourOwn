@@ -46,7 +46,7 @@ pub fn stage() -> Stage {
 }
 
 wasm_test!(block_leaves_nothing, |ctx| {
-    let m = single(
+    let m = beside_seven(
         "block-leaves-nothing",
         ftype(&[], &[ValType::I32]),
         Expr::new().block(BlockType::Value(ValType::I32), Expr::new().nop()),
@@ -143,7 +143,7 @@ wasm_test!(loop_back_edge, |ctx| {
     )?;
 
     // The loop that falls off its own end without producing its result.
-    let no_result = single(
+    let no_result = beside_seven(
         "loop-leaves-nothing",
         ftype(&[], &[ValType::I32]),
         Expr::new().loop_(BlockType::Value(ValType::I32), Expr::new().nop()),
@@ -213,6 +213,21 @@ fn loop_bad_back_edge() -> Module {
         )),
     );
     b.export_func("f", idx).build()
+}
+
+/// A module whose export `f` is a correct `() -> i32 { 7 }` and whose export `defect` is the
+/// function under test.
+///
+/// Used where the broken body, if it were `f` and a runtime ran it anyway, would fail at run
+/// time by popping a result that is not there — which looks exactly like a refusal from
+/// outside. With the defect beside a function that works, accepting the module prints `7`.
+fn beside_seven(label: &str, sig: crate::wasm::FuncType, body: Expr) -> Module {
+    let mut b = ModuleBuilder::new(label);
+    let seven = b.add_type(ftype(&[], &[ValType::I32]));
+    let f = b.add_func(seven, Func::new(Expr::new().i32_const(7)));
+    let ty = b.add_type(sig);
+    let bad = b.add_func(ty, Func::new(body));
+    b.export_func("f", f).export_func("defect", bad).build()
 }
 
 /// A loop that counts a local down to zero and then leaves 99 on the stack.

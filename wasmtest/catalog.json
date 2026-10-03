@@ -1,6 +1,6 @@
 {
   "track": "wasm",
-  "generatedAt": "2026-09-19T06:59:44Z",
+  "generatedAt": "2026-10-03T09:34:10Z",
   "sections": [
     {
       "id": "a",
@@ -1118,7 +1118,7 @@
       ],
       "examples": [
         {
-          "title": "A file that stops in the middle of a body",
+          "title": "A file that stops in the middle of a data segment",
           "kind": "module",
           "request": "`f() -> i32 { 7 }` with a memory and a data segment, cut eight bytes short so the data segment's bytes are missing  —  `run mod.wasm`",
           "request_hex": "0061736d010000000105016000017f030201000503010001070501016600000a0601040041070b0b0b010041",
@@ -4454,7 +4454,7 @@
       "file": "src/stages/s18_float_arithmetic.rs",
       "hints": [
         "f32.const and f64.const carry four and eight raw little-endian bytes, not a LEB128: read them with from_le_bytes and never sign-extend them",
-        "Do every f32 operation at f32 width — computing in f64 and rounding once at the end gives a different answer for add, sub, mul, div and sqrt, and double rounding is how it shows up",
+        "Round every f32 result to f32 before anything else reads it: one add, sub, mul, div or sqrt done in f64 and rounded straight back gives the right f32, but an unrounded f64 carried into the next instruction does not — f32 0.1 + 0.2 == 0.3 is 1 only if the sum was rounded first",
         "ceil, floor and trunc all return a float, not an integer, and ceil(-0.5) is -0: keep the sign bit rather than normalising every zero to +0",
         "Dividing a float by zero is not a trap — it is +inf, -inf or NaN depending on the signs, and only the integer divisions trap"
       ],
@@ -4702,7 +4702,7 @@
       "file": "src/stages/s19_float_special_values.rs",
       "hints": [
         "f32.min and f32.max are not fmin and fmax: if either operand is a NaN the result is a NaN, and min(+0, -0) is -0 while max(+0, -0) is +0",
-        "f32.nearest rounds a tie to the even neighbour — 0.5 and 2.5 both become 2's neighbours 0 and 2 — so it is neither round() nor trunc(x + 0.5)",
+        "f32.nearest rounds a tie to the even neighbour — 0.5 becomes 0, 1.5 and 2.5 both become 2, and -0.5 becomes -0 — so it is neither round() nor trunc(x + 0.5)",
         "copysign takes the magnitude of its first operand and the sign bit of its second, whatever that second operand is: a negative zero and a negative NaN both make the result negative",
         "Every comparison with a NaN is false except ne, which is true; keep that rule out of your min/max and sorting code"
       ],
@@ -11310,7 +11310,7 @@
           "kind": "module",
           "request": "the same message split across two iovecs at 0x100 and 0x108, written with one fd_write(1, 0x100, 2, 0x200), after which the module prints the byte count the host stored at 0x200 — on stderr, so stdout stays exactly what was written  —  `run mod.wasm`",
           "request_hex": "0061736d01000000010c0260047f7f7f7f017f60000002230116776173695f736e617073686f745f70726576696577310866645f77726974650000030201010503010001071302066d656d6f72790200065f737461727400010a9201018f0101027f418002410036020041840241063602004188024106360200418c0241043602004101418002410241800410001a4180042802002100418f08410a3a0000418f08210102400340200141016b2101200141302000410a706a3a00002000410a6e21002000450d010c000b0b418002200136020041840241900820016b3602004102418002410141800410001a0b0b10010041000b0a68656c6c6f2077617369",
-          "response": "hello wasi   (stdout)\n10           (stderr: the byte count)",
+          "response": "hello        (stdout, from wasmtime; \"hello wasi\" is just as correct)\n6            (stderr: the byte count — 10 if both iovecs were written)",
           "response_hex": "",
           "note": "The third argument counts iovecs, not bytes. fd_write is allowed to write fewer bytes than it was given and say so in *nwritten — wasmtime writes the first iovec and answers 6 — so a caller that does not check the count loses data.",
           "request_fields": [

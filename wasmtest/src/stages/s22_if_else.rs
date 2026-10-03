@@ -355,16 +355,25 @@ wasm_test!(if_inside_a_loop, |ctx| {
 
 /// A `br_if l` inside `depth` nested blocks, with the given condition.
 ///
-/// When the branch is taken the stores after every enclosing `end` are skipped and the
-/// local keeps its initial 0; when it is not, the innermost store runs and gives 9.
+/// After the `end` of every block but the outermost the local is bumped by 100, so where
+/// the branch lands is visible in the answer. Taken, it leaves all `depth + 1` blocks, every
+/// store is skipped and the local keeps its initial 0; a branch that stops `k` blocks short
+/// gives `100 * k`. Not taken, the innermost store gives 9 and each bump adds 100.
 fn br_if_nest(depth: u32, cond: i32) -> Expr {
     let mut body = Expr::new()
         .i32_const(cond)
         .br_if(depth)
         .i32_const(9)
         .local_set(0);
-    for _ in 0..=depth {
+    for level in 0..=depth {
         body = Expr::new().block(BlockType::Empty, body);
+        if level < depth {
+            body = body
+                .local_get(0)
+                .i32_const(100)
+                .op(op::I32_ADD)
+                .local_set(0);
+        }
     }
     body.local_get(0)
 }
@@ -377,9 +386,9 @@ wasm_test!(br_if_taken_or_not, |ctx| {
             acc_case("br_if 0 taken leaves one block", br_if_nest(0, 1), 0),
             acc_case("br_if 0 not taken falls through", br_if_nest(0, 0), 9),
             acc_case("br_if 1 taken leaves two blocks", br_if_nest(1, 1), 0),
-            acc_case("br_if 1 not taken falls through", br_if_nest(1, 0), 9),
+            acc_case("br_if 1 not taken falls through", br_if_nest(1, 0), 109),
             acc_case("br_if 2 taken leaves three blocks", br_if_nest(2, -1), 0),
-            acc_case("br_if 2 not taken falls through", br_if_nest(2, 0), 9),
+            acc_case("br_if 2 not taken falls through", br_if_nest(2, 0), 209),
         ],
     )
 });

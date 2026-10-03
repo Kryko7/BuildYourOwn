@@ -332,7 +332,8 @@ pub struct Ctx {
     pub deadline: Instant,
     /// The run's seed; every random choice must come from it.
     pub seed: u64,
-    /// A seeded RNG, reset per test so runs are reproducible.
+    /// A seeded RNG, reset per test from the seed and the test's identity, so a filtered
+    /// rerun with the same seed replays it.
     pub rng: StdRng,
     /// Print what the harness is doing between invocations.
     pub verbose: bool,
@@ -349,7 +350,7 @@ impl Ctx {
         tmp: PathBuf,
         timeout: Duration,
         seed: u64,
-        test_index: u64,
+        test_id: u64,
         verbose: bool,
     ) -> Ctx {
         Ctx {
@@ -359,7 +360,7 @@ impl Ctx {
             timeout,
             deadline: Instant::now() + timeout,
             seed,
-            rng: StdRng::seed_from_u64(seed ^ (test_index.wrapping_mul(0x9e37_79b9_7f4a_7c15))),
+            rng: StdRng::seed_from_u64(seed ^ (test_id.wrapping_mul(0x9e37_79b9_7f4a_7c15))),
             verbose,
             notes: Vec::new(),
             invocations: 0,
@@ -420,16 +421,10 @@ impl Ctx {
             );
         }
         let left = self.deadline.saturating_duration_since(Instant::now());
+        let budget = self.timeout.min(left).max(Duration::from_millis(50));
         let run = self
             .runtime
-            .invoke(
-                &path,
-                export,
-                &owned,
-                stdin,
-                self.timeout.min(left).max(Duration::from_millis(50)),
-                &self.tmp,
-            )
+            .invoke(&path, export, &owned, stdin, budget, &self.tmp)
             .map_err(|e| {
                 Failure::new(
                     FailureKind::Harness,
@@ -441,8 +436,13 @@ impl Ctx {
             return Err(Failure::new(
                 FailureKind::Timeout,
                 format!(
-                    "the runtime did not finish within {} ms and was killed",
-                    self.timeout.as_millis()
+                    "the runtime did not finish within {} ms and was killed{}",
+                    budget.as_millis(),
+                    if budget < self.timeout {
+                        " (all that was left of the test's deadline)"
+                    } else {
+                        ""
+                    }
                 ),
             )
             .with_module(m)

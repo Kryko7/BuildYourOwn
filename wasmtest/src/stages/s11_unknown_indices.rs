@@ -17,9 +17,10 @@
 //! are too large would pass a runtime that rejects the last valid one as well.
 
 use crate::examples::ExampleSpec;
-use crate::stages::{expect, expect_rejected, single, single_with_locals, Stage, Test};
+use crate::stages::{expect, expect_rejected, single, Stage, Test};
 use crate::wasm::{
-    ftype, global_i32, op, BlockType, Expr, Func, Limits, Module, ModuleBuilder, TableType, ValType,
+    ftype, global_i32, op, BlockType, Expr, Func, FuncType, Limits, Module, ModuleBuilder,
+    TableType, ValType,
 };
 use crate::wasm_test;
 
@@ -51,7 +52,7 @@ pub fn stage() -> Stage {
 }
 
 wasm_test!(unknown_function, |ctx| {
-    let m = single(
+    let m = beside_seven(
         "call-999",
         ftype(&[], &[ValType::I32]),
         Expr::new().call(999),
@@ -59,14 +60,14 @@ wasm_test!(unknown_function, |ctx| {
     expect_rejected(
         ctx,
         &m,
-        "call 999 in a module whose function index space holds exactly one entry",
+        "call 999 in a module whose function index space holds two entries",
     )?;
     Ok(())
 });
 
 wasm_test!(unknown_local, |ctx| {
     // Two parameters and one declared local make indices 0, 1 and 2; 3 is one too far.
-    let m = single_with_locals(
+    let m = beside_seven_with_locals(
         "local-get-3",
         ftype(&[ValType::I32, ValType::I32], &[ValType::I32]),
         &[(1, ValType::I32)],
@@ -81,7 +82,7 @@ wasm_test!(unknown_local, |ctx| {
 });
 
 wasm_test!(unknown_global, |ctx| {
-    let m = single(
+    let m = beside_seven(
         "global-get-0",
         ftype(&[], &[ValType::I32]),
         Expr::new().global_get(0),
@@ -109,7 +110,7 @@ wasm_test!(unknown_type, |ctx| {
 wasm_test!(unknown_label, |ctx| {
     // `br 0` from the top level of a body targets the function itself and is a return, so
     // `br 1` is the first depth that names nothing.
-    let too_deep = single(
+    let too_deep = beside_seven(
         "br-1-at-top-level",
         ftype(&[], &[ValType::I32]),
         Expr::new().i32_const(7).br(1),
@@ -140,7 +141,7 @@ wasm_test!(unknown_table_and_memory, |ctx| {
         "table.get 1 in a module with a single table, which is table 0",
     )?;
 
-    let memory = single(
+    let memory = beside_seven(
         "load-without-memory",
         ftype(&[], &[ValType::I32]),
         Expr::new().i32_const(0).i32_load(0),
@@ -181,16 +182,45 @@ wasm_test!(last_valid_indices, |ctx| {
 // Modules
 // ---------------------------------------------------------------------------------------
 
+/// A module whose export `f` is a correct `() -> i32 { 7 }` and whose export `defect` is the
+/// function under test.
+///
+/// The bad index is kept out of `f` on purpose. When `f` itself names a function, local or
+/// label that does not exist, a runtime that skips the check and runs it anyway fails at run
+/// time instead — an index looked up and not found — and that failure looks exactly like a
+/// refusal from outside: non-zero exit, nothing on stdout. With the defect beside a function
+/// that works, accepting the module prints `7`, and the test can tell the difference.
+fn beside_seven(label: &str, sig: FuncType, body: Expr) -> Module {
+    beside_seven_with_locals(label, sig, &[], body)
+}
+
+/// [`beside_seven`], for a function under test that declares locals.
+fn beside_seven_with_locals(
+    label: &str,
+    sig: FuncType,
+    locals: &[(u32, ValType)],
+    body: Expr,
+) -> Module {
+    let mut b = ModuleBuilder::new(label);
+    let seven = b.add_type(ftype(&[], &[ValType::I32]));
+    let f = b.add_func(seven, Func::new(Expr::new().i32_const(7)));
+    let ty = b.add_type(sig);
+    let bad = b.add_func(ty, Func::with_locals(locals, body));
+    b.export_func("f", f).export_func("defect", bad).build()
+}
+
 /// `call_indirect (type 9)` against a module holding one type and one table.
 fn call_indirect_bad_type() -> Module {
     let mut b = ModuleBuilder::new("call-indirect-type-9");
     let ty = b.add_type(ftype(&[], &[ValType::I32]));
-    let idx = b.add_func(ty, Func::new(Expr::new().i32_const(0).call_indirect(9, 0)));
+    let bad = b.add_func(ty, Func::new(Expr::new().i32_const(0).call_indirect(9, 0)));
+    let f = b.add_func(ty, Func::new(Expr::new().i32_const(7)));
     b.table(TableType {
         elem: ValType::FuncRef,
         limits: Limits::min(1),
     })
-    .export_func("f", idx)
+    .export_func("f", f)
+    .export_func("defect", bad)
     .build()
 }
 
@@ -198,15 +228,17 @@ fn call_indirect_bad_type() -> Module {
 fn table_get_one() -> Module {
     let mut b = ModuleBuilder::new("table-get-1");
     let ty = b.add_type(ftype(&[], &[ValType::I32]));
-    let idx = b.add_func(
+    let bad = b.add_func(
         ty,
         Func::new(Expr::new().i32_const(0).table_get(1).ref_is_null()),
     );
+    let f = b.add_func(ty, Func::new(Expr::new().i32_const(7)));
     b.table(TableType {
         elem: ValType::FuncRef,
         limits: Limits::min(1),
     })
-    .export_func("f", idx)
+    .export_func("f", f)
+    .export_func("defect", bad)
     .build()
 }
 

@@ -205,7 +205,7 @@ reads every track:
 {
   "target": "wasmtime",
   "validate": true,
-  "passed": 347, "failed": 0, "skipped": 0, "elapsed_ms": 13182,
+  "passed": 381, "failed": 0, "skipped": 0, "elapsed_ms": 13182,
   "stages": [
     {
       "stage": 15, "name": "Division, remainder and the two integer traps",
@@ -247,13 +247,13 @@ reads every track:
 }
 ```
 
-`sections` lists **all 45 stages** whether or not they are implemented, so the site can draw
+`sections` lists **all 48 stages** whether or not they are implemented, so the site can draw
 the whole journey; `stages` holds the implemented ones. `catalog.json` is committed and
 `cargo test` fails if it is stale.
 
 ## Examples
 
-Every stage carries two or three **worked examples** — 92 in all: a module this crate builds, its bytes,
+Every stage carries two or three **worked examples** — 98 in all: a module this crate builds, its bytes,
 an annotation per section and per field, and the output a correct runtime prints — so a
 learner can see what a stage is about before writing a line of code.
 
@@ -500,7 +500,7 @@ the interesting half of the suite: each one is a rule a from-scratch runtime get
   `wasmtime` treats `--` as an argument to the function and fails to parse it as a number.
   The harness never emits one.
 
-There are **no skipped tests** in a `--validate` run — 347 pass, 0 fail, 0 skip. If one ever
+There are **no skipped tests** in a `--validate` run — 381 pass, 0 fail, 0 skip. If one ever
 appears it carries a reason, which is printed in the summary and belongs in this list.
 
 ## Development
@@ -537,7 +537,7 @@ tests/encoder.rs           the encoder against hand-written bytes, examples vs t
 tests/catalog_is_current.rs  catalog.json and PLAN.md freshness
 tests/cli_smoke.rs         selection, exit codes, the red path via examples/broken_runtime.rs
 examples/broken_runtime.rs a runtime that checks the header and nothing else
-PLAN.md                    tickboxes and hints for all 45 stages (generated from the registry)
+PLAN.md                    tickboxes and hints for all 48 stages (generated from the registry)
 catalog.json               committed; a test fails if it is stale
 runtimes.yaml              the reference, your runtime, the broken example
 ```

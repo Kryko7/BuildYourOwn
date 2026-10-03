@@ -39,7 +39,7 @@ pub fn stage() -> Stage {
         ext: false,
         hints: &[
             "f32.const and f64.const carry four and eight raw little-endian bytes, not a LEB128: read them with from_le_bytes and never sign-extend them",
-            "Do every f32 operation at f32 width — computing in f64 and rounding once at the end gives a different answer for add, sub, mul, div and sqrt, and double rounding is how it shows up",
+            "Round every f32 result to f32 before anything else reads it: one add, sub, mul, div or sqrt done in f64 and rounded straight back gives the right f32, but an unrounded f64 carried into the next instruction does not — f32 0.1 + 0.2 == 0.3 is 1 only if the sum was rounded first",
             "ceil, floor and trunc all return a float, not an integer, and ceil(-0.5) is -0: keep the sign bit rather than normalising every zero to +0",
             "Dividing a float by zero is not a trap — it is +inf, -inf or NaN depending on the signs, and only the integer divisions trap",
         ],
@@ -254,7 +254,7 @@ wasm_test!(inexactness, |ctx| {
                 1,
             ),
             case_i32(
-                "f64: (1/3) * 3 == 1 — this one rounds back, unlike the last two",
+                "f64: (1/3) * 3 == 1 — 1/3 is inexact, but the product rounds back to 1",
                 Expr::new()
                     .f64_const(1.0)
                     .f64_const(3.0)

@@ -91,7 +91,7 @@ wasm_test!(right_results, |ctx| {
 });
 
 wasm_test!(falls_off_the_end, |ctx| {
-    let m = single(
+    let m = beside_seven(
         "falls-off-the-end",
         ftype(&[], &[ValType::I32]),
         Expr::new(),
@@ -227,12 +227,32 @@ fn local_runs() -> Module {
     )
 }
 
-/// A module whose single function declares type 7 while the type section holds one type.
+/// A module whose second function declares type 7 while the type section holds one type.
+///
+/// The defect is in `defect`, not in `f`: see [`beside_seven`].
 fn missing_type_index() -> Module {
     let mut b = ModuleBuilder::new("unknown-type-index");
-    b.add_type(ftype(&[], &[ValType::I32]));
-    let idx = b.add_func(7, Func::new(Expr::new().i32_const(1)));
-    b.export_func("f", idx).build()
+    let ty = b.add_type(ftype(&[], &[ValType::I32]));
+    let f = b.add_func(ty, Func::new(Expr::new().i32_const(7)));
+    let bad = b.add_func(7, Func::new(Expr::new().i32_const(1)));
+    b.export_func("f", f).export_func("defect", bad).build()
+}
+
+/// A module whose export `f` is a correct `() -> i32 { 7 }` and whose export `defect` is the
+/// function under test.
+///
+/// The invalid body is kept out of `f` on purpose. When `f` itself is the broken function, a
+/// runtime that skips the check and runs it anyway usually fails at run time instead — an
+/// empty stack popped, a type index looked up — and that failure looks exactly like a
+/// refusal from outside: non-zero exit, nothing on stdout. With the defect beside a function
+/// that works, accepting the module prints `7`, and the test can tell the difference.
+fn beside_seven(label: &str, sig: crate::wasm::FuncType, body: Expr) -> Module {
+    let mut b = ModuleBuilder::new(label);
+    let seven = b.add_type(ftype(&[], &[ValType::I32]));
+    let f = b.add_func(seven, Func::new(Expr::new().i32_const(7)));
+    let ty = b.add_type(sig);
+    let bad = b.add_func(ty, Func::new(body));
+    b.export_func("f", f).export_func("defect", bad).build()
 }
 
 /// A module whose function and code sections disagree about how many functions there are.

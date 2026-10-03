@@ -50,7 +50,7 @@ use crate::wasm::{
 };
 use crate::wasm_test;
 use rand::rngs::StdRng;
-use rand::Rng;
+use rand::{Rng, SeedableRng};
 use std::time::Duration;
 
 /// Mutations per family; five of these plus [`MIXED`] make the five hundred the plan asks for.
@@ -359,10 +359,17 @@ fn flip_bits(rng: &mut StdRng, m: &Module) -> (Module, String) {
         return (remade(m, bytes, "the module was empty"), "nothing".into());
     }
     let flips = rng.random_range(1..=3);
+    let mut chosen: Vec<(usize, u8)> = Vec::new();
     let mut where_ = Vec::new();
-    for _ in 0..flips {
+    while chosen.len() < flips {
         let at = rng.random_range(0..bytes.len());
         let bit = rng.random_range(0..8u8);
+        // Flipping the same bit twice would undo the first flip and hand the runtime the
+        // untouched seed, so every flip lands on a bit no earlier flip has touched.
+        if chosen.contains(&(at, bit)) {
+            continue;
+        }
+        chosen.push((at, bit));
         bytes[at] ^= 1 << bit;
         where_.push(format!("byte {at} bit {bit}"));
     }
@@ -648,6 +655,17 @@ fn stray_files(ctx: &Ctx) -> Vec<String> {
 // The driver
 // ---------------------------------------------------------------------------------------
 
+/// The RNG one family's mutations come from: `seed` mixed with an FNV-1a hash of the
+/// family's name, so a family produces the same modules however the run was filtered.
+fn family_rng(seed: u64, family: &str) -> StdRng {
+    let mut h: u64 = 0xcbf2_9ce4_8422_2325;
+    for b in family.bytes() {
+        h ^= u64::from(b);
+        h = h.wrapping_mul(0x0000_0100_0000_01b3);
+    }
+    StdRng::seed_from_u64(seed ^ h)
+}
+
 /// Run `count` mutations of one family and tally what the runtime did with them.
 fn sweep(
     ctx: &mut Ctx,
@@ -659,6 +677,11 @@ fn sweep(
     // mutation that turns into an infinite loop is reported as a hang instead of eating
     // the whole family.
     ctx.timeout = PER_INVOCATION;
+    // The mutations come from an RNG keyed on `--seed` and the family alone, not from
+    // `ctx.rng`: that one is keyed on the test's position in the run, which changes the
+    // moment `--only` or `--stage` selects fewer tests, and the replay line below would
+    // then rebuild different modules from the ones that failed.
+    let mut rng = family_rng(ctx.seed, family);
     let seeds = seeds();
     let replay = format!(
         "replay it with --seed {:#x} --stage 43 --only \"{family}\"",
@@ -669,7 +692,7 @@ fn sweep(
     let mut ran = 0usize;
     for i in 0..count {
         let seed = &seeds[i % seeds.len()];
-        let (m, how) = mutate(&mut ctx.rng, &seed.module);
+        let (m, how) = mutate(&mut rng, &seed.module);
         let context = format!("mutation {i} of '{family}': {} {how}", seed.what);
         let run = match seed.export {
             Some(name) => ctx.invoke(&m, name, &[]),
@@ -817,7 +840,6 @@ fn examples() -> Vec<ExampleSpec> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rand::SeedableRng;
 
     fn rng() -> StdRng {
         StdRng::seed_from_u64(43)
@@ -898,6 +920,23 @@ mod tests {
             }
         }
         assert_eq!(changed, 50, "a bit flip always changes a byte");
+    }
+
+    #[test]
+    fn a_family_replays_the_same_modules_whatever_else_ran() {
+        let take = |mut r: StdRng| {
+            (0..8)
+                .map(|_| flip_bits(&mut r, &numeric_seed()).0.bytes)
+                .collect::<Vec<_>>()
+        };
+        assert_eq!(
+            take(family_rng(0x5eed, "bits flipped")),
+            take(family_rng(0x5eed, "bits flipped"))
+        );
+        assert_ne!(
+            take(family_rng(0x5eed, "bits flipped")),
+            take(family_rng(0x5eee, "bits flipped"))
+        );
     }
 
     #[test]

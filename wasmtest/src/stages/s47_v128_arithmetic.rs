@@ -472,8 +472,27 @@ wasm_test!(f32x4_arithmetic, |ctx| {
     )
 });
 
+/// Four f32 lanes as a `v128.const`.
+fn f4c(lanes: [f32; 4]) -> Expr {
+    Expr::new().v128_const_i32x4(lanes.map(|v| v.to_bits() as i32))
+}
+
+/// `(a op b) == (a op b)` lanewise: all-ones where the result is a number, zero where it is
+/// NaN. Comparing the result with itself is the one test of NaN-ness that does not depend on
+/// which NaN bit pattern the runtime produced, which the spec leaves open.
+fn nan_mask(o: OpV, a: [f32; 4], b: [f32; 4]) -> Expr {
+    f4c(a)
+        .then(f4c(b))
+        .opv(o)
+        .then(f4c(a))
+        .then(f4c(b))
+        .opv(o)
+        .opv(opv::F32X4_EQ)
+}
+
 wasm_test!(float_nan_lanes, |ctx| {
     let splat = |v: f32| Expr::new().f32_const(v).opv(opv::F32X4_SPLAT);
+    let nan = f32::NAN;
     run_cases(
         ctx,
         "f32x4-nan",
@@ -509,6 +528,21 @@ wasm_test!(float_nan_lanes, |ctx| {
                     .opv(opv::F32X4_SPLAT)
                     .opv(opv::F32X4_MAX),
                 0,
+            ),
+            case_v128(
+                "min with a NaN on either side is NaN, never the other operand",
+                nan_mask(opv::F32X4_MIN, [nan, 1.0, nan, 1.0], [1.0, nan, 1.0, nan]),
+                0,
+            ),
+            case_v128(
+                "max with a NaN on either side is NaN as well",
+                nan_mask(opv::F32X4_MAX, [nan, 1.0, nan, 1.0], [1.0, nan, 1.0, nan]),
+                0,
+            ),
+            case_v128(
+                "a NaN in lane 0 stays in lane 0: the other three are ordinary minimums",
+                nan_mask(opv::F32X4_MIN, [nan, 1.0, 2.0, 3.0], [1.0; 4]),
+                v128_of_i32x4([0, -1, -1, -1]),
             ),
         ],
     )
