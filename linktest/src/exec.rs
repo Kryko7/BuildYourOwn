@@ -189,13 +189,16 @@ pub fn run(spec: &Spec) -> std::io::Result<Output> {
         }
     };
 
-    let stdout_bytes = out_thread.join().unwrap_or_default();
-    let stderr_bytes = err_thread.join().unwrap_or_default();
-    // Reap anything the child left behind in its group.
+    // Reap anything the child left behind in its group *before* waiting for the pipes to
+    // close. A wrapper script that backgrounds a process (`ld ... & exit 0`, a daemonised
+    // compiler server) leaves that process holding the write ends of stdout and stderr; the
+    // drain threads would then block on it for as long as it lives, with no deadline at all.
     // SAFETY: the group is ours; SIGKILL to an already-empty group is a no-op.
     unsafe {
         libc::killpg(pid, libc::SIGKILL);
     }
+    let stdout_bytes = out_thread.join().unwrap_or_default();
+    let stderr_bytes = err_thread.join().unwrap_or_default();
 
     use std::os::unix::process::ExitStatusExt;
     Ok(Output {
@@ -271,6 +274,21 @@ mod tests {
         let out = sh("sleep 30", 200);
         assert!(out.timed_out, "the sleep should have been killed");
         assert!(out.duration < Duration::from_secs(5));
+    }
+
+    #[test]
+    fn a_background_grandchild_holding_the_pipes_does_not_hang_the_harness() {
+        // The script exits at once, but the `sleep` it leaves behind inherits stdout and
+        // stderr. Waiting for those to close before killing the group waited 30 seconds.
+        let out = sh("echo started; sleep 30 & exit 0", 10_000);
+        assert_eq!(out.code, Some(0));
+        assert!(!out.timed_out);
+        assert!(
+            out.duration < Duration::from_secs(5),
+            "took {:?}",
+            out.duration
+        );
+        assert_eq!(out.stdout.trim(), "started");
     }
 
     #[test]

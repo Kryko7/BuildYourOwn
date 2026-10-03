@@ -118,17 +118,26 @@ fn absolute_symbol_reference(
     Ok((obj, site))
 }
 
-/// The link must be refused, must name `symbol`, and must leave no output file behind.
+/// The link must be refused, must name `symbol`, and must leave nothing runnable behind.
+///
+/// "Nothing runnable" is the contract every error stage holds a linker to (stages 17 and 18
+/// say the same): no output file, as GNU ld does, or one without an execute bit.
 fn assert_refused(ctx: &mut Ctx, link: &Link, doing: &str, symbol: &str) -> Result<(), Failure> {
     let run = ctx.link_fails(link, doing)?;
     let mut c = Check::new(format!("the diagnostic for {doing}"));
     c.mentions("linker.stderr", symbol, &run.output.stderr);
+    let runnable = run.produced.is_some() && crate::stages::is_executable(&run.out_path);
     c.that(
         "linker.output_file",
-        "no output file — a link that failed must not leave a half-relocated binary behind",
-        run.produced.is_none(),
+        "no runnable output — a link that failed must not leave a half-relocated binary the \
+         shell would run",
+        !runnable,
         match &run.produced {
-            Some(b) => format!("{} bytes at {}", b.len(), run.out_path.display()),
+            Some(b) => format!(
+                "{} bytes at {}, executable: {runnable}",
+                b.len(),
+                run.out_path.display()
+            ),
             None => "absent".to_string(),
         },
     );

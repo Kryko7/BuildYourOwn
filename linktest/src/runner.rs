@@ -164,7 +164,7 @@ impl Runner {
         }
         let result = match outcome {
             Some(f) => Err(f),
-            None => (test.run)(&mut ctx),
+            None => run_guarded(test.run, &mut ctx),
         };
         let status = match (&result, &ctx.skipped) {
             (Ok(()), Some(_)) => Status::Skip,
@@ -203,6 +203,32 @@ impl Drop for Runner {
     }
 }
 
+/// Run a test body, turning a panic into a failure of that one test.
+///
+/// A test body does arithmetic on numbers a half-finished linker wrote — addresses,
+/// offsets, sizes — and one that slips past the reader's checks must not take the whole run
+/// down with it (or, under `--validate`, make the run look as if it never reached the later
+/// stages). The panic is reported as a harness failure, because it is the suite's bug that
+/// it panicked rather than failing the check cleanly, and the run carries on.
+fn run_guarded(run: crate::stages::TestFn, ctx: &mut Ctx) -> Result<(), Failure> {
+    match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| run(ctx))) {
+        Ok(result) => result,
+        Err(payload) => {
+            let what = payload
+                .downcast_ref::<&str>()
+                .map(|s| (*s).to_string())
+                .or_else(|| payload.downcast_ref::<String>().cloned())
+                .unwrap_or_else(|| "a panic with no message".to_string());
+            Err(
+                Failure::harness(format!("the test body panicked: {what}")).note(
+                    "this is a bug in linktest, not in the linker: a check on the linker's output \
+                 should have failed cleanly instead",
+                ),
+            )
+        }
+    }
+}
+
 /// A failure kind for a test that never even got to run its first link.
 pub fn setup_failure(message: impl Into<String>) -> Failure {
     Failure::new(FailureKind::Harness, message)
@@ -211,6 +237,37 @@ pub fn setup_failure(message: impl Into<String>) -> Failure {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_panicking_test_body_is_one_failed_test() {
+        crate::link_test!(panics, |ctx| {
+            let (a, b) = (ctx.seed, ctx.seed + 1);
+            let _ = [0u8; 2][usize::try_from(b - a).unwrap_or(0) + 5];
+            Ok(())
+        });
+        let def = LinkerDef {
+            name: "true".to_string(),
+            kind: crate::config::LinkerKind::External,
+            command: vec!["/bin/true".to_string()],
+            cwd: None,
+            env: Default::default(),
+        };
+        let handle = LinkerHandle::resolve(&def).expect("/bin/true resolves");
+        let dir = tempfile::tempdir().expect("tempdir");
+        let mut ctx = Ctx::new(
+            handle,
+            None,
+            dir.path().to_path_buf(),
+            Duration::from_secs(1),
+            Duration::from_secs(1),
+            1,
+            1,
+        );
+        let result = run_guarded(panics, &mut ctx);
+        let failure = result.expect_err("a panic must come back as a failure");
+        assert_eq!(failure.kind, FailureKind::Harness);
+        assert!(failure.messages[0].contains("panicked"), "{failure:?}");
+    }
 
     #[test]
     fn status_serializes_like_the_other_testers() {

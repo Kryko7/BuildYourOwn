@@ -299,7 +299,7 @@ link_test!(one_concatenated_text, |ctx| {
             let mut outside = 0;
             for i in 0..N {
                 if let Some(sym) = linked.elf.symbol(&term_name(i)) {
-                    if sym.value < text.addr || sym.value >= text.addr + text.size {
+                    if sym.value < text.addr || sym.value >= text.addr.saturating_add(text.size) {
                         outside += 1;
                     }
                 }
@@ -422,7 +422,7 @@ link_test!(layout, |ctx| {
                 format!("offset 0x{:x}, addr 0x{:x}", s.offset, s.addr),
             );
         }
-        previous_end = s.addr + s.size;
+        previous_end = s.addr.saturating_add(s.size);
     }
     if !c.ok() {
         c.block("output section headers", linked.elf.section_header_table());

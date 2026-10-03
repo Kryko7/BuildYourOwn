@@ -174,7 +174,7 @@ link_test!(memsz_exceeds_filesz, |ctx| {
             c.at_least(
                 &format!("output.segment[{}].p_memsz - p_filesz", seg.index),
                 4096u64,
-                seg.memsz - seg.filesz,
+                seg.memsz.saturating_sub(seg.filesz),
             );
         }
         None => {
@@ -286,7 +286,7 @@ link_test!(a_megabyte_costs_nothing, |ctx| {
         c.at_least(
             "output.segment(.bss).p_memsz - p_filesz",
             1u64 << 20,
-            seg.memsz - seg.filesz,
+            seg.memsz.saturating_sub(seg.filesz),
         );
     }
     c.finish()

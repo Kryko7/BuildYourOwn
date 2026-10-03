@@ -224,11 +224,13 @@ pub fn assert_runnable_layout(linked: &Linked) -> Result<(), Failure> {
         );
     }
     for s in &loads {
-        let page = if s.align > 1 { s.align } else { PAGE_SIZE };
+        // Always modulo the page size, never modulo p_align: the kernel maps whole pages
+        // whatever p_align says, so a segment that declares p_align 16 and is congruent only
+        // modulo 16 still cannot be mapped.
         c.that(
             &format!("output.segment[{}].p_offset", s.index),
             "congruent to p_vaddr modulo the page size, so the kernel can mmap it",
-            s.offset % page.min(PAGE_SIZE) == s.vaddr % page.min(PAGE_SIZE),
+            s.offset % PAGE_SIZE == s.vaddr % PAGE_SIZE,
             format!(
                 "offset 0x{:x} vaddr 0x{:x} (0x{:x} vs 0x{:x} mod 0x{:x})",
                 s.offset,

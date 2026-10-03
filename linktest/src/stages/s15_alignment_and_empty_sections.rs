@@ -222,7 +222,11 @@ link_test!(alignment_across_objects, |ctx| {
         b % 256 == 0,
         format!("0x{b:x}"),
     );
-    c.at_least("output.symbol['sb'] - output.symbol['sa']", 256u64, b - a);
+    c.at_least(
+        "output.symbol['sb'] - output.symbol['sa']",
+        256u64,
+        b.abs_diff(a),
+    );
     if !c.ok() {
         c.block("output section headers", linked.elf.section_header_table());
     }

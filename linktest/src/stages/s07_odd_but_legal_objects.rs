@@ -199,14 +199,17 @@ link_test!(unknown_section_type, |ctx| {
 });
 
 link_test!(rela_before_its_target, |ctx| {
+    // `message` is global here, unlike in the other fixtures: leg three below reads its
+    // address out of the output's .symtab, and the contract only promises the globals are
+    // there — a linker that drops locals is allowed to.
     let code = program_code();
     let obj = build(
-        message_symbols(
-            ObjectBuilder::new()
-                .section(text_of(&code))
-                .section(message_section()),
-        )
-        .rela_before_target(),
+        ObjectBuilder::new()
+            .section(text_of(&code))
+            .section(message_section())
+            .symbol(SymbolSpec::global(DEFAULT_ENTRY, ".text", 0).func())
+            .symbol(SymbolSpec::global("message", ".rodata", 0).object(MESSAGE.len() as u64))
+            .rela_before_target(),
     )?;
     let parsed = Elf::parse(&obj)
         .map_err(|e| Failure::harness(format!("the suite built an object it cannot read: {e}")))?;

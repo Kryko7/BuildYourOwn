@@ -362,18 +362,18 @@ fn stage_examples() -> Vec<ExampleSpec> {
             "ld -o prog cut.o",
         )
         .request(
-            "cut.o: the first 360 bytes of a 776-byte object. The ELF header is intact and \
-             says e_shoff 328, e_shnum 7, e_shentsize 64 — a table that would end at 776",
+            "cut.o: the first 360 bytes of a 784-byte object. The ELF header is intact and \
+             says e_shoff 336, e_shnum 7, e_shentsize 64 — a table that would end at 784",
         )
         .response(
             "The linker exits non-zero with a message naming `cut.o`, and writes no output \
-             file. 328 + 7 * 64 is past the end of a 360-byte file, and that is the whole \
+             file. 336 + 7 * 64 is past the end of a 360-byte file, and that is the whole \
              check",
         )
         .note(
             "Compute the end of every table in a width that cannot overflow and compare it \
-             with the length of the buffer you read. `e_shnum * 64` in 32 bits is enough to \
-             wrap for e_shnum near 65535.",
+             with the length of the buffer you read. `e_shoff + e_shnum * 64` wraps a u64 \
+             for an e_shoff near 2^64, and then a check that the end is in bounds passes.",
         ),
         ExampleSpec::text("An empty input file", "ld -o prog empty.o")
             .request("empty.o: zero bytes")
@@ -387,4 +387,20 @@ fn stage_examples() -> Vec<ExampleSpec> {
              next to a file the shell will happily try to run.",
             ),
     ]
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// The worked example quotes the fixture's numbers as text; keep them true.
+    #[test]
+    fn the_example_quotes_the_real_fixture() {
+        let (_, len, shoff) = intact().expect("the fixture builds");
+        assert_eq!((len, shoff), (784, 336));
+        assert!(
+            360 < len && 360 > shoff,
+            "360 bytes must cut inside the table"
+        );
+    }
 }

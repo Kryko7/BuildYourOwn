@@ -387,7 +387,7 @@ link_test!(bss_costs_no_file_space, |ctx| {
             c.that(
                 "output.segment[scratch].p_filesz",
                 "a p_filesz that does not cover the .bss",
-                seg.memsz - seg.filesz >= BSS_SIZE,
+                seg.memsz.saturating_sub(seg.filesz) >= BSS_SIZE,
                 format!(
                     "filesz 0x{:x}, memsz 0x{:x}, difference 0x{:x}",
                     seg.filesz,
@@ -460,7 +460,7 @@ link_test!(congruence_at_scale, |ctx| {
             c.that(
                 "output.segment[blob].p_offset + p_filesz",
                 "entirely inside the file",
-                seg.offset + seg.filesz <= linked.bytes.len() as u64,
+                seg.offset.saturating_add(seg.filesz) <= linked.bytes.len() as u64,
                 format!(
                     "0x{:x} + 0x{:x} against a file of 0x{:x} bytes",
                     seg.offset,
@@ -468,10 +468,19 @@ link_test!(congruence_at_scale, |ctx| {
                     linked.bytes.len()
                 ),
             );
+            // Readable is the requirement; read-only is not. Stage 11 accepts .rodata in a
+            // writable segment ("legal but wasteful"), and the contract's segment rules are
+            // only that code is executable, data writable, and nothing both.
             c.that(
                 "output.segment[blob].p_flags",
-                "readable and not writable — this is .rodata",
-                seg.readable() && !seg.writable(),
+                "readable — this is .rodata, and the program reads it",
+                seg.readable(),
+                seg.describe(),
+            );
+            c.that(
+                "output.segment[blob].p_flags",
+                "not both writable and executable",
+                !(seg.writable() && seg.executable()),
                 seg.describe(),
             );
         }

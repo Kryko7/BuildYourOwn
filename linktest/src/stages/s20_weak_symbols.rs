@@ -360,7 +360,7 @@ link_test!(nothing_here_is_an_error, |ctx| {
                 .out("three_weak"),
         ),
         (
-            "a weak definition and a weak reference",
+            "a weak datum and a plain reference to it",
             Link::new()
                 .object("a.o", read_global_and_exit("wval")?)
                 .object("w.o", weak_word("wval", 5)?)

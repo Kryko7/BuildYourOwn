@@ -18,12 +18,13 @@
 //!
 //! `.fini_array` is the same machinery pointing the other way, walked in reverse at exit.
 
-use crate::asm::{Code, Reg};
-use crate::assert::{Check, Failure};
+use crate::asm::{Code, Reg, STDOUT};
+use crate::assert::{Check, Failure, FailureKind};
+use crate::elf::read::Section;
 use crate::elf::write::{ObjectBuilder, Reloc, SectionSpec, SymbolSpec};
 use crate::elf::*;
 use crate::examples::ExampleSpec;
-use crate::link::Link;
+use crate::link::{Link, Linked};
 use crate::link_test;
 use crate::stages::helpers::*;
 use crate::stages::{Stage, Test};
@@ -123,10 +124,10 @@ fn array_type(section: &str) -> u32 {
     }
 }
 
-/// A `_start` that walks `.init_array`, calls every entry, and exits with how many it found.
+/// A `_start` that measures `.init_array` and exits with its length in bytes.
 ///
-/// The count is what makes the test observable: the program reports the length of the array
-/// the linker built, measured from the linker's own symbols.
+/// It calls nothing: the count is what makes the length observable, measured from the
+/// linker's own symbols. [`calling_walker`] is the one that runs the constructors.
 fn array_walker() -> Result<Vec<u8>, Failure> {
     let mut code = Code::new();
     // eax = __init_array_end - __init_array_start, in bytes: eight per constructor.
@@ -141,6 +142,80 @@ fn array_walker() -> Result<Vec<u8>, Failure> {
             .symbol(SymbolSpec::undefined("__init_array_start"))
             .symbol(SymbolSpec::undefined("__init_array_end")),
     )
+}
+
+/// An object whose `.init_array` entry points at a constructor that writes `letter` to
+/// stdout — so running it is visible, and so is the order constructors run in.
+fn printing_ctor_object(name: &str, letter: u8) -> Result<Vec<u8>, Failure> {
+    let mut code = Code::new();
+    code.sys_write(STDOUT, "letter", 1);
+    code.ret();
+    build(
+        ObjectBuilder::new()
+            .section(text_named(".text", &code))
+            .section(SectionSpec::rodata(".rodata", vec![letter]))
+            .section(
+                SectionSpec::new(
+                    ".init_array",
+                    SHT_INIT_ARRAY,
+                    SHF_ALLOC | SHF_WRITE,
+                    vec![0; 8],
+                )
+                .align(8)
+                .entsize(8)
+                .reloc(Reloc::sym(0, name, R_X86_64_64, 0)),
+            )
+            .symbol(SymbolSpec::global(name, ".text", 0).func())
+            .symbol(SymbolSpec::local("letter", ".rodata", 0).object(1)),
+    )
+}
+
+/// A `_start` that really walks `.init_array`: it calls every eight-byte entry from
+/// `__init_array_start` up to `__init_array_end`, then exits with the array's length in
+/// bytes. `rbx` is the cursor because a constructor (and the syscall in it) may clobber
+/// every caller-saved register.
+///
+/// ```text
+///         lea  rbx, [rip+__init_array_start]
+/// loop:   lea  rax, [rip+__init_array_end]     ; 7 bytes
+///         cmp  rbx, rax                        ; 48 39 c3
+///         je   done                            ; 74 08
+///         call qword [rbx]                     ; ff 13
+///         add  rbx, 8                          ; 48 83 c3 08
+///         jmp  loop                            ; eb ec (-20)
+/// done:   eax = end - start; exit(eax)
+/// ```
+fn calling_walker() -> Result<Vec<u8>, Failure> {
+    let mut code = Code::new();
+    code.lea_rip(Reg::Rbx, "__init_array_start", 0);
+    code.lea_rip(Reg::Rax, "__init_array_end", 0);
+    code.raw(&[0x48, 0x39, 0xc3]); // cmp rbx, rax
+    code.je_rel8(8); // over call (2) + add (4) + jmp (2)
+    code.raw(&[0xff, 0x13]); // call qword [rbx]
+    code.raw(&[0x48, 0x83, 0xc3, 0x08]); // add rbx, 8
+    code.raw(&[0xeb, 0xec]); // jmp back 20 bytes, to the second lea
+    code.lea_rip(Reg::Rax, "__init_array_end", 0);
+    code.lea_rip(Reg::Rdi, "__init_array_start", 0);
+    code.sub_r32_r32(Reg::Rax, Reg::Rdi);
+    code.sys_exit_eax();
+    build(
+        ObjectBuilder::new()
+            .section(text_of(&code))
+            .symbol(SymbolSpec::global(DEFAULT_ENTRY, ".text", 0).func())
+            .symbol(SymbolSpec::undefined("__init_array_start"))
+            .symbol(SymbolSpec::undefined("__init_array_end")),
+    )
+}
+
+/// The output's `.init_array`, or a failure that says the linker dropped it — the linker's
+/// failure, not the suite's.
+fn output_init_array(linked: &Linked) -> Result<&Section, Failure> {
+    linked.elf.section(".init_array").ok_or_else(|| {
+        linked.attach(Failure::new(
+            FailureKind::Assertion,
+            "the output has no .init_array: the linker dropped the constructors",
+        ))
+    })
 }
 
 fn stage_examples() -> Vec<ExampleSpec> {
@@ -204,10 +279,7 @@ link_test!(init_array_is_allocated, |ctx| {
             .object("a.o", ctor_object("ctor_a", ".init_array")?)
             .object("main.o", exit_only(0)?),
     )?;
-    let s = linked
-        .elf
-        .section(".init_array")
-        .ok_or_else(|| Failure::harness("the output has no .init_array"))?;
+    let s = output_init_array(&linked)?;
     let mut c = Check::new("the section's flags and placement");
     c.note(
         "The array is walked at run time, so it has to be in memory; the startup code may \
@@ -233,10 +305,7 @@ link_test!(entries_are_concatenated, |ctx| {
             .object("c.o", ctor_object("ctor_c", ".init_array")?)
             .object("main.o", exit_only(0)?),
     )?;
-    let s = linked
-        .elf
-        .section(".init_array")
-        .ok_or_else(|| Failure::harness("the output has no .init_array"))?;
+    let s = output_init_array(&linked)?;
     let mut c = Check::new("three objects, each with one entry");
     c.note(
         "Nothing references these sections and nothing names them in a script: the linker \
@@ -253,12 +322,22 @@ link_test!(order_follows_the_command_line, |ctx| {
             .object("b.o", ctor_object("ctor_b", ".init_array")?)
             .object("main.o", exit_only(0)?),
     )?;
-    let data = linked
-        .elf
-        .section_data(".init_array")
-        .map_err(|e| Failure::harness(format!("cannot read .init_array: {e}")))?;
+    let data = output_init_array(&linked)
+        .and_then(|_| {
+            linked.elf.section_data(".init_array").map_err(|e| {
+                linked.attach(Failure::new(
+                    FailureKind::MalformedOutput,
+                    format!("the output's .init_array cannot be read: {e}"),
+                ))
+            })
+        })?
+        .to_vec();
+    // An array shorter than the two entries asked for reads as 0, which no ctor is at.
     let entry = |i: usize| -> u64 {
-        u64::from_le_bytes(data[i * 8..i * 8 + 8].try_into().unwrap_or([0; 8]))
+        data.get(i * 8..i * 8 + 8)
+            .and_then(|b| b.try_into().ok())
+            .map(u64::from_le_bytes)
+            .unwrap_or(0)
     };
     let a = linked.elf.symbol_address("ctor_a").unwrap_or(0);
     let b = linked.elf.symbol_address("ctor_b").unwrap_or(0);
@@ -303,10 +382,7 @@ link_test!(the_symbols_bracket_the_section, |ctx| {
             .object("b.o", ctor_object("ctor_b", ".init_array")?)
             .object("main.o", array_walker()?),
     )?;
-    let s = linked
-        .elf
-        .section(".init_array")
-        .ok_or_else(|| Failure::harness("the output has no .init_array"))?;
+    let s = output_init_array(&linked)?;
     let start = linked.elf.symbol_address("__init_array_start").unwrap_or(0);
     let end = linked.elf.symbol_address("__init_array_end").unwrap_or(0);
     let mut c = Check::new("where the two symbols point");
@@ -317,8 +393,12 @@ link_test!(the_symbols_bracket_the_section, |ctx| {
          not there.",
     );
     c.eq("__init_array_start", s.addr, start);
-    c.eq("__init_array_end", s.addr + s.size, end);
-    c.eq("the array holds two entries", 2u64, (end - start) / 8);
+    c.eq("__init_array_end", s.addr.saturating_add(s.size), end);
+    c.eq(
+        "the array holds two entries",
+        Some(2u64),
+        end.checked_sub(start).map(|bytes| bytes / 8),
+    );
     c.finish()
 });
 
@@ -380,20 +460,19 @@ link_test!(fini_array_too, |ctx| {
 link_test!(the_constructors_run, |ctx| {
     let linked = ctx.link_ok(
         &Link::new()
-            .object("a.o", ctor_object("ctor_a", ".init_array")?)
-            .object("b.o", ctor_object("ctor_b", ".init_array")?)
-            .object("c.o", ctor_object("ctor_c", ".init_array")?)
-            .object("main.o", array_walker()?),
+            .object("a.o", printing_ctor_object("ctor_a", b'a')?)
+            .object("b.o", printing_ctor_object("ctor_b", b'b')?)
+            .object("c.o", printing_ctor_object("ctor_c", b'c')?)
+            .object("main.o", calling_walker()?),
     )?;
     assert_runnable_layout(&linked)?;
-    // Three constructors, eight bytes each.
-    ctx.expect_output(&linked, "", 24)?;
-    let mut c = Check::new("the linked program, actually executed");
-    c.note(
-        "Three objects contributed a constructor each and the program, reading nothing but \
-         the linker's own symbols, finds three. Everything in this stage is visible from \
-         inside the process — which is the only place it matters.",
+    // Each constructor prints its own letter, in the order the array holds them; the exit
+    // status is the array's length — three entries of eight bytes.
+    ctx.expect_output(&linked, "abc", 24)?;
+    ctx.note(
+        "Three objects contributed a constructor each, and a _start that knows nothing but \
+         the linker's two symbols called all three, in command-line order. An entry the \
+         linker left unrelocated is a call to address 0, and that is a SIGSEGV here.",
     );
-    c.eq("three entries of eight bytes", 24u64, 3 * 8u64);
-    c.finish()
+    Ok(())
 });

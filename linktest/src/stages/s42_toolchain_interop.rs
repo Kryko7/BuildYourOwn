@@ -15,7 +15,7 @@
 //! machine without binutils is a machine where this leg cannot run, not a machine where the
 //! linker is wrong.
 
-use crate::assert::{Check, Failure};
+use crate::assert::{Check, Failure, FailureKind};
 use crate::elf::read::{Elf, Segment};
 use crate::elf::write::{ObjectBuilder, SectionSpec, SymbolSpec};
 use crate::examples::ExampleSpec;
@@ -175,12 +175,16 @@ fn tool_output(ctx: &mut Ctx, tool: &str, args: &[&str]) -> Result<Option<String
     }
     let out = ctx.run_tool(tool, args)?;
     if !out.success() {
-        return Err(Failure::harness(format!(
-            "{tool} {} exited {}: {}",
-            args.join(" "),
-            out.status_line(),
-            out.stderr.trim()
-        )));
+        // The tool ran; it is the file the linker wrote that it could not read.
+        return Err(Failure::new(
+            FailureKind::MalformedOutput,
+            format!(
+                "{tool} {} exited {}: {}",
+                args.join(" "),
+                out.status_line(),
+                out.stderr.trim()
+            ),
+        ));
     }
     Ok(Some(out.stdout))
 }
@@ -531,11 +535,16 @@ link_test!(objdump_disassembles, |ctx| {
     );
     // The first instruction of caller() is `mov eax, 1`, and somewhere after it is the call
     // to `other` — which objdump resolves back to the symbol only if the displacement is right.
+    // The needle has to be looked for on a `call` line: the bare `<addr> <other>` string is
+    // also the label objdump prints above the function itself, so searching the whole text
+    // for it passes whatever displacement the call carries.
     let other = linked.address_of("other")?;
+    let target = format!("{other:x} <other>");
     c.that(
         "objdump -d: the call to other",
         &format!("a call whose target objdump resolves to 0x{other:x} <other>"),
-        text.contains("call") && text.contains(&format!("{other:x} <other>")),
+        text.lines()
+            .any(|l| l.contains("call") && !l.trim_end().ends_with(':') && l.contains(&target)),
         text.lines()
             .filter(|l| l.contains("call"))
             .collect::<Vec<&str>>()

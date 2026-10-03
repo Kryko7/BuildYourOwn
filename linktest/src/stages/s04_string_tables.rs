@@ -151,7 +151,9 @@ fn extra_trailing_section_header(bytes: Vec<u8>) -> Result<Vec<u8>, Failure> {
         ));
     }
     let mut header = vec![0u8; SHDR_SIZE as usize];
-    header[32..40].copy_from_slice(&1u64.to_le_bytes()); // sh_addralign = 1
+    // sh_addralign is bytes 48..56 of an Elf64_Shdr; 32..40 is sh_size, and writing the 1
+    // there made the "inert" entry claim a byte of content at file offset 0.
+    header[48..56].copy_from_slice(&1u64.to_le_bytes()); // sh_addralign = 1
     let mut out = bytes[..table_end].to_vec();
     out.extend_from_slice(&header);
     out.extend_from_slice(&bytes[table_end..]);
@@ -351,6 +353,15 @@ link_test!(shstrndx_is_authoritative, |ctx| {
             .map(|s| section_type_name(s.sh_type).to_string())
             .unwrap_or_else(|| "no such section".to_string()),
     );
+    let extra = parsed.sections.last();
+    c.that(
+        "input.sections[last]",
+        "an inert SHT_NULL entry: no type, no offset, no size",
+        extra.is_some_and(|s| s.sh_type == SHT_NULL && s.offset == 0 && s.size == 0),
+        extra
+            .map(|s| format!("type {} offset {} size {}", s.sh_type, s.offset, s.size))
+            .unwrap_or_default(),
+    );
     c.finish()?;
 
     let linked = ctx.link_ok(
@@ -471,9 +482,9 @@ fn stage_examples() -> Vec<ExampleSpec> {
         )
         .note(
             "The extra header is deliberately inert — type SHT_NULL, size 0, name 0. A \
-             linker that walks the table and treats the last SHT_STRTAB it sees as the \
-             section name table reads the symbol string table instead and produces garbage \
-             names.",
+             linker that takes the last section header to be the section name table reads \
+             names out of an empty SHT_NULL entry instead of .shstrtab, and every section \
+             comes out nameless.",
         )
         .runs("shstrndx\n", 0),
     ]

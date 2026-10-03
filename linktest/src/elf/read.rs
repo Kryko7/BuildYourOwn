@@ -240,7 +240,7 @@ pub struct Elf {
 }
 
 fn u16le(b: &[u8], at: usize) -> Result<u16, ElfError> {
-    let end = at + 2;
+    let end = at.checked_add(2).unwrap_or(usize::MAX);
     if end > b.len() {
         return Err(ElfError::new(format!(
             "wanted 2 bytes at offset {at}, the file is only {} bytes",
@@ -251,7 +251,7 @@ fn u16le(b: &[u8], at: usize) -> Result<u16, ElfError> {
 }
 
 fn u32le(b: &[u8], at: usize) -> Result<u32, ElfError> {
-    let end = at + 4;
+    let end = at.checked_add(4).unwrap_or(usize::MAX);
     if end > b.len() {
         return Err(ElfError::new(format!(
             "wanted 4 bytes at offset {at}, the file is only {} bytes",
@@ -264,7 +264,7 @@ fn u32le(b: &[u8], at: usize) -> Result<u32, ElfError> {
 }
 
 fn u64le(b: &[u8], at: usize) -> Result<u64, ElfError> {
-    let end = at + 8;
+    let end = at.checked_add(8).unwrap_or(usize::MAX);
     if end > b.len() {
         return Err(ElfError::new(format!(
             "wanted 8 bytes at offset {at}, the file is only {} bytes",
@@ -274,6 +274,28 @@ fn u64le(b: &[u8], at: usize) -> Result<u64, ElfError> {
     let mut v = [0u8; 8];
     v.copy_from_slice(&b[at..end]);
     Ok(u64::from_le_bytes(v))
+}
+
+/// The file offset of entry `i` of a table of `entry_size`-byte entries at `base`, checked
+/// to lie wholly inside a file of `len` bytes — so the field reads that follow can add their
+/// small offsets to it without overflowing, whatever `e_phoff`/`e_shoff` claimed.
+fn entry_at(
+    base: usize,
+    i: usize,
+    entry_size: usize,
+    len: usize,
+    what: &str,
+) -> Result<usize, ElfError> {
+    let at = i
+        .checked_mul(entry_size)
+        .and_then(|o| base.checked_add(o))
+        .filter(|at| at.checked_add(entry_size).is_some_and(|end| end <= len))
+        .ok_or_else(|| {
+            ElfError::new(format!(
+                "{what} {i} at 0x{base:x} + {i} * {entry_size} is past the end of a {len}-byte file"
+            ))
+        })?;
+    Ok(at)
 }
 
 /// A NUL-terminated string starting at `at` inside `table`.
@@ -359,9 +381,7 @@ impl Elf {
         }
         let base = self.phoff as usize;
         for i in 0..self.phnum as usize {
-            let at = base
-                .checked_add(i * entry_size)
-                .ok_or_else(|| ElfError::new("e_phoff overflows"))?;
+            let at = entry_at(base, i, entry_size, self.bytes.len(), "program header")?;
             let b = &self.bytes;
             self.segments.push(Segment {
                 index: i,
@@ -391,9 +411,7 @@ impl Elf {
         let base = self.shoff as usize;
         let mut raw = Vec::new();
         for i in 0..self.shnum as usize {
-            let at = base
-                .checked_add(i * entry_size)
-                .ok_or_else(|| ElfError::new("e_shoff overflows"))?;
+            let at = entry_at(base, i, entry_size, self.bytes.len(), "section header")?;
             let b = &self.bytes;
             raw.push((
                 u32le(b, at)?, // sh_name
@@ -578,14 +596,20 @@ impl Elf {
             .segment_at(addr)
             .ok_or_else(|| ElfError::new(format!("no PT_LOAD segment maps address 0x{addr:x}")))?;
         let delta = addr - seg.vaddr;
-        if delta + len > seg.filesz {
+        if delta.saturating_add(len) > seg.filesz {
             return Err(ElfError::new(format!(
                 "address 0x{addr:x} is inside the segment at 0x{:x} but past its {} file bytes \
                  (p_filesz 0x{:x}) — .bss has no bytes in the file",
                 seg.vaddr, seg.filesz, seg.filesz
             )));
         }
-        self.slice(seg.offset + delta, len)
+        let offset = seg.offset.checked_add(delta).ok_or_else(|| {
+            ElfError::new(format!(
+                "the segment at 0x{:x} claims p_offset 0x{:x}, which overflows",
+                seg.vaddr, seg.offset
+            ))
+        })?;
+        self.slice(offset, len)
     }
 
     /// The 32-bit little-endian value at a virtual address.
@@ -709,6 +733,55 @@ mod tests {
             .expect_err("bad magic")
             .message
             .contains("magic"));
+    }
+
+    /// The reader's input is whatever a half-finished linker wrote, so a table offset near
+    /// the top of the address space has to come back as an error. It used to overflow the
+    /// `offset + 4` in the field reads: a panic in a debug build, and in a release build a
+    /// wrapped end that sliced `bytes[huge..small]` and panicked anyway.
+    #[test]
+    fn table_offsets_near_u64_max_are_errors_not_panics() {
+        let obj = ObjectBuilder::new()
+            .section(SectionSpec::text(".text", vec![0xc3]))
+            .build()
+            .expect("build");
+        for (field, at, count_at) in [("e_phoff", 32usize, 56usize), ("e_shoff", 40, 60)] {
+            for value in [u64::MAX, u64::MAX - 1, u64::MAX - 63, 1 << 63] {
+                let mut bytes = obj.clone();
+                bytes[at..at + 8].copy_from_slice(&value.to_le_bytes());
+                bytes[count_at..count_at + 2].copy_from_slice(&2u16.to_le_bytes());
+                if field == "e_phoff" {
+                    bytes[54..56].copy_from_slice(&(PHDR_SIZE).to_le_bytes());
+                }
+                assert!(
+                    Elf::parse(&bytes).is_err(),
+                    "{field} = 0x{value:x} must be an error"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn a_segment_whose_offset_overflows_is_unreadable_not_a_panic() {
+        let mut elf = Elf::parse(
+            &ObjectBuilder::new()
+                .section(SectionSpec::text(".text", vec![0xc3]))
+                .build()
+                .expect("build"),
+        )
+        .expect("parse");
+        elf.segments.push(Segment {
+            index: 0,
+            p_type: PT_LOAD,
+            flags: PF_R,
+            offset: u64::MAX - 2,
+            vaddr: 0x40_0000,
+            paddr: 0x40_0000,
+            filesz: 0x1000,
+            memsz: 0x1000,
+            align: 0x1000,
+        });
+        assert!(elf.read_at_vaddr(0x40_0010, 4).is_err());
     }
 
     #[test]

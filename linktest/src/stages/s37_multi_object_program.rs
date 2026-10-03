@@ -8,7 +8,7 @@
 //! linker can build something a person would actually run.
 
 use crate::asm::{Code, Reg, STDOUT};
-use crate::assert::{Check, Failure};
+use crate::assert::{Check, Failure, FailureKind};
 use crate::elf::read::Elf;
 use crate::elf::write::{ObjectBuilder, SectionSpec, SymbolSpec};
 use crate::elf::*;
@@ -240,10 +240,12 @@ link_test!(layout, |ctx| {
     assert_entry_is(&linked, DEFAULT_ENTRY)?;
 
     let mut c = Check::new("where the six objects' contributions landed");
-    let text = linked
-        .elf
-        .section(".text")
-        .ok_or_else(|| linked.attach(Failure::harness("the output has no section named .text")))?;
+    let text = linked.elf.section(".text").ok_or_else(|| {
+        linked.attach(Failure::new(
+            FailureKind::Assertion,
+            "the output has no section named .text",
+        ))
+    })?;
     c.that(
         "output..text.sh_flags",
         "SHF_ALLOC | SHF_EXECINSTR",
@@ -255,11 +257,11 @@ link_test!(layout, |ctx| {
         c.that(
             &format!("output.{part}"),
             "an address inside the concatenated .text",
-            addr >= text.addr && addr < text.addr + text.size,
+            addr >= text.addr && addr < text.addr.saturating_add(text.size),
             format!(
                 "0x{addr:x}, while .text is 0x{:x}..0x{:x}",
                 text.addr,
-                text.addr + text.size
+                text.addr.saturating_add(text.size)
             ),
         );
     }

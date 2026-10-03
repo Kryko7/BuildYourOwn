@@ -367,11 +367,9 @@ link_test!(one_allocation_two_objects, |ctx| {
 /// The allocated section whose address range covers `addr`, if the output has section
 /// headers at all.
 fn section_covering(linked: &Linked, addr: u64) -> Option<&Section> {
-    linked
-        .elf
-        .sections
-        .iter()
-        .find(|s| s.is_alloc() && s.size > 0 && s.addr <= addr && addr < s.addr + s.size)
+    linked.elf.sections.iter().find(|s| {
+        s.is_alloc() && s.size > 0 && s.addr <= addr && addr < s.addr.saturating_add(s.size)
+    })
 }
 
 /// An object that declares a common symbol and nothing else.

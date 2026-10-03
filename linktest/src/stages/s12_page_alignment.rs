@@ -246,7 +246,7 @@ link_test!(file_ranges_are_inside_the_file, |ctx| {
             format!(
                 "0x{:x}..0x{:x} of a 0x{len:x}-byte file",
                 s.offset,
-                s.offset + s.filesz
+                s.offset.saturating_add(s.filesz)
             ),
         );
     }

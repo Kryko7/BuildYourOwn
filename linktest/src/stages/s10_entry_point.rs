@@ -173,7 +173,7 @@ link_test!(a_symbol_in_front_of_start, |ctx| {
     c.addr_eq(
         "output.symbol['_start'] - output.symbol['before']",
         offset,
-        start - before,
+        start.wrapping_sub(before),
     );
     c.note(
         "'before' is the lower address and would be what a linker that used 'the first \

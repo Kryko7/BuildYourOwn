@@ -289,7 +289,7 @@ link_test!(either_a_got_or_a_relaxation, |ctx| {
         .any(|s| s.name == ".got" || s.name == ".got.plt");
     c.that(
         "output.got",
-        "a GOT section exactly when the load was left in place",
+        "a GOT section whenever the load was left in place",
         !(road == Some(Road::GotEntry)) || has_got,
         format!("road {road:?}, .got present: {has_got}"),
     );
@@ -536,11 +536,16 @@ link_test!(gotpcrel_to_nothing, |ctx| {
     )?;
     let mut c = Check::new("the diagnostic for an unresolvable GOT reference");
     c.mentions("linker.stderr", "no_such_global", &run.output.stderr);
+    let runnable = run.produced.is_some() && crate::stages::is_executable(&run.out_path);
     c.that(
         "linker.output_file",
-        "no output file left behind",
-        run.produced.is_none(),
-        run.produced.is_some(),
+        "no runnable output left behind — no file at all, or one without an execute bit, as \
+         stages 17 and 18 allow",
+        !runnable,
+        format!(
+            "output present: {}, executable: {runnable}",
+            run.produced.is_some()
+        ),
     );
     c.note(
         "a GOT slot needs a value like any other relocation; there is nothing to put in it \
