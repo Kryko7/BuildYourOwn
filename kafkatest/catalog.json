@@ -1,6 +1,6 @@
 {
   "track": "kafka",
-  "generatedAt": "2026-10-03T09:44:54Z",
+  "generatedAt": "2026-10-03T11:00:41Z",
   "sections": [
     {
       "id": "a",
@@ -19299,9 +19299,9 @@
       "file": "src/stages/s36_idempotent_producer.rs",
       "hints": [
         "InitProducerId with a null transactional_id hands out a fresh producer id (>= 0) and epoch (>= 0); the producer stamps both into every batch header",
-        "Keep the last sequence number per (producer id, partition): the next batch must start at last + 1, and its last sequence is baseSequence + lastOffsetDelta",
+        "Keep the last sequence number per (producer id, partition): the next batch must start at last + 1, and its last sequence is baseSequence + lastOffsetDelta; a gap is error 45 OUT_OF_ORDER_SEQUENCE_NUMBER and appends nothing",
         "A batch that repeats a sequence already appended is a retry — return the offset it got the first time (real Kafka) or error 46 DUPLICATE_SEQUENCE_NUMBER, and append nothing",
-        "A gap is error 45 OUT_OF_ORDER_SEQUENCE_NUMBER; an older epoch is error 47 INVALID_PRODUCER_EPOCH (45 is accepted too if you check the sequence first) — either way the log is left untouched"
+        "Keep the producer epoch per producer id too: a batch with a higher epoch and baseSequence 0 is a bumped producer and becomes the new state; a batch with an epoch below the one you hold is a zombie, error 47 INVALID_PRODUCER_EPOCH"
       ],
       "tests": [
         {

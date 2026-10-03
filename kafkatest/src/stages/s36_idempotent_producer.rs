@@ -40,13 +40,14 @@ pub fn stage() -> Stage {
              (>= 0) and epoch (>= 0); the producer stamps both into every batch header",
             "Keep the last sequence number per (producer id, partition): the next batch \
              must start at last + 1, and its last sequence is baseSequence + \
-             lastOffsetDelta",
+             lastOffsetDelta; a gap is error 45 OUT_OF_ORDER_SEQUENCE_NUMBER and appends \
+             nothing",
             "A batch that repeats a sequence already appended is a retry — return the \
              offset it got the first time (real Kafka) or error 46 \
              DUPLICATE_SEQUENCE_NUMBER, and append nothing",
-            "A gap is error 45 OUT_OF_ORDER_SEQUENCE_NUMBER; an older epoch is error 47 \
-             INVALID_PRODUCER_EPOCH (45 is accepted too if you check the sequence first) \
-             — either way the log is left untouched",
+            "Keep the producer epoch per producer id too: a batch with a higher epoch and \
+             baseSequence 0 is a bumped producer and becomes the new state; a batch with an \
+             epoch below the one you hold is a zombie, error 47 INVALID_PRODUCER_EPOCH",
         ],
         examples: wire_examples,
         tests: vec![
@@ -372,23 +373,38 @@ kafka_test!(stale_epoch, |ctx| {
     );
     c.finish()?;
 
-    // One epoch behind: a zombie producer that missed a fencing.
-    let stale = idempotent_batch(pid, epoch - 1, 1, &["b"]);
+    // The producer bumps its epoch, restarting its sequence at 0. Kafka accepts that and
+    // from then on holds the new epoch for this producer id.
+    let bumped = bump(epoch)?;
+    let (error, _) = produce(ctx, &t.name, &idempotent_batch(pid, bumped, 0, &["b"])).await?;
+    let mut c = Check::detached(format!(
+        "a batch with the epoch bumped to {bumped} and its sequence restarted at 0"
+    ));
+    c.that(
+        "response.responses[0].partition_responses[0].error_code",
+        &error_label(NONE),
+        error == NONE,
+        error_label(error),
+    );
+    c.finish()?;
+
+    // A zombie still on the old epoch, whose next sequence would be valid for the new one:
+    // only the epoch can tell the broker to refuse it. Sending epoch - 1 would instead be
+    // -1, the "no epoch" sentinel, not an older epoch at all.
+    let stale = idempotent_batch(pid, epoch, 1, &["zombie"]);
     let (rejected, _) = produce(ctx, &t.name, &stale).await?;
     let mut c = Check::detached(format!(
-        "a batch stamped with producer epoch {} while the broker holds {epoch}",
-        epoch - 1
+        "a batch stamped with producer epoch {epoch} while the broker holds {bumped}"
     ));
     c.note(
-        "Apache Kafka 4.1.2 fences the older epoch with 47 INVALID_PRODUCER_EPOCH; a \
-         broker that checks the sequence before the epoch answers 45 \
-         OUT_OF_ORDER_SEQUENCE_NUMBER, which is accepted too because the batch is \
-         rejected either way",
+        "Apache Kafka 4.1.2 fences the older epoch with 47 INVALID_PRODUCER_EPOCH. The \
+         sequence (1) is the right next one for the bumped epoch, so a broker that \
+         ignores epochs appends it",
     );
     error_is_one_of(
         &mut c,
         "response.responses[0].partition_responses[0].error_code",
-        &[INVALID_PRODUCER_EPOCH, OUT_OF_ORDER_SEQUENCE_NUMBER],
+        &[INVALID_PRODUCER_EPOCH],
         rejected,
     );
     c.finish()?;
@@ -397,7 +413,7 @@ kafka_test!(stale_epoch, |ctx| {
     let mut c = Check::detached("the log after the fenced batch");
     c.eq(
         "response.responses[0].partitions[0].high_watermark",
-        1i64,
+        2i64,
         hw,
     );
     c.finish()
@@ -408,16 +424,13 @@ kafka_test!(still_serving, |ctx| {
     let (pid, epoch) = init_producer_id(ctx).await?;
     produce(ctx, &t.name, &idempotent_batch(pid, epoch, 0, &["a"])).await?;
     produce(ctx, &t.name, &idempotent_batch(pid, epoch, 99, &["gap"])).await?;
-    produce(
-        ctx,
-        &t.name,
-        &idempotent_batch(pid, epoch - 1, 1, &["stale"]),
-    )
-    .await?;
-    expect_still_serving(ctx, "three rejected idempotent batches").await?;
+    let bumped = bump(epoch)?;
+    produce(ctx, &t.name, &idempotent_batch(pid, bumped, 0, &["b"])).await?;
+    produce(ctx, &t.name, &idempotent_batch(pid, epoch, 1, &["stale"])).await?;
+    expect_still_serving(ctx, "rejected idempotent batches").await?;
 
     // And a correct batch is still accepted afterwards.
-    let (error, base) = produce(ctx, &t.name, &idempotent_batch(pid, epoch, 1, &["b"])).await?;
+    let (error, base) = produce(ctx, &t.name, &idempotent_batch(pid, bumped, 1, &["c"])).await?;
     let mut c = Check::detached("a valid batch after the rejected ones");
     c.that(
         "response.responses[0].partition_responses[0].error_code",
@@ -427,11 +440,21 @@ kafka_test!(still_serving, |ctx| {
     );
     c.eq(
         "response.responses[0].partition_responses[0].base_offset",
-        1i64,
+        2i64,
         base,
     );
     c.finish()
 });
+
+/// The next producer epoch, as a producer that bumps its own epoch would stamp it.
+fn bump(epoch: i16) -> Result<i16, Failure> {
+    epoch.checked_add(1).ok_or_else(|| {
+        Failure::new(
+            crate::assert::FailureKind::Assertion,
+            format!("InitProducerId handed out epoch {epoch}, which cannot be bumped"),
+        )
+    })
+}
 
 /// Worked examples: asking for a producer id, and what the batch header then carries.
 fn wire_examples() -> Vec<ExampleSpec> {

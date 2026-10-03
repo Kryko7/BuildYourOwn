@@ -195,9 +195,9 @@ apache_kafka`, and reach the site through `catalog.json`. See README.md, "Exampl
   - Only baseOffset and partitionLeaderEpoch are the broker's to rewrite; the record bytes inside the batch belong to the producer
 - [ ] **Stage 36** — Idempotent producer: InitProducerId (22) and sequences **[ext]** (`src/stages/s36_idempotent_producer.rs`, 7 tests)
   - InitProducerId with a null transactional_id hands out a fresh producer id (>= 0) and epoch (>= 0); the producer stamps both into every batch header
-  - Keep the last sequence number per (producer id, partition): the next batch must start at last + 1, and its last sequence is baseSequence + lastOffsetDelta
+  - Keep the last sequence number per (producer id, partition): the next batch must start at last + 1, and its last sequence is baseSequence + lastOffsetDelta; a gap is error 45 OUT_OF_ORDER_SEQUENCE_NUMBER and appends nothing
   - A batch that repeats a sequence already appended is a retry — return the offset it got the first time (real Kafka) or error 46 DUPLICATE_SEQUENCE_NUMBER, and append nothing
-  - A gap is error 45 OUT_OF_ORDER_SEQUENCE_NUMBER; an older epoch is error 47 INVALID_PRODUCER_EPOCH (45 is accepted too if you check the sequence first) — either way the log is left untouched
+  - Keep the producer epoch per producer id too: a batch with a higher epoch and baseSequence 0 is a bumped producer and becomes the new state; a batch with an epoch below the one you hold is a zombie, error 47 INVALID_PRODUCER_EPOCH
 - [ ] **Stage 37** — Record validation: CORRUPT_MESSAGE (2) and MESSAGE_TOO_LARGE (10) **[ext]** (`src/stages/s37_record_validation.rs`, 7 tests)
   - Recompute the CRC-32C over everything after the crc field and compare: a mismatch is error 2 CORRUPT_MESSAGE and nothing is appended
   - A recordCount that does not match the records, or a magic other than 2, is rejected too: real Kafka answers 87 INVALID_RECORD there, and 2 CORRUPT_MESSAGE is accepted as well
