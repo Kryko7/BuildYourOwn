@@ -70,6 +70,24 @@ pub async fn reaction_past_tickets(conn: &mut TlsConn) -> Reaction {
     Reaction::Silence
 }
 
+/// Read past whatever ordinary handshake traffic the server sends — its ServerHello, a
+/// ChangeCipherSpec, encrypted records this connection has no keys for — and report what
+/// it does once that is over: an alert, a close, or silence.
+///
+/// This is what a test needs when the thing it provokes is *behind* a ClientHello in the
+/// same write: the server answers the hello first, so the first reaction is always a
+/// normal message and says nothing about the part that was meant to be refused.
+pub async fn reaction_past_flight(conn: &mut TlsConn) -> Reaction {
+    for _ in 0..32 {
+        let reaction = conn.reaction(Duration::from_millis(REACTION_MS)).await;
+        match &reaction {
+            Reaction::Message(_) => continue,
+            _ => return reaction,
+        }
+    }
+    Reaction::Silence
+}
+
 /// Assert that a server refused: an alert, or a closed connection. Both are legal.
 pub fn check_refused(c: &mut Check, path: &str, what: &str, reaction: &Reaction) {
     c.that(

@@ -79,11 +79,23 @@ async fn plaintext_alert(ctx: &crate::stages::Ctx) -> Result<Option<Record>, Fai
         .extensions
         .insert(1, crate::tls::msg::supported_versions_extension(&[0x0303]));
     let mut conn = ctx.connect().await?;
-    let _ = provoke(
+    let reaction = provoke(
         &mut conn,
         &Record::build(22, LEGACY_VERSION_TLS12, &hello.encode()),
     )
     .await;
+    // Without this, a server that hangs (or answers the 1.2-only hello) would leave no
+    // alert record behind and pass through the "closed without an alert" branch below.
+    if !reaction.is_refusal() {
+        let mut c = Check::new("a hello offering only TLS 1.2 in supported_versions");
+        crate::stages::check_refused(
+            &mut c,
+            "the server's reaction",
+            "a protocol_version alert",
+            &reaction,
+        );
+        c.finish()?;
+    }
     Ok(conn
         .records_in
         .iter()
@@ -213,11 +225,9 @@ tls_test!(client_fatal_alert, |ctx| {
     );
     c.that(
         "the server's reaction",
-        "a close, or an alert of its own",
-        matches!(
-            reaction,
-            Reaction::Closed | Reaction::Alert(_) | Reaction::Silence
-        ),
+        "a close, or an alert of its own — RFC 8446 section 6.2: on a fatal alert both \
+         parties \"MUST immediately close the connection\"",
+        matches!(reaction, Reaction::Closed | Reaction::Alert(_)),
         reaction.describe(),
     );
     c.finish()?;
@@ -278,7 +288,10 @@ tls_test!(bad_alert_length, |ctx| {
         );
         bytes.extend_from_slice(&Record::build(21, LEGACY_VERSION_TLS12, &fragment));
         let mut conn = ctx.connect().await?;
-        let reaction = provoke(&mut conn, &bytes).await;
+        conn.write_raw(&bytes).await.map_err(Failure::tls)?;
+        // The ServerHello answers the hello in front of the bad record; the refusal, if
+        // there is one, comes after the server's flight.
+        let reaction = crate::stages::reaction_past_flight(&mut conn).await;
         let mut c = Check::new(format!(
             "an alert record whose fragment is {} byte(s)",
             fragment.len()
@@ -287,11 +300,11 @@ tls_test!(bad_alert_length, |ctx| {
             "RFC 8446 section 6: an alert is exactly two bytes. A one-byte record cannot be \
              one, and a three-byte record is two alerts' worth of nonsense.",
         );
-        c.that(
+        crate::stages::check_refused(
+            &mut c,
             "the server's reaction",
-            "an alert, a close, or a ServerHello — but never a crash",
-            !matches!(reaction, Reaction::Error(_)),
-            reaction.describe(),
+            "an alert record of the wrong length",
+            &reaction,
         );
         c.finish()?;
         drop(conn);
@@ -318,8 +331,9 @@ tls_test!(unknown_description, |ctx| {
     c.note(format!("the server answered: {}", reaction.describe()));
     c.that(
         "the server's reaction",
-        "a close or an alert — the description is unknown, the level is not",
-        !matches!(reaction, Reaction::Error(_)),
+        "a close or an alert — the description is unknown, the level is not (RFC 8446 \
+         section 6: unknown alerts are treated as error alerts)",
+        reaction.is_refusal(),
         reaction.describe(),
     );
     c.finish()?;

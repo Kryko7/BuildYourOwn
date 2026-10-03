@@ -9,7 +9,9 @@ use std::time::Duration;
 
 /// Read exactly `n` bytes of application data, or fail saying how many arrived.
 async fn read_exactly(client: &mut Client, n: usize) -> Result<Vec<u8>, Failure> {
-    let mut out = client.pending_app_data().to_vec();
+    // `read_app_data` hands over (and drains) anything already buffered first, so starting
+    // from a copy of the buffer would count those bytes twice.
+    let mut out = Vec::new();
     let deadline = tokio::time::Instant::now() + client.conn.timeout;
     while out.len() < n {
         let left = deadline.saturating_duration_since(tokio::time::Instant::now());

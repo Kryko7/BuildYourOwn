@@ -88,11 +88,18 @@ tls_test!(reset_on_key_change, |ctx| {
         .await
         .map_err(Failure::tls)?;
     let after_update = client.conn.layer.write_seq;
+    // The server has to have reset its own read counter too, or the next record does not
+    // open on its side.
+    let answer = client
+        .echo_line("two")
+        .await
+        .map_err(|e| crate::stages::handshake_failure(e, &client))?;
     let mut c = Check::new("the write counter across a key change");
+    c.eq("echo after the KeyUpdate", "owt".to_string(), answer);
     c.eq("sequence number after the handshake", 0u64, before);
     c.eq("sequence number after one record", 1u64, after_one);
     c.note(
-        "The KeyUpdate itself goes out under the *old* keys at sequence 2, and the new keys \
+        "The KeyUpdate itself goes out under the *old* keys at sequence 1, and the new keys \
          start again at zero.",
     );
     c.eq("sequence number after the KeyUpdate", 0u64, after_update);
@@ -152,7 +159,9 @@ tls_test!(one_per_record, |ctx| {
 });
 
 tls_test!(ccs_does_not_count, |ctx| {
-    let mut client = ctx.handshake_with(ctx.config().with_ccs(false)).await?;
+    // The default client sends its compatibility CCS after the ClientHello, so a server
+    // that counted it would open the client's Finished with nonce 1 instead of 0 and fail.
+    let mut client = ctx.handshake_with(ctx.config().with_ccs(true)).await?;
     let before_read = client.conn.layer.read_seq;
     let before_write = client.conn.layer.write_seq;
     let ccs_in = client
@@ -253,7 +262,7 @@ fn examples() -> Vec<ExampleSpec> {
                  the client's Finished     -> 1\n\
                  application keys installed -> 0\n\
                  first application record   -> 1\n\
-                 KeyUpdate sent (under the old keys) -> 3, then new keys -> 0",
+                 KeyUpdate sent (under the old keys) -> 2, then new keys -> 0",
             )
             .response(
                 "The server counts its own writes the same way, independently. Nothing about \

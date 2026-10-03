@@ -1,6 +1,6 @@
 {
   "track": "tls",
-  "generatedAt": "2026-09-19T07:24:53Z",
+  "generatedAt": "2026-10-03T10:03:05Z",
   "sections": [
     {
       "id": "a",
@@ -5564,7 +5564,7 @@
           "name": "the refusal is a fatal alert, never a warning"
         },
         {
-          "name": "a hello offering only an unimplementable group is refused"
+          "name": "a hello offering only ffdhe2048 is refused or retried, never answered"
         },
         {
           "name": "the server still serves an acceptable client afterwards"
@@ -9546,10 +9546,10 @@
           "name": "the server's own CCS, if any, is plaintext and one byte"
         },
         {
-          "name": "a CCS carrying a byte other than 0x01 does not crash the server"
+          "name": "a CCS carrying a byte other than 0x01 is refused"
         },
         {
-          "name": "a CCS before the ClientHello does not crash the server"
+          "name": "a CCS before the ClientHello is refused"
         }
       ],
       "examples": [
@@ -10502,7 +10502,7 @@
         {
           "title": "The counter's whole life",
           "kind": "text",
-          "request": "handshake keys installed -> 0\nthe client's Finished     -> 1\napplication keys installed -> 0\nfirst application record   -> 1\nKeyUpdate sent (under the old keys) -> 3, then new keys -> 0",
+          "request": "handshake keys installed -> 0\nthe client's Finished     -> 1\napplication keys installed -> 0\nfirst application record   -> 1\nKeyUpdate sent (under the old keys) -> 2, then new keys -> 0",
           "request_hex": "",
           "response": "The server counts its own writes the same way, independently. Nothing about either counter is ever transmitted.",
           "response_hex": "",

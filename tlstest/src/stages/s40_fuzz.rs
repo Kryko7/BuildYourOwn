@@ -93,8 +93,11 @@ tls_test!(mutated_hellos, |ctx| {
         };
         let reaction = provoke_within(&mut conn, &bytes, FUZZ_WINDOW_MS).await;
         match reaction {
-            Reaction::Error(e) if crashed.len() < 5 => {
-                crashed.push(format!("round {round} ({}): {e}", mutation.name()))
+            // Every error counts against `survived`; only the first five are spelled out.
+            Reaction::Error(e) => {
+                if crashed.len() < 5 {
+                    crashed.push(format!("round {round} ({}): {e}", mutation.name()))
+                }
             }
             _ => survived += 1,
         }

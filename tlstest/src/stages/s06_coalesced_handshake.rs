@@ -3,12 +3,12 @@
 use crate::assert::{Check, Failure};
 use crate::examples::Expect;
 use crate::examples::{ExampleEnv, ExampleSpec, Part};
-use crate::stages::{hello_message, provoke};
+use crate::stages::{check_refused_with, hello_message};
 use crate::stages::{Stage, Test};
 use crate::tls::client::ClientConfig;
 use crate::tls::msg::{encode_handshake, HandshakeMessage};
 use crate::tls::record::Record;
-use crate::tls::{ContentType, HandshakeType, LEGACY_VERSION_TLS12};
+use crate::tls::{AlertDescription, ContentType, HandshakeType, LEGACY_VERSION_TLS12};
 use crate::tls_test;
 
 /// Stage definition.
@@ -148,21 +148,28 @@ tls_test!(trailing_bytes, |ctx| {
     // plus junk: the record ends mid-message, which RFC 8446 section 5.1 forbids.
     fragment.extend_from_slice(&[1u8, 0xff, 0xff, 0xff, 0x01, 0x02]);
     let mut conn = ctx.connect().await?;
-    let reaction = provoke(
-        &mut conn,
-        &Record::build(22, LEGACY_VERSION_TLS12, &fragment),
-    )
-    .await;
+    conn.write_raw(&Record::build(22, LEGACY_VERSION_TLS12, &fragment))
+        .await
+        .map_err(Failure::tls)?;
+    // The server may well answer the ClientHello before it notices the leftover bytes, so
+    // what counts is what it does once its own flight is out.
+    let reaction = crate::stages::reaction_past_flight(&mut conn).await;
     let mut c = Check::new("a record holding a ClientHello and half of another message");
     c.note(
-        "A server may refuse this outright, or wait for the rest of the second message. What \
-         it must not do is answer the first one and forget the leftover bytes.",
+        "RFC 8446 section 5.1: the ClientHello must end on a record boundary, because a key \
+         change follows it, and a server that finds handshake bytes left over \
+         \"MUST terminate the connection with an unexpected_message alert\". Answering the \
+         first message and forgetting the rest is the bug this catches.",
     );
-    c.that(
+    check_refused_with(
+        &mut c,
         "the server's reaction",
-        "a refusal, or patience — but never a crash",
-        !matches!(reaction, crate::tls::conn::Reaction::Error(_)),
-        reaction.describe(),
+        &reaction,
+        &[
+            AlertDescription::UNEXPECTED_MESSAGE,
+            AlertDescription::DECODE_ERROR,
+            AlertDescription::ILLEGAL_PARAMETER,
+        ],
     );
     c.finish()?;
     drop(conn);
@@ -173,16 +180,16 @@ tls_test!(trailing_bytes, |ctx| {
 tls_test!(client_flight_together, |ctx| {
     // The client's last flight is a ChangeCipherSpec record and an encrypted Finished. A
     // server has to cope with them arriving in one write, which is what a real client does.
-    let mut client = ctx.client().await?;
+    // The CCS is therefore held back until the Finished is ready, not sent after the hello.
+    let mut client = ctx.client_with(ctx.config().with_ccs(false)).await?;
     client.send_client_hello().await.map_err(Failure::tls)?;
-    client.maybe_send_ccs().await.map_err(Failure::tls)?;
     if let Err(e) = client.read_server_hello().await {
         return Err(crate::stages::handshake_failure(e, &client));
     }
     if let Err(e) = client.read_server_flight().await {
         return Err(crate::stages::handshake_failure(e, &client));
     }
-    if let Err(e) = client.send_client_finished().await {
+    if let Err(e) = client.send_ccs_and_finished_together().await {
         return Err(crate::stages::handshake_failure(e, &client));
     }
     let answer = client

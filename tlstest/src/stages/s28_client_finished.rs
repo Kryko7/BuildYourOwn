@@ -138,18 +138,21 @@ async fn bad_finished(
             .map(|v| hex(&v))
             .unwrap_or_else(|_| "unavailable".into())
     ));
-    check_refused_with(
-        &mut c,
-        "the server's reaction",
-        &reaction,
+    // RFC 8446 section 4.4.4: a Finished whose verify_data is wrong "MUST terminate the
+    // connection with a decrypt_error alert". One of the wrong *length* cannot even be
+    // decoded as a Finished, so decode_error is right for that one too. Anything else —
+    // bad_record_mac in particular — means the record itself did not open, which is a
+    // different bug from the one under test.
+    let right_length = client.suite.map(|s| s.hash.len()).unwrap_or(32) == body.len();
+    let allowed: &[AlertDescription] = if right_length {
+        &[AlertDescription::DECRYPT_ERROR]
+    } else {
         &[
-            AlertDescription::DECRYPT_ERROR,
-            AlertDescription::BAD_RECORD_MAC,
             AlertDescription::DECODE_ERROR,
-            AlertDescription::ILLEGAL_PARAMETER,
-            AlertDescription::HANDSHAKE_FAILURE,
-        ],
-    );
+            AlertDescription::DECRYPT_ERROR,
+        ]
+    };
+    check_refused_with(&mut c, "the server's reaction", &reaction, allowed);
     c.finish()
 }
 

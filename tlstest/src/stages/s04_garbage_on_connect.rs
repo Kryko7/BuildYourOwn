@@ -77,7 +77,12 @@ tls_test!(ssh_banner, |ctx| {
 });
 
 tls_test!(random_bytes, |ctx| {
-    let bytes: Vec<u8> = (0..64).map(|_| ctx.rng.random::<u8>()).collect();
+    let mut bytes: Vec<u8> = (0..64).map(|_| ctx.rng.random::<u8>()).collect();
+    // Random is random only up to the first byte: one that looks like a TLS content type
+    // (20..=23) or has the top bit set (an SSLv2-compatible hello header) can make a correct
+    // server wait for a record that is not finished yet, and the test would then fail for
+    // some seeds and not others. Folding it into 0x40..=0x7f keeps it unambiguous garbage.
+    bytes[0] = 0x40 | (bytes[0] & 0x3f);
     refuse(ctx, &bytes, "64 random bytes").await
 });
 

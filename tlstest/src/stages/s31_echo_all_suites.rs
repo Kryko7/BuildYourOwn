@@ -114,6 +114,9 @@ tls_test!(ciphertext_overhead, |ctx| {
             .records_in
             .iter()
             .skip(before)
+            // The *last* protected record: the echo ends the read, while the first one after
+            // the handshake is usually a NewSessionTicket, which is also outer type 23.
+            .rev()
             .find(|r| r.content_type == crate::tls::ContentType::ApplicationData)
             .ok_or_else(|| crate::stages::harness("no application record came back"))?;
         let mut c = Check::new(format!(

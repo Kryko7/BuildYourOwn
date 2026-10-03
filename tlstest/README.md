@@ -171,7 +171,7 @@ line in chunks, each reversed on its own, so the suite keeps its lines well unde
 
 ## Stages
 
-45 stages in seven sections; `PLAN.md` has the tickboxes and the hints.
+48 stages in eight sections; `PLAN.md` has the tickboxes and the hints.
 
 | Section | Stages | About |
 |---|---|---|
@@ -182,14 +182,14 @@ line in chunks, each reversed on its own, so the suite keeps its lines well unde
 | E | 30–35 | Application data and AEAD: the echo, every suite, padding, sizes, close_notify, `bad_record_mac` |
 | F | 36–40 | Alerts, errors and robustness: alert format, bad handshakes, no renegotiation, fifty connections, fuzz |
 | G | 41–45 | Advanced: HelloRetryRequest, KeyUpdate, tickets and resumption, early-data rejection, real-client interop |
+| H | 46–48 | Client authentication: CertificateRequest, the client's Certificate and CertificateVerify, requesting against requiring |
 
 Sections A and B check liveness by sending a fresh ClientHello and requiring a handshake
 record back — not a completed handshake — so the record layer can be finished before the
 key schedule is started. From section C onward a test may reasonably expect the handshake
 to complete, because the stages that build it come first.
 
-Stages 39–45 are `ext`, along with a few individual tests earlier on: `--skip-ext` leaves a
-270-test core path.
+Stages 39–48 are `ext`: `--skip-ext` leaves a 270-test core path.
 
 ## What the failure blocks mean
 
@@ -261,7 +261,11 @@ Set `TLSTEST_OPENSSL` to point at a different build. OpenSSL 3.x is required; th
 checks for `-rev`, `-naccept` and `-tls1_3` in `cargo test`.
 
 The server is started in its own process group and killed as a group (`SIGTERM`, then
-`SIGKILL`), so a wrapper script never leaves a process behind. Every server instance gets a
+`SIGKILL`), so a wrapper script never leaves a process behind. Because a terminal's `Ctrl-C`
+never reaches another process group, the harness also catches `SIGINT`, `SIGTERM` and
+`SIGHUP` itself and kills the server and removes its scratch directory before exiting; a run
+killed with `SIGKILL` is cleaned up by the next one, which kills whatever is still running out
+of a dead run's `tlstest-<pid>` directory and deletes it. Every server instance gets a
 free port from the kernel; the suite never binds a fixed one, and never 4433.
 
 **The reference serves connections one at a time.** That is conformant, so no test requires

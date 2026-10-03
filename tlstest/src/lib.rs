@@ -20,6 +20,7 @@
 pub mod assert;
 pub mod catalog;
 pub mod certs;
+pub mod cleanup;
 pub mod config;
 pub mod examples;
 pub mod report;

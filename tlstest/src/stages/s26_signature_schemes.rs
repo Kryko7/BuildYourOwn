@@ -18,6 +18,13 @@ fn ed25519_server() -> ServerOptions {
     ServerOptions::with_cert(CertKind::Leaf(KeyKind::Ed25519))
 }
 
+/// The three RSA-PSS schemes for an rsaEncryption key, all of which the client offers.
+const RSA_PSS_RSAE: [u16; 3] = [
+    SIG_RSA_PSS_RSAE_SHA256,
+    crate::tls::SIG_RSA_PSS_RSAE_SHA384,
+    crate::tls::SIG_RSA_PSS_RSAE_SHA512,
+];
+
 /// Stage definition.
 pub fn stage() -> Stage {
     Stage {
@@ -109,8 +116,9 @@ tls_test!(ecdsa, |ctx| {
     );
     c.that(
         "certificate_verify.signature.len()",
-        "between 70 and 72 bytes — DER integers lose or gain a leading zero",
-        (68..=72).contains(&signature.len()),
+        "at most 72 bytes, usually 70-72 — DER integers lose or gain a leading zero, and \
+         an r or s with leading zero bytes is shorter still",
+        (8..=72).contains(&signature.len()),
         signature.len(),
     );
     c.that(
@@ -128,10 +136,13 @@ tls_test!(rsa, |ctx| {
     c.block("certificate_verify", &bytes);
     c.keying(&hash, "Transcript-Hash(CH..Certificate)");
     c.eq("certificate.public_key", "RSA", key.algorithm());
-    c.eq(
+    // The client offers all three rsa_pss_rsae_* schemes, and any of them is a correct
+    // choice for an rsaEncryption key.
+    c.that(
         "certificate_verify.algorithm",
-        SIG_RSA_PSS_RSAE_SHA256,
-        scheme,
+        "rsa_pss_rsae_sha256, rsa_pss_rsae_sha384 or rsa_pss_rsae_sha512",
+        RSA_PSS_RSAE.contains(&scheme),
+        sig_name(scheme),
     );
     c.eq(
         "certificate_verify.signature.len()",
@@ -175,15 +186,18 @@ tls_test!(rsa_is_pss, |ctx| {
     let content = server_signed_content(&hash);
     let mut c = Check::new("that the RSA signature is PSS and not PKCS#1 v1.5");
     c.block("certificate_verify", &bytes);
-    c.eq(
+    // The client offers all three rsa_pss_rsae_* schemes, and any of them is a correct
+    // choice for an rsaEncryption key.
+    c.that(
         "certificate_verify.algorithm",
-        SIG_RSA_PSS_RSAE_SHA256,
-        scheme,
+        "rsa_pss_rsae_sha256, rsa_pss_rsae_sha384 or rsa_pss_rsae_sha512",
+        RSA_PSS_RSAE.contains(&scheme),
+        sig_name(scheme),
     );
     c.that(
         "the signature as RSA-PSS",
         "verifies",
-        sig::verify_content(&key, SIG_RSA_PSS_RSAE_SHA256, &signature, &content).is_ok(),
+        sig::verify_content(&key, scheme, &signature, &content).is_ok(),
         "does not verify",
     );
     c.that(

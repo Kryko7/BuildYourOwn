@@ -300,6 +300,10 @@ pub struct Client {
     pub alpn_selected: Option<String>,
     /// Tickets the server has sent so far.
     pub tickets: Vec<NewSessionTicket>,
+    /// When each of [`Client::tickets`] arrived, for its `obfuscated_ticket_age`.
+    pub ticket_arrivals: Vec<std::time::Instant>,
+    /// Every KeyUpdate the server has sent, in order.
+    pub server_key_updates: Vec<KeyUpdate>,
     /// Application data read while looking for something else.
     pending_app: Vec<u8>,
     /// True once the client's Finished has been sent.
@@ -360,6 +364,8 @@ impl Client {
             server_ccs_before_encrypted: false,
             alpn_selected: None,
             tickets: Vec::new(),
+            ticket_arrivals: Vec::new(),
+            server_key_updates: Vec::new(),
             pending_app: Vec::new(),
             finished: false,
         }
@@ -494,6 +500,15 @@ impl Client {
         }
         let hello = ServerHello::parse(&message.body)?;
         if hello.is_hello_retry_request() {
+            if self.hello_retry_request.is_some() {
+                // RFC 8446 section 4.1.4: a second HelloRetryRequest in the same connection
+                // is an unexpected_message abort, never a second retry.
+                return Err(TlsError::Protocol(
+                    "the server sent a second hello_retry_request: RFC 8446 section 4.1.4 \
+                     allows one per connection"
+                        .into(),
+                ));
+            }
             self.hello_retry_request = Some(hello.clone());
             self.server_hello_bytes = message.raw.clone();
             if !self.config.follow_hello_retry {
@@ -519,6 +534,18 @@ impl Client {
                 "server_hello.cipher_suite is {}, which the ClientHello never offered",
                 suite_name(hello.cipher_suite)
             )));
+        }
+        if let Some(retry) = &self.hello_retry_request {
+            // RFC 8446 section 4.1.4: the ServerHello after a retry must keep the suite the
+            // HelloRetryRequest chose; the transcript is already hashed under it.
+            if retry.cipher_suite != hello.cipher_suite {
+                return Err(TlsError::Protocol(format!(
+                    "server_hello.cipher_suite is {} but the hello_retry_request chose {} \
+                     (RFC 8446 section 4.1.4)",
+                    suite_name(hello.cipher_suite),
+                    suite_name(retry.cipher_suite)
+                )));
+            }
         }
         self.suite = Some(suite);
 
@@ -558,7 +585,19 @@ impl Client {
         self.server_hello = Some(hello.clone());
 
         let psk = self.config.psk.as_ref().map(|p| p.psk.clone());
-        let accepted_psk = hello.selected_psk()?.is_some();
+        let accepted_psk = match hello.selected_psk()? {
+            None => false,
+            // This client offers exactly one identity, so 0 is the only index there is
+            // (RFC 8446 section 4.2.11: anything else is illegal_parameter).
+            Some(0) if psk.is_some() => true,
+            Some(index) => {
+                return Err(TlsError::Protocol(format!(
+                    "server_hello.pre_shared_key.selected_identity is {index}, but the \
+                     ClientHello offered {} identities",
+                    usize::from(psk.is_some())
+                )))
+            }
+        };
         let mut schedule = KeySchedule::new(suite, accepted_psk.then_some(()).and(psk.as_deref()));
         let shared = self.shared_secret.clone();
         let hash = self.hash_after_server_hello.clone();
@@ -604,10 +643,22 @@ impl Client {
         transcript.replace_with_message_hash();
         transcript.push(retry_bytes, "hello_retry_request");
 
-        self.config.share_groups = vec![group];
-        if !self.config.groups.contains(&group) {
-            self.config.groups.push(group);
+        // RFC 8446 section 4.1.4: the group has to be one the client named in
+        // supported_groups and one it did not already send a share for; anything else is an
+        // illegal_parameter abort, not something to comply with.
+        if !self.config.groups.contains(&group) || self.config.share_groups.contains(&group) {
+            return Err(TlsError::Protocol(format!(
+                "hello_retry_request.key_share.selected_group is {}, which is {} \
+                 (RFC 8446 section 4.1.4)",
+                group_name(group),
+                if self.config.share_groups.contains(&group) {
+                    "a group the ClientHello already sent a share for"
+                } else {
+                    "not in the ClientHello's supported_groups"
+                }
+            )));
         }
+        self.config.share_groups = vec![group];
         let mut hello = self.build_client_hello()?;
         if let Some(cookie) = retry.cookie()? {
             hello.extensions.push(cookie_extension(&cookie));
@@ -634,8 +685,70 @@ impl Client {
     /// signature and the server's `verify_data` as they arrive.
     pub async fn read_server_flight(&mut self) -> TlsResult<()> {
         let mut saw_encrypted_extensions = false;
+        // The type of the previous message in this flight, for the order RFC 8446 section
+        // 4.4.1 fixes: EncryptedExtensions, [CertificateRequest], Certificate,
+        // CertificateVerify, Finished — with the authentication messages present unless a
+        // PSK was accepted.
+        let mut previous: Option<HandshakeType> = None;
+        let resumed = self
+            .server_hello
+            .as_ref()
+            .map(|h| matches!(h.selected_psk(), Ok(Some(_))))
+            .unwrap_or(false);
         loop {
             let message = self.next_handshake("the server's encrypted flight").await?;
+            let out_of_order = match message.msg_type {
+                HandshakeType::ENCRYPTED_EXTENSIONS => None,
+                _ if !saw_encrypted_extensions => Some(
+                    "RFC 8446 section 4.3.1 makes EncryptedExtensions the first message of the \
+                     encrypted flight",
+                ),
+                HandshakeType::CERTIFICATE_REQUEST if resumed => {
+                    Some("a resumed handshake carries no CertificateRequest (section 4.3.2)")
+                }
+                HandshakeType::CERTIFICATE_REQUEST
+                    if previous != Some(HandshakeType::ENCRYPTED_EXTENSIONS) =>
+                {
+                    Some("CertificateRequest comes straight after EncryptedExtensions")
+                }
+                HandshakeType::CERTIFICATE if resumed => Some(
+                    "the server accepted a PSK, so it authenticates with that and sends no \
+                     Certificate (section 4.4)",
+                ),
+                HandshakeType::CERTIFICATE if self.certificate.is_some() => {
+                    Some("the server sent its Certificate twice")
+                }
+                HandshakeType::CERTIFICATE_VERIFY
+                    if previous != Some(HandshakeType::CERTIFICATE) =>
+                {
+                    Some("CertificateVerify comes immediately after the Certificate it proves")
+                }
+                HandshakeType::FINISHED
+                    if !resumed && previous != Some(HandshakeType::CERTIFICATE_VERIFY) =>
+                {
+                    Some(
+                        "a handshake that is not resuming must authenticate the server with \
+                         Certificate and CertificateVerify before its Finished (section 4.4)",
+                    )
+                }
+                HandshakeType::FINISHED
+                    if resumed && previous != Some(HandshakeType::ENCRYPTED_EXTENSIONS) =>
+                {
+                    Some("a resumed handshake goes EncryptedExtensions, Finished")
+                }
+                _ => None,
+            };
+            if let Some(why) = out_of_order {
+                return Err(TlsError::Protocol(format!(
+                    "{} arrived {}: {why}",
+                    message.name(),
+                    match previous {
+                        Some(p) => format!("after {}", p.name()),
+                        None => "first".to_string(),
+                    }
+                )));
+            }
+            previous = Some(message.msg_type);
             let transcript = self
                 .transcript
                 .as_mut()
@@ -665,13 +778,6 @@ impl Client {
                     transcript.push(&message.raw, "certificate_request");
                 }
                 HandshakeType::CERTIFICATE => {
-                    if !saw_encrypted_extensions {
-                        return Err(TlsError::Protocol(
-                            "certificate arrived before encrypted_extensions: RFC 8446 section 4.3.1 \
-                             makes EncryptedExtensions the first message of the encrypted flight"
-                                .into(),
-                        ));
-                    }
                     let cert = CertificateMsg::parse(&message.body)?;
                     self.server_public_key = Some(PublicKey::from_certificate(cert.leaf()?)?);
                     self.certificate = Some(cert);
@@ -681,6 +787,22 @@ impl Client {
                 }
                 HandshakeType::CERTIFICATE_VERIFY => {
                     let cv = CertificateVerifyMsg::parse(&message.body)?;
+                    // RFC 8446 section 4.4.3: the scheme must be one the client offered, and
+                    // RSA signs with PSS here even when rsa_pkcs1_* was offered (for
+                    // certificate signatures).
+                    if !self.config.signature_algorithms.contains(&cv.algorithm)
+                        || cv.algorithm == super::SIG_RSA_PKCS1_SHA256
+                    {
+                        return Err(TlsError::Protocol(format!(
+                            "certificate_verify.algorithm is {}, which {} (RFC 8446 section 4.4.3)",
+                            super::sig_name(cv.algorithm),
+                            if cv.algorithm == super::SIG_RSA_PKCS1_SHA256 {
+                                "TLS 1.3 never uses in CertificateVerify: RSA signs with PSS"
+                            } else {
+                                "the ClientHello's signature_algorithms did not offer"
+                            }
+                        )));
+                    }
                     let key = self.server_public_key.as_ref().ok_or_else(|| {
                         TlsError::Protocol("certificate_verify arrived before certificate".into())
                     })?;
@@ -878,7 +1000,34 @@ impl Client {
     /// `decrypt_error`" test sends a deliberately bad one.
     pub async fn send_client_finished_bytes(&mut self, message: &[u8]) -> TlsResult<()> {
         self.ensure_client_handshake_keys()?;
-        self.conn.write_handshake(message).await?;
+        // The key switch happens even when the write fails: a server that has already
+        // refused the client's flight sends its alert under its *application* keys (it
+        // sent its own Finished long ago), and a test reading that alert needs them in
+        // place rather than an AEAD failure that hides what the server said.
+        let written = self.conn.write_handshake(message).await;
+        self.client_finished_sent(message)?;
+        written
+    }
+
+    /// Send the compatibility `ChangeCipherSpec` and the encrypted Finished in one TCP
+    /// write, which is what a real middlebox-compatible client does with its last flight.
+    pub async fn send_ccs_and_finished_together(&mut self) -> TlsResult<()> {
+        self.ensure_client_handshake_keys()?;
+        let message = encode_handshake(HandshakeType::FINISHED, &self.client_verify_data()?);
+        let mut bytes = super::record::Record::build(
+            ContentType::ChangeCipherSpec.as_u8(),
+            LEGACY_VERSION_TLS12,
+            &[1],
+        );
+        bytes.extend_from_slice(&self.conn.layer.seal(ContentType::Handshake, &message, 0)?);
+        let written = self.conn.write_raw(&bytes).await;
+        self.client_finished_sent(&message)?;
+        written
+    }
+
+    /// Everything that follows the client's Finished going out: the transcript, the
+    /// resumption secret, and both directions moving to the application keys.
+    fn client_finished_sent(&mut self, message: &[u8]) -> TlsResult<()> {
         self.client_finished_bytes = message.to_vec();
         let transcript = self
             .transcript
@@ -993,6 +1142,7 @@ impl Client {
                 Incoming::Handshake(m) => {
                     if m.msg_type == HandshakeType::NEW_SESSION_TICKET {
                         self.tickets.push(NewSessionTicket::parse(&m.body)?);
+                        self.ticket_arrivals.push(std::time::Instant::now());
                         continue;
                     }
                     return Ok(m);
@@ -1052,10 +1202,12 @@ impl Client {
         match m.msg_type {
             HandshakeType::NEW_SESSION_TICKET => {
                 self.tickets.push(NewSessionTicket::parse(&m.body)?);
+                self.ticket_arrivals.push(std::time::Instant::now());
                 Ok(())
             }
             HandshakeType::KEY_UPDATE => {
                 let update = KeyUpdate::parse(&m.body)?;
+                self.server_key_updates.push(update);
                 self.rekey_read()?;
                 if update.request_update == 1 {
                     self.send_key_update(KeyUpdate::NOT_REQUESTED).await?;
@@ -1199,11 +1351,18 @@ impl Client {
         let suite = self
             .suite
             .ok_or_else(|| TlsError::Crypto("no cipher suite was negotiated".into()))?;
+        let age_ms = self
+            .tickets
+            .iter()
+            .position(|t| t.ticket == ticket.ticket && t.ticket_nonce == ticket.ticket_nonce)
+            .and_then(|i| self.ticket_arrivals.get(i))
+            .map(|at| u32::try_from(at.elapsed().as_millis()).unwrap_or(u32::MAX))
+            .unwrap_or(0);
         Ok(PskOffer {
             identity: ticket.ticket.clone(),
-            // The age is obfuscated by adding the server's `ticket_age_add`; a resumption
-            // milliseconds after the ticket arrived is age ~0.
-            obfuscated_ticket_age: ticket.ticket_age_add.wrapping_add(0),
+            // RFC 8446 section 4.2.11.1: the age in milliseconds since the ticket arrived,
+            // plus the server's `ticket_age_add`, modulo 2^32.
+            obfuscated_ticket_age: ticket.ticket_age_add.wrapping_add(age_ms),
             psk: schedule.resumption_psk(&ticket.ticket_nonce)?,
             suite,
         })

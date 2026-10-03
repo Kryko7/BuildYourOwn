@@ -121,11 +121,24 @@ tls_test!(share_is_offered, |ctx| {
          computed. A server that wants a group from the first list but not the second has to \
          send a HelloRetryRequest — stage 41.",
     );
-    c.eq(
-        "server_hello.key_share.group",
-        GROUP_SECP256R1,
-        client.selected_group.unwrap_or(0),
-    );
+    // A server that prefers x25519 may legally ask for it with a HelloRetryRequest
+    // (RFC 8446 section 4.1.4), and the client follows one; what it may never do is
+    // complete a ServerHello for a group it was sent no share for.
+    if client.hello_retry_request.is_some() {
+        c.note("the server asked for another group with a HelloRetryRequest, which is legal");
+        c.that(
+            "server_hello.key_share.group",
+            "a group the ClientHello named in supported_groups",
+            [GROUP_X25519, GROUP_SECP256R1].contains(&client.selected_group.unwrap_or(0)),
+            group_name(client.selected_group.unwrap_or(0)),
+        );
+    } else {
+        c.eq(
+            "server_hello.key_share.group",
+            GROUP_SECP256R1,
+            client.selected_group.unwrap_or(0),
+        );
+    }
     c.finish()
 });
 

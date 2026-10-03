@@ -38,13 +38,10 @@ pub fn stage() -> Stage {
                 server_ccs_shape,
             ),
             Test::new(
-                "a CCS carrying a byte other than 0x01 does not crash the server",
+                "a CCS carrying a byte other than 0x01 is refused",
                 odd_ccs_payload,
             ),
-            Test::new(
-                "a CCS before the ClientHello does not crash the server",
-                ccs_first,
-            ),
+            Test::new("a CCS before the ClientHello is refused", ccs_first),
         ],
     }
 }
@@ -118,7 +115,7 @@ tls_test!(ccs_after_finished, |ctx| {
     let reaction = crate::stages::reaction_past_tickets(&mut client.conn).await;
     let mut c = Check::new("a ChangeCipherSpec sent after the client's Finished");
     c.note(
-        "RFC 8446 appendix D.4: a CCS is only droppable between the first ClientHello and the \
+        "RFC 8446 section 5: a CCS is only droppable between the first ClientHello and the \
          peer's Finished. Outside that window 'it MUST be treated as an unexpected record \
          type', which is unexpected_message(10).",
     );
@@ -126,11 +123,7 @@ tls_test!(ccs_after_finished, |ctx| {
         &mut c,
         "the server's reaction",
         &reaction,
-        &[
-            crate::tls::AlertDescription::UNEXPECTED_MESSAGE,
-            crate::tls::AlertDescription::DECODE_ERROR,
-            crate::tls::AlertDescription::ILLEGAL_PARAMETER,
-        ],
+        &[crate::tls::AlertDescription::UNEXPECTED_MESSAGE],
     );
     c.finish()?;
     drop(client);
@@ -184,17 +177,21 @@ tls_test!(odd_ccs_payload, |ctx| {
     // A CCS whose single byte is 0x02 rather than 0x01.
     bytes.extend_from_slice(&Record::build(20, LEGACY_VERSION_TLS12, &[2]));
     let mut conn = ctx.connect().await?;
-    let reaction = provoke(&mut conn, &bytes).await;
+    conn.write_raw(&bytes).await.map_err(Failure::tls)?;
+    // The server answers the hello before it reads the CCS behind it, so its ServerHello
+    // says nothing; what it does once its flight is out is the answer.
+    let reaction = crate::stages::reaction_past_flight(&mut conn).await;
     let mut c = Check::new("a ChangeCipherSpec whose payload byte is 0x02");
     c.note(
-        "RFC 8446 appendix D.4 allows an implementation to reject a CCS whose value is not \
-         0x01, and allows it to ignore the record entirely. Both are fine; crashing is not.",
+        "RFC 8446 section 5: only a CCS consisting of the single byte 0x01 may be dropped; \
+         \"an implementation which receives any other change_cipher_spec value ... MUST \
+         abort the handshake with an unexpected_message alert\".",
     );
-    c.that(
+    crate::stages::check_refused_with(
+        &mut c,
         "the server's reaction",
-        "an alert, a close, or a normal ServerHello",
-        !matches!(reaction, crate::tls::conn::Reaction::Error(_)),
-        reaction.describe(),
+        &reaction,
+        &[crate::tls::AlertDescription::UNEXPECTED_MESSAGE],
     );
     c.finish()?;
     drop(conn);
@@ -214,16 +211,16 @@ tls_test!(ccs_first, |ctx| {
     let reaction = provoke(&mut conn, &bytes).await;
     let mut c = Check::new("a ChangeCipherSpec sent before the ClientHello");
     c.note(
-        "RFC 8446 appendix D.4 puts this outside the droppable window too, so a refusal is \
-         right; a server that quietly ignores it and answers the hello is also alive and \
-         well, which is what the check requires.",
+        "RFC 8446 section 5: a CCS \"received before the first ClientHello message ... MUST \
+         be treated as an unexpected record type\" — so answering the hello that follows it \
+         is the bug, and unexpected_message(10) is the alert.",
     );
     c.observe("the server's reaction", reaction.describe());
-    c.that(
+    crate::stages::check_refused_with(
+        &mut c,
         "the server's reaction",
-        "an alert, a close, or a ServerHello — but not a crash",
-        !matches!(reaction, crate::tls::conn::Reaction::Error(_)),
-        reaction.describe(),
+        &reaction,
+        &[crate::tls::AlertDescription::UNEXPECTED_MESSAGE],
     );
     c.finish()?;
     drop(conn);

@@ -80,6 +80,10 @@ impl ServerHandle {
             .stdout(Stdio::from(out))
             .stderr(Stdio::from(err))
             .process_group(0);
+        // SAFETY: the closure only calls async-signal-safe functions.
+        unsafe {
+            cmd.pre_exec(crate::cleanup::reset_signal_mask_in_child);
+        }
         for (k, v) in &spec.env {
             cmd.env(k, v);
         }
@@ -87,6 +91,7 @@ impl ServerHandle {
             .spawn()
             .with_context(|| format!("cannot start server '{}': {program}", spec.name))?;
         let pgid = child.id() as i32;
+        crate::cleanup::register_group(pgid);
         let addr: SocketAddr = format!("127.0.0.1:{}", spec.port)
             .parse()
             .context("server address")?;
@@ -241,6 +246,7 @@ impl ServerHandle {
         unsafe {
             libc::killpg(self.pgid, libc::SIGKILL);
         }
+        crate::cleanup::unregister_group(self.pgid);
     }
 }
 

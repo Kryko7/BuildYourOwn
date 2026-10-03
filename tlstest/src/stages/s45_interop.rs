@@ -9,12 +9,15 @@ use crate::tls::{
 use crate::tls_test;
 use std::process::Stdio;
 use std::time::Duration;
-use tokio::io::AsyncWriteExt;
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
 /// How long `s_client` is given to finish once it has been asked to stop.
 const CLIENT_TIMEOUT: Duration = Duration::from_secs(10);
-/// How long to wait for the answer before closing `s_client`'s stdin.
-const ANSWER_WAIT: Duration = Duration::from_millis(700);
+/// How long to wait for the answer line before giving up on it.
+///
+/// The wait ends as soon as the answer arrives; this is only the ceiling for a server that
+/// never answers, and it is generous so that a slow machine does not read as a failure.
+const ANSWER_WAIT: Duration = Duration::from_secs(5);
 /// How long to wait after the EOF before stopping `s_client` outright.
 ///
 /// `s_client` does not exit on stdin EOF while the peer's connection is still open, and the
@@ -52,23 +55,46 @@ async fn s_client(ctx: &crate::stages::Ctx, extra: &[&str], line: &str) -> Resul
     ];
     argv.extend(extra.iter().map(|a| (*a).to_string()));
     let command = format!("{} {}", openssl.display(), argv.join(" "));
-    let mut child = tokio::process::Command::new(&openssl)
-        .args(&argv)
+    let mut cmd = tokio::process::Command::new(&openssl);
+    cmd.args(&argv)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
-        .kill_on_drop(true)
+        .kill_on_drop(true);
+    // SAFETY: the closure only calls async-signal-safe functions.
+    unsafe {
+        cmd.pre_exec(crate::cleanup::reset_signal_mask_in_child);
+    }
+    let mut child = cmd
         .spawn()
         .map_err(|e| crate::stages::harness(format!("cannot run {command}: {e}")))?;
+    let mut stdout_pipe = child.stdout.take();
+    let mut stdout = Vec::new();
     if let Some(mut stdin) = child.stdin.take() {
         let _ = stdin.write_all(format!("{line}\n").as_bytes()).await;
         let _ = stdin.flush().await;
-        // Give the server time to answer before the EOF asks s_client to shut down.
-        tokio::time::sleep(ANSWER_WAIT).await;
+        // Read until the answer line is in (or s_client gives up, or the ceiling passes),
+        // and only then send the EOF that asks s_client to shut down.
+        if let Some(out) = stdout_pipe.as_mut() {
+            let deadline = tokio::time::Instant::now() + ANSWER_WAIT;
+            let mut chunk = [0u8; 4096];
+            // Without -quiet stdout also carries the session summary, so a newline alone
+            // is not the answer: wait for the reversed line itself.
+            let answer = format!("{}\n", reversed(line)).into_bytes();
+            while !stdout.windows(answer.len()).any(|w| w == answer.as_slice()) {
+                match tokio::time::timeout_at(deadline, out.read(&mut chunk)).await {
+                    Ok(Ok(n)) if n > 0 => stdout.extend_from_slice(&chunk[..n]),
+                    _ => break,
+                }
+            }
+        }
         drop(stdin);
     }
     tokio::time::sleep(SHUTDOWN_WAIT).await;
     let _ = child.start_kill();
+    if let Some(mut out) = stdout_pipe {
+        let _ = tokio::time::timeout(CLIENT_TIMEOUT, out.read_to_end(&mut stdout)).await;
+    }
     let output = tokio::time::timeout(CLIENT_TIMEOUT, child.wait_with_output())
         .await
         .map_err(|_| {
@@ -79,7 +105,7 @@ async fn s_client(ctx: &crate::stages::Ctx, extra: &[&str], line: &str) -> Resul
         })?
         .map_err(|e| crate::stages::harness(format!("{command}: {e}")))?;
     Ok(Run {
-        stdout: String::from_utf8_lossy(&output.stdout).to_string(),
+        stdout: String::from_utf8_lossy(&stdout).to_string(),
         stderr: String::from_utf8_lossy(&output.stderr).to_string(),
         command,
     })
@@ -159,11 +185,21 @@ tls_test!(handshake, |ctx| {
         "An independent implementation is the point: it agrees with the RFC rather than with \
          this suite's client.",
     );
+    // Under -quiet a failed handshake prints only an OpenSSL error line
+    // (`...:error:0A000410:SSL routines::ssl/tls alert handshake failure...`), so the proof
+    // of a handshake is the echo coming back and no error line beside it.
     c.that(
         "s_client",
         "no handshake failure in its output",
-        !run.all().contains("CONNECTION FAILURE") && !run.all().contains("no protocols available"),
+        !run.all().contains(":error:")
+            && !run.all().contains("CONNECTION FAILURE")
+            && !run.all().contains("no protocols available"),
         run.all(),
+    );
+    c.eq(
+        "s_client stdout",
+        format!("{}\n", reversed("interop")),
+        run.stdout.clone(),
     );
     c.finish()
 });
@@ -198,10 +234,12 @@ tls_test!(reports_version, |ctx| {
     let all = run.all();
     let mut c = Check::new("the parameters s_client reports");
     c.note(run.command.clone());
+    // A failed handshake still prints `Protocol: TLSv1.3` and `New, (NONE), Cipher is
+    // (NONE)`, so the line that proves a TLS 1.3 session is the one naming a real suite.
     c.that(
         "s_client output",
-        "mentions TLSv1.3",
-        all.contains("TLSv1.3"),
+        "reports a TLS 1.3 session with a cipher suite (\"New, TLSv1.3, Cipher is TLS_...\")",
+        all.contains("New, TLSv1.3, Cipher is TLS_") && !all.contains("Cipher is (NONE)"),
         all.lines().take(20).collect::<Vec<_>>().join("\n"),
     );
     if let Some(line) = all.lines().find(|l| l.contains("Cipher is")) {
@@ -312,11 +350,13 @@ tls_test!(resumes, |ctx| {
         format!("{}\n", reversed("one")),
         first.stdout.clone(),
     );
+    c.that(
+        "s_client -sess_out",
+        "wrote a session file (the server sent a ticket worth keeping, as stage 43 requires)",
+        session.is_file(),
+        "no session file: the server offered no ticket, so there is nothing to resume with",
+    );
     if !session.is_file() {
-        c.note(
-            "s_client wrote no session file, which means the server offered no ticket it \
-             wanted to keep; there is nothing to resume with",
-        );
         return c.finish();
     }
     let second = s_client(ctx, &["-sess_in", &path], "two").await?;

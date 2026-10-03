@@ -184,6 +184,9 @@ fn run() -> Result<bool> {
         seed: cli.seed,
         verbose: cli.verbose,
     };
+    // Before the runtime exists, so every thread inherits the blocked signal mask.
+    tlstest::cleanup::sweep_abandoned();
+    tlstest::cleanup::install_signal_handler();
     let rt = tokio::runtime::Builder::new_multi_thread()
         .enable_all()
         .build()

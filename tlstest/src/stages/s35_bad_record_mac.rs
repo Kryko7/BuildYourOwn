@@ -82,11 +82,10 @@ async fn tamper(
         &mut c,
         "the server's reaction",
         &reaction,
-        &[
-            AlertDescription::BAD_RECORD_MAC,
-            AlertDescription::DECRYPT_ERROR,
-            AlertDescription::UNEXPECTED_MESSAGE,
-        ],
+        // RFC 8446 section 5.2: a record that fails to deprotect "MUST terminate the
+        // connection with a bad_record_mac alert" — decrypt_error is for signatures and
+        // Finished, and would hide which of the two checks went wrong.
+        &[AlertDescription::BAD_RECORD_MAC],
     );
     c.finish()?;
     drop(client);
@@ -161,11 +160,10 @@ tls_test!(replayed_record, |ctx| {
         &mut c,
         "the server's reaction",
         &reaction,
-        &[
-            AlertDescription::BAD_RECORD_MAC,
-            AlertDescription::DECRYPT_ERROR,
-            AlertDescription::UNEXPECTED_MESSAGE,
-        ],
+        // RFC 8446 section 5.2: a record that fails to deprotect "MUST terminate the
+        // connection with a bad_record_mac alert" — decrypt_error is for signatures and
+        // Finished, and would hide which of the two checks went wrong.
+        &[AlertDescription::BAD_RECORD_MAC],
     );
     c.finish()?;
     drop(client);

@@ -189,6 +189,14 @@ tls_test!(not_a_retry, |ctx| {
         crate::tls::hex(&hello.random),
     );
     c.eq("hello_retry_request", false, hello.is_hello_retry_request());
+    // The client follows a HelloRetryRequest transparently, so the hello it keeps is never
+    // one; what shows a needless retry is that one arrived at all, though the client
+    // offered an x25519 share the server supports.
+    c.eq(
+        "a hello_retry_request arrived",
+        false,
+        client.hello_retry_request.is_some(),
+    );
     c.finish()
 });
 

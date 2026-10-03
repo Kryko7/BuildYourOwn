@@ -202,11 +202,12 @@ tls_test!(grease_version, |ctx| {
 });
 
 tls_test!(unknown_extension_with_data, |ctx| {
-    // 0x7a7a is not GREASE and is not assigned; a server must skip it by its length.
+    // 0x5eed is neither GREASE (RFC 8701 values are 0x?a?a) nor assigned, so a server that
+    // special-cases GREASE instead of skipping every unknown type by its length fails here.
     let client = handshake_edited(ctx, ctx.config(), |hello| {
         hello
             .extensions
-            .insert(1, Extension::new(0x7a7a, (0u8..64).collect()));
+            .insert(1, Extension::new(0x5eed, (0u8..64).collect()));
     })
     .await?;
     let mut c = Check::new("an unassigned extension carrying 64 bytes");

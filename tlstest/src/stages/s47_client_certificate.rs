@@ -290,13 +290,10 @@ async fn bad_certificate_verify(
         &mut c,
         "the server's reaction",
         &reaction,
-        &[
-            AlertDescription::DECRYPT_ERROR,
-            AlertDescription::BAD_CERTIFICATE,
-            AlertDescription::HANDSHAKE_FAILURE,
-            AlertDescription::ILLEGAL_PARAMETER,
-            AlertDescription::DECODE_ERROR,
-        ],
+        // RFC 8446 section 4.4.3: "If the verification fails, the receiver MUST terminate
+        // the handshake with a decrypt_error alert." Both callers send a well-formed
+        // signature over the wrong content, so verification is the only thing that fails.
+        &[AlertDescription::DECRYPT_ERROR],
     );
     c.finish()
 }
@@ -327,8 +324,9 @@ tls_test!(wrong_transcript_refused, |ctx| {
 });
 
 tls_test!(untrusted_certificate_refused, |ctx| {
-    // A certificate the server has never heard of, with a CertificateVerify that is
-    // genuinely correct for it: the proof of possession is sound, the identity is not.
+    // A certificate that does not chain to the client CA the server was given (it is the
+    // server's own self-signed leaf), with a CertificateVerify that is genuinely correct
+    // for it: the proof of possession is sound, the identity is not.
     // Separating the two is the point — a server that only checks the signature has
     // authenticated whoever turns up.
     let other = ctx
@@ -396,7 +394,6 @@ tls_test!(untrusted_certificate_refused, |ctx| {
             AlertDescription::BAD_CERTIFICATE,
             AlertDescription::CERTIFICATE_UNKNOWN,
             AlertDescription::HANDSHAKE_FAILURE,
-            AlertDescription::CERTIFICATE_REQUIRED,
         ],
     );
     c.finish()

@@ -1,11 +1,13 @@
 //! Stage 11 — Nothing in common: `handshake_failure`.
 
-use crate::assert::Check;
+use crate::assert::{Check, Failure};
 use crate::examples::{ExampleEnv, ExampleSpec, Expect};
 use crate::stages::{check_refused_with, provoke, Stage, Test};
 use crate::tls::client::{build_hello, ClientConfig};
+use crate::tls::conn::{Incoming, Reaction};
+use crate::tls::msg::ServerHello;
 use crate::tls::record::Record;
-use crate::tls::{AlertDescription, LEGACY_VERSION_TLS12};
+use crate::tls::{group_name, AlertDescription, HandshakeType, TlsError, LEGACY_VERSION_TLS12};
 use crate::tls_test;
 
 /// Stage definition.
@@ -43,7 +45,7 @@ pub fn stage() -> Stage {
                 fatal_not_warning,
             ),
             Test::new(
-                "a hello offering only an unimplementable group is refused",
+                "a hello offering only ffdhe2048 is refused or retried, never answered",
                 no_common_group,
             ),
             Test::new(
@@ -117,10 +119,14 @@ tls_test!(fatal_not_warning, |ctx| {
                  everything else is fatal.",
             );
             c.eq("alert.level", 2u8, alert.level.as_u8());
-            c.eq(
+            // RFC 8446 section 4.1.1: "either a handshake_failure or an
+            // insufficient_security fatal alert".
+            c.that(
                 "alert.description",
-                AlertDescription::HANDSHAKE_FAILURE.0,
-                alert.description.0,
+                "handshake_failure(40) or insufficient_security(71)",
+                alert.description == AlertDescription::HANDSHAKE_FAILURE
+                    || alert.description == AlertDescription::INSUFFICIENT_SECURITY,
+                alert.description.name(),
             );
         }
         None => {
@@ -141,7 +147,39 @@ tls_test!(no_common_group, |ctx| {
     let (hello, _) = build_hello(&config).map_err(|e| crate::stages::harness(e.to_string()))?;
     let bytes = hello.encode();
     let mut conn = ctx.connect().await?;
-    let reaction = provoke(&mut conn, &Record::build(22, LEGACY_VERSION_TLS12, &bytes)).await;
+    conn.write_raw(&Record::build(22, LEGACY_VERSION_TLS12, &bytes))
+        .await
+        .map_err(Failure::tls)?;
+    // A bare "some message arrived" would also pass the ServerHello this test exists to
+    // catch, so the answer is read as a message and only a HelloRetryRequest for a group
+    // the client named counts as asking it to try again.
+    let reaction = match conn
+        .next_message_within(std::time::Duration::from_millis(crate::stages::REACTION_MS))
+        .await
+    {
+        Ok(Incoming::Handshake(m)) if m.msg_type == HandshakeType::SERVER_HELLO => {
+            match ServerHello::parse(&m.body) {
+                Ok(h) if h.is_hello_retry_request() => match h.retry_group() {
+                    Ok(Some(g)) if config.groups.contains(&g) => {
+                        Reaction::Message(format!("hello_retry_request for {}", group_name(g)))
+                    }
+                    other => Reaction::Error(format!(
+                        "a hello_retry_request whose key_share is {other:?}, not a group the \
+                         client offered"
+                    )),
+                },
+                Ok(_) => Reaction::Error(
+                    "a full server_hello, though the client sent no key share it could use".into(),
+                ),
+                Err(e) => Reaction::Error(format!("an unparsable server_hello: {e}")),
+            }
+        }
+        Ok(Incoming::Alert(a)) => Reaction::Alert(a),
+        Ok(other) => Reaction::Error(format!("unexpected {}", other.describe())),
+        Err(TlsError::Closed) => Reaction::Closed,
+        Err(TlsError::Timeout(_)) => Reaction::Silence,
+        Err(e) => Reaction::Error(e.to_string()),
+    };
     let mut c = Check::new("a hello whose only group is ffdhe2048, with no key share");
     c.block("client_hello", &bytes);
     c.note(
@@ -152,7 +190,7 @@ tls_test!(no_common_group, |ctx| {
     c.that(
         "the server's reaction",
         "a refusal, or a handshake message asking the client to try again",
-        reaction.is_refusal() || matches!(reaction, crate::tls::conn::Reaction::Message(_)),
+        reaction.is_refusal() || matches!(reaction, Reaction::Message(_)),
         reaction.describe(),
     );
     c.finish()?;

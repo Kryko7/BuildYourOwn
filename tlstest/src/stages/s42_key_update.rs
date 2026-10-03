@@ -103,6 +103,12 @@ tls_test!(requested, |ctx| {
          own KeyUpdate — and that one must say update_not_requested.",
     );
     c.eq("echo after the exchange", reversed("post"), answer);
+    let names: Vec<String> = client.server_key_updates.iter().map(|u| u.name()).collect();
+    c.eq(
+        "the server's KeyUpdate messages",
+        vec![KeyUpdate::NOT_REQUESTED.name()],
+        names,
+    );
     c.ne(
         "server_application_traffic_secret",
         hex(&secret_before),
@@ -237,11 +243,9 @@ tls_test!(bad_request_update, |ctx| {
         &mut c,
         "the server's reaction",
         &reaction,
-        &[
-            AlertDescription::ILLEGAL_PARAMETER,
-            AlertDescription::DECODE_ERROR,
-            AlertDescription::UNEXPECTED_MESSAGE,
-        ],
+        // RFC 8446 section 4.6.3: "If an implementation receives any other value [than 0
+        // or 1], it MUST terminate the connection with an illegal_parameter alert."
+        &[AlertDescription::ILLEGAL_PARAMETER],
     );
     c.finish()?;
     drop(client);

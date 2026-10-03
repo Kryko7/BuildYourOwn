@@ -83,20 +83,42 @@ pub struct Runner {
 impl Runner {
     /// Prepare a runner and generate the default certificate.
     pub fn new(def: ServerDef, opts: RunOptions) -> Result<Runner> {
-        let tmp_root = std::env::temp_dir().join(format!("tlstest-{}", std::process::id()));
+        let tmp_root = std::env::temp_dir().join(format!(
+            "{}{}",
+            crate::cleanup::SCRATCH_PREFIX,
+            std::process::id()
+        ));
         std::fs::create_dir_all(&tmp_root)
             .with_context(|| format!("cannot create {}", tmp_root.display()))?;
-        let certs = Arc::new(CertStore::new(&tmp_root.join("certs"))?);
-        certs
-            .default_material()
-            .context("cannot generate the default certificate")?;
-        let openssl = reference::openssl_path().ok();
-        if def.kind == ServerKind::Reference && openssl.is_none() {
-            anyhow::bail!(
-                "the reference server needs `openssl` on PATH (or {} set)",
-                reference::OPENSSL_ENV
-            );
+        if !opts.keep_tmp {
+            crate::cleanup::register_dir(&tmp_root);
         }
+        // Until the Runner exists its Drop cannot clean up, so a failure here removes the
+        // directory it just created.
+        let prepared = (|| -> Result<(Arc<CertStore>, Option<PathBuf>)> {
+            let certs = Arc::new(CertStore::new(&tmp_root.join("certs"))?);
+            certs
+                .default_material()
+                .context("cannot generate the default certificate")?;
+            let openssl = reference::openssl_path().ok();
+            if def.kind == ServerKind::Reference && openssl.is_none() {
+                anyhow::bail!(
+                    "the reference server needs `openssl` on PATH (or {} set)",
+                    reference::OPENSSL_ENV
+                );
+            }
+            Ok((certs, openssl))
+        })();
+        let (certs, openssl) = match prepared {
+            Ok(p) => p,
+            Err(e) => {
+                if !opts.keep_tmp {
+                    let _ = std::fs::remove_dir_all(&tmp_root);
+                    crate::cleanup::unregister_dir(&tmp_root);
+                }
+                return Err(e);
+            }
+        };
         Ok(Runner {
             def,
             opts,
@@ -332,6 +354,7 @@ impl Drop for Runner {
         }
         if !self.opts.keep_tmp {
             let _ = std::fs::remove_dir_all(&self.tmp_root);
+            crate::cleanup::unregister_dir(&self.tmp_root);
         }
     }
 }

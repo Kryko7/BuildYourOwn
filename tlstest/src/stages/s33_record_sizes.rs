@@ -92,6 +92,12 @@ tls_test!(at_the_limit, |ctx| {
         payload.push_str(&line);
         payload.push('\n');
     }
+    // Top the record up with one shorter line so the plaintext is exactly 2^14 bytes: a
+    // server whose record buffer is a few hundred bytes short must fail here.
+    let rest = MAX_PLAINTEXT - payload.len() - 1;
+    let tail: String = line.chars().take(rest).collect();
+    payload.push_str(&tail);
+    payload.push('\n');
     let mut client = ctx.handshake().await?;
     client
         .write_app_data(payload.as_bytes())
@@ -100,13 +106,15 @@ tls_test!(at_the_limit, |ctx| {
     let seen = read_exactly(&mut client, payload.len()).await?;
     let mut c = Check::new("one record at the plaintext size limit");
     c.note(format!(
-        "{count} lines of {LINE} bytes in a single record: {} bytes of plaintext, under the \
-         {MAX_PLAINTEXT}-byte limit",
+        "{count} lines of {LINE} bytes and one of {} in a single record: {} bytes of \
+         plaintext, exactly the {MAX_PLAINTEXT}-byte limit",
+        tail.len(),
         payload.len()
     ));
-    let expected: String = (0..count)
+    let mut expected: String = (0..count)
         .map(|_| format!("{}\n", reversed(&line)))
         .collect();
+    expected.push_str(&format!("{}\n", reversed(&tail)));
     c.eq("the answer", expected.len(), seen.len());
     c.bytes_eq("the answer bytes", expected.as_bytes(), &seen);
     c.finish()

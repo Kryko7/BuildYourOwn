@@ -41,6 +41,3 @@ x509-parser = "0.16"
 
 [dev-dependencies]
 tokio = { version = "1", features = ["full"] }
-
-[profile.release]
-strip = true

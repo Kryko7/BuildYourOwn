@@ -248,12 +248,12 @@ tls_test!(wrong_binder, |ctx| {
                 &mut c,
                 "the server's reaction",
                 &next,
+                // RFC 8446 section 6.2 names decrypt_error for a binder that does not
+                // validate; section 4.2.11 itself only says "abort", and OpenSSL 3.0 sends
+                // illegal_parameter (3.6 sends decrypt_error), so both are accepted.
                 &[
                     AlertDescription::DECRYPT_ERROR,
                     AlertDescription::ILLEGAL_PARAMETER,
-                    AlertDescription::HANDSHAKE_FAILURE,
-                    AlertDescription::DECODE_ERROR,
-                    AlertDescription::BAD_RECORD_MAC,
                 ],
             );
         }
@@ -262,12 +262,12 @@ tls_test!(wrong_binder, |ctx| {
                 &mut c,
                 "the server's reaction",
                 other,
+                // RFC 8446 section 6.2 names decrypt_error for a binder that does not
+                // validate; section 4.2.11 itself only says "abort", and OpenSSL 3.0 sends
+                // illegal_parameter (3.6 sends decrypt_error), so both are accepted.
                 &[
                     AlertDescription::DECRYPT_ERROR,
                     AlertDescription::ILLEGAL_PARAMETER,
-                    AlertDescription::HANDSHAKE_FAILURE,
-                    AlertDescription::DECODE_ERROR,
-                    AlertDescription::BAD_RECORD_MAC,
                 ],
             );
         }
