@@ -111,18 +111,36 @@ impl Http {
         })
     }
 
-    async fn checkout(&self) -> Result<Conn, HttpError> {
-        if let Some(c) = self.idle.lock().await.pop() {
-            return Ok(c);
+    /// A connection to send on, and whether it came out of the pool.
+    ///
+    /// A pooled connection the server has since closed (or that holds bytes nobody asked
+    /// for) is thrown away here, before anything is written to it, which is what keeps the
+    /// retry in [`Http::request`] rare enough to be restricted to safe cases.
+    async fn checkout(&self) -> Result<(Conn, bool), HttpError> {
+        loop {
+            let Some(c) = self.idle.lock().await.pop() else {
+                break;
+            };
+            if !c.reader.buffer().is_empty() {
+                continue;
+            }
+            let mut probe = [0u8; 1];
+            match c.reader.get_ref().try_read(&mut probe) {
+                Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => return Ok((c, true)),
+                _ => continue, // closed (Ok(0)), unsolicited bytes, or an error
+            }
         }
         let stream = tokio::time::timeout(self.timeout, TcpStream::connect(self.addr))
             .await
             .map_err(|_| HttpError::Timeout(format!("connecting to {}", self.addr)))?
             .map_err(|e| HttpError::Connect(format!("{}: {e}", self.addr)))?;
         let _ = stream.set_nodelay(true);
-        Ok(Conn {
-            reader: BufReader::new(stream),
-        })
+        Ok((
+            Conn {
+                reader: BufReader::new(stream),
+            },
+            false,
+        ))
     }
 
     /// Drop every pooled connection; used when a node has been killed under us.
@@ -139,9 +157,18 @@ impl Http {
     ) -> Result<HttpResponse, HttpError> {
         // One retry, and only on a connection that came out of the pool: a keep-alive
         // connection the server has since closed is normal, a fresh one failing is not.
+        //
+        // A request that was written in full may already have been applied, though, and
+        // repeating a write or a compare-and-swap would apply it twice: the second answer
+        // would then describe an operation nobody issued (a CAS that "failed" because its
+        // own first copy already succeeded). So a write is retried only when the request
+        // never left, or when the connection closed before a single byte of answer came
+        // back — the signature of a server closing an idle keep-alive connection, the same
+        // rule Go's client applies. A connection that fails *mid-answer*, or a timeout, is
+        // never retried for a write; the error goes back to the caller, which records the
+        // outcome as unknown.
         for attempt in 0..2 {
-            let pooled = !self.idle.lock().await.is_empty();
-            let mut conn = self.checkout().await?;
+            let (mut conn, pooled) = self.checkout().await?;
             match self.round_trip(&mut conn, method, path, body).await {
                 Ok(resp) => {
                     if resp
@@ -152,8 +179,9 @@ impl Http {
                     }
                     return Ok(resp);
                 }
-                Err(e) => {
-                    if attempt == 0 && pooled && matches!(e, HttpError::Io(_)) {
+                Err((e, retry_safe)) => {
+                    let safe = retry_safe || is_read_only(path);
+                    if attempt == 0 && pooled && safe && matches!(e, HttpError::Io(_)) {
                         continue;
                     }
                     return Err(e);
@@ -163,16 +191,19 @@ impl Http {
         Err(HttpError::Io("no attempt succeeded".into()))
     }
 
+    /// One exchange; an error says whether repeating the request is known to be harmless
+    /// (it never fully left, or the connection closed before any answer arrived).
     async fn round_trip(
         &self,
         conn: &mut Conn,
         method: &str,
         path: &str,
         body: Option<&[u8]>,
-    ) -> Result<HttpResponse, HttpError> {
+    ) -> Result<HttpResponse, (HttpError, bool)> {
         let req = build_request(method, path, &self.host, body);
         let deadline = self.timeout;
-        tokio::time::timeout(deadline, async {
+        let mut retry_safe = true;
+        let result = tokio::time::timeout(deadline, async {
             conn.reader
                 .get_mut()
                 .write_all(&req)
@@ -183,10 +214,27 @@ impl Http {
                 .flush()
                 .await
                 .map_err(|e| HttpError::Io(e.to_string()))?;
+            // Delivered: from here on only "closed before anything came back" stays safe.
+            match conn.reader.fill_buf().await {
+                Ok([]) => {
+                    return Err(HttpError::Io(
+                        "the connection was closed before a status line arrived".into(),
+                    ))
+                }
+                Err(e) => return Err(HttpError::Io(e.to_string())),
+                Ok(_) => retry_safe = false,
+            }
             read_response(&mut conn.reader).await
         })
-        .await
-        .map_err(|_| HttpError::Timeout(format!("{method} {path} after {deadline:?}")))?
+        .await;
+        match result {
+            Ok(Ok(resp)) => Ok(resp),
+            Ok(Err(e)) => Err((e, retry_safe)),
+            Err(_) => Err((
+                HttpError::Timeout(format!("{method} {path} after {deadline:?}")),
+                false,
+            )),
+        }
     }
 
     /// Open a streaming request: the body is sent whole, the response arrives as chunks.
@@ -234,6 +282,20 @@ impl Http {
             done: false,
         })
     }
+}
+
+/// Paths whose request changes nothing, so sending it twice is harmless.
+fn is_read_only(path: &str) -> bool {
+    matches!(
+        path,
+        "/health"
+            | "/version"
+            | "/v3/kv/range"
+            | "/v3/maintenance/status"
+            | "/v3/cluster/member/list"
+            | "/v3/lease/timetolive"
+            | "/v3/lease/leases"
+    )
 }
 
 /// An open streaming response: one JSON object per line, as they arrive.
@@ -368,7 +430,9 @@ async fn read_head(reader: &mut BufReader<TcpStream>) -> Result<HttpResponse, Ht
             .read_line(&mut line)
             .await
             .map_err(|e| HttpError::Io(e.to_string()))?;
-        if n == 0 {
+        // A line cut off by the end of the stream is a connection that died, not a
+        // malformed header.
+        if n == 0 || !line.ends_with('\n') {
             return Err(HttpError::Io(
                 "the connection was closed inside the response headers".into(),
             ));
@@ -537,6 +601,73 @@ mod tests {
             }
         });
         format!("http://{addr}")
+    }
+
+    /// A server whose first connection answers one request in full and then, on the
+    /// second request, starts an answer and hangs up halfway; later connections answer
+    /// normally. Counts every request it reads.
+    async fn serve_then_break_midway() -> (String, std::sync::Arc<std::sync::atomic::AtomicU32>) {
+        use std::sync::atomic::{AtomicU32, Ordering};
+        let l = TcpListener::bind("127.0.0.1:0").await.expect("bind");
+        let addr = l.local_addr().expect("addr");
+        let seen = std::sync::Arc::new(AtomicU32::new(0));
+        let counter = seen.clone();
+        tokio::spawn(async move {
+            let mut first = true;
+            while let Ok((mut s, _)) = l.accept().await {
+                let mut buf = [0u8; 4096];
+                let mut answered = 0;
+                loop {
+                    match s.read(&mut buf).await {
+                        Ok(0) | Err(_) => break,
+                        Ok(_) => {}
+                    }
+                    counter.fetch_add(1, Ordering::Relaxed);
+                    if first && answered == 1 {
+                        let _ = s.write_all(b"HTTP/1.1 200 OK\r\nContent-Le").await;
+                        break;
+                    }
+                    let _ = s
+                        .write_all(b"HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\n{}")
+                        .await;
+                    answered += 1;
+                }
+                first = false;
+            }
+        });
+        (format!("http://{addr}"), seen)
+    }
+
+    #[tokio::test]
+    async fn a_write_that_fails_mid_answer_is_not_sent_again() {
+        use std::sync::atomic::Ordering;
+        let (url, seen) = serve_then_break_midway().await;
+        let http = Http::new(&url, Duration::from_secs(2)).expect("client");
+        http.request("POST", "/v3/kv/put", Some(b"{}"))
+            .await
+            .expect("first put");
+        let second = http.request("POST", "/v3/kv/put", Some(b"{}")).await;
+        assert!(
+            second.is_err(),
+            "the broken answer must surface: {second:?}"
+        );
+        assert_eq!(
+            seen.load(Ordering::Relaxed),
+            2,
+            "a put the server may have applied must not be repeated"
+        );
+    }
+
+    #[tokio::test]
+    async fn a_read_that_fails_mid_answer_is_retried() {
+        let (url, _) = serve_then_break_midway().await;
+        let http = Http::new(&url, Duration::from_secs(2)).expect("client");
+        http.request("POST", "/v3/kv/range", Some(b"{}"))
+            .await
+            .expect("first read");
+        http.request("POST", "/v3/kv/range", Some(b"{}"))
+            .await
+            .expect("a read is safe to repeat on a fresh connection");
     }
 
     #[tokio::test]

@@ -46,6 +46,9 @@ pub async fn run(
     let dist = reference::ensure_installed(&version)?;
     let tmp = std::env::temp_dir().join(format!("disttest-capture-{}", std::process::id()));
     std::fs::create_dir_all(&tmp)?;
+    // Removed on every way out, an error included, not just after a clean capture.
+    crate::cleanup::register_dir(&tmp);
+    let _tmp_guard = ScratchDir(tmp.clone());
     let timeout = Duration::from_millis(opts.timeout_ms.max(5_000));
 
     let mut cluster: Option<Cluster> = None;
@@ -183,7 +186,6 @@ pub async fn run(
     if let Some(mut c) = cluster {
         c.shutdown();
     }
-    let _ = std::fs::remove_dir_all(&tmp);
     std::fs::write(out, file.to_json()?)
         .with_context(|| format!("cannot write {}", out.display()))?;
     println!(
@@ -396,4 +398,20 @@ async fn capture_prim(
         request_fields: Vec::new(),
         response_fields: Vec::new(),
     })
+}
+
+/// Deletes a scratch directory when dropped, and lets an interrupted run delete it too.
+struct ScratchDir(PathBuf);
+
+impl ScratchDir {
+    fn path(&self) -> &Path {
+        &self.0
+    }
+}
+
+impl Drop for ScratchDir {
+    fn drop(&mut self) {
+        let _ = std::fs::remove_dir_all(self.path());
+        crate::cleanup::unregister_dir(self.path());
+    }
 }

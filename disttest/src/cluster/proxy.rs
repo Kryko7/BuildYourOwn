@@ -22,8 +22,8 @@
 //! | `cut` | refuses new connections and closes open ones, in both directions |
 //! | `delay` | holds every chunk for the given time before passing it on |
 //! | `drop` | refuses a new connection with the given probability, so the link flaps |
-//! | `duplicate` | in message mode, sends a parsed peer message twice |
-//! | `reorder` | in message mode, holds a message back and sends it after the next one |
+//! | `duplicate` | in message mode, delivers a parsed peer message (one with a body) a second time, on a connection of its own whose answer is discarded |
+//! | `reorder` | in message mode, holds a message back and sends it after the next one (or after 50 ms when no next one comes) |
 //!
 //! Whether a connection is framed is decided when it is *accepted*, because starting to
 //! frame a stream halfway through would split it in the wrong place. A stage that wants
@@ -34,7 +34,8 @@
 //! *bytes* of a TCP stream would corrupt it rather than model a network. In message mode the
 //! proxy parses the dialer's direction as HTTP/1.1 requests — which is what a raft transport
 //! over HTTP sends — and duplicates or swaps whole messages. A stream it cannot frame is
-//! passed through untouched and counted in [`ProxyStats::unframed`].
+//! passed through untouched from the point it stops looking like framed requests, and
+//! counted in [`ProxyStats::unframed`].
 
 use rand::{Rng, SeedableRng};
 use std::collections::{HashMap, HashSet};
@@ -222,7 +223,11 @@ impl FaultTable {
 pub struct SourceMap {
     /// Member index → the pids that member may own (the wrapper and its children).
     roots: Mutex<Vec<(usize, u32)>>,
-    cache: Mutex<HashMap<(u16, u16), usize>>,
+    /// (source port, destination port) → (member, socket inode). The inode is checked on
+    /// every hit: every connection reaches a proxy on that proxy's one port, so the pair
+    /// is really just the source port, and a recycled ephemeral port must not inherit the
+    /// member that used it last.
+    cache: Mutex<HashMap<(u16, u16), (usize, u64)>>,
 }
 
 impl SourceMap {
@@ -237,6 +242,15 @@ impl SourceMap {
         }
     }
 
+    /// Forget which process a member runs as; used when it is killed or stopped, so a
+    /// recycled pid cannot make its traffic look like someone else's.
+    pub fn unregister(&self, member: usize) {
+        if let Ok(mut r) = self.roots.lock() {
+            r.retain(|(m, _)| *m != member);
+        }
+        self.forget();
+    }
+
     /// Forget every cached source port; used when a member is restarted.
     pub fn forget(&self) {
         if let Ok(mut c) = self.cache.lock() {
@@ -247,17 +261,19 @@ impl SourceMap {
     /// Which member dialled from `source`, if the kernel still knows.
     pub fn owner(&self, source: SocketAddr, dest: SocketAddr) -> Option<usize> {
         let key = (source.port(), dest.port());
+        let inode = socket_inode(source, dest)?;
         if let Ok(c) = self.cache.lock() {
-            if let Some(m) = c.get(&key) {
-                return Some(*m);
+            if let Some((m, cached)) = c.get(&key) {
+                if *cached == inode {
+                    return Some(*m);
+                }
             }
         }
-        let inode = socket_inode(source, dest)?;
         let roots = self.roots.lock().ok()?.clone();
         for (member, pid) in roots {
             if process_tree_owns(pid, inode, 0) {
                 if let Ok(mut c) = self.cache.lock() {
-                    c.insert(key, member);
+                    c.insert(key, (member, inode));
                 }
                 return Some(member);
             }
@@ -310,13 +326,19 @@ fn ends_with_addr(field: &str, want: &str) -> bool {
     if want.starts_with(':') {
         field.ends_with(want)
     } else {
+        // An IPv4 address on a dual-stack socket shows up in /proc/net/tcp6 in its mapped
+        // form, `0000000000000000FFFF0000` followed by the same little-endian word.
         field.eq_ignore_ascii_case(want)
+            || field
+                .to_ascii_uppercase()
+                .strip_prefix("0000000000000000FFFF0000")
+                .is_some_and(|rest| rest == want.to_ascii_uppercase())
     }
 }
 
 /// True when `pid` or one of its descendants holds the socket with this inode.
 fn process_tree_owns(pid: u32, inode: u64, depth: usize) -> bool {
-    if depth > 4 {
+    if depth > 8 {
         return false;
     }
     let want = format!("socket:[{inode}]");
@@ -329,8 +351,17 @@ fn process_tree_owns(pid: u32, inode: u64, depth: usize) -> bool {
             }
         }
     }
-    let children =
-        std::fs::read_to_string(format!("/proc/{pid}/task/{pid}/children")).unwrap_or_default();
+    // `children` is per *thread*: a launcher that forks from a thread other than its main
+    // one (`go run`, cargo, a JVM) lists the real member under that thread only.
+    let mut children = String::new();
+    if let Ok(tasks) = std::fs::read_dir(format!("/proc/{pid}/task")) {
+        for t in tasks.flatten() {
+            if let Ok(c) = std::fs::read_to_string(t.path().join("children")) {
+                children.push_str(&c);
+                children.push(' ');
+            }
+        }
+    }
     children
         .split_whitespace()
         .filter_map(|c| c.parse::<u32>().ok())
@@ -451,6 +482,7 @@ async fn handle(
         member,
         stats.clone(),
         framed,
+        Some(forward),
         seed ^ 1,
     ));
     let b = tokio::spawn(pump(
@@ -461,13 +493,28 @@ async fn handle(
         member,
         stats.clone(),
         false,
+        None,
         seed ^ 2,
     ));
     let _ = a.await;
     b.abort();
 }
 
+/// How long a message held back for reordering waits for a successor to overtake it.
+///
+/// HTTP/1.1 peers do not pipeline: the next request on a connection is only sent once the
+/// previous one has been answered, so a held request may never get a successor on its own
+/// connection. Without this bound "reorder" would really mean "hold until the dialer gives
+/// up", which is a lost message, not a late one.
+const HOLD_AT_MOST: Duration = Duration::from_millis(50);
+
 /// Copy one direction, applying whatever the link's fault says.
+///
+/// `side_channel` is where a duplicated message is sent: a fresh connection to the member,
+/// whose answer is read and thrown away. Writing the copy on the dialer's own connection
+/// would make the member answer twice there, and the dialer would then pair its *next*
+/// request with the duplicate's answer, which is a corrupted transport, not a network that
+/// repeats itself.
 #[allow(clippy::too_many_arguments)]
 async fn pump(
     mut from: tokio::net::tcp::OwnedReadHalf,
@@ -477,34 +524,54 @@ async fn pump(
     member: usize,
     stats: Arc<ProxyStats>,
     framed: bool,
+    side_channel: Option<SocketAddr>,
     seed: u64,
 ) {
     let mut rng = rand::rngs::StdRng::seed_from_u64(seed);
     let mut buf = vec![0u8; 32 * 1024];
     let mut pending: Vec<u8> = Vec::new();
     let mut held: Option<Vec<u8>> = None;
-    let mut unframed_reported = false;
+    let mut framed = framed;
+    let current = || match source {
+        Some(s) => faults.get(s, member),
+        None => faults.get(member, member),
+    };
     loop {
-        let fault = match source {
-            Some(s) => faults.get(s, member),
-            None => faults.get(member, member),
+        if current().cut {
+            stats.blocked.fetch_add(1, Ordering::Relaxed);
+            return;
+        }
+        let read = tokio::select! {
+            r = from.read(&mut buf) => Some(r),
+            _ = faults.changed.notified() => continue,
+            _ = tokio::time::sleep(HOLD_AT_MOST), if held.is_some() => None,
         };
+        let n = match read {
+            Some(Ok(0)) | Some(Err(_)) => break,
+            Some(Ok(n)) => n,
+            None => {
+                // Nothing overtook the held message in time: it goes out late, unswapped.
+                if let Some(earlier) = held.take() {
+                    if to.write_all(&earlier).await.is_err() {
+                        return;
+                    }
+                }
+                continue;
+            }
+        };
+        // Read the table again: a cut that landed while this chunk was being read (the
+        // notification is not latched, and `select!` may prefer the read) must still stop
+        // it from crossing.
+        let fault = current();
         if fault.cut {
             stats.blocked.fetch_add(1, Ordering::Relaxed);
             return;
         }
-        let n = tokio::select! {
-            r = from.read(&mut buf) => match r {
-                Ok(0) | Err(_) => break,
-                Ok(n) => n,
-            },
-            _ = faults.changed.notified() => continue,
-        };
         stats.bytes.fetch_add(n as u64, Ordering::Relaxed);
         if !fault.delay.is_zero() {
             stats.delayed.fetch_add(1, Ordering::Relaxed);
             tokio::time::sleep(fault.delay).await;
-            if faults.get(source.unwrap_or(member), member).cut {
+            if current().cut {
                 return;
             }
         }
@@ -517,9 +584,16 @@ async fn pump(
         pending.extend_from_slice(&buf[..n]);
         loop {
             let Some(len) = http_message_len(&pending) else {
-                if pending.len() > 1 << 20 && !unframed_reported {
+                if unframeable(&pending) {
+                    // Not something the proxy can split into messages: pass the stream
+                    // through untouched from here on, rather than stalling it.
                     stats.unframed.fetch_add(1, Ordering::Relaxed);
-                    unframed_reported = true;
+                    framed = false;
+                    if let Some(earlier) = held.take() {
+                        if to.write_all(&earlier).await.is_err() {
+                            return;
+                        }
+                    }
                     if to.write_all(&pending).await.is_err() {
                         return;
                     }
@@ -530,6 +604,7 @@ async fn pump(
             let msg: Vec<u8> = pending.drain(..len).collect();
             if let Some(earlier) = held.take() {
                 // The held message goes out *after* this one: that is the reordering.
+                stats.reordered.fetch_add(1, Ordering::Relaxed);
                 if to.write_all(&msg).await.is_err() {
                     return;
                 }
@@ -539,17 +614,16 @@ async fn pump(
                 continue;
             }
             if fault.reorder > 0.0 && rng.random::<f64>() < fault.reorder {
-                stats.reordered.fetch_add(1, Ordering::Relaxed);
                 held = Some(msg);
                 continue;
             }
             if to.write_all(&msg).await.is_err() {
                 return;
             }
-            if fault.duplicate > 0.0 && rng.random::<f64>() < fault.duplicate {
-                stats.duplicated.fetch_add(1, Ordering::Relaxed);
-                if to.write_all(&msg).await.is_err() {
-                    return;
+            if fault.duplicate > 0.0 && has_body(&msg) && rng.random::<f64>() < fault.duplicate {
+                if let Some(addr) = side_channel {
+                    stats.duplicated.fetch_add(1, Ordering::Relaxed);
+                    tokio::spawn(deliver_and_discard(addr, msg));
                 }
             }
         }
@@ -561,6 +635,49 @@ async fn pump(
         let _ = to.write_all(&pending).await;
     }
     let _ = to.flush().await;
+}
+
+/// Send one duplicated message on a connection of its own and throw the answer away.
+async fn deliver_and_discard(addr: SocketAddr, msg: Vec<u8>) {
+    let Ok(mut s) = TcpStream::connect(addr).await else {
+        return;
+    };
+    let _ = s.set_nodelay(true);
+    if s.write_all(&msg).await.is_err() {
+        return;
+    }
+    // Keep the connection open until the member has answered (or a few seconds pass), so
+    // the request is not cancelled by its dialer going away.
+    let mut sink = [0u8; 4096];
+    let _ = tokio::time::timeout(Duration::from_secs(5), s.read(&mut sink)).await;
+}
+
+/// True when a framed message carries a body: a bodiless request (a stream `GET`) is a
+/// subscription, not a peer message, and repeating it on another connection would make the
+/// member move its stream there.
+fn has_body(msg: &[u8]) -> bool {
+    find(msg, b"\r\n\r\n").is_some_and(|i| i + 4 < msg.len())
+}
+
+/// True when `buf` cannot be the start of HTTP/1.1 requests the proxy knows how to frame:
+/// a chunked request, something that is not HTTP at all, or a head that never ends.
+fn unframeable(buf: &[u8]) -> bool {
+    if buf.len() > 1 << 20 {
+        return true;
+    }
+    if let Some(end) = find(buf, b"\r\n\r\n") {
+        let head = String::from_utf8_lossy(&buf[..end]).to_ascii_lowercase();
+        if head.contains("transfer-encoding:") {
+            return true;
+        }
+    }
+    // A request line starts with an upper-case method and a space within a few bytes.
+    let probe = &buf[..buf.len().min(9)];
+    match probe.iter().position(|b| *b == b' ') {
+        Some(0) => true,
+        Some(i) => !probe[..i].iter().all(u8::is_ascii_uppercase),
+        None => probe.len() == 9 || !probe.iter().all(u8::is_ascii_uppercase),
+    }
 }
 
 /// The length of the first complete HTTP/1.1 message in `buf`, when there is one.
@@ -685,6 +802,149 @@ mod tests {
         assert_eq!(hex_addr(a), "0100007F:85F0");
         assert!(ends_with_addr("0100007F:85F0", "0100007F:85F0"));
         assert!(!ends_with_addr("0100007F:85F1", "0100007F:85F0"));
+    }
+
+    #[test]
+    fn a_dual_stack_socket_is_matched_in_its_mapped_form() {
+        assert!(ends_with_addr(
+            "0000000000000000FFFF00000100007F:85F0",
+            "0100007F:85F0"
+        ));
+        assert!(!ends_with_addr(
+            "0000000000000000FFFF00000100007F:85F1",
+            "0100007F:85F0"
+        ));
+    }
+
+    #[test]
+    fn streams_that_cannot_be_framed_are_recognised_early() {
+        assert!(!unframeable(b""));
+        assert!(!unframeable(b"PO"));
+        assert!(!unframeable(b"POST /raft HTTP/1.1\r\nContent-Le"));
+        assert!(unframeable(b"\x00\x00\x01\x02binary"));
+        assert!(unframeable(
+            b"POST /x HTTP/1.1\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nhello"
+        ));
+        assert!(unframeable(b"lowercase stuff"));
+        assert!(has_body(b"POST / HTTP/1.1\r\nContent-Length: 1\r\n\r\nx"));
+        assert!(!has_body(b"GET /stream HTTP/1.1\r\n\r\n"));
+    }
+
+    /// A tiny keep-alive HTTP server that answers every request with its own path and
+    /// counts the requests it saw.
+    async fn counting_server() -> (u16, Arc<AtomicU64>) {
+        let l = TcpListener::bind("127.0.0.1:0").await.expect("bind");
+        let port = l.local_addr().expect("addr").port();
+        let seen = Arc::new(AtomicU64::new(0));
+        let counter = seen.clone();
+        tokio::spawn(async move {
+            while let Ok((mut s, _)) = l.accept().await {
+                let counter = counter.clone();
+                tokio::spawn(async move {
+                    let mut pending = Vec::new();
+                    let mut b = [0u8; 4096];
+                    loop {
+                        while let Some(len) = http_message_len(&pending) {
+                            let msg: Vec<u8> = pending.drain(..len).collect();
+                            counter.fetch_add(1, Ordering::Relaxed);
+                            let text = String::from_utf8_lossy(&msg).to_string();
+                            let path = text.split(' ').nth(1).unwrap_or("").to_string();
+                            let resp = format!(
+                                "HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n{path}",
+                                path.len()
+                            );
+                            if s.write_all(resp.as_bytes()).await.is_err() {
+                                return;
+                            }
+                        }
+                        match s.read(&mut b).await {
+                            Ok(0) | Err(_) => return,
+                            Ok(n) => pending.extend_from_slice(&b[..n]),
+                        }
+                    }
+                });
+            }
+        });
+        (port, seen)
+    }
+
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    async fn mangling_repeats_messages_without_desynchronising_the_dialer() {
+        // Duplication: every request reaches the member twice, the dialer sees one answer.
+        mangled_exchange(1.0, 0.0, 6, 3).await;
+        // Reordering on a connection that never pipelines: each held request still goes
+        // out (nothing overtakes it), late but not lost, and nothing is counted as swapped.
+        mangled_exchange(0.0, 1.0, 3, 0).await;
+    }
+
+    async fn mangled_exchange(duplicate: f64, reorder: f64, member_sees: u64, dups: u64) {
+        let (upstream, seen) = counting_server().await;
+        let faults = Arc::new(FaultTable::default());
+        // The test dials as "somebody unidentified", which the self-link stands for.
+        faults.set(
+            0,
+            0,
+            LinkFault {
+                duplicate,
+                reorder,
+                ..Default::default()
+            },
+        );
+        let stats = Arc::new(ProxyStats::default());
+        let port = crate::node::free_port().expect("port");
+        let _proxy = PeerProxy::start(
+            0,
+            port,
+            upstream,
+            faults,
+            Arc::new(SourceMap::default()),
+            stats.clone(),
+            1,
+        )
+        .await
+        .expect("proxy");
+        let mut c = TcpStream::connect(("127.0.0.1", port))
+            .await
+            .expect("connect");
+        // One request at a time, the way an HTTP/1.1 peer transport talks.
+        for i in 0..3 {
+            let path = format!("/m{i}");
+            let req = format!("POST {path} HTTP/1.1\r\nContent-Length: 1\r\n\r\nx");
+            c.write_all(req.as_bytes()).await.expect("write");
+            let mut got = Vec::new();
+            let mut b = [0u8; 256];
+            let answered = tokio::time::timeout(Duration::from_secs(2), async {
+                loop {
+                    let n = c.read(&mut b).await.expect("read");
+                    assert!(n > 0, "the proxy closed the connection");
+                    got.extend_from_slice(&b[..n]);
+                    if let Some(end) = find(&got, b"\r\n\r\n") {
+                        if got.len() >= end + 4 + path.len() {
+                            break;
+                        }
+                    }
+                }
+            })
+            .await;
+            assert!(answered.is_ok(), "a held request was never released");
+            let text = String::from_utf8_lossy(&got).to_string();
+            assert!(
+                text.ends_with(&path) && text.matches("HTTP/1.1").count() == 1,
+                "request {path} must get exactly its own answer, got {text:?}"
+            );
+        }
+        let deadline = std::time::Instant::now() + Duration::from_secs(2);
+        while seen.load(Ordering::Relaxed) < member_sees && std::time::Instant::now() < deadline {
+            tokio::time::sleep(Duration::from_millis(20)).await;
+        }
+        assert_eq!(
+            seen.load(Ordering::Relaxed),
+            member_sees,
+            "{}",
+            stats.summary()
+        );
+        assert_eq!(stats.duplicated(), dups, "{}", stats.summary());
+        assert_eq!(stats.reordered(), 0, "{}", stats.summary());
     }
 
     #[test]

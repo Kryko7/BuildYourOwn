@@ -247,6 +247,34 @@ async fn wait_for_local_value(
     .await
 }
 
+/// Demand that a cut-off member does *not* yet hold `want` for `key`.
+///
+/// Without this, every catch-up test would pass just as well if the partition had leaked:
+/// the value would already be there and "caught up on its own" would be measuring nothing.
+async fn still_missing(
+    client: &Client,
+    member: &str,
+    key: &[u8],
+    want: &str,
+) -> Result<(), Failure> {
+    let req = RangeRequest::key(key).with("serializable", json!(true));
+    let read = ok(
+        client.range_req(&req).await,
+        &format!("a serializable read on {member} before the heal"),
+    )?;
+    let held = read.one().map(|kv| kv.value_str());
+    if held.as_deref() == Some(want) {
+        return Err(Failure::new(
+            FailureKind::Assertion,
+            format!(
+                "{member} already held {want:?} before the partition healed, so nothing was \
+                 ever cut and there was nothing to catch up on"
+            ),
+        ));
+    }
+    Ok(())
+}
+
 /// The lowest-numbered member that is not the leader.
 fn a_follower(leader: usize, size: usize) -> usize {
     (0..size).find(|i| *i != leader).unwrap_or(0)
@@ -276,6 +304,7 @@ dist_test!(catches_up_on_its_own, |ctx| {
         )?;
     }
     let last = [prefix.as_slice(), b"/4"].concat();
+    still_missing(cluster.client(cut), &name, &last, "v4").await?;
     // Nothing else happens here: no restart, no command, no operator. The link comes back
     // and the leader works out how far behind its follower is.
     cluster.heal().await;
@@ -586,6 +615,7 @@ dist_test!(a_second_cycle, |ctx| {
             cluster.client(serving).put(&key, value.as_bytes()).await,
             "a write during the partition",
         )?;
+        still_missing(cluster.client(cut), &name, &key, &value).await?;
         cluster.heal().await;
         times.push(wait_for_local_value(cluster.client(cut), &name, &key, &value).await?);
     }
@@ -639,6 +669,13 @@ dist_test!(a_long_absence, |ctx| {
         .header
         .revision;
     }
+    still_missing(
+        cluster.client(cut),
+        &name,
+        &[prefix.as_slice(), b"/299"].concat(),
+        "v299",
+    )
+    .await?;
     cluster.heal().await;
     let took = wait_for_local_value(
         cluster.client(cut),
@@ -693,6 +730,10 @@ dist_test!(five_members_heal, |ctx| {
         cluster.client(serving).put(&key, b"three-of-five").await,
         "a write on the majority side of five",
     )?;
+    for i in &minority {
+        let name = cluster.members[*i].name.clone();
+        still_missing(cluster.client(*i), &name, &key, "three-of-five").await?;
+    }
     cluster.heal().await;
     let mut times = Vec::new();
     for i in &minority {

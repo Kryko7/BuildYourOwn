@@ -144,6 +144,23 @@ pub struct History {
 }
 
 impl History {
+    /// Reads that came back with an answer: the only operations a checker can catch a
+    /// stale or invented value with.
+    pub fn answered_reads(&self) -> usize {
+        self.entries
+            .iter()
+            .filter(|e| matches!(e.outcome, Outcome::Value(_)))
+            .count()
+    }
+
+    /// Writes, deletes and compare-and-swaps the server acknowledged.
+    pub fn acknowledged_updates(&self) -> usize {
+        self.entries
+            .iter()
+            .filter(|e| matches!(e.outcome, Outcome::Ok | Outcome::Swapped(_)))
+            .count()
+    }
+
     /// An empty history.
     pub fn new() -> History {
         History::default()
@@ -350,14 +367,40 @@ pub fn check(history: &History) -> Verdict {
 
 /// [`check`] with an explicit search budget, so a test can prove the budget is respected.
 pub fn check_with_budget(history: &History, budget: u64) -> Verdict {
+    // A key the search could not decide must not stop the others from being checked: a
+    // starved key is only a note, while a broken key behind it is a real failure.
+    let mut undecided = None;
     for key in history.keys() {
         let entries = history.for_key(&key);
         match check_one_key(&key, &entries, budget) {
             Verdict::Linearizable => continue,
-            other => return other,
+            v @ Verdict::Inconclusive { .. } => {
+                undecided.get_or_insert(v);
+            }
+            v => return v,
         }
     }
-    Verdict::Linearizable
+    undecided.unwrap_or(Verdict::Linearizable)
+}
+
+/// The history as it stood at instant `t`: every operation called by then, and those that
+/// had not yet answered turned into operations with no answer, because at `t` nobody knew
+/// whether they would take effect. Without that, an operation still in flight at `t`
+/// would simply be missing, and a read that legally saw it would look impossible.
+fn prefix_at(entries: &[Entry], t: u64) -> (Vec<Entry>, Vec<Entry>) {
+    let shown: Vec<Entry> = entries.iter().filter(|e| e.call_ns <= t).cloned().collect();
+    let searched = shown
+        .iter()
+        .map(|e| {
+            let mut e = e.clone();
+            if e.ret_ns > t {
+                e.outcome = Outcome::Unknown;
+                e.ret_ns = u64::MAX;
+            }
+            e
+        })
+        .collect();
+    (shown, searched)
 }
 
 fn check_one_key(key: &str, entries: &[Entry], budget: u64) -> Verdict {
@@ -371,26 +414,49 @@ fn check_one_key(key: &str, entries: &[Entry], budget: u64) -> Verdict {
             states: search.states,
         };
     }
-    // Find the smallest prefix that already fails, so the report shows the few operations
-    // that matter instead of the whole workload. Prefixes are taken in return order,
-    // because it is a *return* that makes a history impossible.
-    let mut by_return: Vec<Entry> = entries.to_vec();
-    by_return.sort_by_key(|e| (e.ret_ns, e.call_ns, e.id));
-    for n in 1..=by_return.len() {
-        let prefix = &by_return[..n];
-        let mut s = Search::new(prefix, budget);
+    // Find the earliest instant at which the history had already become impossible, so the
+    // report shows the few operations that matter instead of the whole workload. Only a
+    // *return* can make a history impossible, so the candidates are the return instants,
+    // and "impossible at t" only ever turns from false to true as t grows: bisect.
+    let mut returns: Vec<(u64, usize)> = entries
+        .iter()
+        .enumerate()
+        .filter(|(_, e)| !e.is_unknown())
+        .map(|(i, e)| (e.ret_ns, i))
+        .collect();
+    returns.sort();
+    let (mut lo, mut hi) = (0usize, returns.len());
+    let mut best: Option<(usize, Vec<Entry>, Vec<usize>, State)> = None;
+    while lo < hi {
+        let mid = lo + (hi - lo) / 2;
+        let (t, culprit) = returns[mid];
+        let (shown, searched) = prefix_at(entries, t);
+        let mut s = Search::new(&searched, budget);
         if !s.run() && !s.exhausted_budget {
-            return Verdict::NotLinearizable(Box::new(Violation {
-                key: key.to_string(),
-                entries: prefix.to_vec(),
-                culprit: prefix[n - 1].clone(),
-                best_attempt: s.best_attempt.clone(),
-                best_state: s.best_state.clone().flatten(),
-                states: search.states,
-            }));
+            best = Some((
+                culprit,
+                shown,
+                s.best_attempt.clone(),
+                s.best_state.clone().flatten(),
+            ));
+            hi = mid;
+        } else {
+            lo = mid + 1;
         }
     }
-    // Every prefix is linearizable but the whole is not: report the whole thing.
+    if let Some((culprit, shown, best_attempt, best_state)) = best {
+        return Verdict::NotLinearizable(Box::new(Violation {
+            key: key.to_string(),
+            entries: shown,
+            culprit: entries[culprit].clone(),
+            best_attempt,
+            best_state,
+            states: search.states,
+        }));
+    }
+    // No prefix could be decided within the budget: report the whole thing.
+    let mut by_return: Vec<Entry> = entries.to_vec();
+    by_return.sort_by_key(|e| (e.ret_ns, e.call_ns, e.id));
     Verdict::NotLinearizable(Box::new(Violation {
         key: key.to_string(),
         entries: by_return.clone(),
@@ -886,6 +952,61 @@ mod tests {
         let text = v.render();
         assert!(text.contains(">>"), "the culprit must be marked:\n{text}");
         assert!(text.contains("states explored"), "{text}");
+    }
+
+    #[test]
+    fn the_culprit_is_never_an_operation_that_saw_a_write_still_in_flight() {
+        // #1 legally sees "a" (written by #0, which never answered, and by #4, which was
+        // still running); the real violation is #3, which sees the key absent after "x"
+        // was acknowledged. A prefix that simply dropped in-flight writes would blame #1.
+        for (first, first_ret) in [(Outcome::Unknown, 0), (Outcome::Ok, 1000)] {
+            let entries = vec![
+                e(0, 0, w("a"), first.clone(), 0, first_ret),
+                e(1, 1, Op::Read, read(Some("a")), 10, 20),
+                e(2, 2, w("x"), Outcome::Ok, 30, 40),
+                e(3, 2, Op::Read, read(None), 50, 60),
+            ];
+            let Verdict::NotLinearizable(v) = check(&history(entries)) else {
+                panic!("must fail");
+            };
+            assert_eq!(v.culprit.id, 3, "{}", v.render());
+        }
+    }
+
+    #[test]
+    fn a_starved_key_does_not_hide_a_broken_one() {
+        let mut h = History::new();
+        // Key "a" (checked first) is far too concurrent for a budget of 500 states.
+        for i in 0..40 {
+            h.push(Entry {
+                key: "a".into(),
+                ..e(i, i % 8, w(&format!("v{i}")), Outcome::Ok, 0, 10_000)
+            });
+        }
+        h.push(Entry {
+            key: "a".into(),
+            ..e(
+                40,
+                0,
+                Op::Read,
+                read(Some("nothing-like-this")),
+                20_000,
+                20_010,
+            )
+        });
+        // Key "b" is small and plainly broken.
+        h.push(Entry {
+            key: "b".into(),
+            ..e(0, 0, w("1"), Outcome::Ok, 0, 10)
+        });
+        h.push(Entry {
+            key: "b".into(),
+            ..e(0, 1, Op::Read, read(None), 20, 30)
+        });
+        match check_with_budget(&h, 500) {
+            Verdict::NotLinearizable(v) => assert_eq!(v.key, "b"),
+            other => panic!("the broken key must still be reported, got {other:?}"),
+        }
     }
 
     #[test]

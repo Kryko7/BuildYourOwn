@@ -102,7 +102,10 @@ impl Runner {
         let tmp_root = std::env::temp_dir().join(format!("disttest-{}", std::process::id()));
         std::fs::create_dir_all(&tmp_root)
             .with_context(|| format!("cannot create {}", tmp_root.display()))?;
-        sweep_abandoned_scratch_dirs();
+        crate::cleanup::sweep_abandoned();
+        if !opts.keep_tmp {
+            crate::cleanup::register_dir(&tmp_root);
+        }
         Ok(Runner {
             targets,
             chosen,
@@ -524,42 +527,13 @@ impl Runner {
     }
 }
 
-/// Delete the scratch directories of `disttest` runs that are no longer running.
-///
-/// A run that was killed with `SIGKILL` (or that ran out of `/tmp` and gave up) leaves its
-/// nodes' data directories behind, and each of those holds a preallocated 64 MB write-ahead
-/// log. Sweeping them at the start of the next run keeps one bad afternoon from making the
-/// machine unusable.
-fn sweep_abandoned_scratch_dirs() {
-    let Ok(entries) = std::fs::read_dir(std::env::temp_dir()) else {
-        return;
-    };
-    for entry in entries.flatten() {
-        let name = entry.file_name();
-        let Some(pid) = name
-            .to_string_lossy()
-            .strip_prefix("disttest-")
-            .and_then(|p| p.parse::<u32>().ok())
-        else {
-            continue;
-        };
-        if pid == std::process::id() {
-            continue;
-        }
-        // `/proc/<pid>` is the cheapest "is anyone still using this" there is.
-        if std::path::Path::new(&format!("/proc/{pid}")).exists() {
-            continue;
-        }
-        let _ = std::fs::remove_dir_all(entry.path());
-    }
-}
-
 impl Drop for Runner {
     fn drop(&mut self) {
         self.drop_node();
         self.drop_cluster();
         if !self.opts.keep_tmp {
             let _ = std::fs::remove_dir_all(&self.tmp_root);
+            crate::cleanup::unregister_dir(&self.tmp_root);
         }
     }
 }

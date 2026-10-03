@@ -31,7 +31,7 @@ use crate::cluster::proxy::LinkFault;
 use crate::cluster::workload::{self, verify_convergence, FaultSchedule, WorkloadSpec};
 use crate::cluster::Cluster;
 use crate::dist_test;
-use crate::etcd::RangeRequest;
+use crate::etcd::{cmp_version_eq, op_put, op_range, RangeRequest};
 use crate::examples::{cluster_example, step, ExampleSpec};
 use crate::stages::{check_strictly_increasing, ok, Ladder, Stage, Test};
 use serde_json::json;
@@ -159,7 +159,14 @@ struct Written {
     revision: i64,
 }
 
-/// Put one key, trying every running member in turn until one takes it.
+/// Put one fresh key, trying every running member in turn until one takes it.
+///
+/// The put is a transaction guarded on the key not existing yet. A plain retry would not be
+/// safe here: an attempt that errored (a timeout, a leader change) may still have been
+/// committed, and repeating it would give the key version 2 and cost an extra revision —
+/// the very symptoms this stage blames on an implementation that applies a duplicated
+/// append twice. With the guard, a retry whose first attempt landed finds the key already
+/// holding this value and reports the revision it was written at.
 async fn put_patiently(
     cluster: &mut Cluster,
     key: &str,
@@ -173,10 +180,24 @@ async fn put_patiently(
             let name = cluster.members[i].name.clone();
             match cluster.members[i]
                 .client
-                .put(key.as_bytes(), value.as_bytes())
+                .txn(
+                    vec![cmp_version_eq(key.as_bytes(), 0)],
+                    vec![op_put(key.as_bytes(), value.as_bytes())],
+                    vec![op_range(key.as_bytes())],
+                )
                 .await
             {
-                Ok(r) => return Ok(r.header.revision),
+                Ok(r) if r.succeeded => return Ok(r.header.revision),
+                Ok(r) => match r.range(0).and_then(|g| g.one()) {
+                    Some(kv) if kv.value_str() == value => return Ok(kv.mod_revision),
+                    other => {
+                        return Err(Failure::new(
+                            FailureKind::Assertion,
+                            format!("{key} already held something this test never wrote"),
+                        )
+                        .note(format!("{name} answered the guarded put with {other:?}")))
+                    }
+                },
                 Err(e) => last = format!("{name}: {e}"),
             }
         }

@@ -205,7 +205,7 @@ impl Cluster {
         let Some(node) = self.members[i].node.as_mut() else {
             return Err(Failure::harness(format!("member {name} was never started")));
         };
-        node.wait_until_ready()
+        off_the_runtime(|| node.wait_until_ready())
             .map_err(|e| Failure::harness(format!("member {name} never came up: {e:#}")))
     }
 
@@ -263,6 +263,15 @@ impl Cluster {
         let mut last;
         loop {
             let running = self.running();
+            // A member whose id was never learnt (its status call failed once at boot) could
+            // never be recognised as the leader, and this would time out whenever it leads.
+            for i in &running {
+                if self.members[*i].member_id == 0 {
+                    if let Ok(s) = self.members[*i].client.status().await {
+                        self.members[*i].member_id = s.header.member_id;
+                    }
+                }
+            }
             let mut leaders: Vec<Option<usize>> = Vec::new();
             for i in &running {
                 leaders.push(self.leader_according_to(*i).await);
@@ -374,16 +383,11 @@ impl Cluster {
                 },
             );
         }
-        // The destination's own link also stands for "a dialer the harness could not
-        // identify", so an isolated member is isolated even without /proc.
-        self.faults.set(
-            i,
-            i,
-            LinkFault {
-                cut: true,
-                ..Default::default()
-            },
-        );
+        // A dialer the harness could not identify is judged by the *destination's* own
+        // link, so cutting only (i, i) would stop unidentified connections *into* i but
+        // wave through unidentified ones from i to everybody else. Refuse them all, as
+        // `partition` does: a peer transport that loses a connection simply redials.
+        self.cut_unattributable();
         self.forget_sources();
         self.reset_clients().await;
     }
@@ -457,22 +461,22 @@ impl Cluster {
     pub async fn kill(&mut self, i: usize) {
         self.dirty = true;
         if let Some(node) = self.members[i].node.as_mut() {
-            node.kill_hard();
+            off_the_runtime(|| node.kill_hard());
         }
         self.members[i].node = None;
         self.members[i].client.reset().await;
-        self.sources.forget();
+        self.sources.unregister(i);
     }
 
     /// Stop one member politely.
     pub async fn stop(&mut self, i: usize) {
         self.dirty = true;
         if let Some(node) = self.members[i].node.as_mut() {
-            node.stop();
+            off_the_runtime(|| node.stop());
         }
         self.members[i].node = None;
         self.members[i].client.reset().await;
-        self.sources.forget();
+        self.sources.unregister(i);
     }
 
     /// Start a member again from its own data directory.
@@ -625,6 +629,19 @@ impl Cluster {
 impl Drop for Cluster {
     fn drop(&mut self) {
         self.shutdown();
+    }
+}
+
+/// Run a blocking call (a readiness poll, a polite stop that may sleep for seconds) without
+/// parking a runtime worker. The proxies forwarding every byte of peer traffic are tasks
+/// on the same runtime; on a machine with one or two cores, a worker asleep in
+/// `thread::sleep` is the whole network pausing, and the cluster starts electing.
+fn off_the_runtime<R>(f: impl FnOnce() -> R) -> R {
+    match tokio::runtime::Handle::try_current() {
+        Ok(h) if h.runtime_flavor() == tokio::runtime::RuntimeFlavor::MultiThread => {
+            tokio::task::block_in_place(f)
+        }
+        _ => f(),
     }
 }
 

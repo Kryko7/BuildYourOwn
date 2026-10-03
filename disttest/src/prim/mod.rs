@@ -27,6 +27,7 @@ pub struct PrimProc {
     stdout: Option<BufReader<ChildStdout>>,
     stderr_path: PathBuf,
     timeout: Duration,
+    pgid: i32,
 }
 
 impl PrimProc {
@@ -55,12 +56,18 @@ impl PrimProc {
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::from(stderr))
+            // Its own group, so a wrapper script and the program it starts die together and
+            // an interrupted run can find both (see `cleanup`).
+            .process_group(0)
             .kill_on_drop(true);
         for (k, v) in env {
             cmd.env(k, v);
         }
+        crate::cleanup::unblock_signals_in_tokio_child(&mut cmd);
         let mut child = spawn_retrying_on_etxtbsy(&mut cmd)
             .map_err(|e| Failure::harness(format!("cannot start '{program} {topic}': {e}")))?;
+        let pgid = child.id().map_or(0, |p| p as i32);
+        crate::cleanup::register_group(pgid);
         let stdin = child
             .stdin
             .take()
@@ -77,6 +84,7 @@ impl PrimProc {
             stdout: Some(BufReader::new(stdout)),
             stderr_path,
             timeout,
+            pgid,
         })
     }
 
@@ -300,15 +308,30 @@ impl PrimProc {
         if let Some(mut child) = self.child.take() {
             let _ = tokio::time::timeout(Duration::from_millis(500), child.wait()).await;
             let _ = child.start_kill();
+            self.kill_group();
+            let _ = tokio::time::timeout(Duration::from_millis(500), child.wait()).await;
         }
+    }
+
+    /// `SIGKILL` whatever is left of the program's process group, and forget the group.
+    fn kill_group(&mut self) {
+        if self.pgid > 1 {
+            // SAFETY: killpg on the process group this handle created at spawn time.
+            unsafe {
+                libc::killpg(self.pgid, libc::SIGKILL);
+            }
+            crate::cleanup::unregister_group(self.pgid);
+        }
+        self.pgid = 0;
     }
 }
 
 impl Drop for PrimProc {
     fn drop(&mut self) {
-        // `kill_on_drop` handles the child; dropping stdin also lets a well-behaved program
-        // notice end of input and leave on its own.
+        // `kill_on_drop` handles the direct child; the group kill reaches whatever a wrapper
+        // script started underneath it.
         self.stdin = None;
+        self.kill_group();
     }
 }
 

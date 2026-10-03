@@ -24,6 +24,7 @@
 
 pub mod assert;
 pub mod catalog;
+pub mod cleanup;
 pub mod cluster;
 pub mod config;
 pub mod etcd;

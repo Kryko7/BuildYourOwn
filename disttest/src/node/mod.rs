@@ -97,9 +97,11 @@ impl NodeHandle {
         for (k, v) in &spec.env {
             cmd.env(k, v);
         }
+        crate::cleanup::unblock_signals_in_child(&mut cmd);
         let child = spawn_retrying_on_etxtbsy(&mut cmd)
             .with_context(|| format!("cannot start node '{}': {program}", spec.name))?;
         let pgid = child.id() as i32;
+        crate::cleanup::register_group(pgid);
         let addr: SocketAddr = format!("127.0.0.1:{}", spec.client_port)
             .parse()
             .context("node address")?;
@@ -242,6 +244,7 @@ impl NodeHandle {
         let Some(mut child) = self.child.take() else {
             // The group may still hold grandchildren even when the leader is already reaped.
             self.killpg(libc::SIGKILL);
+            self.forget_group();
             return;
         };
         self.killpg(libc::SIGTERM);
@@ -260,6 +263,15 @@ impl NodeHandle {
             }
         }
         self.killpg(libc::SIGKILL);
+        self.forget_group();
+    }
+
+    /// The group is dead (the final `SIGKILL` reached every member that was left), so its
+    /// id must never be signalled again: once the kernel recycles it, a later `killpg` —
+    /// `Drop` after `kill_hard`, say — would hit some unrelated process group.
+    fn forget_group(&mut self) {
+        crate::cleanup::unregister_group(self.pgid);
+        self.pgid = 0;
     }
 
     fn signal_and_reap(&mut self, sig: i32) {
@@ -269,6 +281,7 @@ impl NodeHandle {
         self.killpg(sig);
         let _ = child.wait();
         self.killpg(libc::SIGKILL);
+        self.forget_group();
     }
 
     fn killpg(&self, sig: i32) {

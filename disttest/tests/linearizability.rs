@@ -186,8 +186,9 @@ fn lost_responses_never_cause_a_false_failure() {
                 e.ret_ns = u64::MAX;
             }
         }
-        assert!(
-            check(&h).ok(),
+        assert_eq!(
+            check(&h),
+            Verdict::Linearizable,
             "seed {seed}: losing responses turned a good history bad:\n{}",
             h.render()
         );
@@ -276,7 +277,9 @@ fn the_checker_is_fast_enough_for_a_real_workload() {
     let started = std::time::Instant::now();
     let verdict = check(&h);
     let elapsed = started.elapsed();
-    assert!(verdict.ok(), "{verdict:?}");
+    // Inconclusive would also be `ok()`, but it would mean the budget is too small for a
+    // real workload, which is exactly what this test is here to catch.
+    assert_eq!(verdict, Verdict::Linearizable);
     assert!(
         elapsed < std::time::Duration::from_secs(3),
         "the checker took {elapsed:?} on 400 operations"

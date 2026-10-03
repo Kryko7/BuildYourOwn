@@ -123,7 +123,7 @@ pub fn ensure_installed(version: &str) -> Result<PathBuf> {
     let staging = cache.join(format!(".extract-{version}"));
     let _ = std::fs::remove_dir_all(&staging);
     std::fs::create_dir_all(&staging)?;
-    let status = std::process::Command::new("tar")
+    let status = unmasked("tar")
         .arg("xzf")
         .arg(&tgz)
         .arg("-C")
@@ -170,7 +170,7 @@ fn fetch(url: &str, to: &Path) -> Result<()> {
     ];
     let mut last = String::new();
     for (prog, args) in attempts {
-        match std::process::Command::new(prog).args(&args).status() {
+        match unmasked(prog).args(&args).status() {
             Ok(s) if s.success() => return Ok(()),
             Ok(s) => last = format!("{prog} exited with {s}"),
             Err(e) => last = format!("cannot run {prog}: {e}"),
@@ -216,10 +216,7 @@ pub fn sha256_of(file: &Path) -> Result<String> {
 
 /// The version string the cached distribution reports, for the run header.
 pub fn dist_version(dist: &Path) -> Option<String> {
-    let out = std::process::Command::new(dist.join("etcd"))
-        .arg("--version")
-        .output()
-        .ok()?;
+    let out = unmasked(dist.join("etcd")).arg("--version").output().ok()?;
     String::from_utf8_lossy(&out.stdout)
         .lines()
         .find_map(|l| l.strip_prefix("etcd Version: "))
@@ -295,7 +292,7 @@ pub fn example_binary(name: &str) -> Result<PathBuf> {
         }
     }
     eprintln!("disttest: building the {name} example (once)");
-    let status = std::process::Command::new(std::env::var("CARGO").unwrap_or("cargo".into()))
+    let status = unmasked(std::env::var("CARGO").unwrap_or("cargo".into()))
         .arg("build")
         .arg("--release")
         .arg("--example")
@@ -322,6 +319,14 @@ pub fn example_binary(name: &str) -> Result<PathBuf> {
 
 /// How long a reference node may take to answer its first request.
 pub const REFERENCE_BOOT_TIMEOUT: Duration = Duration::from_millis(20_000);
+
+/// A command whose child starts with no signals blocked (see `cleanup`), so a `Ctrl-C`
+/// during a download or a build reaches it rather than leaving it running.
+fn unmasked(program: impl AsRef<std::ffi::OsStr>) -> std::process::Command {
+    let mut cmd = std::process::Command::new(program);
+    crate::cleanup::unblock_signals_in_child(&mut cmd);
+    cmd
+}
 
 #[cfg(test)]
 mod tests {

@@ -260,6 +260,13 @@ dist_test!(the_soak_is_linearizable, |ctx| {
     // linearizability, however green the verdict.
     c.at_least("history.len()", 60, result.history.len());
     c.at_least("operations acknowledged", 30, result.acknowledged);
+    // Both halves: writes nobody reads back, or reads of a key nobody wrote, prove nothing.
+    c.at_least("reads answered", 10, result.history.answered_reads());
+    c.at_least(
+        "writes, deletes and swaps acknowledged",
+        10,
+        result.history.acknowledged_updates(),
+    );
     ctx.note(summary);
     ctx.note(format!("fault plan:\n{plan}"));
     ctx.note(format!("faults applied:\n{applied}"));

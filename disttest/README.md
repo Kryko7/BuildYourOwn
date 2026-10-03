@@ -954,8 +954,8 @@ because both directions of a pair share the same TCP connections.
 | `cut` | refuses new connections and closes open ones, in both directions |
 | `delay` | holds every chunk for the given time before passing it on |
 | `drop` | refuses a new connection with the given probability, so the link flaps |
-| `duplicate` | in message mode, sends a parsed peer message twice |
-| `reorder` | in message mode, holds a message back and sends it after the next one |
+| `duplicate` | in message mode, delivers a parsed peer message (one with a body) a second time, on a connection of its own whose answer is discarded |
+| `reorder` | in message mode, holds a message back and sends it after the next one, or after 50 ms when no next one comes |
 
 **Which member dialled?** A proxy only ever sees the destination, so the harness asks the
 kernel: the accepted connection's source port names a socket in `/proc/net/tcp`, that
@@ -973,8 +973,11 @@ message mode.
 **Why duplication and reordering need framing.** Deleting or swapping *bytes* of a TCP stream
 corrupts it; it does not model a network. In message mode the proxy parses the dialer's
 direction as HTTP/1.1 requests — which is what a raft transport over HTTP sends — and
-duplicates or swaps whole messages. A stream it cannot frame (a chunked one, say) is passed
-through untouched and counted, and the stage reports how many messages were actually mangled
+duplicates or swaps whole messages. The copy goes on a separate connection, so the member
+really sees the message twice while the dialer still gets exactly one answer per request
+(HTTP/1.1 peers do not pipeline, and a second answer on their own connection would be read
+as the answer to their next request). A stream it cannot frame (a chunked one, or one that
+is not HTTP) is passed through untouched from that point on and counted, and the stage reports how many messages were actually mangled
 rather than pretending.
 
 Everything is driven by `--seed`: which fault fires, when, and on which members.

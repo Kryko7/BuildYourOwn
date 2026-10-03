@@ -227,6 +227,21 @@ async fn run_and_check(
     let faults = cluster.faults.describe();
     let verdict = lin::check(&result.history);
     let note = judge(verdict, &result.history, &described, &faults)?;
+    // A history with no answered reads cannot show a stale value, and one with no
+    // acknowledged writes has nothing to be stale about: a server that answered every
+    // request with an error, or never answered reads, would sail through the checker.
+    //
+    // The floor is low on purpose: with one member isolated for the whole run, every
+    // operation sent to it waits out the request timeout, and the reference answered only
+    // six reads in six seconds. Zero is what the floor exists to rule out.
+    let mut c = Check::new("the recorded history is worth checking");
+    c.at_least("reads answered", 3, result.history.answered_reads());
+    c.at_least(
+        "writes, deletes and swaps acknowledged",
+        3,
+        result.history.acknowledged_updates(),
+    );
+    c.finish()?;
     let mut lines = vec![result.summary()];
     if !result.faults_applied.is_empty() {
         lines.push(format!(

@@ -46,6 +46,3 @@ path = "examples/reference_algorithms.rs"
 [[example]]
 name = "broken_node"
 path = "examples/broken_node.rs"
-
-[profile.release]
-strip = true

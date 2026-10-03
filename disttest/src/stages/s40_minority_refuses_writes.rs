@@ -224,6 +224,14 @@ async fn wait_for_the_cut_to_bite(cluster: &Cluster, before: u64) -> Result<(), 
     .map(|_| ())
 }
 
+/// A sibling of `key` for the write that must be refused before the heal, so it can never be
+/// confused with the write that must be accepted after it.
+fn ctx_key_refused(key: &[u8]) -> Vec<u8> {
+    let mut k = key.to_vec();
+    k.extend_from_slice(b"-refused");
+    k
+}
+
 /// The lowest-numbered member that is not the leader, so a run is reproducible whichever
 /// member happened to win the election.
 fn a_follower(leader: usize, size: usize) -> usize {
@@ -535,8 +543,20 @@ dist_test!(healing_restores_writes, |ctx| {
     let leader = cluster.wait_for_leader(ELECT_WITHIN).await?;
     let cut = a_follower(leader, cluster.initial_size);
     let name = cluster.members[cut].name.clone();
+    let before_blocked = cluster.stats.blocked.load(Ordering::Relaxed);
     cluster.isolate(cut).await;
     cut_unattributable_links(cluster).await;
+    // First prove the member really was refusing: without this the test would pass just as
+    // well if the partition had never taken effect, and "recovers" would mean nothing.
+    wait_for_the_cut_to_bite(cluster, before_blocked).await?;
+    let refused_key = ctx_key_refused(&key);
+    expect_error(
+        cluster
+            .client(cut)
+            .put(&refused_key, b"should-not-land")
+            .await,
+        &format!("a write through {name} while it can reach nobody"),
+    )?;
     // Refusing writes is a state, not a verdict: a member that rejoins a quorum serves
     // again, with nothing to restart and nobody to tell it.
     cluster.heal().await;

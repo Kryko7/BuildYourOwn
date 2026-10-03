@@ -70,6 +70,8 @@ struct Cli {
 }
 
 fn main() {
+    // Before anything can start a thread: see `cleanup::install_signal_handler`.
+    disttest::cleanup::install_signal_handler();
     let code = match run() {
         Ok(true) => 0,
         Ok(false) => 1,
