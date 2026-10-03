@@ -346,7 +346,22 @@ fn key_pair(kind: KeyKind) -> Result<KeyPair> {
             KeyPair::generate_for(&PKCS_ECDSA_P256_SHA256).context("cannot generate a P-256 key")
         }
         KeyKind::Ed25519 => {
-            KeyPair::generate_for(&PKCS_ED25519).context("cannot generate an Ed25519 key")
+            // Not `KeyPair::generate_for`: ring writes Ed25519 keys as PKCS#8 v2 (RFC 5958,
+            // version 1 with the public key in a `[1]` field), and OpenSSL 3.0 — what
+            // ubuntu-latest ships — refuses to load that file at all, so every Ed25519 stage
+            // failed against `s_server` there while passing against 3.6. The v1 form below
+            // (RFC 8410 §7: version 0, the OID, the 32-byte seed) is what `openssl genpkey`
+            // itself writes, and ring derives the public key from the seed.
+            let seed: [u8; 32] = rand::random();
+            let mut der = vec![
+                0x30, 0x2e, // SEQUENCE, 46 bytes
+                0x02, 0x01, 0x00, // INTEGER 0: PKCS#8 v1
+                0x30, 0x05, 0x06, 0x03, 0x2b, 0x65, 0x70, // AlgorithmIdentifier: id-Ed25519
+                0x04, 0x22, 0x04, 0x20, // OCTET STRING { OCTET STRING (32) }
+            ];
+            der.extend_from_slice(&seed);
+            KeyPair::from_pkcs8_der_and_sign_algo(&der.as_slice().into(), &PKCS_ED25519)
+                .context("cannot build an Ed25519 key")
         }
         KeyKind::Rsa2048 => {
             // rcgen's ring backend can sign with an RSA key but cannot make one, so the key
@@ -452,6 +467,24 @@ mod tests {
         assert_eq!(key.algorithm(), "ECDSA P-256");
         let text = std::fs::read_to_string(&m.cert_pem).expect("read");
         assert!(text.starts_with("-----BEGIN CERTIFICATE-----"), "{text}");
+    }
+
+    #[test]
+    fn the_ed25519_key_file_is_pkcs8_v1_which_openssl_3_0_can_read() {
+        // OpenSSL 3.0 rejects the v2 form ring writes by default, which failed every Ed25519
+        // test in CI against `s_server` while passing locally on 3.6.
+        let dir = tempfile::tempdir().expect("tempdir");
+        let store = CertStore::new(dir.path()).expect("store");
+        let m = store.get(CertKind::Leaf(KeyKind::Ed25519)).expect("leaf");
+        let text = std::fs::read_to_string(&m.key_pem).expect("read");
+        let key = KeyPair::from_pem(&text).expect("rcgen reads its own key back");
+        let der = key.serialized_der();
+        assert_eq!(
+            der.len(),
+            48,
+            "a v1 Ed25519 PKCS#8 is exactly 48 bytes: {der:02x?}"
+        );
+        assert_eq!(&der[2..5], &[0x02, 0x01, 0x00], "version must be 0 (v1)");
     }
 
     #[test]

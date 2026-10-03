@@ -64,7 +64,7 @@ pub fn stage() -> Stage {
             )
             .ext(),
             Test::new(
-                "an archive with no symbol index at all still resolves its members",
+                "an archive with no symbol index is either read through or refused by name",
                 missing_index,
             )
             .ext(),
@@ -176,19 +176,43 @@ link_test!(missing_index, |ctx| {
             Member::new("other.o", callee_returning("other", 7)?, &["other"]),
         ],
     )?;
-    let linked = ctx.link_ok(
-        &Link::new()
-            .object("main.o", main)
-            .archive("libnoindex.a", lib)
-            .label("an archive with no symbol index"),
-    )?;
-    assert_runnable_layout(&linked)?;
-    ctx.expect_output(&linked, "no index\n", 7)?;
-    ctx.note(
-        "verified against GNU ld 2.47: an archive without a `/` member is accepted and its \
-         members' own symbol tables are read — `ar` writes the index as a convenience, not as \
-         part of the format's meaning",
+    let link = Link::new()
+        .object("main.o", main)
+        .archive("libnoindex.a", lib)
+        .label("an archive with no symbol index");
+    let run = ctx.link(&link)?;
+    let mut c = Check::new("what a missing symbol index led to");
+    c.that(
+        "linker.signal",
+        "a linker that finished by itself, whatever it decided",
+        run.output.signal.is_none() && !run.output.timed_out,
+        run.output.status_line(),
     );
+    c.finish()?;
+    if run.succeeded() {
+        ctx.note(
+            "verified against GNU ld 2.47: an archive without a `/` member is accepted and its \
+             members' own symbol tables are read — `ar` writes the index as a convenience, not \
+             as part of the format's meaning. The program below proves it found the second \
+             member rather than the first",
+        );
+        let linked = ctx.link_ok(&link)?;
+        assert_runnable_layout(&linked)?;
+        ctx.expect_output(&linked, "no index\n", 7)?;
+    } else {
+        let mut c = Check::new("the diagnostic for a missing symbol index");
+        c.mentions("linker.stderr", "libnoindex.a", &run.diagnostics());
+        if !c.ok() {
+            c.block("linker command", run.output.command_line());
+            c.block("linker output", run.diagnostics());
+        }
+        c.finish()?;
+        ctx.note(
+            "verified against GNU ld 2.42, which refuses: `archive has no index; run ranlib to \
+             add one`. 2.47 reads the members instead. Both are defensible, so this test \
+             accepts either, and only insists that a refusal names the archive",
+        );
+    }
     Ok(())
 });
 

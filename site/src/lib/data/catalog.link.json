@@ -1,6 +1,6 @@
 {
 	"track": "link",
-	"generatedAt": "2026-09-19T08:42:39.920Z",
+	"generatedAt": "2026-10-03T09:17:03.153Z",
 	"sections": [
 		{
 			"id": "A",
@@ -1671,7 +1671,7 @@
 					"ext": true
 				},
 				{
-					"name": "an archive with no symbol index at all still resolves its members",
+					"name": "an archive with no symbol index is either read through or refused by name",
 					"ext": true
 				},
 				{
