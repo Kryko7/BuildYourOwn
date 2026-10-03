@@ -423,7 +423,7 @@ pub async fn await_coordinator(ctx: &Ctx, group: &str) -> Result<CoordinatorInfo
         }
         tokio::time::sleep(Duration::from_millis(100)).await;
     }
-    Err(Failure::harness(format!(
+    Err(Failure::never(format!(
         "no coordinator for group '{group}' within {} ms (last answer: {last:?})",
         ctx.timeout.as_millis()
     )))
@@ -501,7 +501,7 @@ pub async fn finish_join(
     let decoded = crate::proto::decode_response::<JoinGroupRequest>(JOIN_GROUP_V9, &raw)
         .map_err(|e| proto_fail(e, conn))?;
     if decoded.correlation_id != correlation_id {
-        return Err(Failure::harness(format!(
+        return Err(Failure::bad_data(format!(
             "response.correlation_id: expected {correlation_id} for the pending JoinGroup, \
              got {}",
             decoded.correlation_id

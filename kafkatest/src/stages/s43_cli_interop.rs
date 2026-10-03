@@ -8,8 +8,10 @@
 //!
 //! The tools are slow (a JVM start each), so every test raises its own timeout floor and the
 //! whole stage carries the `slow` tag: `--tag slow` selects it, `--only` narrows it further.
-//! When no distribution is available (`ctx.dist` is `None`) the test records why it did
-//! nothing and passes, rather than failing for a reason that is not the broker's fault.
+//! The tools come from the cached reference tarball, which is there for any broker once
+//! `--broker apache_kafka` has run once. When it is not (`ctx.dist` is `None`) the test is
+//! reported as *skipped* with the reason — never as passed, because nothing was checked —
+//! rather than failing for a reason that is not the broker's fault.
 
 use crate::assert::{Check, Failure};
 use crate::examples::ExampleSpec;
@@ -177,10 +179,10 @@ fn dist_or_skip(ctx: &mut Ctx) -> Option<std::path::PathBuf> {
     match ctx.dist.clone() {
         Some(d) => Some(d),
         None => {
-            ctx.note(
-                "skipped: no Apache Kafka distribution is available (ctx.dist is None), so the \
-                 command line tools cannot be run — install one by testing --broker \
-                 apache_kafka once, or set KAFKATEST_CACHE",
+            ctx.skip(
+                "no Apache Kafka distribution in the cache, so the command line tools cannot \
+                 be run — run `kafkatest --broker apache_kafka --stage 1` once to download \
+                 it, or point KAFKATEST_CACHE at one",
             );
             None
         }
@@ -233,7 +235,7 @@ async fn tool(
         Ok(Ok(out)) => out,
         Ok(Err(e)) => return Err(Failure::harness(format!("{describe} failed: {e}"))),
         Err(_) => {
-            return Err(Failure::harness(format!(
+            return Err(Failure::never(format!(
                 "{describe} did not finish within {} s and was killed",
                 limit.as_secs()
             ))
@@ -421,7 +423,7 @@ kafka_test!(console_producer, |ctx| {
         .map(|b| b.to_vec())
         .unwrap_or_default();
     let batches = RecordBatch::decode_all(&bytes).map_err(|e| {
-        Failure::harness(format!(
+        Failure::bad_data(format!(
             "the records kafka-console-producer.sh wrote do not decode: {e:#}"
         ))
     })?;

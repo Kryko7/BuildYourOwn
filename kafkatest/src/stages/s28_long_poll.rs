@@ -332,8 +332,9 @@ kafka_test!(wakes_on_produce, |ctx| {
         ms <= high,
         ms,
     );
-    let batches = RecordBatch::decode_all(&got.records)
-        .map_err(|e| Failure::harness(format!("the woken fetch's records do not decode: {e:#}")))?;
+    let batches = RecordBatch::decode_all(&got.records).map_err(|e| {
+        Failure::bad_data(format!("the woken fetch's records do not decode: {e:#}"))
+    })?;
     let values: Vec<String> = batches
         .iter()
         .flat_map(|b| b.records.iter())

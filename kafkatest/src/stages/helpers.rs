@@ -263,7 +263,8 @@ pub fn error_name(code: i16) -> &'static str {
         14 => "COORDINATOR_LOAD_IN_PROGRESS",
         15 => "COORDINATOR_NOT_AVAILABLE",
         16 => "NOT_COORDINATOR",
-        18 => "INVALID_TOPIC_EXCEPTION",
+        17 => "INVALID_TOPIC_EXCEPTION",
+        18 => "RECORD_LIST_TOO_LARGE",
         21 => "INVALID_REQUIRED_ACKS",
         22 => "ILLEGAL_GENERATION",
         23 => "INCONSISTENT_GROUP_PROTOCOL",
@@ -279,9 +280,14 @@ pub fn error_name(code: i16) -> &'static str {
         45 => "OUT_OF_ORDER_SEQUENCE_NUMBER",
         46 => "DUPLICATE_SEQUENCE_NUMBER",
         47 => "INVALID_PRODUCER_EPOCH",
-        90 => "PRODUCER_FENCED",
+        48 => "INVALID_TXN_STATE",
+        49 => "INVALID_PRODUCER_ID_MAPPING",
+        51 => "CONCURRENT_TRANSACTIONS",
+        53 => "TRANSACTIONAL_ID_AUTHORIZATION_FAILED",
+        69 => "GROUP_ID_NOT_FOUND",
         79 => "MEMBER_ID_REQUIRED",
         87 => "INVALID_RECORD",
+        90 => "PRODUCER_FENCED",
         100 => "UNKNOWN_TOPIC_ID",
         _ => "an error code this suite does not name",
     }
@@ -368,7 +374,7 @@ pub async fn await_high_watermark(
         }
         tokio::time::sleep(Duration::from_millis(50)).await;
     }
-    Err(Failure::harness(format!(
+    Err(Failure::never(format!(
         "{}-{partition} never reached high watermark {want} (last saw {last})",
         topic.name
     )))
@@ -432,6 +438,15 @@ mod tests {
         assert_eq!(r.topic_data.len(), 2);
         assert_eq!(r.topic_data[0].partition_data.len(), 2);
         assert_eq!(r.acks, -1);
+    }
+
+    #[test]
+    fn error_names_match_the_kafka_protocol_guide() {
+        assert_eq!(error_name(17), "INVALID_TOPIC_EXCEPTION");
+        assert_eq!(error_name(18), "RECORD_LIST_TOO_LARGE");
+        assert_eq!(error_name(48), "INVALID_TXN_STATE");
+        assert_eq!(error_name(51), "CONCURRENT_TRANSACTIONS");
+        assert_eq!(error_name(90), "PRODUCER_FENCED");
     }
 
     #[test]

@@ -144,6 +144,9 @@ fn select<'a>(cli: &Cli, all: &'a [Stage]) -> Result<Vec<&'a Stage>> {
 
 fn run() -> Result<bool> {
     let cli = Cli::parse();
+    // Brokers run in their own process groups, out of reach of the terminal's Ctrl-C:
+    // this is what still stops them (and removes the temp dirs) when a run is interrupted.
+    kafkatest::broker::install_signal_cleanup(cli.keep_tmp);
     report::set_color(!cli.no_color && std::env::var_os("NO_COLOR").is_none());
     let all_stages = stages::all();
     let plan = locate(None, "PLAN.md").unwrap_or_else(|_| PathBuf::from("PLAN.md"));

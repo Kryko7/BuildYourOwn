@@ -27,6 +27,11 @@
 
 use anyhow::{bail, Context, Result};
 
+/// Bytes of batch header after the `batchLength` field: partitionLeaderEpoch(4) magic(1)
+/// crc(4) attributes(2) lastOffsetDelta(4) baseTimestamp(8) maxTimestamp(8) producerId(8)
+/// producerEpoch(2) baseSequence(4) recordCount(4). A smaller `batchLength` is malformed.
+pub const BATCH_HEADER_AFTER_LENGTH: i32 = 49;
+
 /// Magic byte of the only batch format this harness writes.
 pub const MAGIC_V2: i8 = 2;
 /// Producer id meaning "not idempotent".
@@ -287,8 +292,11 @@ impl RecordBatch {
         let mut c = Cursor::new(buf);
         let base_offset = c.i64().context("batch.base_offset")?;
         let batch_length = c.i32().context("batch.batch_length")?;
-        if batch_length < 0 {
-            bail!("batch.batch_length is negative ({batch_length})");
+        if batch_length < BATCH_HEADER_AFTER_LENGTH {
+            bail!(
+                "batch.batch_length is {batch_length}, less than the {BATCH_HEADER_AFTER_LENGTH} \
+                 bytes of header that follow it"
+            );
         }
         let after_len = c.pos;
         let total = after_len + batch_length as usize;
@@ -319,22 +327,36 @@ impl RecordBatch {
         let base_sequence = c.i32().context("batch.base_sequence")?;
         let count = c.i32().context("batch.record_count")?;
         let codec = attributes & COMPRESSION_MASK;
+        if count < 0 {
+            bail!("batch.record_count is negative ({count})");
+        }
+        // The records run from here to the end of the batch, and only that far: a record
+        // that spills past batchLength belongs to nothing, and bytes left over after the
+        // last counted record mean batchLength or recordCount is wrong.
+        let payload = buf.get(c.pos..total).unwrap_or_default();
         let mut records = Vec::new();
-        if codec != NO_COMPRESSION {
-            // The compressed payload runs from here to the end of the batch; the record
-            // count in the header still counts the *uncompressed* records.
-            let payload = buf.get(c.pos..total).unwrap_or_default();
+        let leftover = if codec != NO_COMPRESSION {
+            // The record count in the header still counts the *uncompressed* records.
             let name = codec_name(codec);
             let raw = decompress_records(codec, payload)
                 .with_context(|| format!("decompressing a {name} batch of {count} records"))?;
             let mut rc = Cursor::new(&raw);
-            for i in 0..count.max(0) {
+            for i in 0..count {
                 records.push(decode_record(&mut rc).with_context(|| format!("records[{i}]"))?);
             }
-        } else if count > 0 {
+            rc.remaining()
+        } else {
+            let mut rc = Cursor::new(payload);
             for i in 0..count {
-                records.push(decode_record(&mut c).with_context(|| format!("records[{i}]"))?);
+                records.push(decode_record(&mut rc).with_context(|| format!("records[{i}]"))?);
             }
+            rc.remaining()
+        };
+        if leftover != 0 {
+            bail!(
+                "{leftover} byte(s) left in the batch after its {count} record(s): batchLength \
+                 or recordCount does not match the records"
+            );
         }
         Ok((
             RecordBatch {
@@ -355,7 +377,12 @@ impl RecordBatch {
         ))
     }
 
-    /// Decode every batch in a buffer, stopping cleanly at a truncated tail.
+    /// Decode every batch in a buffer.
+    ///
+    /// A tail too short to hold `baseOffset` and `batchLength` (under 12 bytes) is ignored;
+    /// a batch that claims more bytes than remain is an error. Callers that fetch with a
+    /// small limit, where a broker may legitimately cut the last batch short, decode batch
+    /// by batch instead (stage 26).
     pub fn decode_all(buf: &[u8]) -> Result<Vec<RecordBatch>> {
         let mut out = Vec::new();
         let mut at = 0usize;
@@ -724,6 +751,55 @@ mod tests {
         let bytes = sample().encode();
         for cut in [5usize, 13, 30, bytes.len() - 1] {
             assert!(RecordBatch::decode(&bytes[..cut]).is_err(), "cut at {cut}");
+        }
+    }
+
+    #[test]
+    fn a_batch_length_shorter_than_the_header_is_an_error_not_a_panic() {
+        let mut bytes = sample().encode();
+        // Pad so every header read succeeds, then claim a batchLength that ends before the
+        // CRC does: slicing the CRC range must not panic.
+        bytes.extend_from_slice(&[0u8; 64]);
+        for claimed in [0i32, 1, 8, 9, 48] {
+            bytes[8..12].copy_from_slice(&claimed.to_be_bytes());
+            assert!(
+                RecordBatch::decode(&bytes).is_err(),
+                "batchLength {claimed}"
+            );
+            assert!(
+                RecordBatch::decode_all(&bytes).is_err(),
+                "batchLength {claimed}"
+            );
+        }
+    }
+
+    #[test]
+    fn records_never_spill_past_batch_length() {
+        // Two batches back to back, the first claiming one record too many: its reader must
+        // not borrow the second batch's bytes to find it.
+        let mut first = RecordBatch::of(0, 1, vec![RecordItem::value("a")]);
+        first.record_count_override = Some(2);
+        let second = RecordBatch::of(1, 1, vec![RecordItem::value("b")]);
+        let mut bytes = first.encode();
+        bytes.extend_from_slice(&second.encode());
+        assert!(RecordBatch::decode(&bytes).is_err());
+    }
+
+    #[test]
+    fn bytes_left_over_after_the_records_are_reported() {
+        let mut b = RecordBatch::of(0, 1, vec![RecordItem::value("a"), RecordItem::value("b")]);
+        b.record_count_override = Some(1);
+        let err = RecordBatch::decode(&b.encode()).expect_err("must reject");
+        assert!(format!("{err}").contains("left in the batch"), "{err}");
+        for codec in [GZIP, SNAPPY, LZ4, ZSTD] {
+            let mut c = RecordBatch::of(0, 1, vec![RecordItem::value("a"), RecordItem::value("b")])
+                .with_compression(codec);
+            c.record_count_override = Some(1);
+            assert!(
+                RecordBatch::decode(&c.encode()).is_err(),
+                "{}",
+                codec_name(codec)
+            );
         }
     }
 

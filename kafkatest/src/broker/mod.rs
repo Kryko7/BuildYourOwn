@@ -12,7 +12,111 @@ use std::net::{SocketAddr, TcpListener};
 use std::os::unix::process::CommandExt;
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
+use std::sync::atomic::{AtomicI32, Ordering};
+use std::sync::Mutex;
 use std::time::{Duration, Instant};
+
+// ---------------------------------------------------------------------------------------
+// Cleanup on Ctrl-C / SIGTERM.
+//
+// Every broker runs in its own process group so that it can be killed as a tree, which
+// also means the terminal's SIGINT never reaches it: without this, interrupting a run left
+// a JVM listening and a temp dir behind. The handler only writes a byte to a pipe (the one
+// thing that is async-signal-safe); a thread wakes on it, kills every live group, removes
+// the temp roots and exits.
+// ---------------------------------------------------------------------------------------
+
+static LIVE_GROUPS: Mutex<Vec<i32>> = Mutex::new(Vec::new());
+static TEMP_ROOTS: Mutex<Vec<PathBuf>> = Mutex::new(Vec::new());
+static SIGNAL_PIPE: AtomicI32 = AtomicI32::new(-1);
+
+fn register_group(pgid: i32) {
+    if let Ok(mut g) = LIVE_GROUPS.lock() {
+        g.push(pgid);
+    }
+}
+
+fn unregister_group(pgid: i32) {
+    if let Ok(mut g) = LIVE_GROUPS.lock() {
+        g.retain(|p| *p != pgid);
+    }
+}
+
+/// Remove `dir` too if the run is interrupted (the runner's temp root).
+pub fn register_temp_root(dir: &Path) {
+    if let Ok(mut t) = TEMP_ROOTS.lock() {
+        t.push(dir.to_path_buf());
+    }
+}
+
+/// Forget a temp root the runner has removed (or was told to keep).
+pub fn unregister_temp_root(dir: &Path) {
+    if let Ok(mut t) = TEMP_ROOTS.lock() {
+        t.retain(|p| p != dir);
+    }
+}
+
+extern "C" fn on_signal(_: libc::c_int) {
+    let fd = SIGNAL_PIPE.load(Ordering::Relaxed);
+    if fd >= 0 {
+        let b = [1u8];
+        // SAFETY: write(2) is async-signal-safe; the fd stays open for the process's life.
+        unsafe {
+            libc::write(fd, b.as_ptr().cast(), 1);
+        }
+    }
+}
+
+/// Kill every broker group and remove the temp roots when the run is interrupted.
+///
+/// Call once, early in `main`. `keep_tmp` leaves the temp roots in place, as the flag says.
+pub fn install_signal_cleanup(keep_tmp: bool) {
+    let mut fds = [0 as libc::c_int; 2];
+    // SAFETY: pipe(2) fills the two-element array we own.
+    if unsafe { libc::pipe(fds.as_mut_ptr()) } != 0 {
+        return;
+    }
+    let (read_end, write_end) = (fds[0], fds[1]);
+    SIGNAL_PIPE.store(write_end, Ordering::Relaxed);
+    let spawned = std::thread::Builder::new()
+        .name("kafkatest-signals".into())
+        .spawn(move || {
+            let mut b = [0u8; 1];
+            // SAFETY: a blocking read on the pipe's read end, which this thread owns.
+            let n = unsafe { libc::read(read_end, b.as_mut_ptr().cast(), 1) };
+            if n <= 0 {
+                return;
+            }
+            let groups: Vec<i32> = LIVE_GROUPS.lock().map(|g| g.clone()).unwrap_or_default();
+            for pgid in groups {
+                // SAFETY: every registered pgid is a broker group this process spawned.
+                unsafe {
+                    libc::killpg(pgid, libc::SIGKILL);
+                }
+            }
+            if !keep_tmp {
+                let roots: Vec<PathBuf> = TEMP_ROOTS.lock().map(|t| t.clone()).unwrap_or_default();
+                for r in roots {
+                    let _ = std::fs::remove_dir_all(r);
+                }
+            }
+            eprintln!("\nkafkatest: interrupted; stopped the broker and cleaned up");
+            std::process::exit(130);
+        });
+    if spawned.is_err() {
+        return;
+    }
+    for sig in [libc::SIGINT, libc::SIGTERM, libc::SIGHUP] {
+        // SAFETY: installing a handler that only calls write(2). A signal the parent chose
+        // to ignore (`nohup`, a background job's SIGINT) stays ignored.
+        unsafe {
+            let previous = libc::signal(sig, on_signal as libc::sighandler_t);
+            if previous == libc::SIG_IGN {
+                libc::signal(sig, libc::SIG_IGN);
+            }
+        }
+    }
+}
 
 /// Everything needed to start one broker process.
 #[derive(Debug, Clone)]
@@ -77,6 +181,7 @@ impl BrokerHandle {
             .spawn()
             .with_context(|| format!("cannot start broker '{}': {program}", spec.name))?;
         let pgid = child.id() as i32;
+        register_group(pgid);
         let addr: SocketAddr = format!("127.0.0.1:{}", spec.port)
             .parse()
             .context("broker address")?;
@@ -215,6 +320,7 @@ impl BrokerHandle {
         unsafe {
             libc::killpg(self.pgid, libc::SIGKILL);
         }
+        unregister_group(self.pgid);
     }
 }
 
@@ -278,11 +384,21 @@ pub fn write_external_properties(path: &Path, log_dir: &Path, port: u16) -> Resu
 }
 
 /// Build the spec for a non-reference broker.
-pub fn external_spec(def: &BrokerDef, tmp: &Path, port: u16) -> Result<BrokerSpec> {
+///
+/// `log_dir_override` (`--log-dir`) wins over `brokers.yaml`, and it has to be applied here,
+/// before the placeholders are: a `command` or `env` that says `{LOGDIR}` must name the
+/// directory the fixtures are actually written to.
+pub fn external_spec(
+    def: &BrokerDef,
+    tmp: &Path,
+    port: u16,
+    log_dir_override: Option<&Path>,
+) -> Result<BrokerSpec> {
     debug_assert_eq!(def.kind, BrokerKind::External);
-    let log_dir = match &def.log_dir {
-        Some(d) => PathBuf::from(d),
-        None => tmp.join("kraft-combined-logs"),
+    let log_dir = match (log_dir_override, &def.log_dir) {
+        (Some(d), _) => d.to_path_buf(),
+        (None, Some(d)) => PathBuf::from(d),
+        (None, None) => tmp.join("kraft-combined-logs"),
     };
     let props = tmp.join("server.properties");
     let ph = crate::config::Placeholders {
@@ -357,6 +473,30 @@ mod tests {
             )),
             "stage 37 needs the size limit in the properties file\n{text}"
         );
+    }
+
+    #[test]
+    fn a_log_dir_override_reaches_the_command_line() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let def = BrokerDef {
+            name: "b".into(),
+            kind: BrokerKind::External,
+            version: None,
+            command: vec!["./b".into(), "--logs".into(), "{LOGDIR}".into()],
+            port: None,
+            log_dir: Some("/tmp/from-yaml".into()),
+            fixtures: crate::config::FixtureStrategy::Files,
+            restart: crate::config::RestartPolicy::PerTest,
+            cwd: None,
+            env: Default::default(),
+            boot_timeout_ms: 1000,
+        };
+        let forced = dir.path().join("forced");
+        let spec = external_spec(&def, dir.path(), 1234, Some(&forced)).expect("spec");
+        assert_eq!(spec.log_dir, forced);
+        assert_eq!(spec.argv[2], forced.to_string_lossy());
+        let plain = external_spec(&def, dir.path(), 1234, None).expect("spec");
+        assert_eq!(plain.argv[2], "/tmp/from-yaml");
     }
 
     #[test]

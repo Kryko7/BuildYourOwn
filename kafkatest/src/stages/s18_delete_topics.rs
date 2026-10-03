@@ -142,7 +142,7 @@ async fn wait_gone(ctx: &Ctx, name: &str) -> Result<(), Failure> {
         }
         tokio::time::sleep(Duration::from_millis(100)).await;
     }
-    Err(Failure::harness(format!(
+    Err(Failure::never(format!(
         "'{name}' was still described {SETTLE:?} after DeleteTopics returned 0: {last}"
     )))
 }
@@ -166,7 +166,7 @@ async fn wait_visible(ctx: &Ctx, name: &str) -> Result<Uuid, Failure> {
         }
         tokio::time::sleep(Duration::from_millis(100)).await;
     }
-    Err(Failure::harness(format!(
+    Err(Failure::never(format!(
         "'{name}' never came back after being re-created within {SETTLE:?}: {last}"
     )))
 }
@@ -351,6 +351,8 @@ kafka_test!(leaves_others, |ctx| {
         .await
         .map_err(|e| proto_fail(e, &conn))?;
     let mut c = Check::new("the two topics after one of them was deleted", &conn);
+    c.note("both names were asked for, so both get an entry: the deleted one carries error 3");
+    c.eq("response.topics.len", 2usize, described.topics.len());
     for got in &described.topics {
         let name = got
             .name

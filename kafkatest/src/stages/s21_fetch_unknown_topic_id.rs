@@ -135,6 +135,13 @@ kafka_test!(no_records, |ctx| {
             0i64,
             p.high_watermark,
         );
+    } else {
+        c.that(
+            "response.responses[0].partitions[0]",
+            "one partition entry",
+            false,
+            "none",
+        );
     }
     c.finish()
 });

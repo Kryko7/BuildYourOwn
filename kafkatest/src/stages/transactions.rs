@@ -234,9 +234,9 @@ pub async fn produce_transactional(
     let mut conn = ctx.connect().await?;
     let mut req = produce_request(&[(topic.to_string(), 0, batch.encode())], -1);
     // A Produce carrying transactional batches must name the transaction on the request as
-    // well as in the batch header: without it the broker sees a batch claiming to be
-    // transactional from a producer that has declared no transaction, and answers
-    // INVALID_TXN_STATE (53).
+    // well as in the batch header: without it Apache Kafka refuses the whole request with
+    // 53 TRANSACTIONAL_ID_AUTHORIZATION_FAILED, because a transactional write is authorized
+    // against the transactional id the request names, and a null id authorizes nothing.
     req.transactional_id = Some(txn_id(id));
     let resp = conn
         .request(PRODUCE_V11, &req)

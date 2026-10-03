@@ -78,6 +78,24 @@ impl Failure {
         Failure::new(FailureKind::Harness, message)
     }
 
+    /// The broker sent bytes that do not decode (a record batch, a CRC, a length).
+    ///
+    /// Not [`Failure::harness`]: the harness set the test up fine, the broker's answer is
+    /// what is wrong, and the report must not tell a learner the tester broke.
+    pub fn bad_data(message: impl Into<String>) -> Failure {
+        Failure::new(FailureKind::Protocol, message)
+    }
+
+    /// The broker never reached a state the test was waiting for.
+    pub fn never(message: impl Into<String>) -> Failure {
+        Failure::new(FailureKind::Timeout, message)
+    }
+
+    /// The broker's answer lacks an entry the request asked for.
+    pub fn missing(message: impl Into<String>) -> Failure {
+        Failure::new(FailureKind::Assertion, message)
+    }
+
     /// Turn a protocol-level error into a failure, attaching the connection's last bytes.
     pub fn proto(err: ProtoError, conn: Option<&Conn>) -> Failure {
         let kind = match &err {

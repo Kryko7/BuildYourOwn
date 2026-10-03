@@ -240,7 +240,7 @@ kafka_test!(keys_survive, |ctx| {
         .map(|b| b.to_vec())
         .unwrap_or_default();
     let batches = RecordBatch::decode_all(&bytes)
-        .map_err(|e| Failure::harness(format!("the fetched records do not decode: {e:#}")))?;
+        .map_err(|e| Failure::bad_data(format!("the fetched records do not decode: {e:#}")))?;
     let pairs: Vec<(String, String)> = batches
         .iter()
         .flat_map(|b| b.records.iter())
@@ -282,10 +282,10 @@ kafka_test!(fetch_back, |ctx| {
         .responses
         .first()
         .and_then(|r| r.partitions.first())
-        .ok_or_else(|| Failure::harness("the fetch returned no partition entry"))?;
+        .ok_or_else(|| Failure::missing("the fetch returned no partition entry"))?;
     let bytes = p.records.clone().map(|b| b.to_vec()).unwrap_or_default();
     let batches = RecordBatch::decode_all(&bytes)
-        .map_err(|e| Failure::harness(format!("the fetched records do not decode: {e:#}")))?;
+        .map_err(|e| Failure::bad_data(format!("the fetched records do not decode: {e:#}")))?;
     let values: Vec<String> = batches
         .iter()
         .flat_map(|b| b.records.iter())

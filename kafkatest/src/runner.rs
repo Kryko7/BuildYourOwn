@@ -86,12 +86,16 @@ pub struct Runner {
 impl Runner {
     /// Prepare a runner; downloads the reference distribution if this is a reference broker.
     pub fn new(def: BrokerDef, opts: RunOptions) -> Result<Runner> {
+        let version = def
+            .version
+            .clone()
+            .unwrap_or_else(|| reference::DEFAULT_VERSION.to_string());
         let dist = if def.kind == BrokerKind::Reference {
-            let version = def
-                .version
-                .clone()
-                .unwrap_or_else(|| reference::DEFAULT_VERSION.to_string());
             Some(reference::ensure_installed(&version)?)
+        } else if reference::is_installed(&version) {
+            // The command line tools of stage 43 run against any broker; testing another
+            // broker never downloads anything, but a tarball already in the cache is used.
+            Some(reference::dist_dir(&version))
         } else {
             None
         };
@@ -102,6 +106,7 @@ impl Runner {
         let tmp_root = std::env::temp_dir().join(format!("kafkatest-{}", std::process::id()));
         std::fs::create_dir_all(&tmp_root)
             .with_context(|| format!("cannot create {}", tmp_root.display()))?;
+        broker::register_temp_root(&tmp_root);
         Ok(Runner {
             def,
             opts,
@@ -226,11 +231,9 @@ impl Runner {
                     _ => broker::free_port()
                         .map_err(|e| Failure::harness(format!("cannot pick a port: {e:#}")))?,
                 };
-                let mut spec_b = broker::external_spec(&self.def, &tmp, port)
-                    .map_err(|e| Failure::harness(format!("{e:#}")))?;
-                if let Some(d) = &self.opts.log_dir {
-                    spec_b.log_dir = d.clone();
-                }
+                let spec_b =
+                    broker::external_spec(&self.def, &tmp, port, self.opts.log_dir.as_deref())
+                        .map_err(|e| Failure::harness(format!("{e:#}")))?;
                 broker::write_external_properties(&spec_b.props, &spec_b.log_dir, port)
                     .map_err(|e| Failure::harness(format!("{e:#}")))?;
                 let handle = if self.def.fixtures == FixtureStrategy::Files {
@@ -286,8 +289,9 @@ impl Runner {
         let spec = (test.fixtures)();
         let salt = format!("s{:02}x{index}", stage.number);
         let mut notes = Vec::new();
+        let mut skipped = None;
         let result = self
-            .prepare_and_run(stage, test, &spec, &salt, index, &mut notes)
+            .prepare_and_run(test, &spec, &salt, index, &mut notes, &mut skipped)
             .await;
         let mut failure = result.err();
         // A broker that died turns any other failure into the crash that caused it.
@@ -299,29 +303,34 @@ impl Runner {
                 }
             }
         }
+        let status = match (&failure, &skipped) {
+            (Some(_), _) => Status::Fail,
+            (None, Some(_)) => Status::Skip,
+            (None, None) => Status::Pass,
+        };
         TestResult {
             name: test.name.to_string(),
-            status: if failure.is_none() {
-                Status::Pass
-            } else {
-                Status::Fail
-            },
+            status,
             ext: test.is_ext(),
             duration_ms: started.elapsed().as_millis(),
             failure,
-            skip_reason: None,
+            skip_reason: if status == Status::Skip {
+                skipped
+            } else {
+                None
+            },
             notes,
         }
     }
 
     async fn prepare_and_run(
         &mut self,
-        stage: &Stage,
         test: &Test,
         spec: &FixtureSpec,
         salt: &str,
         index: u64,
         notes: &mut Vec<String>,
+        skipped: &mut Option<String>,
     ) -> Result<(), Failure> {
         let per_test = self.def.effective_restart() == RestartPolicy::PerTest;
         let needs_restart = per_test || test.force_restart || self.broker.is_none();
@@ -355,7 +364,7 @@ impl Runner {
         let dist = self.dist.clone();
         let broker = self.broker_mut()?;
         let mut ctx = Ctx::new(broker, handle, timeout, seed, index, dist);
-        let _ = stage;
+        ctx.reference = self.def.kind == BrokerKind::Reference;
         // `ctx.timeout` stays the per-request timeout; the deadline for the whole body is
         // the test's own: an explicit `timeout_ms` override, or `--timeout-ms` raised to a
         // slow stage's `min_timeout_ms` floor.
@@ -375,6 +384,7 @@ impl Runner {
         };
         self.broker = ctx.broker.take();
         notes.append(&mut ctx.notes);
+        *skipped = ctx.skipped.take();
         outcome
     }
 
@@ -392,6 +402,7 @@ impl Drop for Runner {
         if !self.opts.keep_tmp {
             let _ = std::fs::remove_dir_all(&self.tmp_root);
         }
+        broker::unregister_temp_root(&self.tmp_root);
     }
 }
 

@@ -108,6 +108,13 @@ kafka_test!(base_offset, |ctx| {
             -1i64,
             p.log_append_time_ms,
         );
+    } else {
+        c.that(
+            "response.responses[0].partition_responses[0]",
+            "one partition entry",
+            false,
+            "none",
+        );
     }
     c.finish()
 });

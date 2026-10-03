@@ -99,7 +99,7 @@ kafka_test!(succeeds, |ctx| {
 kafka_test!(one_record_back, |ctx| {
     let (records, _, _) = fetch_records(ctx, 0).await?;
     let batches = RecordBatch::decode_all(&records)
-        .map_err(|e| Failure::harness(format!("the returned records do not decode: {e:#}")))?;
+        .map_err(|e| Failure::bad_data(format!("the returned records do not decode: {e:#}")))?;
     let mut c = Check::detached("the decoded record batches");
     c.eq("records.batches.len", 1usize, batches.len());
     c.eq(
@@ -113,7 +113,7 @@ kafka_test!(one_record_back, |ctx| {
 kafka_test!(value_intact, |ctx| {
     let (records, _, _) = fetch_records(ctx, 0).await?;
     let batches = RecordBatch::decode_all(&records)
-        .map_err(|e| Failure::harness(format!("the returned records do not decode: {e:#}")))?;
+        .map_err(|e| Failure::bad_data(format!("the returned records do not decode: {e:#}")))?;
     let got = batches
         .first()
         .and_then(|b| b.records.first())
@@ -131,7 +131,7 @@ kafka_test!(value_intact, |ctx| {
 kafka_test!(base_offset, |ctx| {
     let (records, _, _) = fetch_records(ctx, 0).await?;
     let batches = RecordBatch::decode_all(&records)
-        .map_err(|e| Failure::harness(format!("the returned records do not decode: {e:#}")))?;
+        .map_err(|e| Failure::bad_data(format!("the returned records do not decode: {e:#}")))?;
     let mut c = Check::detached("the batch header");
     c.eq(
         "records.batches[0].base_offset",
@@ -161,7 +161,7 @@ kafka_test!(crc_ok, |ctx| {
     let (records, _, _) = fetch_records(ctx, 0).await?;
     // RecordBatch::decode verifies the CRC-32C and refuses the batch when it is wrong.
     RecordBatch::decode_all(&records).map_err(|e| {
-        Failure::harness(format!(
+        Failure::bad_data(format!(
             "the returned batch failed its own integrity check: {e:#}"
         ))
     })?;

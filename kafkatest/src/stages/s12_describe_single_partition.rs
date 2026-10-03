@@ -80,6 +80,13 @@ kafka_test!(topic_id, |ctx| {
     if let Some(got) = resp.topics.first() {
         c.ne("response.topics[0].topic_id", Uuid::nil(), got.topic_id);
         c.eq("response.topics[0].topic_id", t.id, got.topic_id);
+    } else {
+        c.that(
+            "response.topics[0]",
+            "one topic entry",
+            false,
+            resp.topics.len(),
+        );
     }
     c.finish()
 });
@@ -152,6 +159,13 @@ kafka_test!(leader, |ctx| {
             0i32,
             p.leader_epoch,
         );
+    } else {
+        c.that(
+            "response.topics[0].partitions[0]",
+            "a partition entry",
+            false,
+            "none",
+        );
     }
     c.finish()
 });
@@ -180,6 +194,13 @@ kafka_test!(replicas, |ctx| {
             &format!("to contain the leader ({leader})"),
             isr.contains(&leader),
             isr,
+        );
+    } else {
+        c.that(
+            "response.topics[0].partitions[0]",
+            "a partition entry",
+            false,
+            "none",
         );
     }
     c.finish()

@@ -300,7 +300,18 @@ pub fn prepare(version: &str, tmp: &Path, boot_timeout: Duration) -> Result<Brok
     let props = tmp.join("server.properties");
     std::fs::create_dir_all(&log_dir)?;
     let port = free_port()?;
-    let controller_port = free_port()?;
+    // Each probe binds and releases its port, so two probes can hand back the same one;
+    // a listener and a controller on one port would never boot.
+    let mut controller_port = free_port()?;
+    for _ in 0..16 {
+        if controller_port != port {
+            break;
+        }
+        controller_port = free_port()?;
+    }
+    if controller_port == port {
+        bail!("could not find two distinct free ports");
+    }
     write_properties(&props, &log_dir, port, controller_port)?;
     format_storage(&dist, &props, &cluster_id(&dist)?)?;
     let jvm_logs = tmp.join("jvm-logs");

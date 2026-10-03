@@ -99,6 +99,12 @@ kafka_test!(all_ok, |ctx| {
         .await
         .map_err(|e| proto_fail(e, &conn))?;
     let mut c = Check::new("the error code of every partition", &conn);
+    c.note("the check is only as good as the entries it sees, so all three must be there");
+    c.eq(
+        "response.topics[0].partitions.len",
+        3usize,
+        resp.topics.first().map(|t| t.partitions.len()).unwrap_or(0),
+    );
     if let Some(topic) = resp.topics.first() {
         c.eq("response.topics[0].error_code", NONE, topic.error_code);
         for p in &topic.partitions {
@@ -124,6 +130,11 @@ kafka_test!(leaders, |ctx| {
         .await
         .map_err(|e| proto_fail(e, &conn))?;
     let mut c = Check::new("leaders and ISR of every partition", &conn);
+    c.eq(
+        "response.topics[0].partitions.len",
+        3usize,
+        resp.topics.first().map(|t| t.partitions.len()).unwrap_or(0),
+    );
     if let Some(topic) = resp.topics.first() {
         for p in &topic.partitions {
             let path = format!("response.topics[0].partitions[{}]", p.partition_index);

@@ -108,7 +108,7 @@ async fn fetch_all(ctx: &Ctx) -> Result<(Vec<RecordBatch>, Vec<u8>, i64), Failur
     // decode_all verifies the CRC-32C and decompresses each payload; a broker that
     // re-encoded the batch fails here rather than in a value comparison.
     let batches = RecordBatch::decode_all(&bytes).map_err(|e| {
-        Failure::harness(format!(
+        Failure::bad_data(format!(
             "the returned compressed batches do not decode: {e:#}"
         ))
     })?;

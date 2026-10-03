@@ -43,6 +43,3 @@ uuid = { version = "1", features = ["v4", "serde"] }
 
 [dev-dependencies]
 tokio = { version = "1", features = ["full"] }
-
-[profile.release]
-strip = true

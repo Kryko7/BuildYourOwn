@@ -146,7 +146,7 @@ async fn wait_visible(ctx: &Ctx, name: &str, partitions: usize) -> Result<Uuid, 
         }
         tokio::time::sleep(Duration::from_millis(100)).await;
     }
-    Err(Failure::harness(format!(
+    Err(Failure::never(format!(
         "'{name}' was never published by the controller within {SETTLE:?}: {last}"
     )))
 }
@@ -406,13 +406,16 @@ kafka_test!(two_topics, |ctx| {
     let ida = wait_visible(ctx, &a, 1).await?;
     let idb = wait_visible(ctx, &b, 2).await?;
     let mut c = Check::detached("that both new topics reached Metadata");
-    c.that(
-        "the published topic ids",
-        "to match the ids CreateTopics announced",
-        resp.topics
-            .iter()
-            .all(|t| t.topic_id == ida || t.topic_id == idb),
-        (ida, idb),
+    c.note("each name must be published under the id CreateTopics announced for that name");
+    c.eq(
+        &format!("Metadata: response.topics[name={a}].topic_id"),
+        result_for(&resp, &a).map(|t| t.topic_id),
+        Some(ida),
+    );
+    c.eq(
+        &format!("Metadata: response.topics[name={b}].topic_id"),
+        result_for(&resp, &b).map(|t| t.topic_id),
+        Some(idb),
     );
     c.finish()
 });

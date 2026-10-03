@@ -228,7 +228,7 @@ async fn fetch_at(
         .await
         .map_err(|e| proto_fail(e, &conn))?;
     let Some(p) = resp.responses.first().and_then(|t| t.partitions.first()) else {
-        return Err(Failure::harness("the Fetch returned no partition entry"));
+        return Err(Failure::missing("the Fetch returned no partition entry"));
     };
     let bytes = p.records.clone().unwrap_or_default();
     let batches = RecordBatch::decode_all(&bytes).map_err(|e| {

@@ -83,7 +83,7 @@ fn records_of(
         .map(|b| b.to_vec())
         .unwrap_or_default();
     RecordBatch::decode_all(&bytes).map_err(|e| {
-        Failure::harness(format!(
+        Failure::bad_data(format!(
             "the records of partition {partition} do not decode: {e:#}"
         ))
     })

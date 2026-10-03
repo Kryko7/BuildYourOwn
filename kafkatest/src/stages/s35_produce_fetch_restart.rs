@@ -224,7 +224,7 @@ async fn fetch_from(
     c.finish()?;
     let bytes = p.records.clone().map(|b| b.to_vec()).unwrap_or_default();
     let batches = RecordBatch::decode_all(&bytes).map_err(|e| {
-        Failure::harness(format!(
+        Failure::bad_data(format!(
             "the records fetched from '{}'-0 do not decode: {e:#}",
             topic.name
         ))

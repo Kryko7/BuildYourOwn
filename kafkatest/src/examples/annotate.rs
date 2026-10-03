@@ -170,12 +170,16 @@ impl<'a> Walk<'a> {
     }
 
     fn take(&mut self, n: usize) -> Option<&'a [u8]> {
-        if self.truncated || self.pos + n > self.end {
-            self.truncated = true;
-            return None;
-        }
-        let s = &self.buf[self.pos..self.pos + n];
-        self.pos += n;
+        // A length read off the wire can be anything up to u64::MAX: never let it wrap.
+        let end = match self.pos.checked_add(n) {
+            Some(end) if !self.truncated && end <= self.end => end,
+            _ => {
+                self.truncated = true;
+                return None;
+            }
+        };
+        let s = self.buf.get(self.pos..end)?;
+        self.pos = end;
         Some(s)
     }
 

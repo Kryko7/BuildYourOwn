@@ -134,8 +134,10 @@ against. The harness:
    accepts TCP connections well before it can serve them.
 
 The process is started in its own process group and killed as a group (`SIGTERM`, then
-`SIGKILL`) when the handle drops, so a wrapper script never leaves a JVM behind. After a run,
-`pgrep -f kafka_2.13` returns nothing.
+`SIGKILL`) when the handle drops, so a wrapper script never leaves a JVM behind. Because the
+group is out of reach of the terminal, `Ctrl-C` (or a `SIGTERM`/`SIGHUP` to `kafkatest`) is
+caught too: every live broker group is killed and the temp dirs are removed before the run
+exits with status 130. After a run, interrupted or not, `pgrep -f kafka_2.13` returns nothing.
 
 The reference broker restarts **per stage** (boot is the slow part; tests inside a stage use
 unique topic names). A broker with `files` fixtures restarts **per test**, because those
@@ -472,8 +474,10 @@ is still only planned keeps one.
 | `ctx.fixtures.segment_bytes(&name, 0)?` | The partition's log segment as the broker has it on disk. |
 | `ctx.rng`, `ctx.seed` | The seeded RNG. Every random choice must come from it, or `--seed` stops meaning anything. |
 | `ctx.unique("prefix")` | A name that is unique to the run but stable for a seed. |
-| `ctx.dist` | The unpacked reference distribution, when one is available — use `broker::reference::run_tool(&dist, "kafka-topics.sh", &args)` for interop tests. |
-| `ctx.note("p99 0.22 ms")` | An informational line shown under the test **whatever the outcome** (and carried in the JSON report's `notes`). `Check::note` only ever surfaces under a failure; this is for timings, throughput, and "nothing ran, here is why". |
+| `ctx.dist` | The unpacked reference distribution, when one is in the cache — for **any** broker, not only the reference (testing another broker never downloads it, but uses it once `--broker apache_kafka` has). Stage 43 runs the tarball's command line tools against your broker with it. |
+| `ctx.reference` | True when the broker under test is Apache Kafka itself. |
+| `ctx.skip("why")` | Report the test as **skipped** with that reason, then `return Ok(())`: for a test that finds out at run time it cannot run here (stage 43 with no tarball). A test that did nothing must never show up as passed. |
+| `ctx.note("p99 0.22 ms")` | An informational line shown under the test **whatever the outcome** (and carried in the JSON report's `notes`). `Check::note` only ever surfaces under a failure; this is for timings and throughput. |
 | `ctx.restart_broker().await?` | Stop the broker and start it again from the same spec: same port, same properties file, same log directory, **no reformat**. Only what is on disk survives. Pair it with `Test::timeout_ms(..)`, since the reference broker needs a couple of seconds to come back. |
 | `ctx.timeout`, `ctx.log_dir`, `ctx.addr`, `ctx.broker_name` | The rest of the environment. |
 

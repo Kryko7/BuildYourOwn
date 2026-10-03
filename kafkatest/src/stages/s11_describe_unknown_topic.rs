@@ -101,6 +101,13 @@ kafka_test!(no_partitions, |ctx| {
             0usize,
             t.partitions.len(),
         );
+    } else {
+        c.that(
+            "response.topics[0]",
+            "one topic entry",
+            false,
+            resp.topics.len(),
+        );
     }
     c.finish()
 });

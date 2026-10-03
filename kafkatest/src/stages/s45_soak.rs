@@ -241,7 +241,7 @@ async fn fetch_all(
             .first()
             .and_then(|t| t.partitions.first())
             .ok_or_else(|| {
-                Failure::harness(format!(
+                Failure::missing(format!(
                     "the fetch of {}-{partition} from offset {next} returned no partition entry",
                     topic.name
                 ))
@@ -258,7 +258,7 @@ async fn fetch_all(
         }
         let bytes = part.records.clone().map(|b| b.to_vec()).unwrap_or_default();
         let batches = RecordBatch::decode_all(&bytes).map_err(|e| {
-            Failure::harness(format!(
+            Failure::bad_data(format!(
                 "the records of {}-{partition} from offset {next} do not decode: {e:#}",
                 topic.name
             ))

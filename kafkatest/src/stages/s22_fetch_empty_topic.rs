@@ -83,6 +83,13 @@ kafka_test!(high_watermark, |ctx| {
             0i64,
             p.high_watermark,
         );
+    } else {
+        c.that(
+            "response.responses[0].partitions[0]",
+            "one partition entry",
+            false,
+            "none",
+        );
     }
     c.finish()
 });
@@ -103,6 +110,13 @@ kafka_test!(no_records, |ctx| {
             0usize,
             len,
         );
+    } else {
+        c.that(
+            "response.responses[0].partitions[0]",
+            "one partition entry",
+            false,
+            "none",
+        );
     }
     c.finish()
 });
@@ -121,6 +135,13 @@ kafka_test!(log_start_offset, |ctx| {
             "response.responses[0].partitions[0].log_start_offset",
             0i64,
             p.log_start_offset,
+        );
+    } else {
+        c.that(
+            "response.responses[0].partitions[0]",
+            "one partition entry",
+            false,
+            "none",
         );
     }
     c.finish()

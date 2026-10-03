@@ -139,9 +139,11 @@ fn wire_examples() -> Vec<ExampleSpec> {
             )
             .response("Both are accepted; nothing is written on either socket.")
             .note(
-                "Accept in a loop and hand each connection to its own task or thread. A broker \
-                 that only accepts again after the previous client disconnects passes the first \
-                 test of this stage and fails the third.",
+                "Accept in a loop and hand each connection to its own task or thread. The \
+                 kernel completes the TCP handshake from the listen backlog before accept() is \
+                 ever called, so connecting alone cannot tell a broker that serves one client \
+                 at a time from one that serves many: stage 7 can, and a broker that only \
+                 accepts again after the previous client disconnects fails it.",
             ),
     ]
 }

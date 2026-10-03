@@ -127,13 +127,29 @@ async fn create_topics(conn: &mut Conn, names: &[(String, String, i32)]) -> Resu
                     return Ok(());
                 }
             }
-            Err(e) => last = e.to_string(),
+            Err(e) => {
+                last = e.to_string();
+                reconnect(conn).await;
+            }
         }
         tokio::time::sleep(Duration::from_millis(100 + attempt * 50)).await;
     }
     Err(Failure::harness(format!(
         "could not create the fixture topics: {last}"
     )))
+}
+
+/// Replace a connection after a failed round trip.
+///
+/// A request that timed out may still be answered later, and that late answer would be read
+/// as the reply to the next retry — every retry after it would then fail on a correlation
+/// id that is one behind. A fresh connection has nothing queued.
+async fn reconnect(conn: &mut Conn) {
+    if let Ok(fresh) = Conn::connect(conn.addr, conn.timeout).await {
+        let client_id = conn.client_id.clone();
+        *conn = fresh;
+        conn.client_id = client_id;
+    }
 }
 
 type Discovered = Vec<(String, uuid::Uuid, i32)>;
@@ -189,7 +205,10 @@ async fn wait_for_leaders(
                     return Ok(out);
                 }
             }
-            Err(e) => last = e.to_string(),
+            Err(e) => {
+                last = e.to_string();
+                reconnect(conn).await;
+            }
         }
         tokio::time::sleep(Duration::from_millis(50 + attempt * 25)).await;
     }
@@ -260,7 +279,10 @@ async fn wait_until_fetchable(
                     }
                 }
             }
-            Err(e) => last = e.to_string(),
+            Err(e) => {
+                last = e.to_string();
+                reconnect(conn).await;
+            }
         }
         tokio::time::sleep(Duration::from_millis(50 + attempt * 10)).await;
     }

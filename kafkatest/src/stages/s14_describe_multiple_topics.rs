@@ -134,6 +134,7 @@ kafka_test!(partition_counts, |ctx| {
         .await
         .map_err(|e| proto_fail(e, &conn))?;
     let mut c = Check::new("per-topic partition counts", &conn);
+    c.eq("response.topics.len", 3usize, resp.topics.len());
     for t in &resp.topics {
         let name = t.name.as_ref().map(|n| n.0.to_string()).unwrap_or_default();
         let want = if name == alpha.name {
@@ -166,6 +167,7 @@ kafka_test!(distinct_ids, |ctx| {
         .await
         .map_err(|e| proto_fail(e, &conn))?;
     let mut c = Check::new("that each topic keeps its own id", &conn);
+    c.eq("response.topics.len", 3usize, resp.topics.len());
     let mut ids = Vec::new();
     for t in &resp.topics {
         let name = t.name.as_ref().map(|n| n.0.to_string()).unwrap_or_default();

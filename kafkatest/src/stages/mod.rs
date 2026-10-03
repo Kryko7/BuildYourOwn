@@ -361,8 +361,11 @@ pub struct Ctx {
     pub seed: u64,
     /// A seeded RNG, reset per test so runs are reproducible.
     pub rng: StdRng,
-    /// The unpacked reference distribution, when one is available (interop tests).
+    /// The unpacked reference distribution, when one is available (interop tests). It is
+    /// there for any broker once the tarball is in the cache, not only for the reference.
     pub dist: Option<PathBuf>,
+    /// True when the broker under test is the reference broker (Apache Kafka itself).
+    pub reference: bool,
     /// The broker's log directory.
     pub log_dir: PathBuf,
     /// The broker process, lent to the test by the runner for the duration of the body so
@@ -372,6 +375,8 @@ pub struct Ctx {
     /// Informational lines the test wants in the report even when it passes: timings,
     /// throughput, why something was skipped. See [`Ctx::note`].
     pub notes: Vec<String>,
+    /// Set by [`Ctx::skip`]: the test could not run here, and says why.
+    pub skipped: Option<String>,
 }
 
 impl Ctx {
@@ -393,9 +398,18 @@ impl Ctx {
             seed,
             rng: StdRng::seed_from_u64(seed ^ (test_index.wrapping_mul(0x9e37_79b9_7f4a_7c15))),
             dist,
+            reference: false,
             broker: None,
             notes: Vec::new(),
+            skipped: None,
         }
+    }
+
+    /// Mark the test as skipped: it found out at run time that it cannot run against this
+    /// broker (stage 43 without a Kafka distribution to take the tools from). Return
+    /// `Ok(())` right after; the runner reports the test as skipped, never as passed.
+    pub fn skip(&mut self, reason: impl Into<String>) {
+        self.skipped = Some(reason.into());
     }
 
     /// Add an informational line to the test's report entry.
@@ -421,8 +435,9 @@ impl Ctx {
             ));
         };
         // The reference broker accepts connections well before it can serve them, so wait
-        // for the same marker line the runner waits for at boot.
-        let wait_for_marker = self.dist.is_some();
+        // for the same marker line the runner waits for at boot. Only the reference prints
+        // it: `dist` is available to every broker, so it cannot be the test.
+        let wait_for_marker = self.reference;
         let started = tokio::task::spawn_blocking(move || -> anyhow::Result<BrokerHandle> {
             let spec = handle.spec.clone();
             // Dropping the handle SIGTERMs (then SIGKILLs) the whole process group.

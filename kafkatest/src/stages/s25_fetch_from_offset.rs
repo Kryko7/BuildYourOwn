@@ -90,7 +90,7 @@ impl Fetched {
     /// The batches of the partition, decoded.
     fn batches(&self) -> Result<Vec<RecordBatch>, Failure> {
         RecordBatch::decode_all(&self.records)
-            .map_err(|e| Failure::harness(format!("the returned records do not decode: {e:#}")))
+            .map_err(|e| Failure::bad_data(format!("the returned records do not decode: {e:#}")))
     }
 
     /// The base offset of every returned batch.

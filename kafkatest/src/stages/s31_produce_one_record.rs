@@ -181,7 +181,7 @@ kafka_test!(fetch_back, |ctx| {
         .map(|b| b.to_vec())
         .unwrap_or_default();
     let batches = RecordBatch::decode_all(&bytes)
-        .map_err(|e| Failure::harness(format!("the fetched records do not decode: {e:#}")))?;
+        .map_err(|e| Failure::bad_data(format!("the fetched records do not decode: {e:#}")))?;
     let value = batches
         .first()
         .and_then(|b| b.records.first())

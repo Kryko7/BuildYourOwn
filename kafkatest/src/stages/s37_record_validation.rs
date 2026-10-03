@@ -142,7 +142,7 @@ async fn high_watermark(ctx: &Ctx, topic: &TopicInfo) -> Result<i64, Failure> {
         .and_then(|t| t.partitions.first())
         .map(|p| p.high_watermark)
         .ok_or_else(|| {
-            Failure::harness(format!(
+            Failure::missing(format!(
                 "the Fetch for '{}'-0 returned no partition entry",
                 topic.name
             ))
